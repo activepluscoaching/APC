@@ -78,19 +78,6 @@ for (const viewport of viewports) {
     await page.locator('#managerReports .rc-back').click();
     await noOverflow(page, '#managerShell');
 
-    // The Admin panel's own Report Center mounts, generates and previews too.
-    await enterPortal(page, 'admin');
-    await expect(page.locator('.admin-side')).toHaveCount(0);
-    const adminShell = await page.locator('#adminShell').boundingBox();
-    expect(adminShell.width).toBe(Math.min(viewport.width, 480));
-    await page.locator('.admin-bottom [data-admin-view=reports]').click();
-    await expect(page.locator('#adminReports select[name=report]')).toBeVisible();
-    await page.locator('#adminReports select[name=report]').selectOption('student.class-wise');
-    await page.locator('#adminReports .rc-generate').click();
-    await expect(page.locator('#adminReports .rc-pdf-preview')).toBeVisible();
-    // An empty device still previews, with the one shared empty message.
-    await expect(page.locator('#adminReports .rc-preview-notice')).toHaveText('কোনো তথ্য পাওয়া যায়নি।');
-    await noOverflow(page, '#adminShell');
     expect(errors).toEqual([]);
   });
 }

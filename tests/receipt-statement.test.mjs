@@ -179,7 +179,7 @@ test('the offline shell precaches the complete local entry/module graph and paym
       if (resolved.endsWith('.js')) pending.push(resolved);
     }
   }
-  for (const page of ['index','admin','manager','teacher','payment']) {
+  for (const page of ['index','manager','teacher','payment']) {
     for (const [, src] of read(page + '.html').matchAll(/<script[^>]+src="([^"]+)"/g)) {
       assert.ok(cached.has(src.split('?')[0]), `${page} entry script ${src} is missing from the PWA cache`);
     }

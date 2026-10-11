@@ -1,7 +1,7 @@
 const {test,expect}=require('./fixtures.cjs');
 const {enterPortal}=require('./portal-session.cjs');
 test.use({serviceWorkers:'block'});
-for(const width of [320,390,1280]) for(const role of ['login','admin','manager','teacher','payment','student']) {
+for(const width of [320,390,1280]) for(const role of ['login','manager','teacher','payment','student']) {
  test(`${role} redesigned at ${width}`,async({page},info)=>{
   await page.setViewportSize({width,height:844});
   if(role==='login') await page.goto('/index.html');
@@ -33,18 +33,17 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
 }
 
 // Traverse the secondary screens too, not just the default dashboards.
-for (const role of ['admin','manager','teacher']) test(`${role} secondary screens at 390 dark`, async({page},info)=>{
+for (const role of ['manager','teacher']) test(`${role} secondary screens at 390 dark`, async({page},info)=>{
  await page.setViewportSize({width:390,height:844});
  await enterPortal(page,role);
  await page.evaluate(()=>document.documentElement.dataset.theme='dark');
- const views = role==='admin' ? ['staff','students','reports','roles','data','backup','security','settings','profile']
-   : role==='manager' ? ['students','academic','classes','teachers','finance','cash-counter','notices','routine','exams','results','reports','profile']
+ const views = role==='manager' ? ['students','academic','classes','teachers','finance','cash-counter','notices','routine','exams','results','reports','profile']
    : ['students','classes','routine-view','homework','online-exams','suggestion','reports','profile'];
  for(const view of views) {
   if(role==='teacher'||role==='manager') await page.evaluate(({view,role})=>document.querySelector(`[data-${role}-view="${view}"]`).click(),{view,role});
   else await page.evaluate(view=>location.hash=view,view);
   await page.waitForTimeout(75);
-  const visible=role==='teacher'?page.locator('.teacher-view:visible'):page.locator(`.${role==='admin'?'admin':'manager'}-view.active`);
+  const visible=role==='teacher'?page.locator('.teacher-view:visible'):page.locator('.manager-view.active');
   await expect(visible).toBeVisible();
   if(role!=='teacher') await expect(visible).toHaveAttribute('data-view-panel',view);
   const bad=await visible.evaluate(el=>[...el.querySelectorAll('input,select,textarea,button')].filter(x=>{
@@ -54,15 +53,6 @@ for (const role of ['admin','manager','teacher']) test(`${role} secondary screen
   }).map(el=>el.id||el.className));
   expect(bad,view).toEqual([]);
   await page.screenshot({path:info.outputPath(view+'.png')});
- }
- if(role==='admin') {
-  await page.evaluate(()=>location.hash='staff');
-  await page.locator('#staffCreateButton').click();
-  const dialog=page.locator('#staffModalBody');
-  await expect(dialog).toBeVisible();
-  expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
-  await page.screenshot({path:info.outputPath('staff-form.png')});
-  await page.keyboard.press('Escape');
  }
 });
 

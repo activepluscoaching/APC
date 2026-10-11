@@ -22,25 +22,7 @@ const ROLE_USERNAMES = Object.freeze({
 async function seed(page, role, password = E2E_PASSWORD) {
   await page.evaluate(async ({ role, password }) => {
     const auth = await import('/js/staff-auth.js');
-    let provisioned = false;
-    if (role === 'admin') {
-      /* The first Admin is created once for the institution, in the cloud
-         (js/admin-initialization.js). On a machine that can reach it — and that
-         has never initialized this project — the real workflow runs. In the
-         offline E2E sandbox there is no Firebase, so the fixture falls back to
-         provisioning the reserved role account straight through the storage
-         layer, exactly like tests/legacy-login.spec.cjs does. Nothing here can
-         weaken the app: creation stays closed for an unverified device. */
-      const created = await auth.createInitialAdmin({
-        fullName: 'E2E Owner', mobile: '01700000000', email: '',
-        password, confirmPassword: password
-      });
-      if (!created.ok && created.code !== 'CLOUD_UNVERIFIED' && created.code !== 'ADMIN_EXISTS') {
-        throw new Error(`first admin: ${created.error}`);
-      }
-      provisioned = created.ok;
-    }
-    if (!provisioned) await auth.provisionStaffAccount(role, password, password);
+    await auth.provisionStaffAccount(role, password, password);
     const session = await auth.saveStaffSession(role, true);
     if (!session) throw new Error(`no session for ${role}`);
   }, { role, password });
@@ -49,7 +31,7 @@ async function seed(page, role, password = E2E_PASSWORD) {
 /** Sign a role in and land on its panel, signed in. */
 async function enterPortal(page, role, panel = role) {
   const target = {
-    admin: 'admin.html', manager: 'manager.html',
+    manager: 'manager.html',
     teacher: 'teacher.html', payment: 'payment.html'
   }[panel];
   if (!target) throw new Error(`unknown portal: ${panel}`);

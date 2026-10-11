@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PAGES = ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html'];
+const PAGES = ['index.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html'];
 
 export function canonicalOrder() {
   const css = readFileSync(path.join(ROOT, 'css/design-system.css'), 'utf8');

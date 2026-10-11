@@ -16,7 +16,6 @@ import { loadPage } from './jsdom-harness.mjs';
 
 const PAGES = Object.freeze([
   { file: 'index.html', name: 'শিক্ষার্থী অ্যাপ', exit: 'studentLogout', login: 'Active Plus Coaching' },
-  { file: 'admin.html', name: 'এডমিন প্যানেল', exit: 'adminExitButton' },
   { file: 'manager.html', name: 'ম্যানেজার প্যানেল', exit: 'managerLogout' },
   { file: 'teacher.html', name: 'শিক্ষক প্যানেল', exit: 'teacherExit' },
   { file: 'payment.html', name: 'পেমেন্ট রিসিভ', exit: 'payExitButton' }
@@ -235,7 +234,7 @@ test('a receipt that cannot be saved keeps the message list honest', async () =>
 });
 
 test('the redesigned dark-mode switch really flips the theme', async () => {
-  const ctx = await loadPage('admin.html');
+  const ctx = await loadPage('manager.html');
   const { initAppearance, APPEARANCE_KEY } = await import('../js/appearance.js');
   initAppearance();
   const checkbox = ctx.$('.theme-switch #darkModeToggle');

@@ -241,7 +241,7 @@ test('one login page: teacher credentials typed there land on the teacher panel'
   const password = 'Apc-Teacher-Login-2026';
   await page.goto('/index.html'); await expect(page.locator('#authScreen')).toBeVisible();
   // No shortcut links — the single form is the way in.
-  await expect(page.locator('#authScreen a[href="admin.html"], #authScreen a[href="teacher.html"], #authScreen a[href="payment.html"]')).toHaveCount(0);
+  await expect(page.locator('#authScreen a[href="teacher.html"], #authScreen a[href="payment.html"]')).toHaveCount(0);
   // A real first sign-in sets its own password on this device; there is no
   // built-in default password to type.
   await page.evaluate(async ({ role, password }) => {
@@ -260,12 +260,12 @@ test('one login page: teacher credentials typed there land on the teacher panel'
 
 test('one device, one panel: no cross-panel link and the other panel locks itself', async ({ page, context }) => {
   await enter(page); // teacher session on this device
-  await expect(page.locator('a[href="admin.html"], a[href="manager.html"], a[href="payment.html"]')).toHaveCount(0);
-  const admin = await context.newPage(); await admin.goto('/admin.html');
-  await expect(admin.locator('#apcPanelLock')).toBeVisible();
-  await expect(admin.locator('#adminShell')).toBeHidden();
-  await expect(admin.locator('#apcPanelLockLogin')).toBeVisible();
-  await admin.close();
+  await expect(page.locator('a[href="manager.html"], a[href="payment.html"]')).toHaveCount(0);
+  const pay = await context.newPage(); await pay.goto('/payment.html');
+  await expect(pay.locator('#apcPanelLock')).toBeVisible();
+  await expect(pay.locator('#payShell')).toBeHidden();
+  await expect(pay.locator('#apcPanelLockLogin')).toBeVisible();
+  await pay.close();
 });
 
 test('profile class changes immediately re-scope the student feed and teacher roster', async ({ page, context }) => {

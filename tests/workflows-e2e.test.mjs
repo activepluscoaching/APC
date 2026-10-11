@@ -83,12 +83,14 @@ async function openStaff(page, role, base = {}) {
   return ctx;
 }
 
-/* The Admin academic structure is device data too: one class, two subjects and
-   a chapter. It is written once on the Admin panel and then copied device to
-   device exactly like a real staff hand-over. */
+/* The academic structure is device data too: one class, two subjects and
+   a chapter. It is written once with a signed-in Admin session and then copied
+   device to device exactly like a real staff hand-over. The shared data layer
+   (js/academics.js) enforces the Admin gate itself, so the seeding runs on the
+   login page — the Admin panel is gone. */
 async function seedAcademics() {
   await closePages();
-  const ctx = await loadPage('admin.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   await provisionStaff('admin', STAFF_TEST_PASSWORD);
   seedStaffSession(ctx.window, 'admin');
   const academics = await import('../js/academics.js');

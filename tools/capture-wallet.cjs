@@ -90,7 +90,7 @@ async function enterStudent(page, { work = true, fee = 1500 } = {}) {
 async function enterStaff(page, role) {
   await page.goto('/offline-roles.html');
   await seedOffice(page);
-  if (role === 'teacher' || role === 'manager' || role === 'admin') await seedStudentWork(page);
+  if (role === 'teacher' || role === 'manager') await seedStudentWork(page);
   await enterPortal(page, role);
   await page.waitForTimeout(700);
 }
@@ -123,18 +123,6 @@ const allScenes = [
   {
     "portal": "student",
     "view": "home",
-    "theme": "dark",
-    "width": 390
-  },
-  {
-    "portal": "admin",
-    "view": "dashboard",
-    "theme": "light",
-    "width": 390
-  },
-  {
-    "portal": "admin",
-    "view": "dashboard",
     "theme": "dark",
     "width": 390
   },
@@ -235,18 +223,6 @@ const allScenes = [
     "width": 320
   },
   {
-    "portal": "admin",
-    "view": "staff",
-    "theme": "light",
-    "width": 320
-  },
-  {
-    "portal": "admin",
-    "view": "reports",
-    "theme": "dark",
-    "width": 390
-  },
-  {
     "portal": "manager",
     "view": "finance",
     "theme": "light",
@@ -277,12 +253,6 @@ const allScenes = [
     "width": 1280
   },
   {
-    "portal": "admin",
-    "view": "dashboard",
-    "theme": "light",
-    "width": 1280
-  },
-  {
     "portal": "payment",
     "view": "home",
     "theme": "light",
@@ -295,8 +265,6 @@ async function go(page, portal, view) {
   if (portal === 'student') {
     if (view === 'home') await page.evaluate(() => { location.hash = ''; history.replaceState(null, '', location.pathname); window.dispatchEvent(new HashChangeEvent('hashchange')); });
     else await page.evaluate(v => { location.hash = v; }, view);
-  } else if (portal === 'admin') {
-    await page.evaluate(v => { location.hash = v === 'dashboard' ? 'dashboard' : v; }, view);
   } else if (portal === 'manager') {
     await page.evaluate(v => document.querySelector(`[data-manager-view="${v}"]`)?.click(), view);
   } else if (portal === 'teacher') {

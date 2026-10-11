@@ -57,7 +57,7 @@ async function boot() {
   await mountNoticeCentre();
   await provisionStaff(mode, STAFF_TEST_PASSWORD);
   seedStaffSession(window, mode);
-  const panelModule = { 'admin.html': 'admin.js', 'manager.html': 'manager.js', 'teacher.html': 'teacher.js', 'payment.html': 'payment.js' }[page];
+  const panelModule = { 'manager.html': 'manager.js', 'teacher.html': 'teacher.js', 'payment.html': 'payment.js' }[page];
   if (panelModule) await import(`../js/${panelModule}`);
   await import('../js/theme-entry.js');   // the page's theme-toggle script
   await settle();
@@ -173,7 +173,7 @@ async function sweep(viewName) {
 }
 
 const NAV = {
-  'admin.html': 'data-admin-view', 'manager.html': 'data-manager-view',
+  'manager.html': 'data-manager-view',
   'teacher.html': 'data-teacher-view', 'index.html': 'data-view'
 }[page];
 
@@ -199,7 +199,7 @@ const topbar = $$('.app-topbar').map(bar => ({
   logo: Boolean(bar.querySelector('.app-brand-logo')),
   slogan: Boolean(bar.querySelector('.app-brand-slogan')),
   bell: Boolean(bar.querySelector('#notificationButton')),
-  logout: Boolean(bar.querySelector('#studentLogout, #adminExitButton, #managerLogout, #teacherExit, #payExitButton'))
+  logout: Boolean(bar.querySelector('#studentLogout, #managerLogout, #teacherExit, #payExitButton'))
 }));
 
 console.log(JSON.stringify({

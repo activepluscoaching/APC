@@ -14,7 +14,7 @@ async function prepare(page, role, scene = SCENES[1]) {
   await page.addInitScript(theme => localStorage.setItem('active-plus-appearance-v2', theme), scene.theme);
   if (role === 'student') await enterStudentApp(page);
   else await enterPortal(page, role);
-  const shell = { student: '#appShell', payment: '#payShell', admin: '#adminShell', manager: '#managerShell', teacher: '#teacherShell' }[role];
+  const shell = { student: '#appShell', payment: '#payShell', manager: '#managerShell', teacher: '#teacherShell' }[role];
   // The shared fixture submits a real login; network-idle is not a guarantee
   // its asynchronous credential/session work has finished on a busy runner.
   // Wait for authenticated UI before an immediate offline reload, not a timer.
@@ -75,7 +75,7 @@ for (const scene of SCENES) {
 
 }
 
-for (const role of ['admin','manager','teacher']) for (const scene of SCENES.slice(0,2)) {
+for (const role of ['manager','teacher']) for (const scene of SCENES.slice(0,2)) {
   test(`${role} keeps the authorised reports on their own screen (${scene.width}px ${scene.theme})`, async ({ page }) => {
     await prepare(page, role, scene);
     const attribute = `data-${role}-view`;
@@ -95,18 +95,13 @@ for (const role of ['admin','manager','teacher']) for (const scene of SCENES.sli
       await expect(page.locator(reports)).toBeHidden();
       return;
     }
-    /* Admin and Manager each own a reports seat (Phase 3/5): the report center
-       is that screen, and it never becomes a second row inside More. */
+    /* Manager owns a reports seat (Phase 3/5): the report center is that
+       screen, and it never becomes a second row inside More. */
     await page.locator(`.admin-bottom [${attribute}="reports"]`).click();
     await expect(page.locator(`${reports} select[name="report"]`)).toBeVisible();
-    if (role === 'manager') {
-      await page.locator(`.admin-bottom [${attribute}="more"]`).click();
-      await expect(page.locator('[data-view-panel="more"]')).toBeVisible();
-      await expect(page.locator(`${reports} select[name="report"]`)).toBeHidden();
-    } else {
-      await page.locator(`.admin-bottom [${attribute}="dashboard"]`).click();
-      await expect(page.locator(`${reports} select[name="report"]`)).toBeHidden();
-    }
+    await page.locator(`.admin-bottom [${attribute}="more"]`).click();
+    await expect(page.locator('[data-view-panel="more"]')).toBeVisible();
+    await expect(page.locator(`${reports} select[name="report"]`)).toBeHidden();
   });
 }
 

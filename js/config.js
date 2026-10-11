@@ -20,7 +20,7 @@ export const DEFAULT_PIN = '123123';
 
 /* Maintenance mode is one strict boolean flag plus one admin-authored message.
    The flag is read by the student app (js/main.js) and written by the admin
-   panel (js/admin.js); both go through this helper so the two ends can never
+   admin panel did; both go through this helper so the two ends can never
    drift.
 
    Why the flag is not a plain truthiness test: the config document travels

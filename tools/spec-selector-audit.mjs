@@ -17,7 +17,7 @@ import path from 'node:path';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = file => readFileSync(path.join(root, file), 'utf8');
 
-const PAGES = ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html'];
+const PAGES = ['index.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html'];
 /* Markup can also live in a referenced preview page (a design snapshot a spec
    points at); scan every page in the repo so those selectors resolve too. */
 const ALL_PAGES = readdirSync(root).filter(file => file.endsWith('.html'));

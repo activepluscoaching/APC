@@ -8,7 +8,7 @@ const source = await readFile(new URL('../js/sanitize-url.js', import.meta.url),
 function run(search) {
   const calls = [];
   const window = {
-    location: { search, pathname: '/admin.html', hash: '#finance' },
+    location: { search, pathname: '/manager.html', hash: '#finance' },
     history: {
       state: { marker: true },
       replaceState(...args) { calls.push(args); }
@@ -20,7 +20,7 @@ function run(search) {
 
 test('removes the whole query string from login-page history while preserving hash routes', () => {
   const calls = run('?username=admin.apc&password=secret&tracking=1');
-  assert.deepEqual(calls, [[{ marker: true }, '', '/admin.html#finance']]);
+  assert.deepEqual(calls, [[{ marker: true }, '', '/manager.html#finance']]);
 });
 
 test('does not rewrite URLs without a query string', () => {

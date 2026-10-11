@@ -48,36 +48,6 @@ test('record values are escaped; missing data and unknown status are explicit', 
   assert.match(document.body.textContent, /অনুমোদনের পরে দেখা যাবে/);
 });
 
-test('admin detail opens, closes and edits without changing data; layout variant resets', async t => {
-  const ctx = await loadPage('admin.html', { seed: {
-    'activePlus.demo.autofill.v1': 'off', [ROSTER_KEY]: JSON.stringify([student])
-  } });
-  t.after(() => ctx.window.close());
-  await provisionStaff('admin');
-  seedStaffSession(ctx.window, 'admin');
-  await import('../js/admin.js');
-  await ctx.waitFor(() => !ctx.$('#adminShell').hidden);
-  await ctx.waitFor(() => Boolean(ctx.$('#studentList [data-action="view"]')));
-  const stored = ctx.window.localStorage.getItem(ROSTER_KEY);
-  ctx.click(ctx.$('#studentList [data-action="view"]'));
-  assert.equal(ctx.$('#adminModalBackdrop').hidden, false);
-  assert.ok(ctx.$('.student-record-modal'));
-  assert.equal(ctx.$('#adminModalTitle').textContent, student.name);
-  ctx.click(ctx.$('#adminModalClose'));
-  assert.equal(ctx.$('#adminModalBackdrop').hidden, true);
-  ctx.click(ctx.$('#studentList [data-action="view"]'));
-  ctx.click(ctx.$('[data-modal-action="edit"]'));
-  assert.ok(ctx.$('#studentEditForm'));
-  assert.equal(ctx.$('.student-record-modal'), null, 'edit dialog does not inherit the scroll layout');
-  assert.equal(ctx.$('#editStudentName').value, student.name);
-  ctx.click(ctx.$('#adminModalClose'));
-  ctx.click(ctx.$('#studentList [data-action="view"]'));
-  ctx.click(ctx.$('[data-modal-action="reset-pin"]'));
-  assert.equal(ctx.$('.student-record-modal'), null);
-  assert.match(ctx.$('#adminModalTitle').textContent, /ডিফল্ট পাসওয়ার্ড/);
-  assert.equal(ctx.window.localStorage.getItem(ROSTER_KEY), stored);
-});
-
 // The new renderer/style must also be available to an updated offline install.
 test('student record assets are loaded by the design system and cached offline', () => {
   const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');

@@ -29,8 +29,8 @@ import {
 } from './admin-initialization.js';
 import { isPasswordRecord } from './password-hash.js';
 
-const STAFF_PANEL = Object.freeze({ admin: 'admin.html', manager: 'manager.html', teacher: 'teacher.html', payment: 'payment.html' });
-const STAFF_LABEL = Object.freeze({ admin: 'এডমিন প্যানেল', manager: 'ম্যানেজার প্যানেল', teacher: 'শিক্ষক প্যানেল', payment: 'পেমেন্ট রিসিভ প্যানেল' });
+const STAFF_PANEL = Object.freeze({ manager: 'manager.html', teacher: 'teacher.html', payment: 'payment.html' });
+const STAFF_LABEL = Object.freeze({ manager: 'ম্যানেজার প্যানেল', teacher: 'শিক্ষক প্যানেল', payment: 'পেমেন্ট রিসিভ প্যানেল' });
 
 export function staffRoleFor(value) {
   const typed = normalizeStaffUsername(value);
@@ -68,7 +68,6 @@ function staffRolePanelOf(staff) {
   if (role === 'manager') return 'manager';
   if (role === 'teacher') return 'teacher';
   if (role === 'cash-counter') return 'payment';
-  if (role === 'admin') return 'admin';
   return null; // "other" staff have no panel of their own yet
 }
 
@@ -84,8 +83,16 @@ async function enterStaffPanel(role, remember, identity = null) {
   const switched = previous.length
     ? ` — এই ডিভাইসের আগের ${STAFF_LABEL[previous[0]] || 'প্যানেল'} সেশনটি বন্ধ হয়েছে`
     : '';
+  /* A role with no panel of its own (the device's Admin account since the
+     Admin panel was deleted) signs in to its session only: the authorization
+     stays, but there is no page to hand over to. */
+  const path = staffPanelPath(role);
+  if (!path) {
+    setAuthMessage(`এই স্টাফ অ্যাকাউন্টের জন্য এই ডিভাইসে কোনো প্যানেল নির্ধারিত নয়।${switched}`);
+    return;
+  }
   setAuthMessage(`${STAFF_LABEL[role]}ে নেওয়া হচ্ছে…${switched}`, 'success');
-  window.location.replace(staffPanelPath(role));
+  window.location.replace(path);
 }
 
 async function handleStaffLogin(role, typedId, pin) {

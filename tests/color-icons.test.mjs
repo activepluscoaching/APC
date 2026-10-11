@@ -66,7 +66,7 @@ test('unknown names safely fall back and caller-provided attributes are escaped'
 });
 
 test('static named icons on all five portals use the new set before JS boot', () => {
-  for (const page of ['index','admin','manager','teacher','payment']) {
+  for (const page of ['index','manager','teacher','payment']) {
     const document = parse(read(page + '.html'));
     const icons = [...document.querySelectorAll('svg[data-icon]')];
     assert.ok(page === 'payment' ? icons.length >= 3 : icons.length > 10, page); // Minimal counter has no decorative service grid/footer.
@@ -125,7 +125,7 @@ test('the new icon dependency ships in the bumped offline release', () => {
   assert.ok(sw.includes("'./js/icon-set.js'"));
   assert.ok(existsSync(new URL('../js/icon-set.js', import.meta.url)));
   assert.match(read('js/icons.js'), /from '\.\/icon-set\.js'/);
-  for (const page of ['index','admin','manager','teacher','payment','offline-roles']) {
+  for (const page of ['index','manager','teacher','payment','offline-roles']) {
     /* The stylesheets are linked directly (fifteen parallel <link>s instead of
        one @import chain), so EVERY sheet must carry the release query. */
     const links = [...read(page + '.html').matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(match => match[1]);

@@ -11,7 +11,7 @@
      4. "Rasal Russell Chowdhury" → "rasal.admin.apc"
      5. duplicates walk rasal2 / rasal3 on the first name
      6. after creation the option disappears from the login page
-     7. no other page offers it (admin.html included)
+     7. no other page offers it (the old Admin panel is deleted)
      8. a direct function call cannot create a second Admin
      9. a NEW device (empty localStorage) sees Login, never "Create Admin",
         and signs in with the existing Admin credentials
@@ -152,8 +152,9 @@ test('the generated ID signs in as Admin', async () => {
   ctx.type(ctx.$('#loginMobile'), 'rasal.admin.apc');
   ctx.type(ctx.$('#loginPin'), PASSWORD);
   ctx.submit(ctx.$('#loginForm'));
-  await ctx.waitFor(() => ctx.jsdomErrors.some(error => /navigation/i.test(error)) || /এডমিন প্যানেল/.test(message()), 20000);
-  assert.match(message(), /এডমিন প্যানেল/);
+  await ctx.waitFor(() => /প্যানেল/.test(message()), 20000);
+  assert.match(message(), /কোনো প্যানেল নির্ধারিত নয়/);
+  assert.equal(ctx.jsdomErrors.some(error => /navigation/i.test(error)), false, 'no Admin panel exists to navigate to');
   assert.equal(ctx.window.localStorage.getItem(STAFF_ACCOUNTS.admin.sessionKey) !== null, true);
 });
 
@@ -198,22 +199,6 @@ test('duplicate names walk rasal2 → rasal3 on the first name', async () => {
     assert.doesNotMatch(id, /apc\d/);
     assert.ok(id.endsWith('.apc'));
   }
-});
-
-test('the Admin portal also refuses to offer the workflow', async () => {
-  const panel = await loadPage('admin.html', { seed: { ...DEMO_OFF } });
-  await import('../js/admin.js?no-admin');
-  // No creation form anywhere in the page.
-  assert.equal(panel.$('#initialAdminSetup'), null);
-  assert.equal(panel.$('#initialAdminForm'), null);
-  assert.equal(panel.$('form input[name="username"][id*="initial"]'), null);
-  /* With no Admin session stored the panel never opens: it locks in place and
-     keeps the shared login page — the only place first use is handled — as a
-     button, without navigating there on its own. */
-  await panel.waitFor(() => Boolean(panel.$('#apcPanelLock')));
-  assert.equal(panel.$('#adminShell').hidden, true, 'the Admin panel must stay closed');
-  assert.equal(panel.jsdomErrors.some(error => /navigation/i.test(error)), false, 'no automatic hand-off');
-  panel.window.close();
 });
 
 /* ---- a NEW device: empty localStorage, the Admin already in the cloud ------ */

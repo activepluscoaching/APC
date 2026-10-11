@@ -12,7 +12,7 @@ import { JSDOM } from 'jsdom';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const BARS = '.app-topbar, .auth-topbar, .admin-topbar, .topbar, .teacher-topbar, .manager-topbar, .pay-topbar, header[class*="topbar"]';
-const PAGES = ['index', 'admin', 'manager', 'teacher', 'payment'];
+const PAGES = ['index', 'manager', 'teacher', 'payment'];
 
 function boot({ online = true } = {}) {
   const dom = new JSDOM('<header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand">Active Plus Coaching</div></div></header>',

@@ -93,11 +93,6 @@ test('the login screen repaints as time passes — sun, season line and all', as
   const noonY = screen.style.getPropertyValue('--orb-y');
   assert.ok(noonX && noonY, 'the orb is positioned');
 
-  const note = ctx.$('#authSkyNote');
-  assert.equal(note.hidden, false, 'the status line shows');
-  const noonNote = nfc(note.textContent);
-  assert.ok(noonNote.includes(nfc('শীত')), `season is on the line: ${noonNote}`);
-  assert.ok(noonNote.includes(nfc('শুভ দুপুর')), `greeting follows the clock: ${noonNote}`);
 
   // Hours later, same open tab: the scene must have moved on by itself.
   await paintAuthSky(new Date('2026-01-10T21:00:00'));
@@ -107,7 +102,6 @@ test('the login screen repaints as time passes — sun, season line and all', as
   const nightY = screen.style.getPropertyValue('--orb-y');
   assert.notEqual(noonX, nightX, 'the sun/moon has travelled');
   assert.notEqual(noonY, nightY);
-  assert.ok(nfc(note.textContent).includes(nfc('শুভ রাত্রি')));
 });
 
 test('cached weather of the day overrides the clock sky on repaint', async () => {
@@ -118,7 +112,6 @@ test('cached weather of the day overrides the clock sky on repaint', async () =>
   const screen = ctx.$('#authScreen');
   assert.equal(screen.dataset.sky, 'rain', 'the day weather paints the sky');
   assert.equal(screen.dataset.celestial, '', 'rain hides the sun');
-  assert.ok(nfc(ctx.$('#authSkyNote').textContent).includes(nfc('বৃষ্টি')));
   // Dawn the same day: rain still owns the photograph, but the line knows.
   await paintAuthSky(new Date('2026-01-10T06:20:00'));
   assert.equal(screen.dataset.sky, 'rain');

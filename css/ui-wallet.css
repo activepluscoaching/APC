@@ -867,7 +867,7 @@ label { font-size: 13.5px; font-weight: 600; margin-block: 14px 6px; }
   background-size: auto, auto, cover, auto;  background-position: 70% top;}
 .auth-screen[data-sky=dusk] { background-image: var(--sky-scrim-dusk), url('../assets/sky/dusk.jpg'), var(--sky-fall-dusk);
   background-size: auto, cover, auto; }
-.auth-screen[data-sky=dawn] { background-image: var(--sky-scrim-dawn), url('../assets/sky/dusk.jpg'), var(--sky-fall-dawn);
+.auth-screen[data-sky=dawn] { background-image: var(--sky-scrim-dawn), url('../assets/sky/dawn.jpg'), var(--sky-fall-dawn);
   background-size: auto, cover, auto; }
 .auth-screen[data-sky=clear-night] { background-image: var(--sky-scrim-night), url('../assets/sky/clear-night.jpg'), var(--sky-fall-night);
   background-size: auto, cover, auto; }

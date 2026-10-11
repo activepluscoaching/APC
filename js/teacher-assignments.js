@@ -118,9 +118,19 @@ export function selectableSubjects(className, { includeLegacy = [] } = {}) {
  * Save (or replace) one Teacher + Class + Batch assignment with any number of
  * subjects. `subject` (single string) is still accepted for older callers.
  */
-export async function saveTeacherAssignment({ id = '', className, group = '', subject, subjects } = {}) {
+export async function saveTeacherAssignment({ id = '', className, group = '', subject, subjects, teacherUsername } = {}) {
   await requireManagerSession();
-  const teacher = await readStaffAccount('teacher');
+  /* The Manager form picks WHO gets the work. A caller that passes no teacher
+     keeps assigning to the built-in teacher.apc device account (legacy). */
+  const handle = String(teacherUsername || '').trim().toLowerCase();
+  let teacher;
+  if (handle && handle !== 'teacher.apc') {
+    const { findDirectoryStaffByUsername } = await import('./staff-directory.js');
+    teacher = await findDirectoryStaffByUsername(handle);
+    if (!teacher) fail('নির্বাচিত শিক্ষক পাওয়া যায়নি।');
+  } else {
+    teacher = await readStaffAccount('teacher');
+  }
   if (!teacher || ['disabled', 'inactive', 'rejected'].includes(teacher.status) || teacher.accountStatus === 'disabled') fail('সক্রিয় Teacher account পাওয়া যায়নি।');
   const clean = { className: String(className || '').normalize('NFC').trim(), group: String(group || '').normalize('NFC').trim() };
   const wanted = [...new Set([...(Array.isArray(subjects) ? subjects : []), subject]
@@ -167,7 +177,7 @@ export async function deleteAssignmentSubject(id, subject) {
   const left = record.subjects.filter(name => subjectKey(name) !== subjectKey(subject));
   if (left.length === record.subjects.length) fail('বিষয়টি এই assignment-এ নেই।');
   if (!left.length) return deleteTeacherAssignment(id);
-  return saveTeacherAssignment({ id: record.id, className: record.className, group: record.group, subjects: left });
+  return saveTeacherAssignment({ id: record.id, className: record.className, group: record.group, subjects: left, teacherUsername: record.teacherUsername });
 }
 export function assignedScopeForStudent(username, student) {
   return isTeacherAssigned(username, student?.className, student?.group);

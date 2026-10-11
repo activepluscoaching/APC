@@ -215,9 +215,17 @@ function renderStudents() {
 const weekdayNames = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 function renderTeacherClasses() {
   const host = $('#teacherClassList'); if (!host) return;
+  /* Only tell a teacher "no class is assigned" when that is the truth — after
+     the data actually came back empty. While a load is still running, or has
+     failed (Firebase slow or unreachable), say that instead and offer a retry:
+     an honest empty state must never be shown over classes that do exist. */
+  if (!state.ready) {
+    host.innerHTML = '<p class="teacher-empty">আপনার ক্লাসের তথ্য আনা হচ্ছে… অনুগ্রহ করে একটু ক্ষণ করুন। <button class="mini-btn" type="button" data-teacher-class-retry>আবার চেষ্টা করুন</button></p>';
+    return;
+  }
   host.innerHTML = state.assignments.map(item => {
     const students = state.students.filter(student => student.className === item.className && (!item.group || student.group === item.group));
-    return `<article class="teaching-card"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><p>${esc((item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean).join(', ') || '—')}</p><small>${bn(students.length)} জন অনুমোদিত শিক্ষার্থী</small></article>`;
+    return `<article class="teaching-card"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><p>${esc((item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean).join(', ') || '—')}</p><small>${bn(students.length)} জন অনুমোদিত শিক্ষার্থী</small><p><button class="mini-btn" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button></p></article>`;
   }).join('') || '<p class="teacher-empty">এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি। অ্যাসাইন হলে এখানে আপনার ক্লাস ও বিষয় দেখা যাবে; কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>';
 }
 function assignedRoutineRows(day) {
@@ -342,7 +350,7 @@ async function reload() {
     });
     $('#teacherDataError').hidden = true; render(); return true;
   } catch {
-    state.ready = false; $('#teacherDataError').hidden = false; return false;
+    state.ready = false; $('#teacherDataError').hidden = false; renderTeacherClasses(); return false;
   }
 }
 function openModal(title, html) {
@@ -717,6 +725,24 @@ $('.teacher-type-tabs')?.addEventListener('click', event => {
   state.recordLimit = 15; setView(tab.dataset.typeTab);
 });
 $('#teacherRecordMore').addEventListener('click', () => { state.recordLimit += 15; renderRecords(); });
+/* আমার ক্লাস: every assigned class opens its own work. The list is one row per
+   Teacher + Class + Batch, so a teacher with three classes gets three buttons —
+   choosing one must never leave the other two behind. */
+$('#teacherClassList')?.addEventListener('click', event => {
+  if (event.target.closest('[data-teacher-class-retry]')) return reload();
+  const open = event.target.closest('[data-teacher-open-class]');
+  if (!open) return;
+  const select = $('#teacherClassFilter');
+  const className = open.dataset.teacherOpenClass;
+  if (select) {
+    if (![...select.options].some(option => option.value === className)) select.insertAdjacentHTML('beforeend', `<option value="${esc(className)}">${esc(className)}</option>`);
+    select.value = className;
+    select.dispatchEvent(new Event('change'));
+  }
+  /* The records screen, narrowed to this class: its type tabs are the teacher's
+     existing হোমওয়ার্ক / সাজেশন / উপজাতি / পরীক্ষা workflow. */
+  setView('homework');
+});
 ['teacherStudentSearch', 'teacherStudentClass'].forEach(id => $('#' + id).addEventListener(id.includes('Search') ? 'input' : 'change', renderStudents));
 document.addEventListener('click', event => {
   if (state.busy) return;

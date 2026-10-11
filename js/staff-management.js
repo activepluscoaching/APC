@@ -106,11 +106,23 @@ function fieldRow(spec, value) {
   </div>`;
 }
 
+/** Every class a teacher may be given: the Admin's own Academic Setup first (a
+    class created there is exactly what must be assignable - that is the point of
+    the Setup), then the shipped config list. Before this the picker offered only
+    the 12 built-in classes, so ষষ্ঠ/সপ্তম or any custom class could
+    never reach a teacher, however often the Admin saved. */
+function assignableClasses() {
+  return [...new Set([...listClasses().map(item => item.name), ...enabledClasses])];
+}
 /** Extra fields per role: only what that role actually needs. */
-function roleAssignmentFields(role) {
+function roleAssignmentFields(role, knownClasses = []) {
   if (role === 'teacher') {
+    /* A class the record already carries stays selectable even if it was
+       retired or renamed in the Setup: an option list without it would drop
+       that class the moment the Admin saved for an unrelated edit. */
+    const classes = [...new Set([...assignableClasses(), ...knownClasses.map(name => String(name || '').trim()).filter(Boolean)])];
     return [
-      { name: 'classes', label: 'Assigned Class/শ্রেণি', type: 'select', multiple: true, options: enabledClasses.map(name => ({ value: name, label: name })), hint: 'তালিকা থেকে এক বা একাধিক শ্রেণি বেছে নিন' },
+      { name: 'classes', label: 'Assigned Class/শ্রেণি', type: 'select', multiple: true, options: classes.map(name => ({ value: name, label: name })), hint: 'তালিকা থেকে এক বা একাধিক শ্রেণি বেছে নিন' },
       { name: 'subjects', label: 'বিষয়সমূহ', placeholder: 'যেমন: উচ্চতর গণিত, পদার্থবিজ্ঞান', hint: 'কমা দিয়ে একাধিক বিষয় লিখুন' },
       { name: 'batches', label: 'ব্যাচ / বিভাগ', placeholder: 'যেমন: বিজ্ঞান বিভাগ, A ব্যাচ' }
     ];
@@ -446,7 +458,7 @@ function staffFormHtml(record) {
       <div class="staff-assignment staff-form-section-block" id="staffAssignmentFields" data-role="${escapeHtml(role)}">
         <div class="staff-form-section-title"><span class="staff-section-number">৩</span><div><strong id="staffAssignmentTitle">${escapeHtml(STAFF_ROLE_META[role]?.labelBn || 'স্টাফ')} — দায়িত্ব</strong><small>এই রোল অনুযায়ী প্রয়োজনীয় দায়িত্বের তথ্য দিন</small></div></div>
         <div class="staff-form-grid">
-          ${roleAssignmentFields(role).map(spec => fieldRow(spec, spec.name === 'classes' ? assignment.classes : assignment[spec.name])).join('')}
+          ${roleAssignmentFields(role, assignment.classes).map(spec => fieldRow(spec, spec.name === 'classes' ? assignment.classes : assignment[spec.name])).join('')}
         </div>
         <div class="staff-class-subjects" id="staffClassSubjects"></div>
       </div>

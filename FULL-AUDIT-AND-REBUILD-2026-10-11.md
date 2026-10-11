@@ -177,7 +177,12 @@ writes, and the capability layer are untouched.
 | `js/manager.js` | Assignment form edit mode (`editingAssignmentId` + id on submit + honest toast wording), per-row সম্পাদনা action, picker preselects the row's subjects, ticks no longer leak across class changes (F2 UI, F8), edit-mode banner with cancel |
 | `js/academics.js` | F5 allocator + F11 read-path codes allocate against the live code set |
 | `tests/academics-assignment-regressions.test.mjs` | **new** — 6 tests; 5 of them fail on the pre-fix code (verified by stashing the fix) |
-| `sw.js` + `admin/index/manager/teacher/payment/offline-roles.html` | build 260 → 261: `CACHE_VERSION` bumped per change set, every `?v=` pin re-pinned |
+| `js/teacher-assignments.js` (§9) | `directoryAssignmentRows` reads every stored shape — `classSubjects` map, `classes`, `classIds`, arrays or comma strings — an empty map no longer suppresses the flat list, and a subject-less class is a valid row |
+| `js/staff-management.js` (§9) | Admin's Assigned Class picker = Academic Setup ∪ `enabledClasses` ∪ the record's own classes (`assignableClasses()`), so a Setup class is assignable and an unrelated edit cannot drop a retired one |
+| `js/teacher.js` (§9) | আমার ক্লাস → three honest states (pending/failed with retry, genuinely empty, the list) + each class card opens that class in the records screen with the class filter applied |
+| `js/report-access.js` (§9) | teacher scope pairs are per subject (NFC-compared) instead of the joined `subject` mirror; an unreadable assignment store degrades to an empty scope with `readFailed` instead of rejecting through `ReportCenter.start` |
+| `tests/teacher-assigned-classes.test.mjs` | **new** — 6 tests; 5 of them fail on the pre-fix code (verified by stashing the fix) |
+| `sw.js` + `admin/index/manager/teacher/payment/offline-roles.html` | build 260 → 262: `CACHE_VERSION` bumped per change set, every `?v=` pin re-pinned |
 
 ### Suite results
 
@@ -186,6 +191,7 @@ writes, and the capability layer are untouched.
 | Restored baseline, before any change | 1,001 tests — 998 pass, **0 fail**, 3 skipped |
 | After the assignment-chain set | **1,007 tests — 1,004 pass, 0 fail, 3 skipped** (`npm test`, 394 s) |
 | After the সাজেশন label set (§8) | **1,012 tests — 1,009 pass, 0 fail, 3 skipped** |
+| After the assigned-classes set (§9) | **1,018 tests — 1,015 pass, 0 fail, 3 skipped** (`npm test`, build 262) |
 | Focused sets | assignment chain 40/40; new regressions 6/6 (and 5/6 red on pre-fix code); cache/pin 40/40 |
 | Playwright e2e | **not run here** — 37 failures are documented as pre-existing/environmental on this base (B6) |
 
@@ -228,3 +234,82 @@ heading reads `সাজেশন`, the add button `+ সাজেশন`, the c
 substring anywhere on that screen**, the notice tile still opens `#teacherNotice` alone,
 and a source-level guard fails if `একাডেমিক নোটিশ` returns to any shipped entry point.
 4 of the 5 fail against the pre-fix code (verified by stashing the fix).
+
+---
+
+## 9. Teacher panel — "একাধিক ক্লাস অ্যাসাইন করা হয়েছে, প্যানেলে দেখা যায় না" (reported 2026-10-11, fixed in build 262)
+
+**Symptom.** After logging in with the teacher's own ID, classes assigned by Admin/Manager
+were missing from Teacher Panel → আমার ক্লাস: only one of several classes appeared, or the
+panel said `এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি` while the classes did exist.
+
+**Diagnosis — five links of one chain, each independently enough to hide a class.** Static
+reading was exhausted before any of this was touched; every claim below is the behaviour an
+executed repro showed.
+
+1. `js/staff-management.js` — the Admin's **Assigned Class** picker was built from
+   `enabledClasses`, the 12 shipped classes (অষ্টম … অনার্স ৪র্থ বর্ষ). A class the Admin
+   created in Academic Setup — ষষ্ঠ শ্রেণি, সপ্তম শ্রেণি, any custom batch — was **not in the
+   option list**, so it could never be assigned however many times the form was saved. The
+   Manager's picker already read the Setup (F1); the Admin's never did.
+2. `js/teacher-assignments.js` → `directoryAssignmentRows()` (the projection that turns a
+   Staff Directory record into the rows the panel reads) required a **non-empty flat subject
+   list**: `if (classes.length && flat.length)`. Assign three classes and tick no subject and
+   the projection answered **zero rows** — a whole teacher, invisible.
+3. The same function understood `assignment.classSubjects` **or** `classes`, never both: a
+   map covering two of three classes lost the third; and because
+   `js/staff-directory.js` writes `classSubjects: {}` for every legacy record, an *empty map*
+   was read as "the Admin mapped nothing on purpose", discarding the flat `subjects` mirror.
+   `classIds` — the key the Academic Setup and the offline role store use for a class — was not
+   read at all, so an assignment naming a class by id resolved to nothing.
+4. `validSubjectList()` rejected `subjects: []`, so a class-without-subjects row was not merely
+   dropped — `readAssignments()` failed the store, hiding **every** class that teacher had.
+5. `js/teacher.js` → `renderTeacherClasses()` printed the empty line whenever
+   `state.assignments` was empty — including while the load was still running and after a load
+   that had **failed**, which is how a slow or unreachable Firebase reads as "no class
+   assigned". The cards were also inert `<article>`s: an assigned class could not be opened.
+
+A sixth, adjacent defect surfaced while pinning the fifth: `js/report-access.js` matched a
+teacher's report rows against `item.subject`, the *readable mirror* ("গণিত, ইংরেজি"), so any
+teacher with two subjects in a class got an empty report — and an unreadable assignment store
+threw straight out of `ReportCenter.start`, taking the panel's shell down with it.
+
+**Fix.** No new store, no new field, no migration, no new screen:
+
+- Admin picker: `assignableClasses()` = Academic Setup classes ∪ `enabledClasses`, plus the
+  record's own already-assigned classes, so editing a teacher for an unrelated reason can no
+  longer silently drop a retired or renamed class.
+- `directoryAssignmentRows()`: reads `classSubjects`, `classes`, `classIds`, arrays or
+  comma-separated strings, resolves class ids through `classById`, unions the map with the flat
+  list, treats an empty map as absent, and emits **one row per class** — subjects optional. The
+  `classById` lookup is guarded so an unreadable Academic Setup can never turn classes into
+  "none".
+- `validSubjectList()`: `subjects` may be empty (structural validity only). The Manager's own
+  save rule ("pick at least one subject") is untouched.
+- `renderTeacherClasses()`: three honest states — pending/failed (`তথ্য আনা হচ্ছে` +
+  `আবার চেষ্টা করুন`, wired to the existing `reload()`), genuinely empty, or the list; the
+  failure path repaints the list instead of leaving it stale. Each card carries
+  `data-teacher-open-class` and opens that class in the existing records screen with
+  `#teacherClassFilter` set — the teacher's own homework / সাজেশন / উপজাতি / পরীক্ষা workflow.
+- `actorScope()`: one pair **per subject** (NFC-compared), and a failed store read degrades to
+  an empty scope carrying `readFailed` instead of rejecting — nothing is ever widened on failure.
+
+**Not touched, deliberately.** Identity is still the active staff session's Login User ID
+(falling back to the device account only when no directory record exists) — `teacher.apc`
+itself has no Admin assignment surface because it is not a Directory record, which is by design
+and unchanged. The Manager form still saves one class per row (Teacher + Class + Batch), which
+is the stored shape, not a bug. Firebase mirroring needed no change: `js/sync-collections.js`
+keys rows by `item.id`, and the projected row ids are per class, so all rows mirror — now
+asserted by a test rather than assumed. B1 (wide-open RTDB rules) is still open and still the
+reason not to write data from the preview.
+
+**Proof.** `tests/teacher-assigned-classes.test.mjs` — 6 tests: the Admin's `<select>` offers
+the Setup classes; three assigned classes produce three store rows with their exact per-class
+subjects (including the subject-less one) and never leak to `teacher.apc`; seven stored shapes
+(all listed above) read back to the same class set with distinct row ids; the rows survive the
+`collectionPayload` → `remoteToLocal` Firebase round-trip; the directory record is not narrowed
+by the projection; and the real `teacher.html` panel lists all three cards, opens the clicked
+class with the filter applied, shows the retry state on a corrupt store instead of "no class",
+and shows the empty line only when nothing is assigned. **5 of 6 fail against the pre-fix code**
+(verified by stashing the fix). Full suite: see §7 counts — build **262**, all 100 asset pins
+re-pinned.

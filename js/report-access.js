@@ -81,8 +81,23 @@ export async function resolveActor() {
 export function actorScope(actor) {
   if (!actor) return null;
   if (actor.role === 'teacher') {
-    const assignments = listTeacherAssignments(actor.username);
-    const pairs = assignments.map(item => ({ className: item.className, group: item.group || '', subject: item.subject }));
+    /* An unreadable assignment store is a read failure, not "this teacher has
+       nothing to report": the report centre used to reject on it and take the
+       whole Teacher Panel down with it. The scope stays empty (nothing is ever
+       widened on a failure) and the reason is carried out for the caller. */
+    let assignments = null;
+    let readFailed = '';
+    try { assignments = listTeacherAssignments(actor.username); }
+    catch (error) { readFailed = String(error?.message || error); }
+    if (readFailed) {
+      return { role: 'teacher', classes: [], subjects: [], pairs: [], teacherName: actor.name, readFailed };
+    }
+    /* One pair per assigned subject. `item.subject` is the readable mirror
+       ("গণিত, ইংরেজি"), and matching a report row against that string never
+       equalled the single subject a homework or exam names — so a teacher
+       assigned two subjects in a class saw none of their own records. */
+    const pairs = assignments.flatMap(item => (item.subjects && item.subjects.length ? item.subjects : [''])
+      .map(subject => ({ className: item.className, group: item.group || '', subject })));
     return {
       role: 'teacher',
       classes: [...new Set(pairs.map(pair => pair.className))],
@@ -160,6 +175,9 @@ export function enforceAccess(definition, actor, filters = {}) {
 
 /* ---------- scoped record sets ---------- */
 
+/** Two labels of the same thing, whatever Unicode form they were typed in. */
+const sameText = (a, b) => String(a || '').normalize('NFC').trim() === String(b || '').normalize('NFC').trim();
+
 const sameGroup = (a, b) => String(a || '').normalize('NFC').trim().replace(/\s*বিভাগ$/, '').trim()
   === String(b || '').normalize('NFC').trim().replace(/\s*বিভাগ$/, '').trim();
 
@@ -179,7 +197,7 @@ export function scopeActivities(activities, actor, scope) {
   return activities.filter(activity => scope.pairs.some(pair =>
     (!activity.className || pair.className === activity.className)
     && (!pair.group || !activity.group || sameGroup(pair.group, activity.group))
-    && (!pair.subject || !activity.subject || pair.subject === activity.subject)
+    && (!pair.subject || !activity.subject || sameText(pair.subject, activity.subject))
   ));
 }
 
@@ -192,7 +210,7 @@ export function scopeExams(exams, actor, scope) {
     // matches: an exam that names no class is open to the subject's teacher.
     (!exam.className || pair.className === exam.className)
     && (!pair.group || !exam.group || sameGroup(pair.group, exam.group))
-    && (!exam.subject || pair.subject === exam.subject)
+    && (!exam.subject || sameText(pair.subject, exam.subject))
   ));
 }
 

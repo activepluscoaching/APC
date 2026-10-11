@@ -12,7 +12,7 @@
 import { enabledClasses } from './config.js';
 import { readStaffAccount, hasStaffSession } from './staff-auth.js';
 import { newId } from './database.js';
-import { subjectsForClass, isSubjectEnabled, loadAcademics } from './academics.js';
+import { subjectsForClass, isSubjectEnabled, loadAcademics, classById } from './academics.js';
 
 export const TEACHER_ASSIGNMENTS_KEY = 'activePlus.manager.teacherAssignments.v1';
 
@@ -31,7 +31,11 @@ export function normalizeAssignment(record = {}) {
   return { ...record, subjects };
 }
 function validSubjectList(record) {
-  return Array.isArray(record.subjects) && record.subjects.length > 0 && record.subjects.length <= 30
+  /* A class assignment is a class assignment even before its subjects are
+     pinned down: a teacher can be given a class now and the subject mapping
+     filled in later in Academic Setup. `length > 0` used to reject such a row
+     outright - and one rejected row hid every other class of that teacher. */
+  return Array.isArray(record.subjects) && record.subjects.length <= 30
     && record.subjects.every(subject => typeof subject === 'string' && subject.trim() && subject.length <= 80);
 }
 
@@ -245,27 +249,53 @@ export function directoryAssignmentRows(record = {}) {
   if (!username) return [];
   const teacherName = String(record?.fullName || record?.username || '').trim();
   const staffId = String(record?.staffId || '');
-  const rows = [];
-  const classSubjects = assignment.classSubjects && typeof assignment.classSubjects === 'object' && !Array.isArray(assignment.classSubjects)
+  const clean = value => String(value ?? '').normalize('NFC').trim();
+  const unique = list => [...new Set(list.filter(Boolean))];
+  /* Admin, Manager and the local store have each written this assignment in
+     their own shape over the years:
+       - assignment.classSubjects : { 'অষ্টম শ্রেণি': ['গণিত', …], … }
+       - assignment.classes       : a flat list of class NAMES
+       - assignment.classIds      : a list of class IDS from the academic setup
+     All three are read here, and a class id is resolved back to its name, so a
+     teacher is never told "no class is assigned" because the record was written
+     in a shape the reader happened not to know. */
+  const resolveClass = value => {
+    const raw = clean(value);
+    if (!raw) return '';
+    /* The Academic Setup is a separate store: an unreadable one must not turn a
+       teacher's classes into "no class assigned". Fall back to the stored text. */
+    try { return clean(classById(raw)?.name) || raw; }
+    catch { return raw; }
+  };
+  const subjectsOf = value => unique((Array.isArray(value) ? value : [value]).map(clean));
+  const rawMap = assignment.classSubjects && typeof assignment.classSubjects === 'object' && !Array.isArray(assignment.classSubjects)
     ? assignment.classSubjects
     : null;
-  if (classSubjects) {
-    for (const [className, subjects] of Object.entries(classSubjects)) {
-      const cleanClass = String(className || '').normalize('NFC').trim();
-      const list = [...new Set((Array.isArray(subjects) ? subjects : [subjects])
-        .map(value => String(value ?? '').normalize('NFC').trim()).filter(Boolean))];
-      if (cleanClass && list.length) rows.push({ className: cleanClass, group: '', subjects: list });
-    }
+  /* An EMPTY map is what a legacy record looks like after normalization
+     (js/staff-directory.js writes `classSubjects: {}`), so it must not be read
+     as "the Admin mapped nothing on purpose": only a map that actually names a
+     class may suppress the flat subject list. */
+  const perClass = rawMap && Object.keys(rawMap).length ? rawMap : null;
+  const rowsByClass = new Map();
+  for (const [className, subjects] of Object.entries(perClass || {})) {
+    const name = resolveClass(className);
+    const list = subjectsOf(subjects);
+    if (name && (!rowsByClass.has(name) || list.length)) rowsByClass.set(name, list);
   }
-  if (!rows.length) {
-    const classes = (Array.isArray(assignment.classes) ? assignment.classes : [])
-      .map(value => String(value || '').normalize('NFC').trim()).filter(Boolean);
-    const flat = (Array.isArray(assignment.subjects) ? assignment.subjects : [])
-      .map(value => String(value || '').normalize('NFC').trim()).filter(Boolean);
-    if (classes.length && flat.length) {
-      for (const className of classes) rows.push({ className, group: '', subjects: [...flat] });
-    }
+  const flatSubjects = unique([
+    ...subjectsOf(assignment.subjects),
+    ...(Array.isArray(assignment.subjects) ? [] : [clean(assignment.subject)])
+  ]);
+  const listedClasses = unique([
+    ...(Array.isArray(assignment.classes) ? assignment.classes : String(assignment.classes || '').split(',')),
+    ...(Array.isArray(assignment.classIds) ? assignment.classIds : String(assignment.classIds || '').split(','))
+  ].map(resolveClass));
+  for (const name of listedClasses) {
+    /* The per-class map wins where it exists; the flat subject list is applied
+       only to classes the map does not describe (legacy records). */
+    if (!rowsByClass.has(name)) rowsByClass.set(name, perClass ? [] : flatSubjects);
   }
+  const rows = [...rowsByClass].map(([className, subjects]) => ({ className, group: '', subjects }));
   return rows.map(row => ({
     ...normalizeAssignment(row),
     id: projectedAssignmentId(staffId || username, row.className),

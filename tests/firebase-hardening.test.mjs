@@ -104,7 +104,7 @@ test('a host of forbidden keys still lets the first Admin and the cloud bridge s
   // The login bridge itself is what matters after startup: the Admin signs in.
   const login = await deviceA.run('form-login', { username: admin.username, pin: ADMIN_PASSWORD });
   assert.equal(login.adminSession, true, 'Admin login works on a device holding a forbidden-key record');
-  assert.equal(login.navigated, true, 'hands over to the admin panel');
+  assert.equal(login.navigated, false, 'no Admin panel to hand over to');
 });
 
 test('one bad exam does not stop the good records in the same push', async () => {
@@ -184,7 +184,7 @@ test('the deployment assets the audit found are still in place', () => {
 
   /* App Check with a reCAPTCHA v3 key cannot run under a policy that blocks
      the reCAPTCHA scripts — the sync then fails with Permission denied. */
-  for (const page of ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
+  for (const page of ['index.html', 'manager.html', 'teacher.html', 'payment.html']) {
     const html = readFileSync(new URL('../' + page, import.meta.url), 'utf8');
     assert.match(html, /script-src[^;]*google\.com\/recaptcha\//, `${page} allows the reCAPTCHA script`);
     assert.match(html, /frame-src[^;]*google\.com\/recaptcha\//, `${page} allows the reCAPTCHA frame`);

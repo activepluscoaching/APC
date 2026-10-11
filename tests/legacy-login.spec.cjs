@@ -32,12 +32,12 @@ test('panel module failure after verified login shows recovery instead of blank 
  await page.goto('/index.html');
  await page.evaluate(async password=>{
   const {STAFF_ACCOUNTS}=await import('/js/staff-auth.js');const {hashPassword}=await import('/js/password-hash.js');
-  localStorage.setItem(STAFF_ACCOUNTS.admin.accountKey,JSON.stringify({username:'old.admin.apc',password:await hashPassword(password),role:'admin',fullName:'Old Admin'}));
+  localStorage.setItem(STAFF_ACCOUNTS.teacher.accountKey,JSON.stringify({username:'old.teacher.apc',password:await hashPassword(password),role:'teacher',fullName:'Old Teacher'}));
  },PASSWORD);
- await page.route('**/js/admin.js',route=>route.abort('failed'));
- await page.fill('#loginMobile','old.admin.apc');await page.fill('#loginPin',PASSWORD);await page.click('#loginForm button[type=submit]');
- await expect(page).toHaveURL(/\/admin.html$/);await expect(page.locator('#appEntryError')).toBeVisible();await expect(page.locator('#appEntryError button')).toHaveText('আবার চেষ্টা করুন');
- expect(await page.evaluate(()=>localStorage.getItem('activePlus.adminAccount.v1')!==null)).toBe(true);
+ await page.route('**/js/teacher.js',route=>route.abort('failed'));
+ await page.fill('#loginMobile','old.teacher.apc');await page.fill('#loginPin',PASSWORD);await page.click('#loginForm button[type=submit]');
+ await expect(page).toHaveURL(/\/teacher.html$/);await expect(page.locator('#appEntryError')).toBeVisible();await expect(page.locator('#appEntryError button')).toHaveText('আবার চেষ্টা করুন');
+ expect(await page.evaluate(async()=>{const {STAFF_ACCOUNTS}=await import('/js/staff-auth.js');return localStorage.getItem(STAFF_ACCOUNTS.teacher.accountKey)!==null})).toBe(true);
 });
 test('legacy cash userId/pin keeps its ID through mandatory password change and reload',async({page})=>{
  await page.goto('/index.html');

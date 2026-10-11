@@ -14,7 +14,7 @@ import { JSDOM } from 'jsdom';
 import { loadPage } from './jsdom-harness.mjs';
 import { BRAND_NAME, BRAND_TAGLINE, BRAND_LOGO, brandLogoSrc } from '../js/brand.js';
 
-const PAGES = ['index.html', 'manager.html', 'teacher.html', 'admin.html', 'payment.html'];
+const PAGES = ['index.html', 'manager.html', 'teacher.html', 'payment.html'];
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const contexts = [];
 after(() => contexts.forEach(ctx => ctx.window.close()));

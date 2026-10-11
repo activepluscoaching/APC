@@ -78,12 +78,3 @@ test('the sync boundary exposes the cloud wipe (single-flight facade)', async ()
   assert.match(source, /adminInitialized/, 'the initialization marker is part of the wipe');
 });
 
-test('the Admin panel carries the reset entry point (and the dead stub is gone)', () => {
-  const html = read('../admin.html');
-  assert.match(html, /id="factoryResetButton"/, 'the reset button exists');
-  assert.equal(html.includes('resetAllLocalDataButton'), false, 'the disabled stub is removed');
-  const js = read('../js/admin.js');
-  assert.match(js, /factoryResetButton.*openFactoryReset/s, 'the button is wired');
-  assert.match(js, /resetCloudDatabase/, 'the flow reaches the sync boundary');
-  assert.match(js, /clearLocalAppData/, 'and finishes with the local wipe');
-});

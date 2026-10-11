@@ -41,7 +41,6 @@ const PANEL_HINT_CACHE = 'apc-panel-hint';
 const PENDING_CLICK_MAX_AGE_MS = 10 * 60 * 1000;
 
 const ROLE_PAGES = Object.freeze({
-  'admin.html': 'admin',
   'manager.html': 'manager',
   'teacher.html': 'teacher',
   'payment.html': 'payment'
@@ -96,7 +95,7 @@ const MAX_TIMER_MS = 60 * 60 * 1000;
    shows its own first view (dashboard/home) at that moment, so a tapped
    notification waits for it instead of being overwritten by it. */
 const PANEL_SHELL = Object.freeze({
-  student: '#appShell', manager: '#managerShell', teacher: '#teacherShell', admin: '#adminShell', payment: '#payShell'
+  student: '#appShell', manager: '#managerShell', teacher: '#teacherShell', payment: '#payShell'
 });
 const PANEL_READY_TIMEOUT_MS = 20000;
 /* Rules versions prevent newly-added feed types from replaying old records as
@@ -143,7 +142,6 @@ let pillNoteTimer = null;
 const ROLE_MARKERS = Object.freeze([
   ['manager', '#managerShell'],
   ['teacher', '#teacherShell'],
-  ['admin', '.admin-shell'],
   ['payment', '.pay-shell']
 ]);
 

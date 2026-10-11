@@ -8,14 +8,14 @@
  * moment and leak the other portal's existence, so it must not exist.
  *
  * Checked on the shipped markup of every page (not the booted DOM), which is
- * stricter than the runtime check in tests/admin-panel-shell.test.mjs.
+ * stricter than a runtime check of the booted DOM.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { readFileSync, readdirSync } from 'node:fs';
 
-const PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html']);
+const PANELS = Object.freeze(['manager.html', 'teacher.html', 'payment.html', 'offline-roles.html']);
 const PAGES = Object.freeze(['index.html', ...PANELS]);
 const LINK_CLASSES = Object.freeze(['pay-panel-link', 'teacher-panel-link', 'manager-panel-link', 'admin-panel-link', 'portal-link']);
 const CROSS_PANEL_CAPS = Object.freeze(['payment.panel', 'teaching.panel', 'manager.panel']);
@@ -65,15 +65,14 @@ test('generated markup never builds a link to another portal either', () => {
 
 /* ---------- Panel lockdown: the same rule for the code, not just the markup --- */
 
-const LOCK_PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
+const LOCK_PANELS = Object.freeze(['manager.html', 'teacher.html', 'payment.html']);
 /* Who may name a panel page inside a navigation call:
      • no file may navigate into a *different* panel,
      • js/login.js is the shared door (it routes a signed-in role to its own
-       page) and is the only file allowed to name all four,
+       page) and is the only file allowed to name all of them,
      • each panel's own scripts may name their own page. */
 const NAV_OWNER = Object.freeze({
   'js/login.js': '*',
-  'js/admin.js': 'admin.html',
   'js/manager.js': 'manager.html',
   'js/teacher.js': 'teacher.html',
   'js/payment.js': 'payment.html',
@@ -135,7 +134,6 @@ test('offline and push fallbacks never open another panel', () => {
 
 test('every panel installs the lockdown guard and remembers its own page', () => {
   const entries = Object.freeze({
-    'admin.html': ['js/admin.js', 'admin'],
     'manager.html': ['js/manager.js', 'manager'],
     'teacher.html': ['js/teacher.js', 'teacher'],
     'payment.html': ['js/payment.js', 'payment']
@@ -157,9 +155,4 @@ test('every panel installs the lockdown guard and remembers its own page', () =>
     assert.match(source, new RegExp(`watchOwnPanelSession\\('${role}'\\)`), `${script}: locks itself when its session ends`);
     assert.match(source, /lockPanel\(\{ role: '/, `${script}: locks in place instead of navigating away`);
   }
-  // The Admin boot fallback hands over only on a tap, never on a timer.
-  const admin = readFileSync(new URL('../admin.html', import.meta.url), 'utf8');
-  assert.equal(/window\.location\.replace\(/.test(admin), false, 'the boot fallback must not jump anywhere');
-  assert.match(admin, /apcPanelBootLogin/);
-  assert.match(admin, /apcPanelBootRetry/);
 });

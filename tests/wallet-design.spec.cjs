@@ -14,10 +14,10 @@ async function prepare(page, { role, theme = 'light', width = 390, height = 844 
   const alert = page.locator('[data-apc-alert-ok]:visible').first();
   if (await alert.count()) await alert.click();
 }
-const home = { student: '#homeView', admin: '[data-view-panel="dashboard"]', manager: '[data-view-panel="dashboard"]', teacher: '#teacherHome', payment: '#paymentMain' };
-const shell = { student: '#appShell', admin: '#adminShell', manager: '#managerShell', teacher: '#teacherShell', payment: '#payShell' };
+const home = { student: '#homeView', manager: '[data-view-panel="dashboard"]', teacher: '#teacherHome', payment: '#paymentMain' };
+const shell = { student: '#appShell', manager: '#managerShell', teacher: '#teacherShell', payment: '#payShell' };
 
-for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for (const role of ['student', 'admin', 'manager', 'teacher', 'payment']) {
+for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for (const role of ['student', 'manager', 'teacher', 'payment']) {
   test(`${role} wallet layout fits ${width}px in ${theme}`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -38,18 +38,18 @@ for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for
     expect(await nav.locator('.nav-label').evaluateAll(labels => labels.every(label => label.scrollWidth <= label.clientWidth + 1))).toBe(true);
     } else { await expect(nav).toHaveCount(0); }
     if (role !== 'payment') {
-      const grid = page.locator(role === 'admin' ? '.admin-feature-grid' : '.pay-grid');
+      const grid = page.locator('.pay-grid');
       await expect(grid).toBeVisible();
       const columns = await grid.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-      expect(columns).toBe(role === 'admin' ? (width >= 1000 ? 5 : 3) : (width >= 1000 ? 8 : 4));
-      const icons = grid.locator(role === 'admin' ? '.admin-feature-icon' : '.pay-tile-icon');
+      expect(columns).toBe(width >= 1000 ? 8 : 4);
+      const icons = grid.locator('.pay-tile-icon');
       expect(await icons.evaluateAll(elements => elements.every(el => {
         const r = el.getBoundingClientRect();
         return Math.abs(r.width - r.height) < 1 && r.width >= 48 && getComputedStyle(el).borderRadius === '50%';
       }))).toBe(true);
     }
     if (role !== 'payment') {
-    const serviceIcons = page.locator(role === 'admin' ? '.admin-feature-icon svg' : '.pay-tile-icon svg');
+    const serviceIcons = page.locator('.pay-tile-icon svg');
     expect(await serviceIcons.count()).toBeGreaterThan(0);
     expect(await serviceIcons.evaluateAll(icons => icons.every(svg => {
       const paints = new Set([...svg.querySelectorAll('[fill]')].map(el => getComputedStyle(el).fill).filter(fill => fill !== 'none'));
@@ -164,19 +164,6 @@ for (const theme of ['light', 'dark']) test(`login, recovery and registration us
   await page.locator('#forgotPinButton').click();
   await expect(page.locator('#recoveryModal')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
-test('admin create-staff sheet fits 320px and returns focus on Escape', async ({ page }) => {
-  await prepare(page, { role: 'admin', width: 320 });
-  await page.locator('.admin-bottom [data-admin-view="staff"]').click();
-  await page.locator('#staffCreateButton').click();
-  const dialog = page.locator('#staffModalBody');
-  await expect(dialog).toBeVisible();
-  expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-  expect(await dialog.locator('input:visible,select:visible,textarea:visible').evaluateAll(elements => elements.every(el => parseFloat(getComputedStyle(el).fontSize) >= 16))).toBe(true);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-  await expect(page.locator('#staffCreateButton')).toBeFocused();
 });
 
 test('student profile-edit sheet retains readable fields and keyboard close', async ({ page }) => {

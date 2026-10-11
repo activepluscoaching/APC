@@ -40,7 +40,7 @@ test('cleanText strips control characters and caps length', () => {
 });
 
 test('every page carries a restrictive Content-Security-Policy', () => {
-  for (const page of ['index.html', 'admin.html', 'teacher.html', 'payment.html']) {
+  for (const page of ['index.html', 'teacher.html', 'payment.html']) {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     const match = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/);
     assert.ok(match, `${page} needs a CSP meta tag`);
@@ -84,7 +84,7 @@ test('an admin-authored maintenance message cannot inject markup', async () => {
 });
 
 test('no module keeps a private escaping helper that could drift', () => {
-  for (const file of ['js/admin.js', 'js/payment.js', 'js/finance-receipt.js', 'js/teaching-data.js', 'js/exam-ui.js']) {
+  for (const file of ['js/payment.js', 'js/finance-receipt.js', 'js/teaching-data.js', 'js/exam-ui.js']) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     const privateEscapers = source.match(/const\s+(escapeHtml|escapeText|escape)\s*=/g) || [];
     assert.deepEqual(privateEscapers, [], `${file} must import the shared escaper`);

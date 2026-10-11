@@ -44,18 +44,12 @@ test('teacher: all 30 MCQ templates render, apply and copy without changing acad
  await page.locator('[data-exam-action=sample-30]').click();const text=await page.locator('[name=template]').inputValue();expect(text.split('---').length).toBe(30);
 });
 test('offline update preserves sentinel, existing account and all protected assets',async({page,context})=>{
- await enterPortal(page,'admin');await page.evaluate(()=>localStorage.setItem('qa-existing-data','must-survive'));
+ await enterPortal(page,'manager');await page.evaluate(()=>localStorage.setItem('qa-existing-data','must-survive'));
  await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;await r.update();});
  await expect.poll(()=>page.evaluate(name=>(caches.keys()).then(keys=>keys.some(k=>k.includes(`v${name}`))),CACHE_VERSION)).toBe(true);
  const cached=await page.evaluate(async name=>{const c=await caches.open(name);return (await c.keys()).map(r=>new URL(r.url).pathname)},CACHE_NAME);
  for(const p of ['/firebase/firebase-config.js','/firebase/firebase-init.js','/sync/sync-core.js','/sync/sync-guard.js','/sync/sync-retry.js','/js/icons.js','/css/ui-status.css','/css/app-polish.css','/css/student-record.css'])expect(cached).toContain(p);
- await context.setOffline(true);await page.reload();await expect(page.locator('#adminShell')).toBeVisible();expect(await page.evaluate(()=>localStorage.getItem('qa-existing-data'))).toBe('must-survive');await context.setOffline(false);
-});
-test('staff modal: visible heading, keyboard focus containment and Escape close',async({page})=>{
- await enterPortal(page,'admin');await page.locator('.admin-bottom [data-admin-view=staff]').click();await page.locator('#staffCreateButton').click();
- const dialog=page.locator('[role=dialog]:visible');await expect(dialog).toHaveCount(1);await expect(dialog).toHaveAttribute('aria-modal','true');
- for(let i=0;i<35;i++)await page.keyboard.press('Tab');expect(await dialog.evaluate(e=>e.contains(document.activeElement))).toBe(true);
- await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);
+ await context.setOffline(true);await page.reload();await expect(page.locator('#managerShell')).toBeVisible();expect(await page.evaluate(()=>localStorage.getItem('qa-existing-data'))).toBe('must-survive');await context.setOffline(false);
 });
 test('payment search, collection, durable transaction and receipt PDF',async({page})=>{
  await enterPortal(page,'payment');await roster(page);await page.reload();

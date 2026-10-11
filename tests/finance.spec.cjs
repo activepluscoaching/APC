@@ -66,30 +66,7 @@ for (const { width } of VIEWS) {
     // No collection form here — collecting is the counter's seat, approving is his.
     await expect(page.locator('#feeCollectionForm, #feeSaveButton, #paySaveButton, #payFeeAmount')).toHaveCount(0);
 
-    // The Admin panel keeps no finance surface at all.
-    await enterPortal(page, 'admin');
-    await expect(page.locator('#adminShell')).toBeVisible();
-    await expect(page.locator('#feeStudentSearch, #feeCollectionForm, #feeProfileCollect, #btnFinanceGoCollect, #dashCollectFee, #mgrFinanceTotal, #recentTrxList, #studentLedgerList')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 }
 
-test('Admin reads money through the Report Center: Generate → preview → PDF', async ({ page }) => {
-  await page.clock.setFixedTime(new Date('2026-09-22T12:00:00Z'));
-  await enterPortal(page, 'admin');
-  await seedLedger(page);
-  await page.reload();
-  await page.locator('.admin-bottom [data-admin-view=reports]').click();
-  const select = page.locator('#adminReports select[name=report]');
-  await expect(page.locator('#adminReports .rc-preview')).toHaveCount(0);
-  await select.selectOption('fee.transactions');
-  await page.locator('#adminReports .rc-generate').click();
-  await expect(page.locator('#adminReports .rc-preview')).toBeVisible();
-  const downloading = page.waitForEvent('download');
-  await page.locator('#adminReports .rc-download').click();
-  const file = await downloading;
-  expect(file.suggestedFilename()).toMatch(/\.pdf$/);
-  const bytes = await fs.readFile(await file.path());
-  expect(bytes.toString('latin1').startsWith('%PDF-1.')).toBe(true);
-  expect(bytes.toString('latin1')).toContain('%%EOF');
-});

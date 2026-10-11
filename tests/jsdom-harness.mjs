@@ -51,7 +51,7 @@ export async function loadPage(file, { seed = {}, hash = '' } = {}) {
   const virtualConsole = new VirtualConsole();
   const jsdomErrors = [];
   virtualConsole.on('jsdomError', error => jsdomErrors.push(String(error.message)));
-  // `hash` lets a test open a deep link (admin.html#students) exactly like a
+  // `hash` lets a test open a deep link (manager.html#teachers) exactly like a
   // refresh of that page does.
   const dom = new JSDOM(html, { url: `http://localhost/${hash || ''}`, pretendToBeVisual: true, virtualConsole });
   const { window } = dom;

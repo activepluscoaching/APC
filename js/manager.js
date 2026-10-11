@@ -21,6 +21,7 @@ import { registerServiceWorker } from './service-worker.js';
 import { initFixedShell } from './fixed-shell.js';
 import { initExamManager } from './exam-manager.js';
 import { listTeacherAssignments, saveTeacherAssignment, deleteTeacherAssignment, deleteAssignmentSubject, selectableSubjects, TEACHER_ASSIGNMENTS_KEY } from './teacher-assignments.js';
+import { listStaff } from './staff-directory.js';
 import { listClasses } from './academics.js';
 import { noticeCategory, noticeCategoryInfo } from './notification-rules.js';
 import { mountReports, refreshReports } from './reports.js';
@@ -248,18 +249,27 @@ function renderTeacherSubjectPicker(className, selected = []) {
   if (note) note.textContent = options.length ? `${bn(options.length)}টি বিষয় চালু আছে — একাধিক টিক দিতে পারবেন।` : '';
 }
 async function renderTeachers() {
-  const teacher = await readStaffAccount('teacher');
   const form = $('#managerTeacherAssignmentForm');
+  /* Every active teacher-role staff member can receive work — including the
+     ones the Admin created in Staff Management (they live in the directory,
+     keyed by their Login User ID). The built-in teacher.apc stays as one
+     option among the others, never the only one. */
+  const directory = await listStaff();
+  const teachers = directory.filter(item => item.role === 'teacher' && !['disabled', 'inactive', 'rejected'].includes(item.status));
+  const fallback = await readStaffAccount('teacher');
+  if (fallback && !teachers.some(item => item.username === fallback.username)) teachers.unshift(fallback);
+  const assignments = teachers.flatMap(item => listTeacherAssignments(item.username));
   if (form) {
-    form.elements.teacherName.value = teacher?.fullName || 'Teacher profile unavailable';
-    form.elements.teacherUsername.value = teacher?.username || '';
+    const select = form.elements.teacherUsername;
+    const current = select.value;
+    select.innerHTML = teachers.map(item => `<option value="${escapeHtml(item.username)}">${escapeHtml(item.fullName || item.username)} — ${escapeHtml(item.username)}</option>`).join('');
+    if (current && teachers.some(item => item.username === current)) select.value = current;
     const classes = listClasses().map(item => item.name);
     const choices = classes.length ? classes : [...enabledClasses];
     form.elements.className.innerHTML = `<option value="">শ্রেণি নির্বাচন</option>${choices.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('')}`;
     form.elements.className.value = choices[0] || '';
     renderTeacherSubjectPicker(form.elements.className.value);
   }
-  const assignments = teacher ? listTeacherAssignments(teacher.username) : [];
   const schedule = new Map();
   Object.entries(routine).forEach(([day, info]) => (info.classes || []).forEach(item => {
     if (!item.teacher) return;
@@ -785,7 +795,7 @@ $('#managerTeacherAssignmentForm').addEventListener('submit', async event => {
   const data = new FormData(form);
   try {
     const subjects = data.getAll('subject').map(String).filter(Boolean);
-    await saveTeacherAssignment({ className: data.get('className'), group: data.get('group'), subjects });
+    await saveTeacherAssignment({ className: data.get('className'), group: data.get('group'), subjects, teacherUsername: data.get('teacherUsername') });
     form.reset(); await renderTeachers(); await loadOperationalData(); toast('Teacher assignment সংরক্ষণ হয়েছে।');
   } catch (error) { toast(error.message || 'Assignment সংরক্ষণ হয়নি।', true); }
 });

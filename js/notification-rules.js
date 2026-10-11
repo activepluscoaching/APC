@@ -412,8 +412,8 @@ export function nextHomeworkBoundary(teachingDb, viewer, now = Date.now()) {
   return next;
 }
 
-/* Staff roles that decide on a student registration (js/admin-permissions.js
-   STUDENTS_APPROVE): both see the same "new registration" item. */
+/* Staff roles that decide on a student registration: both see the same
+   "new registration" item. */
 export const REGISTRATION_REVIEWERS = Object.freeze(['admin', 'manager']);
 
 /**

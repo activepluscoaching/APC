@@ -24,7 +24,6 @@ const SURFACES = Object.freeze({
   'index.html': { role: 'student', mount: '#settingsView' },
   'manager.html': { role: 'manager', mount: '[data-settings-hub="manager"]' },
   'teacher.html': { role: 'teacher', mount: '[data-settings-hub="teacher"]' },
-  'admin.html': { role: 'admin', mount: '[data-settings-hub="admin"]' },
   'payment.html': { role: 'payment', mount: '#payMorePanel' }
 });
 

@@ -109,7 +109,7 @@ test('login IDs and data created on device A work on device B', async () => {
   const loginA = await deviceA.run('form-login', { username: adminUsername, pin: ADMIN_PASSWORD });
   assert.equal(loginA.adminSession, true, 'device A admin signs in');
   assert.equal(loginA.dialog, false, 'no forced password change for the first admin');
-  assert.equal(loginA.navigated, true, 'hands over to the admin panel');
+  assert.equal(loginA.navigated, false, 'no Admin panel to hand over to');
 
   const teacher = await deviceA.run('create-directory-staff', {
     fullName: 'Rahim Uddin',
@@ -185,8 +185,8 @@ test('login IDs and data created on device A work on device B', async () => {
   /* The Admin ID created on A signs in on B through the real login form. */
   const loginB = await deviceB.run('form-login', { username: adminUsername, pin: ADMIN_PASSWORD });
   assert.equal(loginB.adminSession, true, `the Admin ID ${adminUsername} created on A signs in on B`);
-  assert.match(loginB.message, /নেওয়া হচ্ছে/, 'no credential error on device B');
-  assert.equal(loginB.navigated, true, 'device B hands over to the admin panel');
+  assert.match(loginB.message, /কোনো প্যানেল নির্ধারিত নয়/, 'no credential error on device B');
+  assert.equal(loginB.navigated, false, 'no Admin panel to hand over to');
 
   /* The Staff Management ID created on A logs in on B. */
   const teacherLogin = await deviceB.run('form-login', { username: teacherUsername, pin: TEACHER_PASSWORD });
@@ -622,7 +622,7 @@ test('A → B student create and B → A edit and notice round trip, then a bran
     /* The login hands the device to the Admin panel, and the panel page boots
        the realtime bridge itself (js/realtime-sync-entry.js on `apc-session-ready`)
        — this is that exact call. */
-    assert.equal(login.navigated, true, 'the login hands over to the Admin panel');
+    assert.equal(login.navigated, false, 'no Admin panel to hand over to');
     await deviceC.run('boot');
     await deviceC.run('wait-status', { state: 'online' });
 

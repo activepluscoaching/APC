@@ -42,7 +42,7 @@ function freshBrowser() {
 }
 
 test('no default password exists anywhere in the shipped code', () => {
-  for (const file of ['js/staff-auth.js', 'js/payment-auth.js', 'js/login.js', 'js/teacher.js', 'js/admin.js', 'js/payment.js', 'js/register.js', 'js/recovery.js']) {
+  for (const file of ['js/staff-auth.js', 'js/payment-auth.js', 'js/login.js', 'js/teacher.js', 'js/payment.js', 'js/register.js', 'js/recovery.js']) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     assert.equal(/Apc@2026/.test(source), false, `${file} still mentions the retired default password`);
     assert.equal(/password\s*[:=]\s*['"][^'"]{4,}['"]/.test(source.replace(/error\s*[:=]/g, '')), false, `${file} still hardcodes a password`);

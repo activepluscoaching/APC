@@ -40,45 +40,9 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
     await barsStayInPlace(page, selectors);
   });
 
-  test(`admin header/footer stay fixed on a long report (${viewport.width}px)`, async ({ page }) => {
-    await page.setViewportSize(viewport);
-    // A real roster, so the report is long enough to scroll in the middle pane.
-    await page.addInitScript(() => {
-      const key = 'activePlus.admin.students.v1';
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(key, JSON.stringify(Array.from({ length: 60 }, (_, index) => ({
-        id: `FIX-${index}`, name: `শিক্ষার্থী ${index}`, mobile: `017${String(10000000 + index)}`,
-        className: 'দশম শ্রেণি', status: 'approved', monthlyFee: 1000, enrolledAt: '2026-09-01'
-      }))));
-    });
-    await enterPortal(page, 'admin');
-    await page.locator('.admin-bottom [data-admin-view=reports]').click();
-    await expect(page.locator('.admin-view[data-view-panel=reports]')).toBeVisible();
-    const selectors = { header: '.app-topbar', footer: '.admin-bottom', main: '#adminMain' };
-    await barsStayInPlace(page, selectors);
-    await page.locator('#adminReports select[name=report]').selectOption('student.class-wise');
-    await page.locator('#adminReports .rc-generate').click();
-    await expect(page.locator('#adminReports .rc-preview')).toBeVisible();
-    await page.locator('#adminMain').evaluate(el => { el.scrollTop = el.scrollHeight; });
-    await expect.poll(() => page.locator('#adminMain').evaluate(el => el.scrollTop)).toBeGreaterThan(50);
-    await barsStayInPlace(page, selectors);
-    // The preview's own last page never hides under the fixed footer.
-    const last = page.locator('#adminReports .rc-pdf-preview .rp-page').last();
-    const box = await last.boundingBox();
-    expect(box.y + box.height).toBeLessThanOrEqual((await page.locator('.admin-bottom').boundingBox()).y + 1);
-    // Going back to the report form and changing seat resets the middle pane.
-    await page.locator('#adminReports .rc-back').click();
-    await page.locator('.admin-bottom [data-admin-view=dashboard]').click();
-    await expect.poll(() => page.locator('#adminMain').evaluate(el => el.scrollTop)).toBe(0);
-    await barsStayInPlace(page, selectors);
-    await page.setViewportSize({ width: 390, height: 520 });
-    await barsStayInPlace(page, selectors);
-    await page.locator('.app-topbar').evaluate(el => { el.style.height = '90px'; });
-    await barsStayInPlace(page, selectors);
-  });
 }
 
-for (const entry of ['index.html', 'admin.html']) {
+for (const entry of ['index.html']) {
   test(`login header stays fixed while the auth form scrolls (${entry})`, async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 400 });
     await page.goto('/' + entry);

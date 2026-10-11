@@ -79,7 +79,9 @@ test('Manager alone assigns Teacher class/batch scope through the Teachers workf
   assert.equal(saved[0].className, 'দশম শ্রেণি'); assert.equal(saved[0].group, 'বিজ্ঞান বিভাগ');
   assert.deepEqual(saved[0].subjects, ['গণিত']);
   assert.equal(saved[0].subject, 'গণিত');
-  assert.equal(ctx.$('#managerTeacherList').textContent.includes('দশম শ্রেণি'), true);
+  /* The list re-renders asynchronously after the save — wait for the card
+     like every other UI assertion here. */
+  await ctx.waitFor(() => ctx.$('#managerTeacherList').textContent.includes('দশম শ্রেণি'));
 });
 
 /* Tracking a student by the permanent Student ID in the Manager panel — the

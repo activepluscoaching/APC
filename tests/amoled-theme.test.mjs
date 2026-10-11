@@ -17,7 +17,7 @@ import { THEME_COLOR, themeColorFor } from '../js/appearance.js';
 const read = path => readFileSync(path, 'utf8');
 // The five shipped pages. offline-roles.html is the developers' role workspace
 // (no theme-color meta, no boot script) and is deliberately not in this list.
-const PAGES = ['index', 'admin', 'manager', 'teacher', 'payment'];
+const PAGES = ['index', 'manager', 'teacher', 'payment'];
 
 function hex(value) {
   const clean = value.trim().replace(/^#/, '');

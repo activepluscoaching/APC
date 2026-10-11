@@ -1,11 +1,9 @@
 /* Panel lockdown — no panel can reach another panel.
  *
- * The Admin panel used to be able to open the Payment counter, and any panel
- * jumped to index.html on its own when its session was missing. Both routes are
- * gone: js/panel-lockdown.js refuses a click / form post / window.open that
- * points at a *different* panel page, the shared login page is the only door
- * between panels, and a panel with no session of its own now locks in place
- * instead of leaving the page.
+ * js/panel-lockdown.js refuses a click / form post / window.open that points at
+ * a *different* panel page, the shared login page is the only door between
+ * panels, and a panel with no session of its own now locks in place instead of
+ * leaving the page.
  *
  * These tests drive the real pages and the real modules in jsdom, so a future
  * edit that quietly re-opens a cross-panel route fails here.
@@ -18,7 +16,6 @@ import { openStaffPanel, provisionStaff, seedStaffSession } from './staff-harnes
 
 const DEMO_OFF = { 'activePlus.demo.autofill.v1': 'off' };
 const PANEL_SHELLS = Object.freeze({
-  'admin.html': ['../js/admin.js', '#adminShell'],
   'manager.html': ['../js/manager.js', '#managerShell'],
   'teacher.html': ['../js/teacher.js', '#teacherShell'],
   'payment.html': ['../js/payment.js', '#payShell']
@@ -29,58 +26,58 @@ const navigationErrors = ctx => ctx.jsdomErrors.filter(error => /navigation/i.te
 
 test('a foreign panel is recognised in every link shape', async () => {
   const { PANEL_PAGES, panelFileOf } = await import('../js/panel-lockdown.js');
-  assert.deepEqual(PANEL_PAGES, ['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
-  assert.equal(panelFileOf('./manager.html', 'admin.html'), 'manager.html');
-  assert.equal(panelFileOf('/teacher.html?v=1#top', 'admin.html'), 'teacher.html');
-  assert.equal(panelFileOf('payment.html', 'admin.html'), 'payment.html');
-  assert.equal(panelFileOf('./admin.html', 'admin.html'), '', 'its own page is not foreign');
-  assert.equal(panelFileOf('/admin.html', 'admin.html'), '');
-  assert.equal(panelFileOf('index.html', 'admin.html'), '', 'the shared login page is the one door');
-  assert.equal(panelFileOf('#finance', 'admin.html'), '');
-  assert.equal(panelFileOf('https://wa.me/8801700000000', 'admin.html'), '');
-  assert.equal(panelFileOf('https://example.com/manager.html', 'admin.html'), '', 'another origin owns that page');
-  assert.equal(panelFileOf('', 'admin.html'), '');
+  assert.deepEqual(PANEL_PAGES, ['manager.html', 'teacher.html', 'payment.html']);
+  assert.equal(panelFileOf('./teacher.html', 'manager.html'), 'teacher.html');
+  assert.equal(panelFileOf('/teacher.html?v=1#top', 'manager.html'), 'teacher.html');
+  assert.equal(panelFileOf('payment.html', 'manager.html'), 'payment.html');
+  assert.equal(panelFileOf('./manager.html', 'manager.html'), '', 'its own page is not foreign');
+  assert.equal(panelFileOf('/manager.html', 'manager.html'), '');
+  assert.equal(panelFileOf('index.html', 'manager.html'), '', 'the shared login page is the one door');
+  assert.equal(panelFileOf('#finance', 'manager.html'), '');
+  assert.equal(panelFileOf('https://wa.me/8801700000000', 'manager.html'), '');
+  assert.equal(panelFileOf('https://example.com/teacher.html', 'manager.html'), '', 'another origin owns that page');
+  assert.equal(panelFileOf('', 'manager.html'), '');
 });
 
 test('a click or window.open into another panel is refused', async () => {
-  const ctx = await loadPage('admin.html', { seed: DEMO_OFF });
+  const ctx = await loadPage('manager.html', { seed: DEMO_OFF });
   const { installPanelGuard } = await import('../js/panel-lockdown.js');
   const blocked = [];
-  const guard = installPanelGuard({ own: 'admin.html', notify: file => blocked.push(file) });
+  const guard = installPanelGuard({ own: 'manager.html', notify: file => blocked.push(file) });
 
   const link = ctx.document.createElement('a');
-  link.href = './manager.html';
-  link.textContent = 'ম্যানেজার প্যানেল';
+  link.href = './teacher.html';
+  link.textContent = 'শিক্ষক প্যানেল';
   ctx.document.body.append(link);
   ctx.click(link);
-  assert.deepEqual(blocked, ['manager.html'], 'the click was refused');
+  assert.deepEqual(blocked, ['teacher.html'], 'the click was refused');
   assert.deepEqual(navigationErrors(ctx), [], 'and nothing navigated');
 
-  assert.equal(ctx.window.open('./teacher.html', '_blank'), null, 'window.open is refused too');
-  assert.deepEqual(blocked, ['manager.html', 'teacher.html']);
+  assert.equal(ctx.window.open('./payment.html', '_blank'), null, 'window.open is refused too');
+  assert.deepEqual(blocked, ['teacher.html', 'payment.html']);
 
   // Its own page is not a cross-panel route, and neither is an external link.
   const own = ctx.document.createElement('a');
-  own.href = './admin.html';
+  own.href = './manager.html';
   ctx.click(own);
   ctx.window.open('https://wa.me/8801700000000', '_blank');
-  assert.deepEqual(blocked, ['manager.html', 'teacher.html'], 'only another panel is refused');
+  assert.deepEqual(blocked, ['teacher.html', 'payment.html'], 'only another panel is refused');
   guard.uninstall();
 });
 
 test('the lock card explains the rule and offers only the shared login page', async () => {
-  const ctx = await loadPage('admin.html', { seed: DEMO_OFF });
+  const ctx = await loadPage('manager.html', { seed: DEMO_OFF });
   const { showPanelLock } = await import('../js/panel-lockdown.js');
-  ctx.$('#adminShell').hidden = false;
+  ctx.$('#managerShell').hidden = false;
 
-  const card = showPanelLock({ role: 'admin.html', signedIn: ['manager.html'] });
+  const card = showPanelLock({ role: 'manager.html', signedIn: ['teacher.html'] });
   assert.equal(ctx.$('#apcPanelLock'), card);
-  assert.equal(ctx.$('#adminShell').hidden, true, 'the panel content is hidden behind the card');
+  assert.equal(ctx.$('#managerShell').hidden, true, 'the panel content is hidden behind the card');
   assert.match(card.textContent, /এক প্যানেল থেকে অন্য প্যানেলে নয়/);
-  assert.match(card.textContent, /ম্যানেজার প্যানেল লগইন করা আছে/);
+  assert.match(card.textContent, /শিক্ষক প্যানেল লগইন করা আছে/);
   assert.equal(card.querySelectorAll('a[href]').length, 0, 'the card never links anywhere');
   assert.deepEqual([...card.querySelectorAll('button')].map(button => button.id), ['apcPanelLockLogin', 'apcPanelLockRetry']);
-  assert.equal(showPanelLock({ role: 'admin.html' }), card, 'a second call reuses the same card');
+  assert.equal(showPanelLock({ role: 'manager.html' }), card, 'a second call reuses the same card');
 
   assert.deepEqual(navigationErrors(ctx), []);
   ctx.click(ctx.$('#apcPanelLockLogin'));
@@ -103,35 +100,35 @@ for (const [file, [script, shellId]] of Object.entries(PANEL_SHELLS)) {
 }
 
 test('a device signed in as another role cannot open this panel', async () => {
-  const ctx = await loadPage('admin.html', { seed: DEMO_OFF });
-  await provisionStaff('manager');
-  seedStaffSession(ctx.window, 'manager');
-  await import('../js/admin.js?lockdown=wrong-role');
+  const ctx = await loadPage('manager.html', { seed: DEMO_OFF });
+  await provisionStaff('teacher');
+  seedStaffSession(ctx.window, 'teacher');
+  await import('../js/manager.js?lockdown=wrong-role');
   await ctx.waitFor(() => Boolean(ctx.$('#apcPanelLock')));
-  await ctx.waitFor(() => /ম্যানেজার প্যানেল লগইন করা আছে/.test(ctx.$('#apcPanelLock').textContent));
-  assert.equal(ctx.$('#adminShell').hidden, true, 'the Admin panel does not open for a Manager session');
+  await ctx.waitFor(() => /শিক্ষক প্যানেল লগইন করা আছে/.test(ctx.$('#apcPanelLock').textContent));
+  assert.equal(ctx.$('#managerShell').hidden, true, 'the Manager panel does not open for a Teacher session');
   assert.deepEqual(navigationErrors(ctx), []);
 });
 
 /* ---------- One device, one panel ------------------------------------------ */
 
 test('signing a panel in on this device ends the other panels here', async () => {
-  const ctx = await loadPage('admin.html', { seed: DEMO_OFF });
-  await provisionStaff('admin');
+  const ctx = await loadPage('manager.html', { seed: DEMO_OFF });
   await provisionStaff('manager');
-
-  assert.equal(await saveStaffSession('admin', true), true);
-  assert.equal(await hasStaffSession('admin'), true);
-  assert.deepEqual(await activeStaffRoles(), ['admin']);
+  await provisionStaff('teacher');
 
   assert.equal(await saveStaffSession('manager', true), true);
   assert.equal(await hasStaffSession('manager'), true);
-  assert.equal(await hasStaffSession('admin'), false, 'the Admin session ended when the Manager signed in here');
-  assert.equal(ctx.window.localStorage.getItem(STAFF_ACCOUNTS.admin.sessionKey), null);
-  assert.equal(ctx.window.sessionStorage.getItem(STAFF_ACCOUNTS.admin.sessionKey), null);
   assert.deepEqual(await activeStaffRoles(), ['manager']);
 
-  clearStaffSession('manager');
+  assert.equal(await saveStaffSession('teacher', true), true);
+  assert.equal(await hasStaffSession('teacher'), true);
+  assert.equal(await hasStaffSession('manager'), false, 'the Manager session ended when the Teacher signed in here');
+  assert.equal(ctx.window.localStorage.getItem(STAFF_ACCOUNTS.manager.sessionKey), null);
+  assert.equal(ctx.window.sessionStorage.getItem(STAFF_ACCOUNTS.manager.sessionKey), null);
+  assert.deepEqual(await activeStaffRoles(), ['teacher']);
+
+  clearStaffSession('teacher');
   assert.deepEqual(await activeStaffRoles(), []);
   ctx.window.close();
 });
@@ -153,7 +150,7 @@ test('a panel installs the guard itself, so a later link cannot leave either', a
   assert.equal(ctx.$('#managerShell').hidden, false, 'the Manager panel is open');
 
   const link = ctx.document.createElement('a');
-  link.href = './admin.html';
+  link.href = './payment.html';
   ctx.document.body.append(link);
   ctx.click(link);
   assert.deepEqual(navigationErrors(ctx), [], 'the panel guard cancelled the jump');

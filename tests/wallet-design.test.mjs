@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const portals = ['index', 'admin', 'manager', 'teacher', 'payment'];
+const portals = ['index', 'manager', 'teacher', 'payment'];
 const doc = name => new JSDOM(read(name + '.html')).window.document;
 const css = read('css/ui-wallet.css');
 
@@ -71,7 +71,6 @@ test('student, manager and teacher have real, named service shortcuts', () => {
       else assert.ok(['homework', 'notices', 'fees'].includes(tile.dataset.action));
     }
   }
-  assert.ok(read('js/admin-panel-ui.js').includes('admin-feature-tile'), 'admin must retain its capability-generated service grid');
 });
 
 test('secondary screens have accessible home/back controls and staff hub rows have round icons', () => {
@@ -101,9 +100,7 @@ test('secondary screens have accessible home/back controls and staff hub rows ha
     }
   }
   /* Admin: a screen inside a hub returns to that hub; the rest go home. */
-  const adminBacks = [...doc('admin').querySelectorAll('.pay-back')].map(button => button.getAttribute('data-admin-view'));
-  assert.deepEqual(adminBacks, ['dashboard', 'dashboard', 'system', 'system', 'dashboard', 'dashboard', 'dashboard', 'data', 'system', 'system', 'system', 'dashboard']);
-  for (const name of ['admin', 'manager', 'teacher']) {
+  for (const name of ['manager', 'teacher']) {
     for (const row of doc(name).querySelectorAll('.admin-more-item')) {
       assert.ok(row.querySelector('.admin-more-icon, .admin-more-copy'), name + ' hub row has no icon slot');
     }
@@ -140,7 +137,7 @@ test('exam workspace rows keep one even gap with no dead space', () => {
 });
 
 test('notification settings live inside a hidden view, never floating outside the panels', () => {
-  for (const name of ['index', 'admin', 'manager', 'teacher']) {
+  for (const name of ['index', 'manager', 'teacher']) {
     const document = doc(name);
     const mount = document.getElementById('notificationSettings');
     assert.ok(mount, name + ' is missing its notification settings mount');

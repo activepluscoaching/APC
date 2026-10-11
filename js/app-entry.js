@@ -4,7 +4,7 @@
 (() => {
   const script = document.currentScript || document.querySelector('script[data-entry]');
   const entries = {
-    student: './main.js', admin: './admin.js', manager: './manager.js',
+    student: './main.js', manager: './manager.js',
     teacher: './teacher.js', payment: './payment.js'
   };
   const entry = entries[script?.dataset.entry];

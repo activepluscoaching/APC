@@ -1,7 +1,7 @@
 /* Academic structure — the single source of truth for classes and subjects.
  *
  * Admin defines which classes exist and which subjects each class runs
- * (js/admin.js → Academic Setup). Every other module reads the structure from
+ * through the Admin-gated writes below. Every other module reads the structure from
  * here instead of keeping its own copy: teacher assignments, examinations,
  * routine, notices/notifications, courses and the student side.
  *

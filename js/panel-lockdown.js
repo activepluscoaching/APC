@@ -1,6 +1,6 @@
 /* Panel lockdown — one device, one panel, one door.
 
-   Every role owns exactly one page: admin.html, manager.html, teacher.html and
+   Every role owns exactly one page: manager.html, teacher.html and
    payment.html. Those four pages must never reach each other. A cross-panel
    route is both a permission hole (a role holds no capability of the other
    portal) and a real-world mistake (the counter tapping into the Admin panel
@@ -22,18 +22,16 @@
 import { activeStaffRoles, clearStaffSession, hasStaffSession } from './staff-auth.js';
 
 export const LOGIN_PAGE = 'index.html';
-export const PANEL_PAGES = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
+export const PANEL_PAGES = Object.freeze(['manager.html', 'teacher.html', 'payment.html']);
 export const PANEL_LABELS = Object.freeze({
-  'admin.html': 'এডমিন প্যানেল',
   'manager.html': 'ম্যানেজার প্যানেল',
   'teacher.html': 'শিক্ষক প্যানেল',
   'payment.html': 'পেমেন্ট রিসিভ প্যানেল'
 });
 export const PANEL_BY_ROLE = Object.freeze({
-  admin: 'admin.html', manager: 'manager.html', teacher: 'teacher.html', payment: 'payment.html'
+  manager: 'manager.html', teacher: 'teacher.html', payment: 'payment.html'
 });
 const PANEL_SHELLS = Object.freeze({
-  'admin.html': 'adminShell',
   'manager.html': 'managerShell',
   'teacher.html': 'teacherShell',
   'payment.html': 'payShell'
@@ -47,7 +45,6 @@ const PANEL_EXTRAS = Object.freeze(['payStickyBar']);
 const ROLE_MARKERS = Object.freeze([
   ['manager.html', '#managerShell'],
   ['teacher.html', '#teacherShell'],
-  ['admin.html', '.admin-shell'],
   ['payment.html', '.pay-shell']
 ]);
 

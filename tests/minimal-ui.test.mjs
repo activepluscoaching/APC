@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import { checkAll as checkCssOrder } from '../tools/css-order-check.mjs';
 const await_import_guard = () => ({ checkAll: checkCssOrder });
 const read=p=>readFileSync(p,'utf8');
-const pages=['index','admin','manager','teacher','payment','offline-roles'];
+const pages=['index','manager','teacher','payment','offline-roles'];
 test('every page links the canonical stylesheet set and no legacy icon dependencies',()=>{
  /* One @import chain became fifteen parallel <link>s; the canonical order is
     css/design-system.css's, guarded by tools/css-order-check.mjs. */
@@ -43,7 +43,7 @@ test('protected core and all new and protected assets cached',()=>{
 test('no panel keeps a standing offline-workspace or sync-not-connected notice',()=>{
  // The school asked for lean pages: only the work at hand. A permanent banner
  // that says the backend is not connected belongs in docs, not on screen.
- for(const page of ['index','admin','manager','teacher','payment'])assert.doesNotMatch(read(`${page}.html`),/Offline workspace|manager-local-notice/);
+ for(const page of ['index','manager','teacher','payment'])assert.doesNotMatch(read(`${page}.html`),/Offline workspace|manager-local-notice/);
  assert.doesNotMatch(read('css/ui-components.css'),/manager-local-notice/);
 });
 test('precache URLs are unique and all local shell assets exist',()=>{

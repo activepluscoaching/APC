@@ -82,7 +82,7 @@
 // v254: refresh the Teacher hero's complete greeting and note colour.
 // v253: keep the Teacher home greeting on its hero band when account names wrap.
 // v252: refresh the official MCQ exam screen's pinned timer-bar styles.
-const CACHE_VERSION = 255;
+const CACHE_VERSION = 260;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './css/notifications.css',
@@ -152,7 +152,6 @@ const APP_SHELL = [
   './js/offline-role-ui.js',
   './',
   './index.html',
-  './admin.html',
   './manager.html',
   './teacher.html',
   './payment.html',
@@ -191,8 +190,6 @@ const APP_SHELL = [
   './js/settings-hub.js',
   './js/academics.js',
   './js/brand.js',
-  './js/admin-academics.js',
-  './js/admin-migration.js',
   './js/exam-data.js',
   './js/exam-ui.js',
   './js/exam-core.js',
@@ -232,7 +229,6 @@ const APP_SHELL = [
   './js/fixed-shell.js',
   './js/main.js',
   './js/panel-route.js',
-  './js/admin.js',
   './js/factory-reset.js',
   './js/manager.js',
   './js/payment.js',
@@ -251,11 +247,7 @@ const APP_SHELL = [
   './js/report-access.js',
   './js/report-builders.js',
   './js/report-sources.js',
-  './js/admin-permissions.js',
-  './js/admin-icons.js',
-  './js/admin-panel-ui.js',
   './js/staff-directory.js',
-  './js/staff-management.js',
   './js/user-id.js',
   './js/storage/migration.js'
 ];
@@ -265,7 +257,7 @@ const APP_SHELL = [
    the hint the panel left here. Never a hard-coded page, never another panel. */
 const PANEL_HINT_CACHE = 'apc-panel-hint';
 const PANEL_HINT_PATH = './__apc-last-panel';
-const PANEL_PAGES = ['admin.html', 'manager.html', 'teacher.html', 'payment.html'];
+const PANEL_PAGES = ['manager.html', 'teacher.html', 'payment.html'];
 const APP_ENTRY = './index.html';
 
 /* Served when an offline navigation is not in the cache. It stays on the page

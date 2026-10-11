@@ -41,7 +41,7 @@ messaging.onBackgroundMessage(payload => {
    another panel, so its `url` field is deliberately ignored here. */
 const PANEL_HINT_CACHE = 'apc-panel-hint';
 const PANEL_HINT_PATH = './__apc-last-panel';
-const PANEL_PAGES = ['admin.html', 'manager.html', 'teacher.html', 'payment.html'];
+const PANEL_PAGES = ['manager.html', 'teacher.html', 'payment.html'];
 const APP_ENTRY = './index.html';
 
 async function panelHintTarget() {

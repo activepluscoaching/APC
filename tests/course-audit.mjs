@@ -107,7 +107,7 @@ for (const [tag, dark, width] of [['light', false, 390], ['amoled', true, 390], 
   note(pendingTile === '১বাড়িরকাজবাকি'.normalize('NFC'), `pending tile: ${audit.summary[1]}`);
   note(doneTile === '১বাড়িরকাজসম্পন্ন'.normalize('NFC'), `done tile: ${audit.summary[2]}`);
   const chipText = squash(audit.chips.map(c => c.text));
-  const expected = ['সব৪', 'নম্বরওফলাফল০', 'বাড়িরকাজ২', 'একাডেমিকনোটিশ১', 'রুটিন১']
+  const expected = ['সব৪', 'নম্বরওফলাফল০', 'বাড়িরকাজ২', 'সাজেশন১', 'রুটিন১']
     .map(text => text.normalize('NFC'));
   note(JSON.stringify(chipText) === JSON.stringify(expected), `filter chips: ${JSON.stringify(chipText)} vs ${JSON.stringify(expected)}`);
   note(audit.firstCard?.expanded === 'false' && audit.firstCard?.detailsHidden === true, `first card starts collapsed (expanded=${audit.firstCard?.expanded}, hidden=${audit.firstCard?.detailsHidden})`);

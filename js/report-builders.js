@@ -981,7 +981,7 @@ const academicClass = {
         { label: 'শিক্ষার্থী', value: num(students.length) },
         { label: 'ক্লাস সেশন', value: num(classes.length) },
         { label: 'বাড়ির কাজ', value: num(activities.filter(a => a.type === 'homework').length) },
-        { label: 'একাডেমিক নোটিশ', value: num(activities.filter(a => a.type === 'suggestion').length) }
+        { label: 'সাজেশন', value: num(activities.filter(a => a.type === 'suggestion').length) }
       ])
     ];
     blocks.push(heading('ক্লাস সেশন'));
@@ -1473,11 +1473,15 @@ const teacherStudentAcademic = {
   }
 };
 
+/* The id stays `teacher.academic-notice` on purpose: stored report selections and
+   older exports carry it. What it reports has always been Teacher suggestions
+   (`activitiesFor(ctx, ['suggestion'])`) — the "notice" wording is what made the
+   Teacher's সাজেশন tile look like it opened an notice board. */
 const teacherAcademicNotice = {
   id: 'teacher.academic-notice',
   category: 'academic',
-  title: 'Academic Notice Report',
-  subtitle: 'আমার scope-এ প্রকাশিত একাডেমিক নোটিশ',
+  title: 'সাজেশন রিপোর্ট',
+  subtitle: 'আমার scope-এ প্রকাশিত সাজেশন',
   roles: ['teacher'],
   filters: ['period', 'class', 'batch', 'subject'],
   period: 'activity',
@@ -1487,14 +1491,14 @@ const teacherAcademicNotice = {
       period: ctx.range.label,
       scopeLines: scopeLine(ctx),
       blocks: [
-        tiles([{ label: 'নোটিশ', value: num(notices.length) }], 4),
+        tiles([{ label: 'সাজেশন', value: num(notices.length) }], 4),
         table([
           { label: 'তারিখ', width: 1.1 }, { label: 'শিরোনাম', width: 2.2 }, { label: 'বিষয়', width: 1.2 },
           { label: 'শ্রেণি', width: 1.1 }, { label: 'বিভাগ', width: 1.1 }, { label: 'অবস্থা', width: 1 }
         ], notices.map(activity => [
           dateLabel(activity.date), dash(activity.title), dash(activity.subject),
           dash(activity.className), dash(activity.group || 'সব'), dash(activity.status)
-        ]), 'একাডেমিক নোটিশ')
+        ]), 'সাজেশন')
       ]
     };
   }

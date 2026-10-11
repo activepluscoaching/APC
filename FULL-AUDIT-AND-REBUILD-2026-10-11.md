@@ -92,7 +92,7 @@ writes, and the capability layer are untouched.
 | **B4** | `sync/sync-queue.js` (5 lines), `sync-retry.js` (3), `sync-status.js` (1) | The offline write queue is effectively a stub while `js/realtime-sync.js` carries the logic. §12.4 (stable operation ids, no duplicate replay, honest pending state) is not met at the layer the prompt expects. |
 | **B5** | `package.json` | No `build`, no `typecheck`, no `lint`. §2.3/§17.3 ("run TypeScript checks, build production assets") cannot be satisfied as written; the only gate is `npm test` + Playwright. |
 | **B6** | `tests/` + Playwright | The 2026-10-10 audit recorded **16 passed / 37 failed** e2e on the base commit (pixel/clock assertions). Until that is green, §20.20 "tested in the deployed application" has no automated support. |
-| ~~B7~~ **done** | `sw.js:85` | `CACHE_VERSION` 259 → **260** and all 100 `?v=` pins in the six HTML entry points re-pinned, so no client keeps running stale JS after this change set (§16.2). The 40 cache/pin tests pass. |
+| ~~B7~~ **done** | `sw.js:85` | `CACHE_VERSION` 259 → **261** (260 for the assignment-chain set, 261 for the সাজেশন label set) and all 100 `?v=` pins in the six HTML entry points re-pinned, so no client keeps running stale JS after this change set (§16.2). The 40 cache/pin tests pass. |
 | **B8** | `README.md` | Documents the pre-Firebase era; §2.2/§13 claims contradict the code (see 1.3). |
 | F6–F10 | `js/academics.js`, `js/admin-academics.js`, `js/manager.js` | Open items from the same audit: `loadAcademics()` re-runs the full migration scan on every read (N scans per save); `listMappings` comment vs code; `allocate*(name, [])` elsewhere; busy-guard silently dropping rapid Admin ticks; Admin Setup `render()` wiping in-progress input and resetting a detached node. |
 
@@ -154,7 +154,7 @@ writes, and the capability layer are untouched.
 | Stage | Work | Exit test |
 |---|---|---|
 | **0 — stop the bleeding** | Restore build 259 ✅ done; restore `main` (or repoint Pages to this branch) so the five panels answer again; bump `sw.js` `CACHE_VERSION` | `admin.html`/`index.html` HTTP 200 on `github.io`; §18.1 login set passes in a browser |
-| **1 — assignment chain** | F1–F5 + build 260 cache bump ✅ done | `tests/academics-assignment-regressions.test.mjs` + the whole `npm test` green |
+| **1 — assignment chain** | F1–F5 + build 260/261 cache bump + §8 Teacher সাজেশন workflow ✅ done | `tests/academics-assignment-regressions.test.mjs` + the whole `npm test` green |
 | **2 — Admin IA** | §6.1 sections as routes, one page per icon, no stale tab (§6.12), dashboard cards clickable, Staff Management as the only staff surface, Activity Log + System Health wired to real records | §18.2 checklist; `admin-nav-*.test.mjs` extended |
 | **3 — security** | Deploy claim-scoped rules (v2 shape, backward-compatible read of v1 paths), remove `password` from `staffAccounts` validation, protect `system.adminInitialized`, per-student own-record rules | Rules simulator + real signed-in role matrix (needs Firebase console access — owner action) |
 | **4 — sync truth** | Real queue with operation ids, honest `স্থানীয় / সিঙ্কের অপেক্ষায় / সিঙ্ক হয়েছে / ব্যর্থ` states, listener de-duplication, no form wipes on background updates | §18.7, cross-device §12.8 with two browsers |
@@ -177,13 +177,54 @@ writes, and the capability layer are untouched.
 | `js/manager.js` | Assignment form edit mode (`editingAssignmentId` + id on submit + honest toast wording), per-row সম্পাদনা action, picker preselects the row's subjects, ticks no longer leak across class changes (F2 UI, F8), edit-mode banner with cancel |
 | `js/academics.js` | F5 allocator + F11 read-path codes allocate against the live code set |
 | `tests/academics-assignment-regressions.test.mjs` | **new** — 6 tests; 5 of them fail on the pre-fix code (verified by stashing the fix) |
-| `sw.js` + `admin/index/manager/teacher/payment/offline-roles.html` | build 260: `CACHE_VERSION` 259→260, every `?v=` pin re-pinned |
+| `sw.js` + `admin/index/manager/teacher/payment/offline-roles.html` | build 260 → 261: `CACHE_VERSION` bumped per change set, every `?v=` pin re-pinned |
 
 ### Suite results
 
 | Run | result |
 |---|---|
 | Restored baseline, before any change | 1,001 tests — 998 pass, **0 fail**, 3 skipped |
-| After this change set | **1,007 tests — 1,004 pass, 0 fail, 3 skipped** (`npm test`, 394 s) |
+| After the assignment-chain set | **1,007 tests — 1,004 pass, 0 fail, 3 skipped** (`npm test`, 394 s) |
+| After the সাজেশন label set (§8) | **1,012 tests — 1,009 pass, 0 fail, 3 skipped** |
 | Focused sets | assignment chain 40/40; new regressions 6/6 (and 5/6 red on pre-fix code); cache/pin 40/40 |
 | Playwright e2e | **not run here** — 37 failures are documented as pre-existing/environmental on this base (B6) |
+
+---
+
+## 8. Teacher panel workflow — "সাজেশনে ক্লিক করলে একাডেমিক নোটিশ খোলে" (reported 2026-10-11)
+
+**Not a routing bug.** `js/teacher.js:299` maps `suggestion` → `#teacherRecords` with the
+suggestion tab selected, and that is what happened. The screen *told the teacher
+otherwise*, because one label was wrong at the source:
+
+```js
+/* js/teaching-data.js */
+export const ACTIVITY_TYPES = Object.freeze({
+  exam:       { label: 'নম্বর ও ফলাফল', … },
+  homework:   { label: 'বাড়ির কাজ', … },
+  suggestion: { label: 'একাডেমিক নোটিশ', plural: 'একাডেমিক নোটিশ', … },   // ← the bug
+  routine:    { label: 'উপস্থিতি ক্লাস', … }
+});
+```
+
+That `label`/`plural` is the single source for the tab (`teacher.html:80`), the screen
+heading (`js/teacher.js:163` sets `#teacherRecordsTitle` from `plural`), the add button
+(`:168`), every card chip (`:75`), the paging control ("আরও ৩টি একাডেমিক নোটিশ দেখুন"),
+the teacher PDF header (`js/material-pdf.js:18`) — and the **student panel's own
+filters and chips** (`js/student-teaching.js:33,84`). The Teacher panel separately owns a
+real notice board (`#teacherNotice`, `js/teacher.js:496+`), so the two collided by name.
+`js/report-builders.js` also shipped a report titled **"Academic Notice Report"** that
+counts `activitiesFor(ctx, ['suggestion'])` — suggestions again wearing a notice label.
+
+**Fix.** Rename the type, not the routing: `ACTIVITY_TYPES.suggestion` → `সাজেশন`;
+the home tile subtitle `একাডেমিক নোটিশ` → `বিষয়ভিত্তিক পরামর্শ`; the tab → `সাজেশন`;
+the report title → `সাজেশন রিপোর্ট` with its subtitle/tile relabelled. The report's
+`id` stays `teacher.academic-notice` on purpose (stable identifier — stored report
+selections keep working; §15.1).
+
+**Proof.** `tests/teacher-suggestion-workflow.test.mjs` — 5 tests on the real
+`teacher.html` in jsdom: the tile opens records with the suggestion tab selected, the
+heading reads `সাজেশন`, the add button `+ সাজেশন`, the card chip `সাজেশন`, **no "নোটি"
+substring anywhere on that screen**, the notice tile still opens `#teacherNotice` alone,
+and a source-level guard fails if `একাডেমিক নোটিশ` returns to any shipped entry point.
+4 of the 5 fail against the pre-fix code (verified by stashing the fix).

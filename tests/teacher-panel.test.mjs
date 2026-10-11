@@ -196,7 +196,7 @@ test('a long list pages instead of scrolling forever', async () => {
 
   assert.equal(cards('#teacherRecordList').length, 15);
   assert.equal($('#teacherRecordMore').hidden, false);
-  assert.equal($('#teacherRecordMore').textContent, 'আরও ৩টি একাডেমিক নোটিশ দেখুন');
+  assert.equal($('#teacherRecordMore').textContent, 'আরও ৩টি সাজেশন দেখুন');
   ctx.click($('#teacherRecordMore'));
   assert.equal(cards('#teacherRecordList').length, 18);
   assert.equal($('#teacherRecordMore').hidden, true);

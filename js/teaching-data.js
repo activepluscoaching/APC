@@ -47,7 +47,7 @@ export async function currentTeacherProfile() {
 export const ACTIVITY_TYPES = Object.freeze({
   exam: { label: 'নম্বর ও ফলাফল', plural: 'নম্বর ও ফলাফল', progress: '' },
   homework: { label: 'বাড়ির কাজ', plural: 'বাড়ির কাজ', progress: 'জমার অবস্থা' },
-  suggestion: { label: 'একাডেমিক নোটিশ', plural: 'একাডেমিক নোটিশ', progress: '' },
+  suggestion: { label: 'সাজেশন', plural: 'সাজেশন', progress: '' },
   routine: { label: 'উপস্থিতি ক্লাস', plural: 'উপস্থিতি ক্লাস', progress: 'উপস্থিতি' }
 });
 export const PROGRESS_LABELS = Object.freeze({ pending: 'বাকি', done: 'সম্পন্ন জানিয়েছে', reviewed: 'দেখা হয়েছে', present: 'উপস্থিত', absent: 'অনুপস্থিত', late: 'দেরিতে উপস্থিত' });

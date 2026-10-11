@@ -42,7 +42,11 @@ function readAssignments() {
   if (raw === null) return [];
   let records;
   try { records = JSON.parse(raw); } catch { fail('শিক্ষক অ্যাসাইনমেন্টের সংরক্ষিত তথ্য সঠিক নয়।'); }
-  if (!Array.isArray(records) || records.some(record => !record || typeof record.id !== 'string' || typeof record.teacherUsername !== 'string' || !enabledClasses.includes(record.className) && !loadAcademics().classes.some(item => item.name === record.className) || typeof record.group !== 'string')) fail('শিক্ষক অ্যাসাইনমেন্টের সংরক্ষিত তথ্য সঠিক নয়।');
+  /* Structural shape only. Whether the class still exists in the Academic
+     Setup is a WRITE concern (saveTeacherAssignment) and a DISPLAY concern
+     (selectableSubjects) — one renamed or retired class must not brick every
+     teacher's assignment list (audit F4). */
+  if (!Array.isArray(records) || records.some(record => !record || typeof record.id !== 'string' || typeof record.teacherUsername !== 'string' || typeof record.className !== 'string' || !record.className.trim() || typeof record.group !== 'string')) fail('শিক্ষক অ্যাসাইনমেন্টের সংরক্ষিত তথ্য সঠিক নয়।');
   const normalized = records.map(normalizeAssignment);
   const ids = new Set();
   for (const record of normalized) {
@@ -135,32 +139,55 @@ export async function saveTeacherAssignment({ id = '', className, group = '', su
   const clean = { className: String(className || '').normalize('NFC').trim(), group: String(group || '').normalize('NFC').trim() };
   const wanted = [...new Set([...(Array.isArray(subjects) ? subjects : []), subject]
     .map(value => String(value ?? '').normalize('NFC').trim()).filter(Boolean))];
-  const known = new Set(loadAcademics().subjects.map(item => subjectKey(item.name)));
-  if (!clean.className || !known.has(subjectKey(clean.className)) && !enabledClasses.includes(clean.className)) fail('শ্রেণি যাচাই করুন।');
+  /* A class is valid when the Admin's Academic Setup lists it or the shipped
+     config lists it. It is never validated against the SUBJECT list — that
+     made every Admin-created class impossible to assign (audit F1). */
+  const knownClasses = new Set([...enabledClasses, ...loadAcademics().classes.map(item => item.name)]);
+  if (!clean.className || !knownClasses.has(clean.className)) fail('শ্রেণি যাচাই করুন।');
   if (clean.group.length > 80) fail('Batch/Group যাচাই করুন।');
   if (!wanted.length) fail('অন্তত একটি বিষয় নির্বাচন করুন।');
   if (wanted.length > 30) fail('একটি assignment-এ সর্বোচ্চ ৩০টি বিষয় দেওয়া যাবে।');
   if (wanted.some(name => name.length > 80)) fail('বিষয়ের নাম যাচাই করুন।');
-  for (const name of wanted) {
-    /* New assignments follow the Admin structure. A subject the class no
-       longer runs cannot be handed out again. */
-    if (!isSubjectEnabled(clean.className, name)) fail(`“${name}” বিষয়টি ${clean.className}-এর জন্য চালু নেই — Admin Academic Setup থেকে চালু করুন।`);
-  }
   const records = readAssignments();
   const normalizedUsername = String(teacher.username || '').trim().toLowerCase();
   const same = (a, b) => groupKey(a) === groupKey(b);
-  const duplicate = records.some(item => item.id !== id && item.teacherUsername.toLowerCase() === normalizedUsername && item.className === clean.className && same(item.group, clean.group) && item.subjects.some(name => wanted.some(wantedName => subjectKey(wantedName) === subjectKey(name))));
-  if (duplicate) fail('এই Teacher, class/batch ও subject assignment আগে থেকেই আছে।');
-  const index = id ? records.findIndex(item => item.id === id && item.teacherUsername.toLowerCase() === normalizedUsername) : records.findIndex(item => item.teacherUsername.toLowerCase() === normalizedUsername && item.className === clean.className && same(item.group, clean.group));
-  const next = { ...clean, subjects: wanted, subject: wanted.join(', '), id: id || (index >= 0 ? records[index].id : newId('TAS')), teacherUsername: normalizedUsername, teacherName: String(teacher.fullName || teacher.username).trim() };
+  /* The row this call writes: by id when the caller knows it, otherwise the
+     one row this teacher+class+batch already has. Resolving it up front is what
+     lets an existing row be edited instead of refused (audit F2). */
+  const index = id
+    ? records.findIndex(item => item.id === id && item.teacherUsername.toLowerCase() === normalizedUsername)
+    : records.findIndex(item => item.teacherUsername.toLowerCase() === normalizedUsername && item.className === clean.className && same(item.group, clean.group));
+  const target = index >= 0 ? records[index] : null;
+  const prior = target ? target.subjects : [];
+  for (const name of wanted) {
+    /* New assignments follow the Admin structure. A subject the class no longer
+       runs cannot be handed out again — but a subject ALREADY on this row stays
+       writable, so disabling a subject in Admin Setup never freezes the row
+       that carries it (audit F3). */
+    if (prior.some(held => subjectKey(held) === subjectKey(name))) continue;
+    if (!isSubjectEnabled(clean.className, name)) fail(`“${name}” বিষয়টি ${clean.className}-এর জন্য চালু নেই — Admin Academic Setup থেকে চালু করুন।`);
+  }
+  /* Wrong id and no row at all are different problems: say so. */
   if (id && index < 0) fail('অ্যাসাইনমেন্টটি পাওয়া যায়নি।');
+  /* A save that does not name a row never rewrites one. The Manager form
+     edits through an explicit row id, so this can only be an accidental
+     double submit or a half-filled resubmit — refuse it and say what to do
+     instead (audit F2). */
+  if (!id && target) fail('এই Teacher, class/batch ও subject assignment আগে থেকেই আছে — বিষয় কমানো বা বদলানোর জন্য তালিকা থেকে সম্পাদনা ব্যবহার করুন।');
+  const targetId = id;
+  /* Overlap with another row is always a duplicate. Overlap with the row
+     named by `id` is the edit itself, so that one row is exempt. */
+  const duplicate = records.some(item => item.id !== targetId && item.teacherUsername.toLowerCase() === normalizedUsername && item.className === clean.className && same(item.group, clean.group) && item.subjects.some(name => wanted.some(wantedName => subjectKey(wantedName) === subjectKey(name))));
+  if (duplicate) fail('এই Teacher, class/batch ও subject assignment আগে থেকেই আছে।');
+  const next = { ...clean, subjects: wanted, subject: wanted.join(', '), id: targetId || newId('TAS'), teacherUsername: normalizedUsername, teacherName: String(teacher.fullName || teacher.username).trim() };
   if (index >= 0) records[index] = next; else records.unshift(next);
   return writeAssignments(records);
 }
 /** Add a subject to an existing Teacher + Class row (checkbox save). */
-export async function addAssignmentSubject({ className, group = '', subject } = {}) {
-  const existing = listTeacherAssignments((await readStaffAccount('teacher'))?.username).find(item => item.className === className && groupKey(item.group) === groupKey(group));
-  return saveTeacherAssignment({ id: existing?.id || '', className, group, subjects: [...(existing?.subjects || []), subject] });
+export async function addAssignmentSubject({ className, group = '', subject, teacherUsername } = {}) {
+  const handle = String(teacherUsername || '').trim().toLowerCase() || String((await readStaffAccount('teacher'))?.username || '').trim().toLowerCase();
+  const existing = listTeacherAssignments(handle).find(item => item.className === className && groupKey(item.group) === groupKey(group));
+  return saveTeacherAssignment({ id: existing?.id || '', className, group, subjects: [...(existing?.subjects || []), subject], teacherUsername: existing?.teacherUsername || handle });
 }
 export async function deleteTeacherAssignment(id) {
   await requireManagerSession();

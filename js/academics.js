@@ -72,12 +72,24 @@ export const EXAM_CLASS_CODES = Object.freeze({
 const latin = value => String(value || '').replace(/[^A-Za-z]/g, '').toUpperCase();
 /** A stable 2–4 letter code that no other subject is using. */
 function allocateSubjectCode(name, subjects = []) {
-  const known = EXAM_SUBJECT_CODES[text(name)];
-  if (known) return known;
   const used = new Set(subjects.map(item => text(item.code).toUpperCase()).filter(Boolean));
+  const known = EXAM_SUBJECT_CODES[text(name)];
+  /* The school's master list wins only while its code is still free. Two
+     subjects that share a map entry ('আইসিটি' and
+     'তথ্য ও যোগাযোগ প্রযুক্তি' both map to ICT) must not be handed the same
+     paper code (audit F5). */
+  if (known && !used.has(known)) return known;
   const letters = latin(name);
   const candidates = [letters.slice(0, 2), letters.slice(0, 3), letters.slice(0, 4)].filter(value => value.length >= 2);
   for (const candidate of candidates) if (!used.has(candidate)) return candidate;
+  /* No Latin letters left: keep the master code and number it, so the paper
+     code still reads as the subject it belongs to. */
+  if (known) {
+    for (let index = 2; index <= 99; index += 1) {
+      const candidate = known + index;
+      if (!used.has(candidate)) return candidate;
+    }
+  }
   // A Bangla-only subject with no Latin letters gets S01, S02 … in order.
   for (let index = 1; index <= 99; index += 1) {
     const candidate = `S${String(index).padStart(2, '0')}`;
@@ -388,13 +400,18 @@ export const classNames = ({ includeInactive = false } = {}) => listClasses({ in
 
 /** The permanent code of a class (`10` for দশম শ্রেণি). '' when unknown. */
 export function classCodeFor(className) {
-  const item = className ? classByName(className) : null;
-  return text(item?.code) || (item ? allocateClassCode(item.name, []) : '');
+  const db = loadAcademics();
+  const item = className ? db.classes.find(entry => keyOf(entry.name) === keyOf(className)) : null;
+  /* A record that never got its code frozen (older copies, hand-edited rows)
+     falls back to an allocation — but against the WHOLE class list. Allocating
+     against `[]` let two records share one code (audit F5/F11). */
+  return text(item?.code) || (item ? allocateClassCode(item.name, db.classes) : '');
 }
 /** The permanent code of a subject (`MT` for গণিত). '' when unknown. */
 export function subjectCodeFor(subjectName) {
-  const item = subjectName ? subjectByName(subjectName) : null;
-  return text(item?.code) || (item ? allocateSubjectCode(item.name, []) : '');
+  const db = loadAcademics();
+  const item = subjectName ? db.subjects.find(entry => keyOf(entry.name) === keyOf(subjectName)) : null;
+  return text(item?.code) || (item ? allocateSubjectCode(item.name, db.subjects) : '');
 }
 /** Both codes at once, for the paper-code builder. */
 export function academicCodes(className, subjectName) {

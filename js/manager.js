@@ -232,11 +232,21 @@ function renderClasses() {
 /** Step 3 of the assignment form: only the subjects Admin enabled for the
     chosen class (plus any legacy value already on the record, so nothing is
     stranded). One class → several ticked subjects → several assignments. */
-function renderTeacherSubjectPicker(className, selected = []) {
+/* The class the picker was last painted for. Ticks are read back from the DOM
+   only while this stays the same: a background storage re-render must not wipe
+   what the Manager has ticked, but switching class must not drag the previous
+   class's ticks along (audit F8). */
+let pickerClass = null;
+/** The row the Manager is editing, when the form is in edit mode. */
+let editingAssignmentId = '';
+let assignmentRowsById = new Map();
+function renderTeacherSubjectPicker(className, selected = [], { preferSelected = false } = {}) {
   const box = $('#managerTeacherSubjectList');
   const note = $('[data-teacher-subject-note]');
   if (!box) return;
-  const chosen = [...new Set([...selected, ...[...box.querySelectorAll('input[name=subject]:checked')].map(input => input.value)])];
+  const carried = preferSelected || pickerClass !== className ? [] : [...box.querySelectorAll('input[name=subject]:checked')].map(input => input.value);
+  const chosen = [...new Set([...selected, ...carried])];
+  pickerClass = className;
   if (!className) {
     box.innerHTML = '<p class="admin-empty">আগে ক্লাস নির্বাচন করুন — তারপর সেই ক্লাসের বিষয়গুলো দেখবেন।</p>';
     if (note) note.textContent = 'Admin-এর ক্লাস ও বিষয় সেটআপ থেকেই এই তালিকা আসে।';
@@ -247,6 +257,29 @@ function renderTeacherSubjectPicker(className, selected = []) {
     ? options.map(name => `<label class="manager-subject-option"><input type="checkbox" name="subject" value="${escapeHtml(name)}" ${chosen.includes(name) ? 'checked' : ''}> ${escapeHtml(name)}</label>`).join('')
     : '<p class="admin-empty">এই ক্লাসের জন্য Admin কোনো বিষয় চালু করেননি — Admin → ক্লাস ও বিষয় সেটআপ থেকে চালু করুন।</p>';
   if (note) note.textContent = options.length ? `${bn(options.length)}টি বিষয় চালু আছে — একাধিক টিক দিতে পারবেন।` : '';
+}
+/** Put the assignment form in create or edit mode, honestly. */
+function setAssignmentFormMode() {
+  const form = $('#managerTeacherAssignmentForm');
+  if (!form) return;
+  const submit = form.querySelector('button[type="submit"]');
+  const row = assignmentRowsById.get(editingAssignmentId);
+  let note = form.querySelector('[data-assignment-edit-note]');
+  if (!editingAssignmentId) {
+    note?.remove();
+    if (submit) submit.textContent = 'শিক্ষককে ক্লাস ও বিষয় দিন';
+    return;
+  }
+  if (!note) {
+    note = document.createElement('p');
+    note.className = 'form-note';
+    note.setAttribute('data-assignment-edit-note', '');
+    note.innerHTML = '<span data-assignment-edit-label></span><button class="mini-btn" type="button" data-manager-action="cancel-assignment-edit">সম্পাদনা বাতিল</button>';
+    form.insertBefore(note, submit || null);
+  }
+  const label = note.querySelector('[data-assignment-edit-label]');
+  if (label) label.textContent = `সম্পাদনা হচ্ছে: ${row?.teacherName || row?.teacherUsername || ''} • ${row?.className || ''}${row?.group ? ` • ${row.group}` : ''} — সংরক্ষণ করলে এই ঠিকায় বিষয়গুলো বদলাবে, নতুন সারি তৈরি হবে না।`;
+  if (submit) submit.textContent = 'Assignment হালনাগাদ করুন';
 }
 async function renderTeachers() {
   const form = $('#managerTeacherAssignmentForm');
@@ -259,16 +292,31 @@ async function renderTeachers() {
   const fallback = await readStaffAccount('teacher');
   if (fallback && !teachers.some(item => item.username === fallback.username)) teachers.unshift(fallback);
   const assignments = teachers.flatMap(item => listTeacherAssignments(item.username));
+  assignmentRowsById = new Map(assignments.map(item => [item.id, item]));
+  if (editingAssignmentId && !assignmentRowsById.has(editingAssignmentId)) { editingAssignmentId = ''; setAssignmentFormMode(); }
+  const editing = editingAssignmentId ? assignmentRowsById.get(editingAssignmentId) : null;
   if (form) {
     const select = form.elements.teacherUsername;
     const current = select.value;
     select.innerHTML = teachers.map(item => `<option value="${escapeHtml(item.username)}">${escapeHtml(item.fullName || item.username)} — ${escapeHtml(item.username)}</option>`).join('');
-    if (current && teachers.some(item => item.username === current)) select.value = current;
+    if (editing?.teacherUsername && teachers.some(item => item.username === editing.teacherUsername)) select.value = editing.teacherUsername;
+    else if (current && teachers.some(item => item.username === current)) select.value = current;
     const classes = listClasses().map(item => item.name);
     const choices = classes.length ? classes : [...enabledClasses];
+    /* A row can outlive its class (Admin retires or renames one). Keep it
+       selectable while it is being edited, or the edit would save to a
+       different class than the one on screen. */
+    if (editing && !choices.includes(editing.className)) choices.push(editing.className);
     form.elements.className.innerHTML = `<option value="">শ্রেণি নির্বাচন</option>${choices.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('')}`;
-    form.elements.className.value = choices[0] || '';
-    renderTeacherSubjectPicker(form.elements.className.value);
+    if (editing) {
+      form.elements.className.value = editing.className;
+      form.elements.group.value = editing.group || '';
+      renderTeacherSubjectPicker(editing.className, editing.subjects, { preferSelected: true });
+    } else {
+      form.elements.className.value = choices[0] || '';
+      renderTeacherSubjectPicker(form.elements.className.value);
+    }
+    setAssignmentFormMode();
   }
   const schedule = new Map();
   Object.entries(routine).forEach(([day, info]) => (info.classes || []).forEach(item => {
@@ -281,7 +329,7 @@ async function renderTeachers() {
   const cards = assignments.map(item => {
     const subjects = (item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean);
     const chips = subjects.map(name => `<span class="manager-subject-chip">${escapeHtml(name)}<button class="mini-btn reject" type="button" data-manager-action="delete-teacher-subject" data-id="${escapeHtml(item.id)}" data-subject="${escapeHtml(name)}" aria-label="${escapeHtml(name)} সরান">×</button></span>`).join('');
-    return `<article class="manager-record"><div class="manager-record-head"><div><h2>${escapeHtml(item.className)}${item.group ? ` • ${escapeHtml(item.group)}` : ''}</h2><p class="manager-meta">${escapeHtml(item.teacherName)} • ${bn(subjects.length)}টি বিষয়</p><div class="manager-subject-chips">${chips}</div></div><button class="mini-btn reject" type="button" data-manager-action="delete-teacher-assignment" data-id="${escapeHtml(item.id)}">Assignment সরান</button></div></article>`;
+    return `<article class="manager-record"><div class="manager-record-head"><div><h2>${escapeHtml(item.className)}${item.group ? ` • ${escapeHtml(item.group)}` : ''}</h2><p class="manager-meta">${escapeHtml(item.teacherName)} • ${bn(subjects.length)}টি বিষয়</p><div class="manager-subject-chips">${chips}</div></div><div class="manager-record-actions"><button class="mini-btn" type="button" data-manager-action="edit-teacher-assignment" data-id="${escapeHtml(item.id)}">সম্পাদনা</button><button class="mini-btn reject" type="button" data-manager-action="delete-teacher-assignment" data-id="${escapeHtml(item.id)}">Assignment সরান</button></div></div></article>`;
   });
   const routineRows = [...schedule.entries()].flatMap(([name, items]) => items.map(item => `<li>${escapeHtml(name)} — ${escapeHtml(item)}</li>`));
   $('#managerTeacherList').innerHTML = `${cards.join('') || '<p class="admin-empty">এখনো কোনো Teacher class/batch assignment নেই। Teacher panel-এ assignment না থাকলে academic data access বন্ধ থাকবে।</p>'}<article class="manager-record"><h2>Routine schedule</h2><p>নিচের routine entries আলাদা schedule data; এগুলো নিজেরা Teacher access grant করে না।</p><ul>${routineRows.join('') || '<li>কোনো routine assignment নেই।</li>'}</ul><p class="manager-meta">সংরক্ষিত teaching activities: ${bn(activityCount)}</p></article>`;
@@ -795,11 +843,29 @@ $('#managerTeacherAssignmentForm').addEventListener('submit', async event => {
   const data = new FormData(form);
   try {
     const subjects = data.getAll('subject').map(String).filter(Boolean);
-    await saveTeacherAssignment({ className: data.get('className'), group: data.get('group'), subjects, teacherUsername: data.get('teacherUsername') });
-    form.reset(); await renderTeachers(); await loadOperationalData(); toast('Teacher assignment সংরক্ষণ হয়েছে।');
+    await saveTeacherAssignment({ id: editingAssignmentId, className: data.get('className'), group: data.get('group'), subjects, teacherUsername: data.get('teacherUsername') });
+    const wasEditing = Boolean(editingAssignmentId);
+    editingAssignmentId = '';
+    form.reset(); await renderTeachers(); await loadOperationalData(); toast(wasEditing ? 'Teacher assignment হালনাগাদ হয়েছে' : 'Teacher assignment সংরক্ষণ হয়েছে।');
   } catch (error) { toast(error.message || 'Assignment সংরক্ষণ হয়নি।', true); }
 });
+$('#managerTeacherAssignmentForm').addEventListener('click', event => {
+  if (!event.target.closest('[data-manager-action="cancel-assignment-edit"]')) return;
+  editingAssignmentId = '';
+  renderTeachers();
+});
 $('#managerTeacherList').addEventListener('click', async event => {
+  const editButton = event.target.closest('[data-manager-action="edit-teacher-assignment"]');
+  if (editButton) {
+    const editForm = $('#managerTeacherAssignmentForm');
+    const record = assignmentRowsById.get(editButton.dataset.id);
+    if (!editForm || !record) return toast('Assignment টি সম্পাদনার জন্য খুলা যায়নি', true);
+    editingAssignmentId = record.id;
+    await renderTeachers();
+    editForm.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    editForm.elements.teacherUsername.focus?.();
+    return;
+  }
   const subjectButton = event.target.closest('[data-manager-action="delete-teacher-subject"]');
   if (subjectButton) {
     if (!(await managerGuard())) return toast('Manager session যাচাই হয়নি।', true);

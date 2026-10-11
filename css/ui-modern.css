@@ -1,0 +1,208 @@
+/* Active Plus Coaching — modern UI layer
+   Visual-only overrides. Do not add routing, storage, auth, sync or business logic here. */
+
+:root{
+  --modern-radius:22px;
+  --modern-radius-sm:16px;
+  --modern-gap:14px;
+  --modern-ease:cubic-bezier(.22,1,.36,1);
+}
+
+html{background:var(--color-bg)}
+body{
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(900px 520px at 8% -8%,var(--ambient-1),transparent 62%),
+    radial-gradient(780px 520px at 100% 0%,var(--ambient-2),transparent 62%),
+    var(--color-bg);
+}
+
+.app-shell,.admin-shell,.pay-shell{background:transparent}
+
+.app-topbar{
+  border-bottom:1px solid color-mix(in srgb,var(--color-border) 70%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,var(--color-surface) 70%,transparent);
+}
+.app-topbar-inner{min-height:68px;padding-inline:clamp(14px,3vw,28px)}
+.app-brand{gap:10px}
+.app-brand-logo{
+  width:40px;height:40px;border-radius:14px;
+  box-shadow:0 8px 24px rgba(43,111,224,.18);
+}
+.app-brand-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+.app-brand-slogan{font-size:11px}
+.app-topbar-icon{
+  width:42px;height:42px;border:1px solid var(--glass-border);
+  transition:transform .2s var(--modern-ease),background .2s var(--modern-ease);
+}
+.app-topbar-icon:active{transform:scale(.94)}
+
+.app-main,.admin-main,.pay-main{
+  padding-top:clamp(18px,3vw,30px);
+  padding-inline:clamp(14px,3vw,28px);
+}
+
+.page-intro h1,.admin-hero-title h1{letter-spacing:-.025em}
+.eyebrow{font-size:11px;text-transform:none}
+
+.admin-card,.pay-card,.study-progress-card,.dashboard-exam-card,
+.dashboard-fee-card,.challenge-card,.teaching-board,.profile-card,.result-card,
+.course-card,.learning-card,.routine-card,.staff-card,.student-card,.rc-head,#records>article{
+  border-radius:var(--modern-radius);
+  padding:clamp(16px,2.5vw,22px);
+  transition:transform .22s var(--modern-ease),box-shadow .22s var(--modern-ease),border-color .22s ease;
+}
+@media (hover:hover){
+  .admin-card:hover,.pay-card:hover,.course-card:hover,.learning-card:hover,
+  .routine-card:hover,.result-card:hover,.profile-card:hover{transform:translateY(-2px)}
+}
+
+.admin-hero,.study-progress-card{
+  border-radius:28px;
+  overflow:hidden;
+  position:relative;
+}
+.admin-hero::after,.study-progress-card::after{
+  content:"";position:absolute;right:-90px;top:-120px;width:240px;height:240px;
+  border-radius:50%;background:var(--tone-blue-soft);filter:blur(4px);pointer-events:none;
+}
+
+.admin-hero-stats,.admin-stats,.dash-finance-grid,.manager-kpi-grid{gap:12px}
+.admin-stat-tile,.dash-finance-tile,.admin-stat{
+  min-height:112px;border-radius:20px;padding:16px;
+}
+.tile-value,.admin-stat>strong,.dash-finance-tile strong{
+  font-size:clamp(22px,4vw,30px);letter-spacing:-.035em;
+}
+
+.admin-feature-grid{gap:12px}
+.admin-feature-tile{
+  min-height:104px;border-radius:20px;border:1px solid var(--glass-border);
+  transition:transform .2s var(--modern-ease),box-shadow .2s ease;
+}
+.admin-feature-tile:active{transform:scale(.985)}
+.admin-feature-icon,.admin-more-icon,.settings-icon,.dashboard-feature-icon{border-radius:14px}
+
+button,.admin-btn,.mini-btn,.rc-back{
+  border-radius:14px;min-height:42px;border:1px solid var(--glass-border);
+  transition:transform .18s var(--modern-ease),background .18s var(--modern-ease),box-shadow .18s var(--modern-ease);
+}
+button:active,.admin-btn:active,.mini-btn:active{transform:scale(.97)}
+button[type=submit],.auth-submit,.modal-action,.rc-generate,.rc-download,
+.dashboard-primary-action,.step-next{
+  min-height:48px;border-radius:15px;font-weight:700;
+}
+
+input,select,textarea{
+  min-height:46px;border-radius:14px;border:1px solid var(--glass-border);
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+textarea{padding-block:12px}
+input:focus,select:focus,textarea:focus{
+  border-color:color-mix(in srgb,var(--color-primary) 70%,transparent);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--color-primary) 13%,transparent);
+  outline:none;
+}
+
+.bottom-nav,.admin-bottom{
+  min-height:72px;
+  padding-inline:max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-right));
+  border-top-color:var(--glass-border);
+}
+.bottom-link,.admin-bottom-item{
+  max-width:104px;margin:auto;gap:4px;font-size:10px;border-radius:16px;padding:5px 6px;
+}
+.nav-chip{
+  width:38px;height:30px;border-radius:12px;
+  transition:transform .22s var(--modern-ease),box-shadow .22s ease;
+}
+.bottom-link.active .nav-chip,.admin-bottom-item.active .nav-chip{
+  transform:translateY(-2px) scale(1.05);
+}
+.bottom-link.active{font-weight:650}
+
+/* Subtle icon motion: small lift/float on interactive icons, with stronger feedback on tap. */
+@keyframes apc-icon-float{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-2px) rotate(-1deg)}
+}
+@keyframes apc-icon-pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.045)}
+}
+.app-topbar-icon svg,.admin-feature-icon svg,.admin-more-icon svg,.settings-icon svg,
+.dashboard-feature-icon svg,.nav-chip svg,.bottom-link svg,.admin-bottom-item svg,
+.auth-icon svg,.profile-icon svg,.modal-icon svg{
+  transform-origin:center;
+  animation:apc-icon-float 3.2s ease-in-out infinite;
+}
+.app-topbar-icon:hover svg,.admin-feature-tile:hover svg,.bottom-link:hover svg,
+.admin-bottom-item:hover svg,.nav-chip:hover svg{animation:apc-icon-pulse .8s ease-in-out 1}
+.bottom-link.active .nav-chip svg,.admin-bottom-item.active .nav-chip svg{
+  animation:apc-icon-pulse 1.8s ease-in-out infinite;
+}
+.app-topbar-icon:active svg,.admin-feature-tile:active svg,.bottom-link:active svg,
+.admin-bottom-item:active svg,.nav-chip:active svg{animation:none;transform:scale(.9)}
+
+.auth-screen{
+  background:
+    radial-gradient(520px 360px at 50% -5%,var(--ambient-1),transparent 70%),
+    radial-gradient(420px 320px at 100% 90%,var(--ambient-2),transparent 70%),
+    var(--color-bg);
+}
+.auth-card{
+  max-width:460px;border-radius:30px;padding:clamp(18px,5vw,30px);
+  box-shadow:0 24px 70px rgba(31,54,90,.12);
+}
+.auth-brand img{
+  width:76px;height:76px;border-radius:22px;
+  box-shadow:0 14px 34px rgba(43,111,224,.20);
+}
+.auth-brand h1{letter-spacing:-.03em}
+.auth-tabs{border-radius:16px;padding:4px}
+.auth-tab{min-height:44px;border-radius:12px;font-weight:650}
+.auth-submit{box-shadow:0 12px 28px rgba(43,111,224,.24)}
+
+.modal-backdrop,.admin-modal-backdrop,.staff-pw-backdrop,.apc-lock-overlay{padding:12px}
+.modal,.admin-modal,.staff-pw-card,.apc-lock-card{
+  border-radius:26px;padding:clamp(16px,4vw,24px);
+}
+.modal-header,.admin-modal-header{padding-block:10px 14px}
+
+.badge,.status-badge,.nav-dot{border-radius:999px;padding:5px 10px}
+.student-avatar,.mini-avatar,.profile-avatar,.staff-avatar{border-radius:18px}
+
+table{border-spacing:0 6px;border-collapse:separate}
+thead th{background:transparent}
+tbody tr{background:var(--glass-chip)}
+tbody td:first-child{border-radius:12px 0 0 12px}
+tbody td:last-child{border-radius:0 12px 12px 0}
+
+@media(max-width:640px){
+  .app-main,.admin-main,.pay-main{padding-bottom:calc(96px + var(--safe-bottom))}
+  .admin-hero-stats,.admin-stats,.dash-finance-grid,.manager-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .admin-stat-tile,.dash-finance-tile,.admin-stat{min-height:96px;padding:14px}
+  .admin-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-feature-tile{min-height:96px;padding:14px}
+  .admin-card,.pay-card,.study-progress-card,.dashboard-exam-card,
+  .dashboard-fee-card,.challenge-card,.teaching-board,.profile-card,.result-card,
+  .course-card,.learning-card,.routine-card,.staff-card,.student-card,.rc-head{
+    border-radius:20px;
+  }
+}
+
+@media(min-width:900px){
+  .app-main,.admin-main,.pay-main{padding-inline:32px}
+  .app-topbar-inner{padding-inline:32px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .admin-card,.pay-card,.course-card,.learning-card,.routine-card,.result-card,.profile-card,
+  button,.admin-btn,.mini-btn,.bottom-link .nav-chip{transition:none}
+  .app-topbar-icon svg,.admin-feature-icon svg,.admin-more-icon svg,.settings-icon svg,
+  .dashboard-feature-icon svg,.nav-chip svg,.bottom-link svg,.admin-bottom-item svg,
+  .auth-icon svg,.profile-icon svg,.modal-icon svg{animation:none}
+}

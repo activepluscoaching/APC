@@ -1,0 +1,311 @@
+/* Glass interior skin — the material the app's inner pages are made of.
+   Frosted panels over a soft ambient wash, so a dashboard, a roster or a form
+   reads as one pane of glass instead of a stack of flat sheets.
+
+   Rules this file keeps:
+   • Additive only. The flat layer underneath (foundation/ui-*) stays the
+     fallback for engines without backdrop-filter and for people who ask for
+     less transparency, so nothing breaks where glass cannot render.
+   • One blur pass per surface. Bars, cards, tiles, toolbars, dialogs and
+     toasts get the blur; the rows, chips, avatars and badges inside them get
+     translucency only — a long roster must still scroll on a low-end phone.
+   • Screen only. Print keeps the flat, ink-friendly document (and the
+     report/receipt preview keeps its white paper: it mirrors the PDF).
+   • Flat selectors, no CSS nesting — the app runs in older WebViews too. */
+@media screen {
+
+  /* 1 ── Ambient wash. Without something behind them, frosted panels have
+     nothing to blur and just look dusty grey. Three low-contrast pools of
+     colour, fixed to the viewport so scrolling never re-renders them. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -12%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(46% 36% at 10% -4%, var(--ambient-1), transparent 70%),
+      radial-gradient(42% 34% at 92% 2%, var(--ambient-2), transparent 72%),
+      radial-gradient(50% 42% at 4% 104%, var(--ambient-4), transparent 74%),
+      radial-gradient(46% 40% at 66% 98%, var(--ambient-3), transparent 76%);
+  }
+  /* The portals stop painting their own canvas so the wash shows through;
+     the page colour itself still comes from body. */
+  .auth-screen, .app-shell, .admin-shell, .pay-shell { background: transparent; }
+
+  /* 2 ── The glass itself, only where it can actually render. */
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+
+    /* 2a. Bars stay put and stay frosted. Their existing hairline border keeps
+       doing the separating; the inner top highlight is the glass edge. */
+    .app-topbar, #appStatusSurface {
+      background: var(--glass-bar);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      border-bottom-color: var(--glass-border);
+    }
+    .bottom-nav, .admin-bottom {
+      background: var(--glass-bar);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      border-top-color: var(--glass-border);
+    }
+    .app-topbar, .bottom-nav, .admin-bottom { box-shadow: inset 0 1px 0 var(--glass-edge); }
+
+    /* 2b. Cards and tiles — the body of every interior page. */
+    .auth-card, .admin-card, .pay-card, .study-progress-card, .dashboard-exam-card,
+    .dashboard-fee-card, .challenge-card, .teaching-board, .profile-card, .result-card,
+    .course-card, .learning-card, .routine-card, .staff-card, .student-card, .rc-head,
+    .admin-feature-tile, .admin-stat-tile, .dash-finance-tile, .admin-stat,
+    .staff-stat-tile, .staff-toolbar, .student-filter-panel, .student-filter-toggle,
+    .class-context, .exam-question, .mcq-question, .exam-form, .exam-timer,
+    .exam-template-panel, .teacher-toolbar, .teacher-summary>div, .rc-form,
+    .recovery-summary, .notice-detail, .pay-pulse-tile, .pay-search-card,
+    .settings-list, .admin-more-menu, .student-row, .student-record-identity,
+    .student-record-actions, .profile-stats>div, .fee-balance-grid>div,
+    .backup-tool section, .entry-error, .maintenance-alert-card, .pending-info,
+    .admin-empty, .dashboard-empty, .dashboard-empty-card, .empty-state,
+    .rc-preview-empty, .teacher-empty, #records>article {
+      background: var(--glass-surface);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      border: 1px solid var(--glass-border);
+      box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+    }
+
+    /* 2c. Dialogs float higher than cards, so they get the deeper shadow and
+       the stronger pane; their sticky headers frost with them. */
+    .modal, .admin-modal, .staff-pw-card, .apc-lock-card, .student-record-modal,
+    .receipt-modal-box, .install-toast, .feedback-toast, .pay-toast,
+    .apc-lock-notice, .apc-inapp-alert, .pull-refresh-indicator, .pay-stickybar {
+      background: var(--glass-strong);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      border: 1px solid var(--glass-border);
+      box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow-strong);
+    }
+    /* The "আরও" cards are ordinary cards, not dialogs: they take the card
+       material so the view stops looking like a settings dialog. */
+    .profile-card, .contact-card, .profile-section, .help-card {
+      background: var(--glass-surface);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      border: 1px solid var(--glass-border);
+      box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+    }
+    .modal-header, .admin-modal-header { background: var(--glass-strong); }
+    .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-lock-overlay,
+    .apc-alert-backdrop {
+      -webkit-backdrop-filter: blur(var(--glass-blur-thin));
+      backdrop-filter: blur(var(--glass-blur-thin));
+    }
+
+    /* 2d. Rows that live inside a card: translucency, no second blur pass. */
+    .routine-item, .ledger-row, .manager-record, .staff-list-item,
+    .dashboard-routine-card, .pay-activity-list>* {
+      background: var(--glass-chip);
+    }
+    .receipt-amount-block, .registration-progress, .auto-id-preview,
+    .staff-section-number, .exam-option:has(input:checked),
+    .apc-inapp-alert-item, .apc-alert-icon { background: var(--glass-chip); }
+
+    /* 2e. Small pieces — avatars, chips, badges, the switch track. */
+    .student-avatar, .mini-avatar, .profile-avatar, .staff-avatar,
+    .badge, .status-badge, .nav-chip, .audit-id-badge, .staff-id-badge, .staff-tag,
+    .exam-tag, .student-record-class-code, .toggle-switch, .step-progress-track,
+    .app-topbar-icon { background: var(--glass-chip); }
+
+    /* 2f. Controls. Inputs frost so the wash stays visible through a form;
+       focus keeps its existing ring, contrast is unchanged. */
+    input, select, textarea { background: var(--glass-chip); }
+    input:disabled, input[readonly] { background: var(--glass-surface); }
+    button, .admin-btn, .mini-btn, .rc-back { background: var(--glass-chip); }
+    button:hover { background: var(--glass-surface); }
+    .link-button, .inline-link, .dashboard-text-link { background: transparent; }
+
+    /* The primary action is painted by the colour pass in § 3g — one solid
+       brand gradient for the whole app, glass or flat. */
+
+    /* Selected tabs and filters are glass pills, not filled blocks. */
+    .active:is(.chip, .day-tab, .auth-tab), [aria-pressed=true],
+    .bottom-link.active, .admin-bottom-item.active,
+    .bottom-link.active .nav-chip, .admin-bottom-item.active .nav-chip {
+      background: var(--glass-surface);
+      -webkit-backdrop-filter: blur(var(--glass-blur-thin));
+      backdrop-filter: blur(var(--glass-blur-thin));
+    }
+    .auth-tabs { background: var(--glass-chip); }
+  }
+
+  /* 3 ── Colour pass. The flat baseline is deliberately grey; this is the layer
+     that makes the same screens look like a 2020s app: one second brand hue plus
+     five tints, painted as washes and accent bars ON TOP of whatever surface is
+     already there (background-image, never background-color). Glass keeps its
+     frosted pane, a flat engine still gets the colour, and the transparency
+     preference below only has to undo translucency — not the design. */
+
+  /* 3a. Brand bar before every section heading. */
+  .dashboard-section-heading h2, .teacher-section-heading h2, .admin-hero-title h1,
+  .settings-list > h2, .admin-card > h2, .pay-card > h2 {
+    display: flex; align-items: center; gap: var(--space-2);
+  }
+  .dashboard-section-heading h2::before, .teacher-section-heading h2::before,
+  .admin-hero-title h1::before, .settings-list > h2::before,
+  .admin-card > h2::before, .pay-card > h2::before {
+    content: ''; flex: none; width: 4px; height: 1.1em; border-radius: 99px;
+    background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+  }
+  .eyebrow { color: var(--tone-blue); font-weight: 600; }
+
+  /* 3b. Headline surfaces get a brand wash and a coloured halo, so the first
+     card on a page reads as the first card on a page. */
+  .study-progress-card, .admin-hero, .teacher-summary, .pay-search-card,
+  .finance-search-card, .rc-head, .learning-summary, .recovery-summary {
+    background-image: linear-gradient(135deg, var(--tone-blue-soft), transparent 46%, var(--tone-violet-soft));
+  }
+
+  /* 3c. The five tints the dashboard tiles are named after. The tile keeps its
+     own surface; the wash sits over it and the icon takes the tone colour. */
+  .admin-stat-tile, .admin-feature-tile, .dash-finance-tile, .admin-stat,
+  .pay-pulse-tile, .pay-pulse-mini { position: relative; }
+  .admin-stat-tile::before, .admin-feature-tile::before, .dash-finance-tile::before,
+  .admin-stat::before, .pay-pulse-tile::before, .pay-pulse-mini::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background-image: radial-gradient(120% 100% at 100% 0%, var(--tone-soft, var(--tone-blue-soft)), transparent 68%);
+  }
+  .admin-stat-tile > *, .admin-feature-tile > *, .dash-finance-tile > *, .admin-stat > *,
+  .pay-pulse-tile > *, .pay-pulse-mini > * { position: relative; }
+  .admin-stat-tile .tile-icon, .admin-feature-icon, .dash-finance-tile .tile-icon,
+  .pay-pulse-icon { color: var(--tone, var(--tone-blue)); }
+  .tone-blue { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+  .tone-mint { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+  .tone-amber { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+  .tone-lilac, .tone-violet { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .tone-rose, .tone-danger { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+  /* Feature tiles have no tone class: cycle the wash so a grid is not one colour. */
+  .admin-feature-tile:nth-child(5n+2) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+  .admin-feature-tile:nth-child(5n+3) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .admin-feature-tile:nth-child(5n+4) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+  .admin-feature-tile:nth-child(5n) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+  /* Payment counter: three pulse tiles, three tones. */
+  .pay-pulse-tile:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+  .pay-pulse-tile:nth-child(2) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .pay-pulse-tile:nth-child(3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+
+  /* 3d. Stat rows on the student dashboard: one tint per figure. */
+  .study-progress-stats > div:nth-child(1) svg { color: var(--tone-blue); }
+  .study-progress-stats > div:nth-child(2) svg { color: var(--tone-amber); }
+  .study-progress-stats > div:nth-child(3) svg { color: var(--tone-mint); }
+  .study-progress-stats > div:nth-child(4) svg { color: var(--tone-violet); }
+
+  /* 3e. The progress figure is a ring gauge: a conic arc over a track. The
+     number sits on an inner disc so the arc stays a ring. */
+  .progress-ring {
+    position: relative; width: 72px; height: 72px; padding: 0; border: 0;
+    border-radius: 50%; display: grid; place-items: center;
+    background-image: conic-gradient(from -90deg,
+      var(--color-primary) var(--progress, 0deg), var(--ring-track) 0);
+  }
+  .progress-ring::before {
+    content: ''; position: absolute; inset: 7px; border-radius: 50%;
+    background: var(--color-surface);
+  }
+  .progress-ring > div { position: relative; text-align: center; line-height: 1.25; }
+  .progress-ring strong { display: block; font-size: var(--font-md); }
+  .progress-ring small { font-size: 10px; }
+
+  /* 3f. Navigation and controls take the brand hue. */
+  .bottom-link.active, .admin-bottom-item.active {
+    background-image: linear-gradient(180deg, var(--tone-blue-soft), transparent);
+    color: var(--color-primary);
+  }
+  .bottom-link.active .nav-chip, .admin-bottom-item.active .nav-chip {
+    background-image: linear-gradient(140deg, var(--color-primary), var(--brand-2));
+    color: var(--color-surface);
+    box-shadow: var(--accent-glow);
+  }
+  .chip.active, .day-tab.active, .auth-tab.active, [aria-pressed=true] {
+    background-image: linear-gradient(140deg, var(--tone-blue-soft), var(--tone-violet-soft));
+    border-color: transparent;
+  }
+  .badge, .status-badge, .audit-id-badge, .staff-id-badge, .staff-tag, .exam-tag {
+    background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent);
+  }
+  .badge-approved { background-image: linear-gradient(140deg, var(--tone-mint-soft), transparent); }
+  .badge-pending { background-image: linear-gradient(140deg, var(--tone-amber-soft), transparent); }
+
+  /* 3g. The one solid control on a page: brand gradient plus a coloured glow. */
+  button.primary, button[type=submit], .auth-submit, .modal-action,
+  .rc-generate, .rc-download, .dashboard-primary-action, .step-next {
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    border-color: transparent;
+    box-shadow: var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  button.primary:hover, button[type=submit]:hover {
+    background-image: linear-gradient(135deg, var(--color-primary-hover), var(--brand-2));
+  }
+
+  /* 3h. The student "আরও" view. Identity chips, the contact row and the icon
+     squares take the same tones the dashboard tiles use, so the last tab of the
+     student app reads as the same app as the first. */
+  .profile-intro h1, .profile-card h2 { margin: 0; }
+  .profile-avatar {
+    display: grid; place-items: center; width: 64px; height: 64px; flex: none;
+    border-radius: 20px; font-size: var(--font-lg); font-weight: 600;
+    background-image: linear-gradient(140deg, var(--tone-blue-soft), var(--tone-violet-soft));
+    color: var(--color-primary);
+  }
+  .student-id { background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent); }
+  .username-chip { background-image: linear-gradient(140deg, var(--tone-violet-soft), transparent); }
+  .edit-button, .help-card button {
+    color: var(--color-primary);
+    background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent);
+  }
+  .contact-icon { color: var(--tone-mint); background-image: linear-gradient(140deg, var(--tone-mint-soft), transparent); }
+  .whatsapp-button {
+    color: var(--tone-mint); border-color: transparent;
+    background-image: linear-gradient(140deg, var(--tone-mint-soft), var(--tone-mint-soft));
+  }
+  .help-icon { color: var(--tone-violet); background-image: linear-gradient(140deg, var(--tone-violet-soft), transparent); }
+  /* One tone per settings row, matching the icon class the markup already had. */
+  .settings-icon.mint { color: var(--tone-mint); background-image: linear-gradient(140deg, var(--tone-mint-soft), transparent); }
+  .settings-icon.green { color: var(--tone-blue); background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent); }
+  .settings-icon.purple { color: var(--tone-violet); background-image: linear-gradient(140deg, var(--tone-violet-soft), transparent); }
+  .settings-icon.danger { color: var(--tone-rose); background-image: linear-gradient(140deg, var(--tone-rose-soft), transparent); }
+  .saved-tag { color: var(--tone-mint); background-image: linear-gradient(140deg, var(--tone-mint-soft), transparent); }
+  /* The logout row is the one destructive entry: it says so in colour. */
+  .logout-button .settings-copy strong { color: var(--tone-rose); }
+  .profile-section {
+    background-image: linear-gradient(160deg, var(--tone-blue-soft), transparent 42%);
+  }
+
+  /* 3i. Student home/courses/routine pieces take the same tones, so every tab
+     of the student app is visibly the same app. */
+  .exam-link { border-left: 4px solid var(--color-primary); }
+  .learning-home-icon { color: var(--tone-blue); background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent); }
+  .learning-filter button[aria-pressed=true] {
+    border-color: transparent; color: var(--color-primary);
+    background-image: linear-gradient(140deg, var(--tone-blue-soft), var(--tone-violet-soft));
+  }
+  .learning-filter-count { color: inherit; opacity: .7; }
+  .calendar-dot { color: var(--tone-blue); background-image: linear-gradient(140deg, var(--tone-blue-soft), transparent); }
+  .class-count { background-image: linear-gradient(140deg, var(--tone-violet-soft), transparent); }
+  .empty-routine span { color: var(--tone-amber); }
+  .challenge-progress-track i { background-image: linear-gradient(90deg, var(--color-primary), var(--brand-2)); }
+  .fee-alert-icon {
+    color: var(--tone-rose); border-color: transparent;
+    background-image: linear-gradient(140deg, var(--tone-rose-soft), transparent);
+  }
+  .exam-feature-icon { color: var(--tone-violet); background-image: linear-gradient(140deg, var(--tone-violet-soft), transparent); }
+  .dashboard-fee-amount { color: var(--color-text); }
+
+  /* 4 ── Asked for less transparency: give the flat, opaque app back. */
+  @media (prefers-reduced-transparency: reduce) {
+    body::before { display: none; }
+    .auth-screen, .app-shell, .admin-shell, .pay-shell { background: var(--color-bg); }
+    .app-topbar, .bottom-nav, .admin-bottom, #appStatusSurface { background: var(--color-surface); }
+    .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-lock-overlay,
+    .apc-alert-backdrop,
+    .app-topbar, .bottom-nav, .admin-bottom, #appStatusSurface { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+}

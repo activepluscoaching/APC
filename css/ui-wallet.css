@@ -1,0 +1,1313 @@
+/* Pay skin — the wallet-style layout of every Active Plus portal.
+
+   What it is: a brand-coloured app bar that flows into a hero band, a floating
+   summary card, a 4-column icon grid, round-icon list rows, a bottom bar with a
+   raised centre action, bottom-sheet dialogs and step-by-step flows with one
+   sticky action. It replaces the glass skin, the "modern" layer and the
+   notebook layer; the structural sheets underneath (ui-layout … student-record)
+   still decide spacing and behaviour.
+
+   Rules this file keeps:
+   • Layout and presentation only. No routing, storage, auth, sync or business
+     logic — a portal behaves exactly as it did before the redesign.
+   • Colours come from css/foundation.css (--color-*, --pay-*, --tone-*). The
+     brand blue/green is unchanged; this file never declares a palette.
+   • The one place gradients and shadows live (tests/minimal-ui.test.mjs): the
+     hero band, the raised action and the soft card lift. AMOLED draws none of
+     the shadows — borders carry the separation on black.
+   • Flat selectors, no CSS nesting — older Android WebViews drop a whole block
+     on a syntax error.
+   • Screen only. Print and the receipt/report preview keep their white paper. */
+@media screen {
+
+/* 1 ── Page ground ─────────────────────────────────────────────────────── */
+html, body { background: var(--color-bg); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.auth-screen, .app-shell, .admin-shell, .pay-shell { background: transparent; }
+.app-main, .admin-main, .pay-main { overflow-x: hidden; }
+
+/* 2 ── App bar: brand colour, white content, round glass-free buttons ───── */
+.app-topbar {
+  background: var(--pay-hero-a); color: var(--pay-on-hero);
+  border-bottom: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.app-topbar-inner { min-height: 60px; padding: 8px 16px; gap: 10px; }
+.app-brand { gap: 10px; }
+.app-brand-logo {
+  width: 40px; height: 40px; flex: none; padding: 3px; border-radius: 13px;
+  background: var(--pay-on-hero); object-fit: contain; box-shadow: var(--pay-logo-shadow);
+}
+.app-brand-text { line-height: 1.25; }
+.app-brand-slogan { color: var(--pay-on-hero-soft); font-size: 11.5px; }
+.app-topbar-actions { gap: 8px; }
+.app-topbar-icon {
+  width: 42px; height: 42px; min-height: 42px; min-width: 42px; padding: 0;
+  border-radius: 50%; color: var(--pay-on-hero);
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+}
+.app-topbar-icon:hover { background: var(--pay-hero-line); }
+.app-topbar-icon svg { width: 21px; height: 21px; }
+.notification-dot { box-shadow: 0 0 0 2px var(--pay-hero-a); }
+
+/* 3 ── Hero band (student home) ───────────────────────────────────────────
+   The band is a full-bleed layer behind the whole hero (it must cover the
+   greeting/name/meta line even in light mode, where the text is white).
+   The summary card is pulled up onto its edge so it hangs half over the
+   band, half over the page — the signature of a wallet home screen. */
+.app-main { padding: 0 16px calc(104px + var(--safe-bottom)); }
+.app-main .view { padding-top: 0; }
+.app-main .student-home-view { padding-top: 0; }
+.pay-hero { position: relative; isolation: isolate; padding: 4px 0 0; color: var(--pay-on-hero); }
+.pay-hero::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%;
+  width: 100vw; transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--pay-hero-a) 0%, var(--pay-hero-b) 100%);
+  border-radius: 0 0 30px 30px;
+}
+.pay-hero-id { display: flex; align-items: center; gap: 12px; padding: 4px 0 26px; }
+.pay-avatar {
+  display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--pay-on-hero); color: var(--pay-hero-b); font-size: 22px; font-weight: 700;
+  box-shadow: 0 0 0 3px var(--pay-hero-line);
+}
+.pay-hero-copy { flex: 1; min-width: 0; line-height: 1.35; }
+.pay-hero-copy p { margin: 0; }
+.pay-greeting { font-size: 13px; color: var(--pay-on-hero-soft); }
+.pay-hero-name { font-size: 20px; font-weight: 700; color: var(--pay-on-hero); letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-hero-meta { font-size: 13px; color: var(--pay-on-hero-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.birthday-banner { margin: 8px 0 0; padding: 8px 12px; border-radius: 14px; background: var(--birthday-band); color: var(--birthday-ink); font-size: 13px; font-weight: 650; }
+html[data-birthday] .app-shell { background: var(--birthday-shell); }
+html[data-birthday] .app-topbar { background: var(--birthday-topbar); }
+html[data-birthday] .pay-hero { background: var(--birthday-hero); }
+html[data-birthday] .pay-tile-icon { box-shadow: var(--birthday-ring); }
+.notice-detail.is-birthday { border-color: var(--birthday-notice-border); background: var(--birthday-notice-bg); }
+.notice-detail-icon.is-birthday { background: var(--birthday-notice-icon); }
+.pay-hero-link {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; min-height: 40px; min-width: 40px;
+  padding: 0; border-radius: 50%; color: var(--pay-on-hero);
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+}
+.pay-hero-link:hover { background: var(--pay-hero-line); }
+.pay-hero-link svg { width: 20px; height: 20px; }
+
+/* Summary card — the "balance" of a student: progress, done, pending, exams.
+   Pulled up 22px so it straddles the hero band's edge (no dead gap, no text
+   left on the page background). */
+.study-progress-card {
+  position: relative; margin: -22px 0 0; padding: 16px; overflow: visible; color: var(--color-text);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 22px; box-shadow: var(--pay-shadow);
+}
+.study-progress-card::after { display: none; }
+.study-progress-top { gap: 12px; align-items: center; flex-wrap: nowrap; }
+.study-progress-heading h1 { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.35; letter-spacing: -.01em; }
+.study-progress-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--color-border);
+}
+.study-progress-stats > div { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; padding: 0; }
+.study-progress-stats svg { width: 20px; height: 20px; flex: none; color: var(--pay-disc-ink); }
+.study-progress-stats span { display: grid; min-width: 0; }
+.study-progress-stats strong { font-size: 14.5px; font-weight: 700; line-height: 1.35; }
+.study-progress-stats small { font-size: 12px; line-height: 1.35; color: var(--color-text-secondary); }
+.study-progress-note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--color-text-secondary); }
+.progress-ring {
+  position: relative; display: grid; place-items: center; flex: none; width: 68px; height: 68px;
+  padding: 0; border: 0; border-radius: 50%;
+  background-image: conic-gradient(from -90deg, var(--color-primary) var(--progress, 0deg), var(--ring-track) 0);
+}
+.progress-ring::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--color-surface); }
+.progress-ring > div { position: relative; text-align: center; line-height: 1.2; }
+.progress-ring strong { display: block; font-size: 15px; font-weight: 700; }
+.progress-ring small { font-size: 10px; color: var(--color-text-secondary); }
+
+/* 4 ── Icon grid (the bKash-style "services" block) ───────────────────────
+   One component for every portal: a round brand-tint disc with a line icon,
+   and one short label under it. Rendered by markup (.pay-grid) or by the
+   admin permission grid (.admin-feature-grid) — the same look either way. */
+.pay-grid, .admin-feature-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 0;
+  margin: 16px 0 0; padding: 14px 6px 10px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 22px; box-shadow: var(--pay-shadow);
+}
+.pay-grid.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pay-grid.is-3, .admin-feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pay-tile, .admin-feature-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 8px; min-height: 0; height: auto; padding: 6px 2px 8px; margin: 0;
+  background: transparent; border: 0; border-radius: 16px; box-shadow: none;
+  color: var(--color-text); font-size: 12.5px; font-weight: 600; line-height: 1.35; text-align: center;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.pay-tile:hover, .admin-feature-tile:hover { background: transparent; }
+.pay-tile:active, .admin-feature-tile:active { transform: scale(.95); }
+.pay-tile-icon, .admin-feature-icon {
+  display: grid; place-items: center; flex: none; width: 54px; height: 54px; border-radius: 50%;
+  background: var(--tone-soft, var(--pay-disc)); color: var(--tone, var(--pay-disc-ink));
+  transition: transform .15s ease;
+}
+.pay-tile-icon svg, .admin-feature-icon svg { width: 25px; height: 25px; stroke-width: 1.7; animation: none; }
+.pay-tile-label, .admin-feature-label { display: block; max-width: 100%; font-size: 12.5px; font-weight: 600; line-height: 1.4;
+  overflow-wrap: break-word; word-break: keep-all; }
+.admin-feature-tile::before { display: none; }
+
+/* 5 ── Bottom bar: wallet-style, with a raised centre action ──────────────
+   The bar is a rounded sheet; with five items the middle one becomes a round
+   floating button seated in a notch cut out of the bar (a mask, so whatever
+   scrolls underneath shows through the notch). */
+.bottom-nav, .admin-bottom {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; isolation: isolate;
+  display: flex; align-items: flex-end; justify-content: space-around; gap: 0;
+  min-height: calc(66px + var(--safe-bottom));
+  padding: 6px 6px calc(6px + var(--safe-bottom));
+  background: transparent; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  filter: drop-shadow(0 -3px 10px var(--pay-nav-shadow));
+}
+.bottom-nav::before, .admin-bottom::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: var(--color-surface); border-radius: 22px 22px 0 0;
+}
+.bottom-nav:has(> :nth-child(5):last-child)::before,
+.admin-bottom:has(> :nth-child(5):last-child)::before {
+  -webkit-mask: radial-gradient(circle 37px at 50% 0, transparent 36px, #000 37px);
+  mask: radial-gradient(circle 37px at 50% 0, transparent 36px, #000 37px);
+}
+.bottom-link, .admin-bottom-item {
+  position: static; flex: 1 1 0; min-width: 0; max-width: 112px; min-height: 54px; margin: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px;
+  padding: 4px 2px 2px; background: transparent; border: 0; border-radius: 14px; box-shadow: none;
+  color: var(--color-text-secondary); font-size: 11.5px; font-weight: 500; line-height: 1.25;
+}
+.bottom-link::before, .admin-bottom-item::before { display: none; }
+.bottom-link:hover, .admin-bottom-item:hover { background: transparent; }
+.bottom-link > span:not(.nav-chip), .admin-bottom-item > .nav-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-chip {
+  display: grid; place-items: center; width: 54px; height: 30px; border-radius: 16px;
+  background: transparent; transition: background-color .18s ease;
+}
+.nav-chip svg { width: 24px; height: 24px; stroke-width: 1.7; animation: none; }
+.bottom-link.active, .admin-bottom-item.active { background: transparent; color: var(--color-primary); font-weight: 700; }
+.bottom-link.active .nav-chip, .admin-bottom-item.active .nav-chip {
+  background-image: linear-gradient(var(--pay-disc), var(--pay-disc)); background-color: transparent;
+  box-shadow: none; transform: none; color: var(--color-primary);
+}
+.bottom-link.active .nav-chip svg, .admin-bottom-item.active .nav-chip svg { animation: none; }
+/* The raised centre action (only on a five-item bar). */
+.bottom-nav > :nth-child(3):nth-last-child(3) .nav-chip,
+.admin-bottom > :nth-child(3):nth-last-child(3) .nav-chip {
+  position: absolute; top: -29px; left: 50%; width: 58px; height: 58px; margin-left: -29px; border-radius: 50%;
+  background-image: linear-gradient(150deg, var(--pay-fab-a), var(--pay-fab-b)); color: var(--pay-on-fab);
+  box-shadow: var(--pay-fab-shadow);
+}
+.bottom-nav > :nth-child(3):nth-last-child(3) .nav-chip svg,
+.admin-bottom > :nth-child(3):nth-last-child(3) .nav-chip svg { width: 27px; height: 27px; }
+.bottom-nav > :nth-child(3):nth-last-child(3).active .nav-chip,
+.admin-bottom > :nth-child(3):nth-last-child(3).active .nav-chip {
+  background-image: linear-gradient(150deg, var(--pay-fab-a), var(--pay-fab-b)); color: var(--pay-on-fab);
+}
+.bottom-nav > :nth-child(3):nth-last-child(3),
+.admin-bottom > :nth-child(3):nth-last-child(3) { padding-top: 34px; }
+
+/* Dark: the bar sits on the black canvas (hairline below), the logo is the
+   light-stroked artwork on no plate, and the hero fades navy → black. */
+html[data-theme="dark"] .app-topbar { background: var(--color-bg); border-bottom: 1px solid var(--color-border); }
+html[data-theme="dark"] .app-brand-logo { background: transparent; padding: 0; box-shadow: none; }
+html[data-theme="dark"] .notification-dot { box-shadow: 0 0 0 2px var(--color-bg); }
+html[data-theme="dark"] .pay-avatar { background: var(--pay-disc); color: var(--pay-disc-ink); box-shadow: 0 0 0 2px var(--pay-hero-line); }
+html[data-theme="dark"] .study-progress-card { box-shadow: none; }
+
+/* 6 ── Sections and list rows (student home) ──────────────────────────── */
+.dashboard-section { margin: 22px 0 0; }
+.dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.dashboard-section-heading h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.dashboard-text-link {
+  display: inline-flex; align-items: center; gap: 2px; min-height: 36px; padding: 0 2px;
+  color: var(--color-primary); font-size: 13px; font-weight: 700; background: transparent; border: 0;
+}
+.dashboard-text-link:hover { background: transparent; text-decoration: underline; }
+
+.dashboard-routine-list { display: grid; gap: 0; }
+.dashboard-routine-list:has(.dashboard-routine-card) {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 20px; box-shadow: var(--pay-shadow); overflow: hidden;
+}
+.dashboard-routine-card {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  margin: 0; padding: 12px 14px; background: transparent; border: 0;
+  border-bottom: 1px solid var(--color-border); border-radius: 0; box-shadow: none;
+}
+.dashboard-routine-card:last-child { border-bottom: 0; }
+.dashboard-routine-icon {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink);
+}
+.dashboard-routine-icon.tone-1 { background: var(--tone-mint-soft); color: var(--tone-mint); }
+.dashboard-routine-icon.tone-2 { background: var(--tone-violet-soft); color: var(--tone-violet); }
+.dashboard-routine-icon svg { width: 22px; height: 22px; }
+.dashboard-routine-main { display: grid; gap: 1px; min-width: 0; }
+.dashboard-routine-main strong { font-size: 15px; font-weight: 700; line-height: 1.4; }
+.dashboard-routine-main small { font-size: 12.5px; line-height: 1.45; color: var(--color-text-secondary); }
+.dashboard-time-pill {
+  justify-self: start; margin-top: 5px; padding: 1px 10px; border-radius: 999px;
+  background: var(--color-surface-muted); color: var(--color-text); font-size: 12px; font-weight: 600; line-height: 1.7;
+}
+.dashboard-routine-status {
+  display: inline-flex; align-items: center; gap: 6px; align-self: start; padding-top: 2px;
+  color: var(--pay-success); font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
+.dashboard-routine-status i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dashboard-empty-card { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px; }
+.dashboard-empty-card strong { display: block; font-size: 14.5px; }
+.dashboard-empty-card small { display: block; color: var(--color-text-secondary); }
+.dashboard-empty-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); }
+
+/* Banner cards: the exam call-out is a brand banner (like a wallet promo), the
+   fee and daily-work cards are white rows with a round icon. */
+.dashboard-exam-card, .dashboard-fee-card, .challenge-card {
+  display: flex; align-items: center; gap: 12px; margin: 14px 0 0; padding: 14px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 20px; box-shadow: var(--pay-shadow); color: var(--color-text);
+}
+.dashboard-exam-card[hidden], .dashboard-fee-card[hidden] { display: none; }
+.dashboard-exam-card {
+  border: 0; color: var(--pay-on-hero);
+  background: linear-gradient(135deg, var(--pay-hero-a), var(--pay-hero-b));
+}
+.dashboard-feature-icon, .challenge-icon, .fee-alert-icon, .study-progress-icon {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); font-weight: 700;
+}
+.dashboard-exam-card .dashboard-feature-icon { background: var(--pay-hero-chip); color: var(--pay-on-hero); border: 1px solid var(--pay-hero-line); }
+.fee-alert-icon { background: var(--tone-amber-soft); color: var(--tone-amber); font-size: 20px; }
+.dashboard-fee-card.is-paid .fee-alert-icon { background: var(--pay-success-soft); color: var(--pay-success); }
+.challenge-icon { background: var(--pay-success-soft); color: var(--pay-success); }
+.dashboard-feature-copy, .challenge-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.dashboard-feature-copy strong, .challenge-copy strong { font-size: 15px; font-weight: 700; line-height: 1.4; }
+.dashboard-feature-copy small, .challenge-copy small { font-size: 12.5px; line-height: 1.45; color: var(--color-text-secondary); }
+.dashboard-exam-card .dashboard-feature-copy small { color: var(--pay-on-hero-soft); }
+.dashboard-exam-card .dashboard-primary-action {
+  flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px;
+  background: var(--pay-on-hero); color: var(--pay-hero-b); font-size: 13px; font-weight: 700; box-shadow: none;
+}
+html[data-theme="dark"] .dashboard-exam-card .dashboard-primary-action { background: var(--pay-fab-a); color: var(--pay-on-fab); }
+.dashboard-fee-amount { flex: none; font-size: 17px; font-weight: 700; color: var(--color-text); }
+.dashboard-fee-card.is-flash { animation: pay-flash 1.4s ease; }
+@keyframes pay-flash { 0%, 100% { box-shadow: var(--pay-shadow); } 35% { box-shadow: 0 0 0 5px var(--tone-amber-soft); } }
+.challenge-progress-track { display: block; height: 6px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: var(--ring-track); }
+.challenge-progress-track i { display: block; height: 100%; border-radius: 99px; background: var(--pay-success); }
+.challenge-open, .dashboard-routine-card > button {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; min-height: 44px; min-width: 44px; padding: 0;
+  border-radius: 50%; font-size: 20px; line-height: 1; background: var(--color-surface-muted); border: 0; color: var(--color-text);
+}
+.daily-challenge-section .challenge-card { margin-top: 0; }
+.challenge-star { display: none; }
+
+/* আজকের অনুপ্রেরণা — one compact row between today's classes and the quick
+   menu. Same card material as the other home rows (surface, hairline, 20px
+   radius); the mark is a small tinted disc. Nothing here depends on the
+   network, so the row can never be a spinner or an empty box. */
+.daily-quote-section { margin: 14px 0 0; }
+.daily-quote-card {
+  display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 10px;
+  margin: 0; padding: 12px 14px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 20px; box-shadow: var(--pay-shadow); color: var(--color-text);
+}
+.daily-quote-card[hidden] { display: none; }
+.daily-quote-mark {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--tone-violet-soft); color: var(--tone-violet);
+}
+.daily-quote-mark svg { width: 20px; height: 20px; }
+.daily-quote-text { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.daily-quote-author { font-size: 12px; color: var(--color-text-secondary); }
+.daily-quote-author[hidden] { display: none; }
+
+/* 7 ── Page header: the app bar's colour continues into a rounded band with
+   a back button and the page title. Top-level views only; a heading nested in
+   a card keeps plain text styling. */
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+  margin: 0 0 16px; padding: 16px 0 28px; color: var(--pay-on-hero);
+}
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 12px; left: 50%; width: 100vw; transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--pay-hero-a) 0%, var(--pay-hero-b) 100%); border-radius: 0 0 26px 26px;
+}
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child :is(h1, h2) {
+  margin: 0; color: var(--pay-on-hero); font-size: 21px; font-weight: 700; letter-spacing: -.015em; line-height: 1.35;
+}
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child .eyebrow {
+  margin: 0 0 1px; color: var(--pay-on-hero-soft); font-size: 12px; font-weight: 500; letter-spacing: .02em;
+}
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child p:not(.eyebrow) { display: none; }
+:is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child > div, .page-intro-copy { flex: 1; min-width: 0; }
+.pay-back {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; min-height: 40px; min-width: 40px;
+  padding: 0; border-radius: 50%; color: var(--pay-on-hero);
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+}
+.pay-back:hover { background: var(--pay-hero-line); }
+.pay-back svg { width: 20px; height: 20px; }
+html[data-theme="dark"] .app-main .view > .page-intro:first-child::before { border-bottom: 1px solid var(--color-border); }
+.app-main .view:not(.student-home-view) > :nth-child(2) { margin-top: 0; }
+
+/* 8 ── Student inner views: rows, tabs and cards ───────────────────────── */
+.exam-link {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center; width: 100%; min-height: 64px;
+  margin: 0 0 14px; padding: 12px 16px; text-align: left; border: 0; border-radius: 20px;
+  background: var(--color-surface); color: var(--color-text); font-size: 15px; font-weight: 700;
+  border: 1px solid var(--color-border); box-shadow: var(--pay-shadow);
+}
+.exam-link:hover { background: var(--color-surface); }
+.exam-link small { color: var(--color-text-secondary); font-size: 12.5px; font-weight: 400; }
+#examsView > .exam-link:first-child {
+  width: auto; min-height: 40px; margin: 0 0 8px; padding: 0 14px 0 8px; border-radius: 999px; display: inline-flex; flex-direction: row;
+  font-size: 13.5px; color: var(--color-primary); box-shadow: none;
+}
+.teaching-board, .profile-card, .contact-card, .help-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 20px; box-shadow: var(--pay-shadow); padding: 16px; margin: 0 0 14px;
+}
+.learning-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.learning-heading h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.learning-heading p { margin: 0; font-size: 12.5px; color: var(--color-text-secondary); }
+.learning-home-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); }
+.learning-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.learning-summary > div { display: grid; gap: 0; padding: 10px; border-radius: 14px; background: var(--color-surface-muted); text-align: center; }
+.learning-summary strong { font-size: 18px; font-weight: 700; }
+.learning-summary span { font-size: 11.5px; color: var(--color-text-secondary); }
+.learning-filter, .chip-row, .day-tabs {
+  display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; margin: 10px -4px 12px; padding: 2px 4px 4px;
+  scrollbar-width: none;
+}
+.learning-filter::-webkit-scrollbar, .chip-row::-webkit-scrollbar, .day-tabs::-webkit-scrollbar { display: none; }
+.learning-filter button, .chip, .chip-row button {
+  flex: none; min-height: 38px; padding: 0 16px; border-radius: 999px; white-space: nowrap;
+  background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border);
+  font-size: 13px; font-weight: 600; box-shadow: none; background-image: none;
+}
+.learning-filter button[aria-pressed="true"], .chip.active, .chip-row button.active, .chip-row button[aria-pressed="true"] {
+  background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); background-image: none;
+}
+.learning-filter-count { margin-left: 4px; opacity: .8; }
+.learning-filter button[aria-pressed="true"] .learning-filter-count { color: inherit; opacity: 1; }
+.learning-list { display: grid; gap: 10px; }
+.learning-card, .teaching-card {
+  padding: 14px; margin: 0; background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: none;
+}
+.learning-card-title { font-size: 15px; font-weight: 700; }
+.learning-subject { font-size: 12.5px; color: var(--color-text-secondary); }
+.teaching-kind, .learning-state {
+  display: inline-flex; align-items: center; padding: 1px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  background: var(--pay-disc); color: var(--pay-disc-ink);
+}
+.learning-state.is-complete { background: var(--pay-success-soft); color: var(--pay-success); }
+
+/* Day strip + routine rows */
+.class-context { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 0 0 12px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 18px; box-shadow: var(--pay-shadow); }
+.class-context > span:nth-child(2) { flex: 1; min-width: 0; }
+.class-context small { display: block; color: var(--color-text-secondary); font-size: 12px; }
+.class-context strong { display: block; font-size: 14.5px; }
+.class-context > button { display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
+.mini-avatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); font-weight: 700; }
+.day-tabs { gap: 8px; margin-top: 4px; }
+.day-tab {
+  flex: 1 0 54px; display: grid; justify-items: center; align-content: center; gap: 0; min-height: 64px; padding: 6px 4px;
+  border-radius: 18px; background: var(--color-surface); color: var(--color-text-secondary);
+  border: 1px solid var(--color-border); box-shadow: none; background-image: none;
+}
+.day-tab small { font-size: 11.5px; color: inherit; }
+.day-tab strong { font-size: 18px; font-weight: 700; line-height: 1.3; color: inherit; }
+.day-tab.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); background-image: none; }
+.routine-date { display: flex; align-items: center; gap: 10px; margin: 6px 2px 10px; color: var(--color-text-secondary); font-size: 13.5px; font-weight: 600; }
+.calendar-dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--pay-disc); color: var(--pay-disc-ink); }
+.calendar-dot svg { width: 17px; height: 17px; }
+.class-count { margin-left: auto; padding: 1px 10px; border-radius: 999px; background: var(--color-surface-muted); font-size: 12px; color: var(--color-text); font-weight: 600; }
+.routine-list { display: grid; gap: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 20px; box-shadow: var(--pay-shadow); overflow: hidden; }
+.routine-list[hidden] { display: none; }
+.routine-item {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 12px; margin: 0; padding: 12px 14px;
+  background: transparent; border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0;
+}
+.routine-item:last-child { border-bottom: 0; }
+.routine-time { display: grid; gap: 0; line-height: 1.4; }
+.routine-time strong { font-size: 13px; font-weight: 700; }
+.routine-time small { font-size: 11.5px; color: var(--color-text-secondary); }
+.routine-body { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; }
+.routine-body > span:nth-child(2) { display: grid; min-width: 0; }
+.routine-body strong { font-size: 15px; font-weight: 700; line-height: 1.4; }
+.routine-body small { font-size: 12px; line-height: 1.4; color: var(--color-text-secondary); }
+.subject-block { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; font-weight: 700; font-size: 16px;
+  background: var(--pay-disc); color: var(--pay-disc-ink); }
+.subject-block.purple, .subject-block.violet { background: var(--tone-violet-soft); color: var(--tone-violet); }
+.subject-block.amber, .subject-block.orange { background: var(--tone-amber-soft); color: var(--tone-amber); }
+.subject-block.green, .subject-block.mint { background: var(--tone-mint-soft); color: var(--tone-mint); }
+.routine-tag { padding: 1px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--pay-success-soft); color: var(--pay-success); white-space: nowrap; }
+.routine-tag.test { background: var(--tone-rose-soft); color: var(--tone-rose); }
+.empty-routine { display: grid; justify-items: center; gap: 4px; padding: 28px 16px; margin-top: 8px; text-align: center;
+  background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: 20px; }
+.empty-routine[hidden] { display: none; }
+.empty-routine span { font-size: 28px; }
+.empty-routine strong { font-size: 15px; }
+.empty-routine p { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+
+/* Profile / "আরও": a list of rows, like a wallet's account page */
+.profile-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+.profile-avatar { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; font-weight: 700;
+  background: var(--pay-disc); color: var(--pay-disc-ink); }
+.profile-card h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.profile-card p { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+.student-id { display: inline-flex; gap: 4px; margin: 6px 6px 0 0; padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--color-surface-muted); color: var(--color-text); }
+.edit-button { display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; min-width: 40px; padding: 0; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); border: 0; }
+.contact-card { display: flex; align-items: center; gap: 12px; }
+.contact-icon, .help-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--tone-mint-soft); color: var(--tone-mint); }
+.help-icon { background: var(--pay-disc); color: var(--pay-disc-ink); }
+.contact-copy { display: grid; flex: 1; min-width: 0; line-height: 1.45; }
+.contact-copy span, .contact-copy small { font-size: 12.5px; color: var(--color-text-secondary); }
+.contact-copy strong { font-size: 15px; }
+.whatsapp-button { min-height: 40px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: var(--pay-success-soft); color: var(--pay-success); border: 0; }
+.profile-section { margin: 20px 0 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.profile-section > .eyebrow { margin: 0 4px 8px; color: var(--color-text-secondary); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
+.settings-list { padding: 0; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 20px; box-shadow: var(--pay-shadow); }
+.settings-list > button, .settings-list > label {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin: 0; padding: 10px 14px;
+  border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; background: transparent; text-align: left; font-weight: 400;
+}
+.settings-list > :last-child { border-bottom: 0; }
+.settings-list > button:hover, .settings-list > label:hover { background: var(--color-surface-muted); }
+.settings-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); }
+.settings-icon.mint, .settings-icon.green { background: var(--tone-mint-soft); color: var(--tone-mint); }
+.settings-icon.purple { background: var(--tone-violet-soft); color: var(--tone-violet); }
+.settings-icon.danger { background: var(--tone-rose-soft); color: var(--tone-rose); }
+.settings-copy { display: grid; flex: 1; min-width: 0; line-height: 1.4; }
+.settings-copy strong { font-size: 14.5px; font-weight: 700; }
+.settings-copy small { font-size: 12px; color: var(--color-text-secondary); }
+.saved-tag { padding: 1px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--pay-success-soft); color: var(--pay-success); }
+.logout-button .settings-copy strong { color: var(--tone-rose); }
+.help-card { display: flex; align-items: center; gap: 12px; }
+.help-card > div { flex: 1; min-width: 0; }
+.help-card p { margin: 0; font-size: 12.5px; color: var(--color-text-secondary); }
+.help-card > button { display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; min-width: 40px; padding: 0; border-radius: 50%; }
+.app-version { text-align: center; font-size: 12px; color: var(--color-text-secondary); padding: 20px 0 4px; }
+
+/* 9 ── Buttons, fields, tags ────────────────────────────────────────────── */
+button, .admin-btn, .mini-btn, .rc-back { border-radius: 14px; transition: background-color .15s ease, transform .12s ease, border-color .15s ease; }
+button:active, .admin-btn:active, .mini-btn:active { transform: scale(.98); }
+button.primary, button[type="submit"], .auth-submit, .modal-action, .rc-generate, .rc-download, .dashboard-primary-action, .step-next {
+  min-height: 50px; border-radius: 14px; font-size: 15px; font-weight: 700;
+  background-color: var(--color-primary); background-image: none; border-color: var(--color-primary); color: var(--color-surface); box-shadow: none;
+}
+button.primary:hover, button[type="submit"]:hover { background-color: var(--color-primary-hover); background-image: none; }
+button:disabled, button[disabled] { opacity: .55; cursor: not-allowed; }
+.admin-btn.ghost, .mini-btn { background: var(--color-surface); color: var(--color-primary); border: 1.5px solid var(--color-border); font-weight: 600; }
+.mini-btn { min-height: 38px; padding: 0 14px; border-radius: 999px; font-size: 13px; }
+input, select, textarea {
+  min-height: 50px; padding: 12px 14px; border-radius: 14px; background: var(--color-surface);
+  border: 1.5px solid var(--color-border); transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--color-primary); outline: 0; box-shadow: 0 0 0 4px var(--tone-blue-soft); }
+input::placeholder, textarea::placeholder { color: var(--color-text-muted); }
+label { font-size: 13.5px; font-weight: 600; margin-block: 14px 6px; }
+.badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background-image: none;
+  background-color: var(--pay-disc); color: var(--pay-disc-ink); border: 0; }
+.badge-approved { background-color: var(--pay-success-soft); color: var(--pay-success); }
+.badge-pending { background-color: var(--tone-amber-soft); color: var(--color-warning); }
+.badge-rejected { background-color: var(--tone-rose-soft); color: var(--color-danger); }
+
+/* 10 ── Staff portal homes: the same band + floating summary + services ─── */
+.admin-main { padding: 0 16px calc(110px + var(--safe-bottom)); }
+.admin-hero { position: relative; isolation: isolate; margin: 0; padding: 14px 0 0; overflow: visible; background: transparent; border: 0; box-shadow: none; }
+.admin-hero::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 44px; left: 50%; width: 100vw; transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--pay-hero-a), var(--pay-hero-b)); border-radius: 0 0 30px 30px;
+}
+/* The Teacher home has no floating stats card below its title, so add a little
+   extra blue base to match the deeper hero landing on the other home screens. */
+.teacher-hero { padding-bottom: var(--space-5); }
+.teacher-hero::before { bottom: 0; }
+.teacher-hero .teacher-welcome-note { color: var(--pay-on-hero-soft); }
+.teacher-hero #teacherHomeTitle { overflow-wrap: anywhere; }
+.admin-hero-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; color: var(--pay-on-hero); }
+.admin-hero-title { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-width: 0; margin: 0; }
+.admin-hero-title h1, .teacher-hero h1 { margin: 0; color: var(--pay-on-hero); font-size: 21px; font-weight: 700; line-height: 1.35; }
+.admin-hero-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%;
+  background: var(--pay-hero-chip); color: var(--pay-on-hero); border: 1px solid var(--pay-hero-line); }
+.admin-hero-icon svg { width: 23px; height: 23px; }
+.pay-portal-heading { min-width: 0; }
+.pay-portal-kicker, .admin-hero .admin-welcome { width: auto; max-width: none; margin: 0 0 2px; padding: 0;
+  color: var(--pay-on-hero-soft); font-size: 12.5px; line-height: 1.4; }
+.admin-date-pill, .admin-hero-head > .badge { padding: 3px 12px; border-radius: 999px; background: var(--pay-hero-chip);
+  color: var(--pay-on-hero); border: 1px solid var(--pay-hero-line); font-size: 12px; white-space: nowrap; }
+.admin-hero-stats, .manager-kpi-grid, .teacher-summary {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; padding: 6px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 22px; box-shadow: var(--pay-shadow);
+  overflow: hidden;
+}
+.admin-hero-stats > .admin-stat-tile, .manager-kpi-grid > .admin-stat-tile, .teacher-summary > div {
+  position: relative; display: grid; align-content: center; gap: 3px; min-height: 90px; padding: 12px 14px; margin: 0;
+  background: transparent; border: 0; border-radius: 0; box-shadow: none; color: var(--color-text);
+}
+.admin-hero-stats > :nth-child(odd), .manager-kpi-grid > :nth-child(odd), .teacher-summary > :nth-child(odd) { border-right: 1px solid var(--color-border); }
+.admin-hero-stats > :nth-last-child(n+3), .manager-kpi-grid > :nth-last-child(n+3), .teacher-summary > :nth-last-child(n+3) { border-bottom: 1px solid var(--color-border); }
+.admin-hero-stats .tile-label, .manager-kpi-grid .tile-label, .teacher-summary span { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--color-text-secondary); }
+.admin-hero-stats .tile-value, .manager-kpi-grid .tile-value, .teacher-summary strong { margin: 0; font-size: 23px; line-height: 1.3; font-weight: 700; font-variant-numeric: tabular-nums; }
+.admin-hero-stats .tile-icon { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px;
+  border-radius: 50%; background: var(--tone-soft, var(--pay-disc)); color: var(--tone, var(--pay-disc-ink)); }
+.admin-hero-stats .tile-icon svg { width: 17px; height: 17px; }
+.admin-hero-stats .tile-label { padding-right: 32px; }
+.pay-section-label { font-size: 15px; font-weight: 700; margin: 22px 2px 8px; color: var(--color-text); }
+.pay-section-label + .admin-feature-grid { margin-top: 0; }
+.manager-dashboard-grid { gap: 14px; margin-top: 0; }
+.manager-dashboard-grid > .admin-card { margin: 0; }
+.manager-status-line { font-weight: 700; font-size: 15px; }
+.manager-inline-summary { font-size: 13.5px; color: var(--color-text-secondary); }
+.manager-compact-row { padding: 10px 0; border-bottom: 1px solid var(--color-border); font-size: 14px; }
+.manager-compact-row:last-child { border-bottom: 0; }
+.manager-compact-row small { font-size: 12px; color: var(--color-text-secondary); }
+.tone-blue { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+.tone-mint { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+.tone-amber { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+.tone-lilac, .tone-violet { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+.tone-rose { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+.teacher-shell .pay-grid { margin-bottom: 18px; }
+.teacher-toolbar, .staff-toolbar, .student-filter-panel { border-radius: 18px; box-shadow: var(--pay-shadow); margin: 14px 0; padding: 16px;
+  background: var(--color-surface); border: 1px solid var(--color-border); }
+.teacher-section-heading { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 8px; gap: 10px; }
+.teacher-section-heading h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.teacher-section-heading small { font-size: 12px; }
+.teacher-record-list, .exam-list, .exam-results { margin: 10px 0; gap: 10px; }
+.teacher-record-list .teaching-card { padding: 14px; border-radius: 18px; box-shadow: var(--pay-shadow); }
+.teacher-record-list h3 { margin: 7px 0 2px; font-size: 15px; font-weight: 700; }
+.teacher-type-tabs.pay-grid,
+#teacherStatusFilter.pay-grid { display: grid; overflow: visible; flex-wrap: unset; }
+.teacher-type-tabs.pay-grid > .pay-tile.active,
+#teacherStatusFilter.pay-grid > .pay-tile.active { outline: 2px solid var(--color-primary); }
+.tab-count { opacity: .8; margin-left: 2px; }
+.teacher-list-more { width: 100%; border-radius: 999px; margin: 12px 0; color: var(--color-primary); }
+.teacher-menu-label { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); padding: 16px 16px 4px; margin: 0; }
+
+/* 11 ── Cards, lists, search and More (all staff screens) ──────────────── */
+.admin-card, .pay-card, .staff-card, .student-card, .rc-head, #records > article {
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 20px; padding: 16px; margin-bottom: 14px; box-shadow: var(--pay-shadow);
+}
+.admin-card-head { gap: 10px; margin-bottom: 12px; align-items: center; }
+.admin-card-head h2, .admin-card > h2, .pay-card > h2 { font-size: 17px; line-height: 1.4; font-weight: 700; margin: 0; }
+.admin-card-head .eyebrow { margin: 0; font-size: 11.5px; font-weight: 600; color: var(--color-primary); }
+.finance-hint, .teacher-local-note { font-size: 13px; line-height: 1.7; color: var(--color-text-secondary); }
+.admin-more-menu.admin-card { padding: 0; overflow: hidden; border-radius: 20px; }
+.admin-more-item { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 12px 16px;
+  background: transparent; border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; text-align: left; }
+.admin-more-item:hover { background: var(--color-surface-muted); }
+.admin-more-item:last-child { border-bottom: 0; }
+.admin-more-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--pay-disc); color: var(--pay-disc-ink); }
+.admin-more-icon svg { width: 22px; height: 22px; }
+.admin-more-item:nth-child(3n+2) .admin-more-icon { background: var(--tone-mint-soft); color: var(--tone-mint); }
+.admin-more-item:nth-child(3n) .admin-more-icon { background: var(--tone-violet-soft); color: var(--tone-violet); }
+.admin-more-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.admin-more-copy strong { font-size: 15px; font-weight: 700; }
+.admin-more-copy small { margin: 0; font-size: 12.5px; color: var(--color-text-secondary); }
+.admin-menu-arrow { width: 19px; height: 19px; color: var(--color-text-secondary); }
+.admin-more-item.is-logout .admin-more-icon { background: var(--tone-rose-soft); color: var(--tone-rose); }
+.admin-more-item.is-logout strong { color: var(--tone-rose); }
+.student-row, .staff-list-item, .manager-record, .staff-card {
+  border-radius: 18px; border: 1px solid var(--color-border); padding: 14px; background: var(--color-surface); box-shadow: var(--pay-shadow); margin-bottom: 0;
+}
+.student-row { margin-bottom: 10px; }
+.student-row h3, .manager-record h2, .staff-card h3 { font-size: 15px; font-weight: 700; }
+.student-avatar, .staff-avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); font-size: 18px; font-weight: 700; }
+:is(.student-search, .staff-search, .student-search-box, .manager-search) { min-width: 0; }
+.student-search, .staff-search { display: flex; align-items: center; position: relative; margin: 0; }
+.student-search > svg, .staff-search-icon { position: absolute; left: 14px; display: grid; place-items: center; width: 22px; height: 22px; color: var(--color-text-secondary); }
+.student-search input, .staff-search input { padding-left: 46px; padding-right: 44px; }
+.student-count-badge, .staff-count-badge { display: inline-flex; padding: 2px 10px; margin-top: 8px; border-radius: 999px; background: var(--pay-disc); color: var(--pay-disc-ink); font-size: 12px; font-weight: 600; }
+.student-filter-toggle { border-radius: 999px; min-height: 40px; color: var(--color-primary); }
+.manager-filter-row, .app-field-row, .manager-finance-kpis, .app-control-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 14px; }
+.app-control-grid > .admin-card, .manager-finance-kpis > .admin-card { margin: 0; }
+.app-control-grid > * { min-width: 0; }
+.manager-finance-kpis strong { display: block; font-size: 23px; font-weight: 700; }
+.manager-profile-list { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.manager-profile-list > div { min-width: 0; }
+.manager-profile-list strong { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.theme-card { padding: 0 16px; }
+.theme-card .settings-toggle { gap: 12px; min-height: 72px; margin: 0; }
+.staff-create-bar { margin-top: 16px; }
+.staff-create-btn { width: 100%; }
+.data-row, .class-row, .security-row { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+.data-row:last-child, .class-row:last-child, .security-row:last-child { border-bottom: 0; }
+.class-copy { flex: 1; min-width: 0; }
+.class-copy strong { display: block; font-size: 14px; }
+.class-copy small { display: block; }
+.ledger-row { border-radius: 18px; }
+.admin-empty, .teacher-empty, .empty-state, .dashboard-empty, .rc-preview-empty {
+  margin: 8px 0; padding: 24px 16px; text-align: center; font-size: 13.5px; line-height: 1.7;
+  border: 1px dashed var(--color-border); border-radius: 18px; background: var(--color-surface); color: var(--color-text-secondary);
+}
+.auth-message, .finance-error, .learning-error, .staff-pw-error {
+  padding: 12px 14px; border: 1px solid var(--color-danger); border-left-width: 3px; border-radius: 14px;
+  font-size: 13px; line-height: 1.7; color: var(--color-danger); background: var(--tone-rose-soft);
+}
+/* On the photographic login sky a translucent rose wash left the red ink
+   fighting the clouds: the banner keeps its tint over a solid surface base. */
+.auth-screen .auth-message {
+  background: var(--color-surface);
+  background: color-mix(in srgb, var(--tone-rose-soft) 78%, var(--color-surface));
+  box-shadow: var(--pay-shadow);
+}
+
+/* 12 ── Payment counter: a wallet summary and a three-step collection flow */
+.pay-body .app-topbar { position: sticky; top: 0; z-index: 50; }
+.pay-main { display: block; padding: 0 16px calc(120px + var(--safe-bottom)); }
+.pay-pulse { position: relative; isolation: isolate; margin: 0 0 18px; padding-top: 12px; }
+.pay-pulse::before { content: ''; position: absolute; z-index: -1; top: 0; bottom: 36px; left: 50%; width: 100vw; transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--pay-hero-a), var(--pay-hero-b)); border-radius: 0 0 30px 30px; }
+.pay-counter-heading { padding: 0 0 16px; }
+.pay-counter-heading h1 { margin: 0; font-size: 22px; font-weight: 700; color: var(--pay-on-hero); }
+.pay-pulse-tile { display: flex; align-items: center; gap: 14px; margin: 0; padding: 18px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-bottom: 0; border-radius: 22px 22px 0 0; box-shadow: none; }
+.pay-pulse-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--pay-success-soft); color: var(--pay-success); }
+.pay-pulse-icon svg { width: 27px; height: 27px; }
+.pay-pulse-label { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+.pay-pulse-value { margin: 2px 0 0; font-size: 30px; line-height: 1.3; font-weight: 700; }
+.pay-pulse-sub { margin: 0; font-size: 11.5px; color: var(--color-text-secondary); }
+.pay-pulse-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 0 16px 12px; overflow: hidden;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-top: 0; border-radius: 0 0 22px 22px; box-shadow: var(--pay-shadow); }
+.pay-pulse-mini { padding: 12px 0 0; background: transparent; border: 0; border-top: 1px dashed var(--color-border); border-radius: 0; }
+.pay-pulse-mini + .pay-pulse-mini { padding-left: 16px; }
+.pay-pulse-mini-value { display: block; margin: 2px 0 0; font-size: 20px; line-height: 1.3; font-weight: 700; }
+.pay-flow { list-style: none; display: flex; align-items: center; gap: 12px; padding: 0 8px; margin: 0 0 14px; }
+.pay-flow li { flex: 1; display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+.pay-flow li:not(:last-child)::after { content: ''; flex: 1; height: 1px; background: var(--color-border); margin-left: 3px; }
+.pay-flow li > span { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); }
+.pay-flow li.active { color: var(--color-primary); }
+.pay-flow li.active > span { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-surface); }
+.pay-search-card { border-top: 1px solid var(--color-border); order: initial; }
+.pay-search-card .finance-search-body > label { font-weight: 500; color: var(--color-text-secondary); font-size: 12.5px; }
+.pay-search-card #paySearchHint { font-size: 12px; margin: 6px 0 0; }
+.pay-pick-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px 6px; }
+.pay-pick-title { font-size: 12px; font-weight: 700; margin: 14px 0 6px; color: var(--color-text-secondary); }
+.pay-pick { display: grid; align-content: center; justify-content: start; flex: 0 0 auto; min-width: 144px; max-width: 190px; padding: 10px 14px; gap: 0; text-align: left;
+  background: var(--color-surface-muted); color: var(--color-text); border: 1px solid transparent; border-radius: 16px; }
+.pay-pick strong { font-size: 13.5px; font-weight: 700; }
+.pay-pick small { font-size: 11.5px; color: var(--color-text-secondary); }
+.pay-pick[aria-pressed="true"] { border-color: var(--color-primary); background: var(--pay-disc); }
+.fee-search-result { display: flex; align-items: center; width: 100%; gap: 12px; padding: 12px; margin-top: 8px; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); text-align: left; }
+.fee-search-result > span:nth-child(2) { display: grid; flex: 1; min-width: 0; }
+.fee-search-result strong { font-size: 14.5px; }
+.fee-search-result small { font-size: 12px; color: var(--color-text-secondary); }
+.fee-search-result[aria-pressed="true"] { background: var(--pay-disc); border-color: var(--color-primary); }
+.fee-profile-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.fee-profile-heading > div { flex: 1; min-width: 0; }
+.fee-profile-heading h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.pay-due-hero { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; margin: 12px 0;
+  background: var(--tone-amber-soft); }
+.pay-due-hero.is-clear { background: var(--pay-success-soft); }
+.pay-due-hero > div { flex: 1; min-width: 0; }
+.pay-due-label { margin: 0; color: var(--color-text-secondary); font-size: 12px; }
+.pay-due-value { font-size: 26px; line-height: 1.3; font-weight: 700; margin: 0; }
+.pay-due-note { flex: 0 1 42%; margin: 0; font-size: 12px; line-height: 1.6; color: var(--color-text-secondary); }
+.fee-profile-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
+.fee-profile-details > div { min-width: 0; }
+.fee-profile-details dt, .fee-balance-grid dt { font-size: 12px; color: var(--color-text-secondary); }
+.fee-profile-details dd, .fee-balance-grid dd { margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.fee-balance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 12px 0; }
+.fee-balance-grid > div { padding: 10px; border: 0; border-radius: 14px; background: var(--color-surface-muted); }
+.fee-profile-collect { width: 100%; }
+.finance-payment-for { margin: 12px 0 0; padding: 12px; border-radius: 14px; background: var(--pay-disc); color: var(--color-text); font-size: 13px; font-weight: 700; }
+.pay-amount-block { margin: 14px 0; padding: 16px; background: var(--color-surface-muted); border-radius: 18px; }
+.pay-amount-block label { margin-top: 0; }
+.pay-amount-field { position: relative; }
+.pay-amount-taka { top: 50%; left: 16px; transform: translateY(-50%); font-size: 27px; color: var(--color-primary); }
+.pay-amount-field input { min-height: 68px; padding-left: 48px; font-size: 30px; font-weight: 700; background: var(--color-surface); color: var(--color-text); }
+.quick-amount-row { margin: 10px 0; gap: 6px; }
+.quick-amount { min-height: 36px; padding: 0 10px; border-radius: 999px; font-size: 12px; background: var(--color-surface); color: var(--color-primary); border: 1px solid var(--color-border); }
+.pay-keypad { gap: 8px; margin-top: 10px; }
+.pay-keypad > button { min-height: 52px; font-size: 23px; font-weight: 600; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; }
+.pay-block-label { display: block; font-size: 13px; font-weight: 700; margin-top: 14px; }
+.pay-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 16px; }
+.pay-method { min-height: 46px; padding: 8px 10px; border-radius: 14px; font-size: 13px; background: var(--color-surface); }
+.pay-method[aria-checked="true"] { color: var(--color-primary); background: var(--pay-disc); border-color: var(--color-primary); }
+.pay-stickybar { position: fixed; z-index: 45; bottom: calc(104px + var(--safe-bottom)); left: 12px; right: 12px; width: auto; max-width: 640px; margin: auto;
+  padding: 12px; gap: 12px; border: 1px solid var(--color-border); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-dialog); }
+.pay-sticky-copy { min-width: 0; flex: 1; }
+.pay-sticky-copy strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-sticky-copy small { font-size: 11.5px; color: var(--color-text-secondary); }
+.pay-stickybar .admin-btn { flex: 0 0 auto; padding: 10px 14px; min-height: 44px; border-radius: 999px; font-size: 13px; }
+.pay-shell:has(#payStickyBar:not([hidden])) .pay-main { padding-bottom: calc(220px + var(--safe-bottom)); }
+.pay-activity-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; text-align: left; border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; background: transparent; }
+.pay-activity-copy { display: grid; flex: 1; min-width: 0; }
+.pay-activity-copy strong { font-size: 14px; }
+.pay-activity-copy small { font-size: 12px; color: var(--color-text-secondary); }
+.pay-activity-amount { font-size: 16px; font-weight: 700; }
+.pay-activity-refresh { display: grid; place-items: center; width: 38px; height: 38px; min-height: 38px; min-width: 38px; padding: 0; border-radius: 50%; color: var(--color-primary); }
+/* More/report sub-pages never share the desktop collection columns. */
+.pay-main:is([data-pay-view="settings"], [data-pay-view="reports"]) { display: block; }
+.pay-main[data-pay-view="settings"] #payDeskTools { max-width: 720px; margin: 20px auto 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.pay-main[data-pay-view="reports"] #payReportsCard { max-width: 1000px; margin: 20px auto 0; }
+.pay-desk-tools .page-intro { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.pay-desk-tools .page-intro h1 { margin: 0; }
+.pay-desk-tools .page-intro > div { min-width: 0; }
+/* These plain headings have no blue hero behind them: use readable blue ink. */
+:is(#payDeskTools, #payReportsCard) .pay-back { background: var(--pay-disc); color: var(--color-primary); border: 0; }
+#payReportsCard > .admin-card-head { justify-content: flex-start; gap: 12px; }
+#payReportsCard > .admin-card-head > div { min-width: 0; }
+.pay-success { gap: 12px; }
+.pay-success-ring { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--pay-success-soft); color: var(--pay-success); }
+
+/* Counter 147: today default, private phone search and explicit payment reports.
+   No dashboard
+   columns, footer spacer, balance cards, keypad or roster directory. */
+.pay-main.pay-counter-minimal { display: block; max-width: 820px; padding: 20px 16px calc(28px + var(--safe-bottom)); }
+.pay-counter-minimal .counter-page-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.counter-page-title h1 { margin: 0; font-size: 23px; }
+.counter-page-title .eyebrow { margin: 0 0 4px; color: var(--color-primary); }
+.pay-counter-minimal > .admin-card, #payCounterHome > .admin-card { margin: 0 0 16px; grid-column: auto; grid-row: auto; }
+.pay-counter-minimal h2 { margin: 0 0 12px; font-size: 18px; }
+.pay-counter-minimal .pay-search-card { border-top: 0; }
+.pay-counter-minimal .pay-search-input { position: relative; }
+.pay-counter-minimal .fee-search-result { width: 100%; padding: 12px; margin-top: 8px; }
+.pay-counter-minimal .fee-search-result > span { display: grid; min-width: 0; }
+.pay-counter-minimal small { color: var(--color-text-secondary); }
+.counter-student-brief { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.counter-student-brief > div { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.counter-student-brief .admin-btn { flex: none; }
+.pay-counter-minimal .pay-form { padding: 0; }
+.pay-counter-minimal #payFeeAmount { font-size: 24px; min-height: 54px; }
+.pay-counter-minimal .pay-activity-copy { overflow-wrap: anywhere; }
+.pay-counter-minimal .pay-activity-amount { flex: none; }
+.pay-body:has(.pay-counter-minimal) .pay-toast { bottom: calc(20px + var(--safe-bottom)); }
+@media (max-width: 420px) { .pay-counter-minimal .counter-page-title { flex-direction: column; gap: 4px; } }
+
+/* Counter reports are an explicit sub-view, not an always-open dashboard. */
+.counter-view-switch { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.counter-view-switch [aria-current="page"] { background: var(--pay-disc); color: var(--color-primary); }
+.counter-report-form { display: grid; gap: 14px; }
+.counter-report-form label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+.counter-report-contact-option { display: flex !important; align-items: center; gap: 8px; }
+.counter-report-contact-option input { width: 18px; min-height: 18px; }
+.counter-report-preview { margin-top: 20px; min-width: 0; }
+.counter-report-preview .modal-actions { margin-bottom: 14px; }
+.counter-report-matches { display: grid; gap: 6px; }
+.counter-financial-preview { background: var(--color-surface); }
+.counter-report-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 16px 0; }
+.counter-report-summary dt { font-size: 12px; color: var(--color-text-secondary); }
+.counter-report-summary dd { margin: 2px 0 0; font-size: 16px; font-weight: 700; }
+.counter-report-table-scroll { max-width: 100%; overflow-x: auto; margin: 12px 0 20px; }
+.counter-financial-table { min-width: 820px; font-size: 13px; }
+.counter-financial-table th, .counter-financial-table td { padding: 10px; white-space: nowrap; border-bottom: 1px solid var(--color-border); }
+@media (max-width:600px) {
+ .counter-financial-table { min-width: 0; width: 100%; }
+ .counter-financial-table thead { display: none; }
+ .counter-financial-table tbody { display: grid; gap: 12px; }
+ .counter-financial-table tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 14px; border: 1px solid var(--color-border); border-radius: 16px; }
+ .counter-financial-table td { display: block; min-width: 0; padding: 0; border: 0; white-space: normal; overflow-wrap: anywhere; }
+ .counter-financial-table td::before { content: attr(data-label); display: block; margin-bottom: 3px; font-size: 11px; color: var(--color-text-secondary); }
+}
+
+/* 13 ── Login and registration: a brand header and a clean form sheet ───── */
+.auth-screen { background: var(--color-bg); padding: 24px 16px calc(32px + var(--safe-bottom)); transition: background 600ms ease; }
+.auth-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.auth-card { position: relative; z-index: 1; }
+/* The sky is a real photograph per weather state (assets/sky/*.jpg, one file
+   fetched per visit, cache-first afterwards). The old cartoon sun disc and
+   three puff-ball clouds are gone: the orb is now a soft atmospheric glow and
+   the clouds are wide blurred haze bands, so nothing reads as a sticker on
+   top of the photo. Every colour lives in the foundation sky palette; the
+   scrim melts the photo into the page and keeps the transparent brand card
+   readable. */
+.auth-orb { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.auth-cloud { position: absolute; top: 72px; left: 4%; width: 62vw; height: 130px; border-radius: 50%;
+  background: var(--sky-haze); filter: blur(14px); }
+.auth-cloud::before, .auth-cloud::after { content: none; }
+.auth-cloud.c1 { left: 8%; animation: apc-cloud-drift 26s linear infinite; }
+.auth-cloud.c2 { left: 36%; top: 168px; width: 72vw; opacity: .8; animation: apc-cloud-drift 34s linear infinite reverse; }
+.auth-cloud.c3 { right: 4%; left: auto; top: 44px; width: 48vw; opacity: .6; animation: apc-cloud-drift 30s linear infinite; }
+@keyframes apc-cloud-drift { from { transform: translateX(0); } to { transform: translateX(28px); } }
+/* The orb IS the sun or the moon: js/login.js walks it along the day's arc
+   through --orb-x/--orb-y/--orb-size and marks it with data-celestial, so it
+   rises, peaks and sets instead of standing still. No glow behind a full
+   cloud deck — the photograph owns those skies. */
+.auth-orb { left: var(--orb-x, 70%); top: var(--orb-y, 22vh);
+  width: var(--orb-size, 180px); height: var(--orb-size, 180px);
+  transition: left 90s linear, top 90s linear, width 400ms ease, height 400ms ease, opacity 600ms ease; }
+.auth-screen[data-celestial=sun] .auth-orb { background: var(--sky-orb-sun); filter: blur(2px); }
+.auth-screen[data-celestial=sun][data-orb-warm=high] .auth-orb { background: var(--sky-orb-sun-warm); filter: blur(4px); }
+.auth-screen[data-celestial=sun][data-orb-warm=mid] .auth-orb { background: var(--sky-orb-sun); filter: blur(3px); }
+.auth-screen[data-celestial=moon] .auth-orb { background: var(--sky-orb-moon); filter: blur(2px); }
+.auth-screen[data-sky=cloudy] .auth-orb,
+.auth-screen[data-sky=rain] .auth-orb,
+.auth-screen[data-sky=storm] .auth-orb,
+.auth-screen[data-sky=fog] .auth-orb { display: none; }
+.auth-screen[data-sky=storm] .auth-cloud { opacity: .45; }
+.auth-screen[data-sky=clear-night] .auth-cloud { opacity: .5; background: var(--sky-haze-night); }
+@media (prefers-reduced-motion: reduce) {
+  .auth-cloud { animation: none; }
+}
+/* Layer order per state: [optional tint/haze] → readability scrim → the
+   photograph → the gradient fallback for offline/no-photo. Only the current
+   state's photograph is ever fetched. */
+.auth-screen[data-sky] { background-position: center top; background-repeat: no-repeat; }
+.auth-screen[data-sky=clear-day] { background-image: var(--sky-scrim-bright), url('../assets/sky/clear-day.jpg'), var(--sky-fall-day);
+  background-size: auto, cover, auto;  background-position: 70% top;}
+.auth-screen[data-sky=heat] { background-image: var(--sky-warm-wash), var(--sky-scrim-bright), url('../assets/sky/clear-day.jpg'), var(--sky-fall-heat);
+  background-size: auto, auto, cover, auto;  background-position: 70% top;}
+.auth-screen[data-sky=dusk] { background-image: var(--sky-scrim-dusk), url('../assets/sky/dusk.jpg'), var(--sky-fall-dusk);
+  background-size: auto, cover, auto; }
+.auth-screen[data-sky=dawn] { background-image: var(--sky-scrim-dawn), url('../assets/sky/dawn.jpg'), var(--sky-fall-dawn);
+  background-size: auto, cover, auto; }
+.auth-screen[data-sky=clear-night] { background-image: var(--sky-scrim-night), url('../assets/sky/clear-night.jpg'), var(--sky-fall-night);
+  background-size: auto, cover, auto; }
+.auth-screen[data-sky=cloudy] { background-image: var(--sky-scrim-mid), url('../assets/sky/cloudy.jpg'), var(--sky-fall-cloudy);
+  background-size: auto, cover, auto; }
+.auth-screen[data-sky=fog] { background-image: var(--sky-fog-wash), var(--sky-scrim-fog), url('../assets/sky/cloudy.jpg'), var(--sky-fall-fog);
+  background-size: auto, auto, cover, auto; }
+.auth-screen[data-sky=rain] { background-image: var(--sky-scrim-rain), url('../assets/sky/rain.jpg'), var(--sky-fall-rain);
+  background-size: auto, cover, auto; }
+.auth-screen[data-sky=storm] { background-image: var(--sky-scrim-storm), url('../assets/sky/storm.jpg'), var(--sky-fall-storm);
+  background-size: auto, cover, auto; }
+/* Over a photograph the brand is hero text: light states keep the ink
+   colours under the scrim, dark skies switch to light ink with a soft
+   shadow so it never fights the clouds. */
+.auth-screen[data-sky=clear-day] .auth-brand h1,
+.auth-screen[data-sky=heat] .auth-brand h1,
+.auth-screen[data-sky=cloudy] .auth-brand h1,
+.auth-screen[data-sky=fog] .auth-brand h1,
+.auth-screen[data-sky=clear-day] .auth-brand p,
+.auth-screen[data-sky=heat] .auth-brand p,
+.auth-screen[data-sky=cloudy] .auth-brand p,
+.auth-screen[data-sky=fog] .auth-brand p { text-shadow: var(--sky-ink-shadow-paper); }
+.auth-screen[data-sky=clear-night] .auth-brand h1,
+.auth-screen[data-sky=storm] .auth-brand h1,
+.auth-screen[data-sky=dusk] .auth-brand h1,
+.auth-screen[data-sky=dawn] .auth-brand h1 { color: var(--sky-ink-strong); text-shadow: var(--sky-ink-shadow); }
+.auth-screen[data-sky=clear-night] .auth-brand p,
+.auth-screen[data-sky=storm] .auth-brand p,
+.auth-screen[data-sky=rain] .auth-brand p,
+.auth-screen[data-sky=dusk] .auth-brand p,
+.auth-screen[data-sky=dawn] .auth-brand p { color: var(--sky-ink-soft); text-shadow: var(--sky-ink-shadow-soft); }
+/* ঋতু washes — one soft tint per Bengali season, laid over the sky photo so
+   a June monsoon morning and a December dawn never share one palette. */
+.auth-sky::before { content: ''; position: absolute; inset: 0 0 auto; height: 46%; opacity: .9; }
+.auth-screen[data-season=sheet] .auth-sky::before { background: var(--sky-wash-sheet); }
+.auth-screen[data-season=basant] .auth-sky::before { background: var(--sky-wash-basanta); }
+.auth-screen[data-season=grishmo] .auth-sky::before { background: var(--sky-wash-grishmo); }
+.auth-screen[data-season=borsha] .auth-sky::before { background: var(--sky-wash-borsha); }
+.auth-screen[data-season=shorot] .auth-sky::before { background: var(--sky-wash-shorot); }
+.auth-screen[data-season=hemonto] .auth-sky::before { background: var(--sky-wash-hemonto); }
+/* The living status line: greeting · ঋতু · আবহাওয়া, recomputed every minute. */
+.auth-screen .auth-brand p.auth-sky-note { display: inline-block; margin: 8px 0 0; padding: 5px 13px;
+  border-radius: 999px; background: var(--sky-note-bg); color: var(--sky-note-ink);
+  text-shadow: none; font-size: 11.5px; font-weight: 600; letter-spacing: .02em; animation: none; }
+.auth-card { position: relative; width: 100%; max-width: 460px; margin: 0 auto; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.auth-brand { text-align: center; margin-bottom: 22px; }
+.auth-brand img { display: block; width: 76px; height: 76px; padding: 8px; margin: 0 auto 12px; border-radius: 22px;
+  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--pay-shadow); }
+.auth-brand h1 { color: var(--color-primary); font-size: 26px; font-weight: 700; margin: 0 0 4px; letter-spacing: -.025em; }
+.auth-brand p { color: var(--color-text-secondary); font-size: 14px; font-weight: 500; display: inline-block; animation: apc-tagline-drift 4.8s ease-in-out infinite; }
+@keyframes apc-tagline-drift {
+  0%, 100% { transform: translateY(0); letter-spacing: 0; opacity: .82; }
+  50% { transform: translateY(-4px); letter-spacing: .06em; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-brand p { animation: none; }
+}
+.auth-tabs { margin: 0 0 12px; padding: 5px; border: 0; border-radius: 16px; gap: 5px; background: var(--color-surface-muted); box-shadow: none; }
+.auth-tab { min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--color-text-secondary); font-weight: 600; }
+.auth-tab.active { background: var(--color-surface); color: var(--color-primary); border: 0; box-shadow: var(--pay-shadow); font-weight: 700; }
+.auth-panel.active { padding: 20px; border: 1px solid var(--color-border); border-radius: 24px; background: var(--color-surface); box-shadow: var(--pay-shadow); }
+.auth-panel-heading { text-align: left; margin: 0 0 16px; }
+.auth-panel-heading h2 { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+.auth-panel-heading p { margin: 0; font-size: 13px; }
+.auth-screen .form-row { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 0 8px; margin: 14px 0 4px; }
+.auth-screen .remember-label { display: inline-flex; gap: 7px; margin: 0; min-height: 44px; font-size: 12.5px; font-weight: 500; }
+.auth-screen .link-button { font-size: 12.5px; font-weight: 600; padding: 0; }
+.auth-submit { margin-top: 14px; }
+.auth-footnote { margin: 18px 0 0; color: var(--color-text-secondary); font-size: 12.5px; line-height: 1.7; }
+.inline-link { display: inline; padding: 0; min-height: 44px; font-size: inherit; text-decoration: underline; }
+.registration-progress { margin: 12px 0 16px; padding: 14px; border-radius: 14px; background: var(--color-surface-muted); }
+.step-progress-track { height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-border); }
+#registrationProgressBar { display: block; height: 100%; border-radius: 999px; background: var(--color-primary); transition: width .18s ease; }
+.step-progress-meta { align-items: center; gap: 12px; margin-top: 7px; font-size: 12px; color: var(--color-text-secondary); }
+.step-progress-meta strong { color: var(--color-text); font-size: 12.5px; }
+.form-section-title { align-items: center; gap: 10px; margin-top: 0; padding: 0 0 12px; }
+.form-section-title > span { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 50%; background: var(--pay-disc); color: var(--pay-disc-ink); font-size: 13px; font-weight: 700; }
+.form-section-title > div { display: grid; gap: 0; }
+.form-section-title small { color: var(--color-text-secondary); font-size: 12px; }
+.registration-step .step-actions { position: sticky; z-index: 3; bottom: -20px; margin-top: 16px; padding: 12px 0 4px; background: var(--color-surface); }
+.register-intro { font-size: 13px; }
+.username-lock-note { font-size: 11.5px; }
+.terms-label { align-items: flex-start; flex-wrap: nowrap; font-size: 13px; }
+.terms-label input { margin-top: 4px; }
+html[data-theme="dark"] .auth-card { box-shadow: none; }
+html[data-theme="dark"] .auth-brand img { background: transparent; padding: 0; box-shadow: none; }
+.launch-screen { background: var(--color-surface); }
+.launch-screen img { width: 112px; height: 112px; }
+
+/* 14 ── Sheets and dialogs: rounded top, a drag handle, stable actions ─────
+   Blur is only used for a dialog backdrop, never on cards or scroll rows.
+   Data-detail geometry stays owned by student-record.css; this skin changes
+   the sheet's material, not its internal scroll ownership. */
+.modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop { padding: 16px; background: var(--modal-backdrop); }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-alert-backdrop { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+}
+.modal, .admin-modal, .staff-pw-card, .apc-lock-card, .apc-inapp-alert {
+  border: 1px solid var(--color-border); border-radius: 26px; background: var(--color-surface); color: var(--color-text);
+  padding: 20px; box-shadow: var(--shadow-dialog); max-height: calc(94dvh - var(--safe-bottom)); overflow-y: auto;
+}
+.modal::before, .admin-modal:not(.student-record-modal)::before, .staff-pw-card::before { content: ''; display: block; width: 36px; height: 4px; margin: -6px auto 14px; border-radius: 99px; background: var(--color-border); }
+.modal-header, .admin-modal-header { margin: 0 0 16px; padding: 0 0 12px; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.modal-header h2, .admin-modal-header h2 { font-size: 20px; font-weight: 700; margin: 0; line-height: 1.45; }
+.modal-header .eyebrow, .admin-modal-header .eyebrow { font-size: 11.5px; margin: 0 0 2px; color: var(--color-primary); }
+.modal-close, .admin-modal-close, .staff-pw-close { display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; min-width: 40px;
+  border-radius: 50%; padding: 0; background: var(--color-surface-muted); color: var(--color-text-secondary); border: 0; font-size: 24px; }
+.modal-copy, .logout-copy { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
+.admin-modal.student-record-modal { border-radius: 26px; }
+.student-record-identity { border-radius: 16px; background: var(--pay-disc); }
+.student-record-actions { background: var(--color-surface); }
+.apc-alert-backdrop { padding: 12px 12px calc(12px + var(--safe-bottom)); }
+.apc-alert-icon, .notice-detail-icon { border-radius: 50%; background: var(--pay-disc); color: var(--pay-disc-ink); }
+.apc-inapp-alert { padding: 18px; }
+.apc-inapp-alert-item { border-radius: 16px; background: var(--color-surface-muted); }
+.apc-alert-choice > button { border-radius: 14px; min-height: 46px; font-size: 14px; }
+.apc-alert-choice > [data-apc-alert-ok] { background: var(--color-primary); color: var(--color-surface); border-color: var(--color-primary); font-weight: 700; }
+.notice-detail { border-radius: 18px; padding: 14px; }
+.notice-detail h3 { font-size: 15px; }
+.notice-detail p { font-size: 13px; }
+.apc-lock-card { width: min(100% - 32px, 560px); margin: 24px auto; }
+.apc-lock-primary { background: var(--color-primary); color: var(--color-surface); }
+.admin-toast, .feedback-toast, .pay-toast { position: fixed; z-index: 160; bottom: calc(112px + var(--safe-bottom)); left: 16px; right: 16px; max-width: 520px; margin: auto; transform: none;
+  padding: 12px 16px; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-text); color: var(--color-surface);
+  font-size: 13px; line-height: 1.65; box-shadow: var(--shadow-dialog); text-align: center; pointer-events: none; }
+#appStatusSurface { width: 100%; max-width: none; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.pending-screen { padding-top: 32px; }
+.pending-logo { margin: 0 auto 16px; }
+.pending-id { display: grid; gap: 4px; padding: 16px; margin: 20px 0; border-radius: 18px; border: 1px solid var(--color-border); background: var(--color-surface); }
+.pending-id strong { font-size: 24px; color: var(--color-primary); }
+.pending-kicker { font-size: 12px; font-weight: 700; color: var(--color-primary); letter-spacing: .08em; }
+.pending-logout { width: 100%; min-height: 50px; color: var(--color-primary); font-weight: 700; }
+.pending-info { padding: 16px; border-radius: 18px; background: var(--pay-success-soft); color: var(--pay-success); font-size: 13.5px; }
+
+/* 15 ── Reports and exams (the controls, never the rendered document) ───── */
+.rc-head { padding: 14px 16px; margin-bottom: 12px; }
+.rc-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.rc-form { padding: 16px; border-radius: 20px; background: var(--color-surface); border: 1px solid var(--color-border); margin: 12px 0; }
+.rc-label { font-size: 13px; margin: 0 0 6px; }
+.rc-preview-head { padding: 8px 0; flex-wrap: wrap; }
+.rc-preview-head h3 { font-size: 16px; margin: 0; }
+.rc-generate, .rc-download { margin-top: 12px; }
+.rc-category { border-radius: 18px; }
+.exam-card { border-radius: 18px; box-shadow: var(--pay-shadow); padding: 16px; }
+.exam-card-head h2 { font-size: 16px; font-weight: 700; }
+.exam-question, .mcq-question { border: 1px solid var(--color-border); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
+.exam-timer { border-radius: 999px; padding: 8px 16px; border: 1px solid var(--color-warning); background: var(--tone-amber-soft); color: var(--color-warning); font-weight: 700; }
+.exam-option { padding: 12px 14px; border-radius: 14px; margin: 8px 0; min-height: 50px; font-weight: 500; }
+.exam-option:has(input:checked) { background: var(--pay-disc); border-color: var(--color-primary); }
+.exam-option input { flex: none; }
+/* Instant MCQ practice — the self-study lane; official exam screens stay as they are. */
+.practice-card h2 { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.practice-history { display: grid; gap: 8px; margin: 10px 0 4px; }
+.practice-history-row { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; font-size: 13px; margin: 0; }
+.practice-history-row span:last-of-type { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.practice-best { font-weight: 600; }
+.practice-review .practice-correct { border-color: var(--color-success); background: var(--pay-success-soft); }
+.practice-review .practice-wrong { border-color: var(--color-danger); background: var(--tone-amber-soft); }
+.practice-review .practice-skip { opacity: .78; }
+.exam-form { border: 1px solid var(--color-border); border-radius: 20px; padding: 16px; background: var(--color-surface); }
+.exam-form > .exam-actions { margin-top: 16px; }
+.rp-section { margin-top: 20px; }
+/* A receipt is paper in both themes, including when the surrounding dialog
+   is AMOLED. Downloaded statements have their own monochrome renderer. */
+#receiptPreviewBox { background: var(--pay-paper); color: var(--pay-paper-ink); border: 1px solid var(--pay-paper-line); border-radius: 14px; }
+#receiptPreviewBox :is(.receipt-sub, .receipt-address, .receipt-note, dt) { color: var(--pay-paper-muted); }
+#receiptPreviewBox .receipt-header { border-color: var(--pay-paper-line); }
+#receiptPreviewBox .receipt-meta-grid > div { min-width: 0; }
+#receiptPreviewBox .receipt-meta-grid dd { margin: 0; overflow-wrap: anywhere; font-size: 14px; }
+#receiptPreviewBox .receipt-amount-block { background: var(--pay-paper-tint); }
+#receiptPreviewBox .receipt-paid-seal { color: var(--pay-paper-success); }
+#receiptPreviewBox .receipt-badge-title { color: var(--pay-paper-ink); }
+
+/* 16 ── Theme details, responsive layout, safe areas and accessibility ──── */
+html[data-theme="dark"] .admin-hero-stats, html[data-theme="dark"] .manager-kpi-grid,
+html[data-theme="dark"] .teacher-summary, html[data-theme="dark"] .pay-grid,
+html[data-theme="dark"] .admin-feature-grid, html[data-theme="dark"] .pay-pulse-row { box-shadow: none; }
+html[data-theme="dark"] .app-topbar { background: var(--pay-hero-a); border-bottom: 0; }
+html[data-theme="dark"] .bottom-nav, html[data-theme="dark"] .admin-bottom { background: transparent; filter: none; }
+html[data-theme="dark"] .bottom-nav::before, html[data-theme="dark"] .admin-bottom::before { background: var(--color-surface); }
+html[data-theme="dark"] .bottom-nav > :nth-child(3):nth-last-child(3) .nav-chip,
+html[data-theme="dark"] .admin-bottom > :nth-child(3):nth-last-child(3) .nav-chip { box-shadow: none; }
+html[data-theme="dark"] .pay-stickybar { box-shadow: none; }
+html[data-theme="dark"] .admin-toast, html[data-theme="dark"] .feedback-toast,
+html[data-theme="dark"] .pay-toast { background: var(--color-surface-muted); color: var(--color-text); }
+:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+.app-topbar-icon:focus-visible, .pay-back:focus-visible, .pay-hero-link:focus-visible { outline-color: var(--pay-on-hero); }
+
+@media (max-width: 700px) {
+  .manager-dashboard-grid, .app-control-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-hero-head { gap: 10px; }
+  .admin-date-pill { margin-left: 56px; }
+  .admin-hero-title h1 { font-size: 20px; }
+  .admin-feature-label { font-size: 12px; }
+  .routine-item { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .routine-time { display: flex; gap: 8px; margin-left: 54px; order: 1; }
+  .routine-time small { align-self: center; }
+  .routine-body { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .profile-card { gap: 10px; }
+  .profile-avatar { width: 48px; height: 48px; font-size: 20px; }
+  .contact-card .whatsapp-button { padding: 0; width: 40px; flex: none; }
+  .contact-card .whatsapp-button > span { display: none; }
+  .settings-icon { border-radius: 50%; }
+  .manager-profile-list, .app-field-row { grid-template-columns: minmax(0, 1fr); }
+  .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop { align-items: end; padding: 0; }
+  .modal, .admin-modal, .staff-pw-card { width: 100%; max-width: 100%; max-height: 94dvh; border-radius: 26px 26px 0 0; padding-bottom: calc(20px + var(--safe-bottom)); }
+  .admin-modal.student-record-modal { border-radius: 26px 26px 0 0; }
+  .student-record-actions { padding-bottom: calc(12px + var(--safe-bottom)); }
+}
+@media (max-width: 360px) {
+  .app-topbar-inner { padding-inline: 12px; }
+  .app-brand-slogan { font-size: 10.5px; }
+  .app-topbar-actions { gap: 5px; }
+  .app-topbar-icon { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  .app-main, .admin-main, .pay-main { padding-inline: 12px; }
+  .pay-hero-name { font-size: 18px; }
+  .pay-avatar { width: 46px; height: 46px; }
+  .study-progress-card { padding: 14px; }
+  .study-progress-icon { display: none; }
+  .study-progress-heading h1 { font-size: 17px; }
+  .study-progress-stats strong { font-size: 13px; }
+  .study-progress-stats small { font-size: 11px; }
+  .progress-ring { width: 60px; height: 60px; }
+  .pay-grid { padding-inline: 2px; }
+  .pay-tile-icon, .admin-feature-icon { width: 48px; height: 48px; }
+  .pay-tile-label { font-size: 11.5px; }
+  .dashboard-routine-card { gap: 10px; padding: 12px; }
+  .dashboard-routine-status { font-size: 10.5px; gap: 4px; }
+  .dashboard-routine-main small { font-size: 12px; }
+  .dashboard-fee-card { gap: 10px; }
+  .dashboard-fee-amount { font-size: 15px; }
+  .auth-screen { padding: 16px 12px calc(24px + var(--safe-bottom)); }
+  .auth-panel.active { padding: 16px; }
+  .auth-brand { margin-bottom: 18px; }
+  .auth-brand img { width: 58px; height: 58px; }
+  .auth-brand h1 { font-size: 24px; }
+  .pay-flow { gap: 8px; padding-inline: 2px; }
+  .pay-flow li { font-size: 11.5px; }
+  .fee-balance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fee-balance-grid > :last-child { grid-column: 1 / -1; }
+  .bottom-link, .admin-bottom-item { font-size: 11px; }
+}
+@media (min-width: 701px) {
+  .app-topbar-inner { padding-inline: 28px; }
+  .app-main, .admin-main, .pay-main { padding-inline: 28px; }
+  .pay-hero-id { padding-top: 14px; }
+  .pay-grid { gap: 10px; padding: 20px; }
+  .pay-tile-icon, .admin-feature-icon { width: 64px; height: 64px; }
+  .pay-tile-label, .admin-feature-label { font-size: 14px; }
+  .pay-tile, .admin-feature-tile { gap: 12px; padding-block: 10px; }
+  .pay-grid.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pay-grid.is-3, .admin-feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .admin-hero-stats, .teacher-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 12px; }
+  .manager-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .admin-hero-stats > .admin-stat-tile, .teacher-summary > div { min-height: 104px; border-bottom: 0; border-right: 1px solid var(--color-border); }
+  .admin-hero-stats > :last-child, .teacher-summary > :last-child { border-right: 0; }
+  .manager-kpi-grid > .admin-stat-tile { border: 0; border-right: 1px solid var(--color-border); }
+  .manager-kpi-grid > :nth-child(3n) { border-right: 0; }
+  .manager-kpi-grid > :nth-last-child(n+4) { border-bottom: 1px solid var(--color-border); }
+  .auth-screen { padding-top: 36px; }
+  .auth-brand { margin-bottom: 28px; }
+  .auth-brand img { width: 80px; height: 80px; }
+  .auth-screen::before { height: 282px; }
+  .auth-panel.active { padding: 28px; }
+  .admin-main, .app-main { scrollbar-gutter: stable; }
+}
+@media (min-width: 1000px) {
+  .student-home-view { display: none; }
+  .student-home-view.active { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+  .student-home-overview { grid-column: 1 / -1; }
+  .student-home-view:not(.is-empty-routine) > .student-home-overview { display: contents; }
+  .student-home-view .pay-hero { grid-column: 1 / -1; }
+  .student-home-view .pay-grid { grid-column: 1 / -1; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .student-home-view #dashboardExamCard { grid-column: 1 / -1; }
+  .student-home-view:not(.is-empty-routine) .dashboard-today-section { grid-row: span 3; }
+  .daily-quote-section { grid-column: 1 / -1; }
+  .daily-challenge-section { grid-column: 1 / -1; }
+  .study-progress-card { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(0, 1.3fr); gap: 0 24px; padding: 20px 24px; }
+  .study-progress-stats { border: 0; border-left: 1px dashed var(--color-border); padding: 0 0 0 24px; margin: 0; }
+  .study-progress-note { grid-column: 1 / -1; }
+  .admin-feature-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .admin-feature-tile.is-wide { grid-column: auto; }
+  .teacher-shell [aria-label="দ্রুত অ্যাক্সেস"].pay-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pay-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .pay-pulse, .pay-flow { grid-column: 1 / -1; }
+  .pay-pulse { margin-bottom: 0; }
+  .pay-pulse-row { padding-bottom: 16px; }
+  .pay-main > .admin-card { margin-bottom: 0; }
+  .pay-main #payProfileCard { grid-column: 2; grid-row: 3 / span 3; }
+  .pay-main #paySearchCard, .pay-main #payActivityCard, .pay-main #payReportsCard { grid-column: 1; }
+  .pay-desk-tools { grid-column: 2; }
+  .bottom-nav, .admin-bottom { left: 50%; right: auto; width: min(700px, calc(100% - 48px)); transform: translateX(-50%); }
+}
+@media (max-height: 500px) and (max-width: 999px) {
+  .bottom-nav, .admin-bottom { min-height: 54px; padding-top: 4px; }
+  .bottom-link, .admin-bottom-item { min-height: 42px; font-size: 10.5px; }
+  .nav-chip { height: 24px; }
+  .nav-chip svg { width: 20px; height: 20px; }
+  .bottom-nav > :nth-child(3):nth-last-child(3) .nav-chip, .admin-bottom > :nth-child(3):nth-last-child(3) .nav-chip { top: -17px; width: 46px; height: 46px; margin-left: -23px; }
+  .modal, .admin-modal, .staff-pw-card { max-height: 96dvh; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-alert-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* 17 ── Active Plus Color: genuine layered service illustrations, with the
+   same objects simplified for small navigation/controls. Paint is inherited
+   from foundation; no icon font, remote image or JS recolouring is required. */
+svg.apc-color-icon, svg.apc-glyph-icon { flex-shrink: 0; pointer-events: none; }
+svg.apc-color-icon {
+  transform-origin: center;
+  animation: apc-icon-live 5.2s ease-in-out infinite;
+}
+.pay-grid .pay-tile:nth-child(3n+2) svg.apc-color-icon { animation-duration: 5.8s; animation-delay: .35s; }
+.pay-grid .pay-tile:nth-child(3n+3) svg.apc-color-icon { animation-duration: 4.6s; animation-delay: .7s; }
+svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
+@keyframes apc-icon-live {
+  0%, 100% { filter: saturate(1.08) hue-rotate(0deg); transform: translateY(0) rotate(0deg) scale(1); }
+  50% { filter: saturate(1.4) hue-rotate(14deg); transform: translateY(-2px) rotate(-3deg) scale(1.05); }
+}
+@keyframes apc-glyph-live {
+  0%, 100% { opacity: .88; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-1px); }
+}
+.admin-bottom-item.active svg.apc-glyph-icon,
+.nav-chip svg.apc-glyph-icon { animation-duration: 3.6s; }
+.pay-tile-icon, .admin-feature-icon { width: 60px; height: 60px; background: var(--icon-plate-blue); }
+.pay-tile-icon svg.apc-color-icon, .admin-feature-icon svg.apc-color-icon { width: 38px; height: 38px; }
+:is(.pay-tile-icon,.admin-feature-icon,.admin-more-icon):has(svg:is([data-icon="book"],[data-icon="classes"],[data-icon="teacher"],[data-icon="teachers"],[data-icon="attendance"],[data-icon="wallet"],[data-icon="notice"],[data-icon="backup"])) { background: var(--icon-plate-green); }
+:is(.pay-tile-icon,.admin-feature-icon,.admin-more-icon):has(svg:is([data-icon="assignment"],[data-icon="result"],[data-icon="approval"])) { background: var(--icon-plate-gold); }
+:is(.pay-tile-icon,.admin-feature-icon,.admin-more-icon):has(svg:is([data-icon="exam"],[data-icon="roles"])) { background: var(--icon-plate-violet); }
+.admin-more-icon svg.apc-color-icon, .settings-icon svg.apc-color-icon { width: 30px; height: 30px; }
+.dashboard-routine-icon svg.apc-color-icon, .dashboard-empty-icon svg.apc-color-icon,
+.challenge-icon svg.apc-color-icon, .study-progress-icon svg.apc-color-icon,
+.learning-home-icon svg.apc-color-icon { width: 30px; height: 30px; }
+.pay-pulse-icon svg.apc-color-icon { width: 36px; height: 36px; }
+/* A colour illustration's stroke is authored per layer. Small glyphs retain
+   currentColor, keeping selected/idle tabs and the centre action legible. */
+.nav-chip svg.apc-glyph-icon { width: 24px; height: 24px; }
+@media (max-width: 360px) {
+  .pay-tile-icon, .admin-feature-icon { width: 52px; height: 52px; }
+  .pay-tile-icon svg.apc-color-icon, .admin-feature-icon svg.apc-color-icon { width: 34px; height: 34px; }
+}
+@media (min-width: 701px) {
+  .pay-tile-icon, .admin-feature-icon { width: 66px; height: 66px; }
+  .pay-tile-icon svg.apc-color-icon, .admin-feature-icon svg.apc-color-icon { width: 42px; height: 42px; }
+}
+@media (max-height: 500px) and (max-width: 999px) {
+  .nav-chip svg.apc-glyph-icon { width: 20px; height: 20px; }
+}
+
+/* 18 ── Student home: measured overview, compact Today class card. ───────
+   The header, truthful status notices and footer consume actual measured
+   space. Extra homework/fee/exam cards remain below and scroll normally. */
+#appShell:not(.is-pending) { height: calc(100dvh - var(--shell-top-offset)); }
+#appShell:not(.is-pending) #appMain {
+  min-height: 0; margin: 0 auto var(--shell-footer-height);
+  padding-bottom: calc(40px + var(--safe-bottom)); scroll-padding-bottom: 40px;
+}
+#homeView.is-empty-routine .student-home-overview {
+  display: flex; flex-direction: column;
+  min-height: var(--student-home-height);
+  padding-bottom: 38px; box-sizing: border-box;
+}
+#homeView.is-empty-routine .pay-hero { flex: none; }
+#homeView.is-empty-routine .pay-hero-id { padding: 4px 0 10px; gap: 10px; }
+#homeView.is-empty-routine .pay-avatar { width: 46px; height: 46px; }
+#homeView.is-empty-routine .pay-hero-name { font-size: 18px; }
+#homeView.is-empty-routine .study-progress-card { margin-top: 0; padding: 12px; }
+#homeView.is-empty-routine .study-progress-top { gap: 10px; }
+#homeView.is-empty-routine .progress-ring { width: 52px; height: 52px; }
+#homeView.is-empty-routine .progress-ring::before { inset: 5px; }
+#homeView.is-empty-routine .study-progress-stats { margin-top: 8px; padding-top: 8px; gap: 4px; }
+#homeView.is-empty-routine .study-progress-stats > div { display: grid; grid-template-columns: 16px minmax(0,1fr); align-items: center; gap: 5px; }
+#homeView.is-empty-routine .study-progress-stats svg { width: 16px; height: 16px; }
+#homeView.is-empty-routine .study-progress-stats strong { font-size: 13.5px; }
+#homeView.is-empty-routine .study-progress-stats small { font-size: 11.5px; }
+#homeView.is-empty-routine .study-progress-note { margin-top: 8px; font-size: 12px; line-height: 1.45; }
+#homeView.is-empty-routine #studentServices { flex: none; margin-top: 10px; padding: 8px 4px; gap: 4px 0; }
+#homeView.is-empty-routine .pay-tile { gap: 6px; padding-block: 4px; }
+#homeView.is-empty-routine .pay-tile-icon { width: 48px; height: 48px; }
+#homeView.is-empty-routine .pay-tile-icon svg { width: 32px; height: 32px; }
+#homeView.is-empty-routine .pay-tile-label { font-size: 12px; }
+#homeView.is-empty-routine .dashboard-today-section { display: flex; flex-direction: column; flex: 1; margin-top: 10px; }
+#homeView.is-empty-routine .daily-quote-section { margin-top: 8px; }
+#homeView.is-empty-routine .daily-quote-card { grid-template-columns: 30px minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-radius: 16px; }
+#homeView.is-empty-routine .daily-quote-mark { width: 30px; height: 30px; }
+#homeView.is-empty-routine .daily-quote-mark svg { width: 17px; height: 17px; }
+#homeView.is-empty-routine .daily-quote-text { font-size: 12.5px; line-height: 1.45; }
+#homeView.is-empty-routine .dashboard-today-section .dashboard-section-heading { flex: none; margin-bottom: 6px; }
+#homeView.is-empty-routine #dashboardRoutineList { display: flex; flex: 1; align-items: flex-start; }
+/* Today’s empty state shares Today study's card, icon, copy and action.
+   Keep the overview/footer measurements, but never stretch the card itself. */
+#homeView .dashboard-empty-card { width: 100%; min-width: 0; min-height: 0; margin: 0; align-self: flex-start; }
+#homeView .dashboard-empty-card > button svg { width: 20px; height: 20px; }
+/* Short portrait phones compact spacing, not whole-page scaling or hidden
+   content. Very short/landscape screens keep the normal accessible scroller. */
+@media (max-width: 700px) and (max-height: 820px) {
+  #homeView.is-empty-routine .student-home-overview { padding-bottom: 36px; }
+  #homeView.is-empty-routine .pay-hero-id { padding: 0 0 8px; }
+  #homeView.is-empty-routine .pay-avatar { width: 42px; height: 42px; }
+  #homeView.is-empty-routine .pay-greeting, #homeView.is-empty-routine .pay-hero-meta { font-size: 12px; }
+  #homeView.is-empty-routine .pay-hero-name { font-size: 17px; }
+  #homeView.is-empty-routine .study-progress-card { padding: 10px; }
+  #homeView.is-empty-routine .progress-ring { width: 44px; height: 44px; }
+  #homeView.is-empty-routine .progress-ring strong { font-size: 13px; }
+  #homeView.is-empty-routine .study-progress-stats { margin-top: 4px; padding-top: 6px; }
+  #homeView.is-empty-routine .study-progress-note { margin-top: 6px; }
+  #homeView.is-empty-routine #studentServices { margin-top: 8px; padding-block: 6px; gap: 2px 0; }
+  #homeView.is-empty-routine .daily-quote-section { margin-top: 6px; }
+  #homeView.is-empty-routine .daily-quote-card { padding: 8px 10px; }
+  #homeView.is-empty-routine .pay-tile { gap: 4px; padding-block: 2px; }
+  #homeView.is-empty-routine .dashboard-today-section { margin-top: 8px; }
+  #homeView.is-empty-routine .dashboard-today-section .dashboard-section-heading { margin-bottom: 4px; }
+}
+/* ---- v168: the student ফি screen (js/student-more.js) ----------------------
+   Read-only: summary tiles, the last payment line and the payment history.
+   The ledger itself belongs to the Cash Counter and the Manager. */
+.student-fee-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--space-2)}
+.student-fee-stat{display:grid;gap:2px;padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface)}
+.student-fee-stat small{font-size:var(--font-xs);color:var(--color-text-secondary)}
+.student-fee-stat strong{font-size:var(--font-lg)}
+.student-fee-stat.is-due strong{color:var(--color-danger)}
+.student-fee-stat.is-clear strong{color:var(--color-success,var(--color-primary))}
+.student-fee-heading{margin:var(--space-4) 0 var(--space-2);font-size:var(--font-md)}
+.student-fee-history{display:grid;gap:var(--space-2)}
+.student-fee-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface)}
+.student-fee-row div{display:grid;gap:2px;min-width:0}
+.student-fee-row small{font-size:var(--font-xs);color:var(--color-text-secondary)}
+.student-fee-receipt{flex:none;font-size:var(--font-xs);color:var(--color-text-muted)}
+@media(max-width:380px){.student-fee-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Exam list: the refresh action reads as a quiet pill, not a full-width block. */
+[data-student-exam-action="refresh"]{width:auto;min-height:40px;margin-inline:auto;padding:0 16px;border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface);color:var(--color-text-secondary);font-size:var(--font-sm);font-weight:600;box-shadow:none}
+/* পড়াশোনা / পরীক্ষা / রুটিন are icon-tile hubs like Home: the open section
+   wears the brand ring on its disc and a primary label. */
+.pay-grid .pay-tile .pay-tile-label strong{font-weight:700}
+.pay-grid .pay-tile[aria-pressed="true"] .pay-tile-label,.pay-grid .day-tab.active .pay-tile-label{color:var(--color-primary)}
+.pay-grid .pay-tile[aria-pressed="true"] .pay-tile-icon,.pay-grid .day-tab.active .pay-tile-icon{box-shadow:0 0 0 2px var(--color-primary),var(--pay-shadow);transform:scale(1.05)}
+.pay-grid .pay-tile[aria-pressed="true"] .learning-filter-count{color:var(--color-primary);opacity:1}
+}

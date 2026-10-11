@@ -1,0 +1,188 @@
+/* WOFF2 is the shipped payload (238 KB vs the 453 KB TTF); the TTF stays in the
+   repository as the licensed OFL source and is only a last-resort fallback for
+   an engine old enough to lack WOFF2 — no modern client ever downloads it. */
+@font-face{font-family:'Noto Sans Bengali';src:url('../assets/fonts/NotoSansBengali-Variable.woff2') format('woff2'),url('../assets/fonts/NotoSansBengali-Variable.ttf') format('truetype');font-weight:100 900;font-display:swap}
+/* One palette for every portal — the only place a colour is defined.
+   Light is the default. The dark theme is the AMOLED one: a true-black canvas
+   (#000 — the pixels an OLED panel actually switches off), surfaces lifted by
+   a single hairline step so a card still reads as a card, borders instead of
+   shadows, and accents bright enough to hold contrast on black.
+   Component-level dark tuning lives in css/app-polish.css; neither file may
+   define a second palette (§ AMOLED block there is strict overrides only). */
+:root{
+ --color-bg:#f7f8fc;--color-surface:#fff;--color-surface-muted:#edf1fa;--color-border:#dfe6f3;
+ --color-text:#1f2a44;--color-text-secondary:#51607a;--color-text-muted:#61708b;
+ --color-primary:#1e3a8a;--color-primary-hover:#182f74;--color-success:#0e7a55;--color-warning:#875b0c;--color-danger:#b91c1c;
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;
+ --radius-sm:9px;--radius-md:14px;--radius-lg:18px;
+ --font-xs:12px;--font-sm:14px;--font-md:16px;--font-lg:20px;--font-xl:28px;--font-2xl:36px;
+ --shadow-sm:0 3px 14px #20365306;--shadow-dialog:0 12px 36px #202b3c18;
+ --modal-backdrop:#17243866;
+ /* Glass material: frosted panels over a soft ambient wash. The flat colour
+    above stays the fallback; these only exist while the blur can render. */
+ --glass-blur:18px;--glass-saturate:1.4;
+ --glass-surface:rgba(255,255,255,.62);--glass-bar:rgba(255,255,255,.74);
+ --glass-strong:rgba(255,255,255,.88);--glass-chip:rgba(255,255,255,.55);
+ --glass-border:rgba(32,54,83,.10);--glass-edge:rgba(255,255,255,.9);
+ --glass-shadow:0 10px 30px rgba(23,42,71,.10);--glass-shadow-strong:0 24px 60px rgba(23,42,71,.20);
+ --glass-blur-thin:6px;
+ --ambient-1:rgba(59,130,246,.20);--ambient-2:rgba(30,58,138,.14);--ambient-3:rgba(69,201,161,.14);
+ --ambient-4:rgba(255,138,110,.13);
+ /* Modern colour: one second brand hue for gradients, and the five tints the
+    dashboard tiles carry in their class names. They never replace the palette
+    above — they are the colour that keeps the flat baseline from looking like a
+    form on paper. Tints sit on top of a surface as a wash, never as a new one. */
+ --brand-2:#3b82f6;
+ --tone-blue:#3b82f6;--tone-blue-soft:rgba(59,130,246,.14);
+ --tone-mint:#0e9f6e;--tone-mint-soft:rgba(16,185,129,.14);
+ --tone-amber:#d97706;--tone-amber-soft:rgba(245,158,11,.16);
+ --tone-violet:#6d4dfa;--tone-violet-soft:rgba(122,92,255,.14);
+ --tone-rose:#d6415d;--tone-rose-soft:rgba(219,77,103,.14);
+ --ring-track:rgba(30,58,138,.16);
+ --accent-glow:0 12px 28px rgba(30,58,138,.26);--card-glow:0 14px 34px rgba(23,42,110,.10);
+ /* Pay skin (css/ui-wallet.css): the hero band, icon discs and the floating
+    action of the wallet-style layout. Colours only — the skin arranges them.
+    Same blue/green brand as before; nothing here is a second palette, it is the
+    brand blue stepped into a band, a disc tint and a lift. */
+ --pay-hero-a:#1e3a8a;--pay-hero-b:#16296b;--pay-on-hero:#fff;--pay-on-hero-soft:#dbe4ff;
+ --pay-hero-chip:rgba(255,255,255,.14);--pay-hero-line:rgba(255,255,255,.30);
+ --pay-disc:#e7ecfa;--pay-disc-ink:#1e3a8a;
+ --pay-fab-a:#3b82f6;--pay-fab-b:#1e3a8a;--pay-on-fab:#fff;
+ --pay-shadow:0 1px 2px rgba(15,28,72,.06),0 8px 22px rgba(15,28,72,.08);--pay-nav-shadow:rgba(15,28,72,.16);
+ --pay-success:#0e7a55;--pay-success-soft:#e2f6ee;
+ --pay-logo-shadow:0 2px 8px rgba(6,24,58,.20);--pay-fab-shadow:0 8px 18px rgba(36,89,179,.28);
+ /* Paper is deliberately invariant: the receipt preview mirrors a printable
+    document even when the surrounding app is AMOLED. */
+ --pay-paper:#fff;--pay-paper-ink:#213047;--pay-paper-muted:#56677e;--pay-paper-line:#dce5f0;--pay-paper-tint:#edf3fc;--pay-paper-success:#187346;
+ /* Active Plus Color: the illustration paints, centrally themed like every
+    other surface. Blue/green remain the brand; warm accents distinguish services. */
+ --icon-outline:#1a3480;--icon-on-color:#fff;
+ --icon-blue:#3d8bff;--icon-blue-back:#b9d6ff;--icon-mint:#0fbf86;--icon-mint-back:#9eecc9;
+ --icon-gold:#ffc107;--icon-coral:#ff7a4d;--icon-violet:#9a7dff;
+ --icon-paper:#fff;--icon-paper-back:#e3edf7;
+ --icon-plate-blue:#eaf2ff;--icon-plate-green:#e9f7f0;--icon-plate-gold:#fff4dc;--icon-plate-violet:#f0edfc;
+ /* Fixed student viewport: JS measures the actual bars/status inset. */
+ --shell-header-height:60px;--shell-footer-height:66px;--shell-top-offset:0px;
+ --student-home-height:calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height));
+ --safe-bottom:env(safe-area-inset-bottom,0px);
+ /* Compatibility for JS-rendered content, not a legacy stylesheet dependency. */
+ --ink:var(--color-text);--muted:var(--color-text-secondary);--muted-2:var(--color-text-muted);--surface:var(--color-surface);--white:var(--color-surface);--line:var(--color-border);--forest:var(--color-primary);--forest-text:var(--color-primary);--mint:var(--color-surface-muted);--cream:var(--color-bg);--coral:var(--color-danger);
+}
+html[data-theme=dark]{
+ color-scheme:dark;
+ --color-bg:#000;--color-surface:#0b0d10;--color-surface-muted:#171a20;--color-border:#2b303a;
+ --color-text:#f4f6fa;--color-text-secondary:#b7bec9;--color-text-muted:#8e96a3;
+ --color-primary:#5ea9ff;--color-primary-hover:#8ac2ff;--color-success:#5cd68f;--color-warning:#f2c56d;--color-danger:#ff8d92;
+ /* AMOLED: a drop shadow on black is invisible and still costs paint on every
+     scroll — surfaces separate with borders instead, dialogs with one deep
+     shadow so the backdrop still reads as a layer. */
+ --shadow-sm:none;--shadow-dialog:0 24px 70px #000;
+ --modal-backdrop:#000000d9;
+ /* Glass on true black: the panels are mostly the canvas itself (5 % white) so
+    the pixels that stay off keep staying off; the rim and the ambient glow are
+    what make them read as glass. Shadow is a zero-alpha placeholder — a black
+    shadow on black is only paint work; the strong one is for dialogs. */
+ --glass-blur:22px;--glass-saturate:1.3;
+ --glass-surface:rgba(255,255,255,.055);--glass-bar:rgba(12,16,22,.72);
+ --glass-strong:rgba(16,20,28,.86);--glass-chip:rgba(255,255,255,.07);
+ --glass-border:rgba(255,255,255,.12);--glass-edge:rgba(255,255,255,.10);
+ --glass-shadow:0 0 0 rgba(0,0,0,0);--glass-shadow-strong:0 28px 70px rgba(0,0,0,.75);
+ --glass-blur-thin:8px;
+ --ambient-1:rgba(94,169,255,.16);--ambient-2:rgba(146,110,255,.14);--ambient-3:rgba(69,201,161,.09);
+ --ambient-4:rgba(255,138,110,.08);
+ /* Same five tints, lifted for the black canvas: colour is what keeps an AMOLED
+    screen from reading as a grey-on-black terminal. */
+ --brand-2:#a08cff;
+ --tone-blue:#6fb2ff;--tone-blue-soft:rgba(111,178,255,.16);
+ --tone-mint:#54e0a4;--tone-mint-soft:rgba(84,224,164,.14);
+ --tone-amber:#ffcf70;--tone-amber-soft:rgba(255,207,112,.14);
+ --tone-violet:#b3a3ff;--tone-violet-soft:rgba(179,163,255,.16);
+ --tone-rose:#ff9aab;--tone-rose-soft:rgba(255,154,171,.14);
+ --ring-track:rgba(94,169,255,.22);
+ --accent-glow:0 16px 40px rgba(94,169,255,.30);--card-glow:0 0 0 rgba(0,0,0,0);
+ /* Pay skin on black: the band is a deep navy that fades to the canvas, the disc
+    is a faint wash of the lifted blue, and nothing casts a shadow. */
+ --pay-hero-a:#0e2b56;--pay-hero-b:#050c18;--pay-on-hero:#f4f6fa;--pay-on-hero-soft:#c3d3ea;
+ --pay-hero-chip:rgba(255,255,255,.10);--pay-hero-line:rgba(255,255,255,.20);
+ --pay-disc:rgba(94,169,255,.16);--pay-disc-ink:#7fbcff;
+ --pay-fab-a:#74b9ff;--pay-fab-b:#438fe9;--pay-on-fab:#04101f;
+ --pay-shadow:none;--pay-nav-shadow:rgba(0,0,0,0);--pay-logo-shadow:none;--pay-fab-shadow:none;
+ --pay-success:#5cd68f;--pay-success-soft:rgba(92,214,143,.14);
+ /* The same illustrations on AMOLED: lifted colours, navy paper and no glow. */
+ --icon-outline:#e4f0ff;--icon-on-color:#0c243c;
+ --icon-blue:#7ec0ff;--icon-blue-back:#1c3f6c;--icon-mint:#4eecc0;--icon-mint-back:#145244;
+ --icon-gold:#ffd56a;--icon-coral:#ff9a6a;--icon-violet:#c9b4ff;
+ --icon-paper:#1d2b40;--icon-paper-back:#293d58;
+ --icon-plate-blue:#0f2036;--icon-plate-green:#112b24;--icon-plate-gold:#2c2619;--icon-plate-violet:#232039;
+}
+*{box-sizing:border-box}html{scroll-padding-block:90px}body{margin:0;background:var(--color-bg);color:var(--color-text);font:400 var(--font-md)/1.65 'Noto Sans Bengali',system-ui,sans-serif}h1,h2,h3,p{margin:0 0 var(--space-3)}h1{font-size:var(--font-xl);line-height:1.4;font-weight:650}h2{font-size:var(--font-lg);line-height:1.5;font-weight:600}h3{font-size:var(--font-md);font-weight:600}strong,b{font-weight:600}small,.eyebrow{font-size:var(--font-xs);color:var(--color-text-secondary)}.eyebrow{letter-spacing:.06em;margin-bottom:var(--space-2)}a{color:var(--color-primary)}img{max-width:100%;object-fit:contain}svg{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}button,a,input,select,textarea{touch-action:manipulation}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}:focus-visible{outline:3px solid var(--color-primary);outline-offset:3px}[hidden]{display:none!important}pre,code{white-space:pre-wrap;overflow-wrap:anywhere}p,small,strong,label{overflow-wrap:anywhere}::selection{background:var(--color-surface-muted)}
+html[data-theme=dark] ::selection{background:#5ea9ff38;color:var(--color-text)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ── Weather-sky palette (login screen) ───────────────────────────────────
+   The photographic sky (css/ui-wallet.css §13) composes these tokens with one
+   state photograph each; every literal lives here so the wallet skin itself
+   stays free of raw colours (tests/wallet-design.test.mjs guards that). The
+   scrim tokens are built from --sky-fade, so the single dark-theme flip
+   re-tints every weather state at once. */
+:root{
+ --sky-fade:247,248,252;
+ --sky-glow-day:radial-gradient(circle at 50% 48%, rgba(255,250,226,.85), rgba(255,222,150,.30) 46%, rgba(255,222,150,0) 72%);
+ --sky-glow-dusk:radial-gradient(ellipse at 50% 60%, rgba(255,196,120,.55), rgba(255,150,80,.22) 48%, rgba(255,150,80,0) 74%);
+ --sky-glow-night:radial-gradient(circle at 50% 48%, rgba(240,246,255,.65), rgba(190,210,240,.18) 46%, rgba(190,210,240,0) 72%);
+ --sky-haze:radial-gradient(ellipse at center, rgba(255,255,255,.40), rgba(255,255,255,0) 70%);
+ --sky-haze-night:radial-gradient(ellipse at center, rgba(205,220,245,.22), rgba(205,220,245,0) 70%);
+ --sky-warm-wash:linear-gradient(180deg, rgba(255,158,64,.16), rgba(255,158,64,0) 55%);
+ --sky-fog-wash:linear-gradient(180deg, rgba(236,234,230,.55), rgba(236,234,230,.22) 45%, rgba(236,234,230,0) 72%);
+ --sky-scrim-bright:linear-gradient(180deg, rgba(var(--sky-fade),.16) 0%, rgba(var(--sky-fade),.60) 34%, rgba(var(--sky-fade),.96) 58%, var(--color-bg) 86%);
+ --sky-scrim-mid:linear-gradient(180deg, rgba(var(--sky-fade),.38) 0%, rgba(var(--sky-fade),.78) 36%, rgba(var(--sky-fade),.96) 60%, var(--color-bg) 88%);
+ --sky-scrim-rain:linear-gradient(180deg, rgba(var(--sky-fade),.30) 0%, rgba(var(--sky-fade),.70) 38%, rgba(var(--sky-fade),.95) 62%, var(--color-bg) 88%);
+ --sky-scrim-dusk:linear-gradient(180deg, rgba(var(--sky-fade),.12) 0%, rgba(var(--sky-fade),.62) 38%, rgba(var(--sky-fade),.95) 64%, var(--color-bg) 90%);
+ --sky-scrim-night:linear-gradient(180deg, rgba(var(--sky-fade),0) 0%, rgba(var(--sky-fade),.44) 36%, rgba(var(--sky-fade),.92) 64%, var(--color-bg) 92%);
+ --sky-scrim-storm:linear-gradient(180deg, rgba(var(--sky-fade),0) 0%, rgba(var(--sky-fade),.45) 38%, rgba(var(--sky-fade),.90) 66%, var(--color-bg) 92%);
+ --sky-scrim-fog:linear-gradient(180deg, rgba(var(--sky-fade),.45) 0%, rgba(var(--sky-fade),.85) 40%, rgba(var(--sky-fade),.98) 62%, var(--color-bg) 88%);
+ --sky-fall-day:linear-gradient(180deg, #cfe8ff 0%, #f4f7fb 42%, var(--color-bg) 100%);
+ --sky-fall-heat:linear-gradient(180deg, #ffd18a 0%, #f7e7d2 42%, var(--color-bg) 100%);
+ --sky-fall-dusk:linear-gradient(180deg, #f3c9a4 0%, #ead4c4 38%, var(--color-bg) 100%);
+ --sky-fall-night:linear-gradient(180deg, #1c2744 0%, #2c3548 40%, var(--color-bg) 100%);
+ --sky-fall-cloudy:linear-gradient(180deg, #c5cdd6 0%, #e8edf2 45%, var(--color-bg) 100%);
+ --sky-fall-rain:linear-gradient(180deg, #6e849c 0%, #c5d2de 48%, var(--color-bg) 100%);
+ --sky-fall-storm:linear-gradient(180deg, #3d4a5c 0%, #8b97a8 50%, var(--color-bg) 100%);
+ --sky-fall-fog:linear-gradient(180deg, #d5d2cc 0%, #eceae6 50%, var(--color-bg) 100%);
+ --sky-ink-strong:#eef4fc;--sky-ink-soft:#dce5f0;
+ --sky-ink-shadow-paper:0 1px 2px rgba(var(--sky-fade),.9), 0 0 14px rgba(var(--sky-fade),.95);
+ --sky-ink-shadow:0 1px 14px rgba(8,14,26,.5);--sky-ink-shadow-soft:0 1px 10px rgba(8,14,26,.45);
+ --sky-glow-dawn:radial-gradient(ellipse at 50% 62%, rgba(255,186,150,.55), rgba(255,140,110,.2) 48%, rgba(255,140,110,0) 74%);
+ --sky-scrim-dawn:linear-gradient(180deg, rgba(var(--sky-fade),.14) 0%, rgba(var(--sky-fade),.64) 38%, rgba(var(--sky-fade),.95) 64%, var(--color-bg) 90%);
+ --sky-fall-dawn:linear-gradient(180deg, #efc0c4 0%, #f2d9c8 38%, var(--color-bg) 100%);
+ --sky-orb-sun:radial-gradient(circle at 50% 50%, rgba(255,253,240,.95), rgba(255,230,160,.55) 32%, rgba(255,200,120,.18) 56%, rgba(255,190,100,0) 72%);
+ --sky-orb-sun-warm:radial-gradient(circle at 50% 52%, rgba(255,236,205,.95), rgba(255,176,112,.52) 34%, rgba(255,132,82,.18) 58%, rgba(255,120,70,0) 74%);
+ --sky-orb-moon:radial-gradient(circle at 46% 44%, rgba(242,247,255,.94), rgba(212,226,248,.5) 36%, rgba(190,210,240,.16) 60%, rgba(180,200,235,0) 76%);
+ --sky-wash-sheet:linear-gradient(180deg, rgba(196,218,244,.18), rgba(196,218,244,.05) 52%, rgba(196,218,244,0) 74%);
+ --sky-wash-basanta:linear-gradient(180deg, rgba(255,192,208,.17), rgba(206,236,196,.06) 52%, rgba(255,255,255,0) 74%);
+ --sky-wash-grishmo:linear-gradient(180deg, rgba(255,202,112,.18), rgba(255,172,92,.05) 52%, rgba(255,172,92,0) 74%);
+ --sky-wash-borsha:linear-gradient(180deg, rgba(118,178,168,.17), rgba(118,168,168,.05) 52%, rgba(118,168,168,0) 74%);
+ --sky-wash-shorot:linear-gradient(180deg, rgba(172,204,236,.15), rgba(180,210,240,.05) 52%, rgba(180,210,240,0) 74%);
+ --sky-wash-hemonto:linear-gradient(180deg, rgba(242,192,130,.16), rgba(236,186,122,.05) 52%, rgba(236,186,122,0) 74%);
+ --sky-note-bg:rgba(20,28,40,.42);
+ --sky-note-ink:#f2f6fb;
+ --orb-x:70%;--orb-y:22vh;--orb-size:180px;
+}
+html[data-theme=dark]{ --sky-fade:0,0,0;
+  /* light ink over a bright day photo needs the stronger wash back */
+  --sky-scrim-bright:linear-gradient(180deg, rgba(var(--sky-fade),.30) 0%, rgba(var(--sky-fade),.72) 34%, rgba(var(--sky-fade),.96) 58%, var(--color-bg) 86%); }
+/* ── Birthday celebration palette (wallet skin) ───────────────────────────
+   Same rule as the weather sky: the skin composes, the palette owns colours. */
+:root{
+ --birthday-band:linear-gradient(90deg, #ffd36a, #ff8aa0);
+ --birthday-ink:#3b2410;
+ --birthday-shell:radial-gradient(520px 280px at 12% -8%, rgba(255, 180, 80, .35), transparent 70%),
+   radial-gradient(480px 260px at 110% 8%, rgba(255, 110, 150, .28), transparent 68%),
+   var(--color-bg);
+ --birthday-topbar:linear-gradient(90deg, rgba(255, 196, 90, .35), rgba(255, 130, 160, .22));
+ --birthday-hero:linear-gradient(135deg, #f6c15a 0%, #ff8a7a 48%, #c084fc 100%);
+ --birthday-ring:0 0 0 2px rgba(255, 196, 90, .45);
+ --birthday-notice-border:#f3bd53;
+ --birthday-notice-bg:linear-gradient(180deg, #fff8e8, var(--color-surface));
+ --birthday-notice-icon:#fff0c4;
+}

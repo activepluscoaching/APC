@@ -1,0 +1,24 @@
+/* Header-free authentication: brand, tagline, tabs and form in one column. */
+.auth-screen{min-height:100dvh;padding:var(--space-6) var(--space-4) var(--space-7);background:var(--color-bg)}
+.auth-card{width:100%;max-width:480px;margin:0 auto;padding:var(--space-6);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.auth-brand{text-align:center;margin-bottom:var(--space-6)}.auth-brand img{display:block;margin:0 auto var(--space-4);width:88px;height:88px}.auth-brand h1{font-size:var(--font-xl);margin-bottom:var(--space-2);font-weight:650}.auth-brand p{color:var(--color-primary);font-size:var(--font-md);margin:0}
+.auth-tabs{display:flex;gap:var(--space-2);padding:var(--space-1);margin-bottom:var(--space-5);border-radius:var(--radius-md);background:var(--color-bg)}.auth-tab{flex:1;min-width:0;min-height:48px;border-color:transparent}.auth-tab.active{background:var(--color-surface);border-color:var(--color-border)}
+.auth-panel-heading{text-align:center;margin-bottom:var(--space-5)}.auth-panel-heading h2{font-size:var(--font-lg)}.auth-panel-heading p{font-size:var(--font-sm);text-align:left;color:var(--color-text-secondary)}
+.auth-footnote{margin:var(--space-5) 0 0;font-size:var(--font-sm);text-align:center}.auth-submit{min-height:50px}.auth-screen .form-row{gap:var(--space-3);align-items:flex-start}.auth-screen .remember-label{min-height:44px}.auth-screen .link-button{text-decoration:underline}.auth-screen input{scroll-margin-block:var(--space-5)}
+.auth-screen #appStatusSurface{max-width:480px;margin:var(--space-5) auto 0;border:0;border-radius:var(--radius-md);max-height:none;padding:var(--space-3);font-size:var(--font-sm)}
+.launch-screen{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-5);background:var(--color-surface);padding:var(--space-6);pointer-events:none;animation:launch-safety 0s 3s forwards}.launch-screen img{width:144px;height:144px}.launch-screen p{font-size:var(--font-md);color:var(--color-text-secondary);text-align:center;margin:0}
+@keyframes launch-safety{to{visibility:hidden}}
+@media(max-width:480px){.auth-screen{padding:var(--space-5) var(--space-4)}.auth-card{padding:var(--space-5)}.auth-brand h1{font-size:24px}.auth-brand img{width:76px;height:76px}.auth-brand{margin-bottom:var(--space-5)}}
+@media(prefers-reduced-motion:reduce){.launch-screen{animation:launch-safety 0s 3s forwards!important}}
+
+/* Keep authentication inside the phone viewport, not a scrolling document.
+   Small screens, enlarged text and the keyboard retain an internal scroll area. */
+.auth-screen{position:fixed;inset:0;height:100dvh;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;padding-top:max(var(--space-4),env(safe-area-inset-top));padding-bottom:max(var(--space-4),env(safe-area-inset-bottom));scroll-padding-block:var(--space-4)}
+@media(max-width:480px){
+  .auth-screen{padding-inline:var(--space-3)}
+  .auth-card{padding:var(--space-4)}
+  .auth-brand{margin-bottom:var(--space-3)}
+  .auth-brand img{width:60px;height:60px;margin-bottom:var(--space-2)}
+  .auth-tabs,.auth-panel-heading{margin-bottom:var(--space-3)}
+  .auth-screen input{font-size:16px}
+}

@@ -21,8 +21,8 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  examRepository as repo, EXAM_KEY, examTemplate, MANAGER_ACTOR, totalMarks,
-  mcqResultsReady, autoPublishMcqResults, classResultRows
+  examRepository as repo, EXAM_KEY, examTemplate, MANAGER_ACTOR, TEACHER_ACTOR, totalMarks,
+  mcqResultsReady, autoPublishMcqResults, classResultRows, staleMcqAttempts, closeStaleMcqAttempts
 } from '../js/exam-data.js';
 import { adminStudents } from '../js/admin-data.js';
 import { ROSTER_KEY } from '../js/office-data.js';
@@ -87,9 +87,12 @@ const fields = (extra = {}) => ({
   startAt, endAt, lateMinutes: 10, negative: 0.5, passPercent: 33,
   template: examTemplate('mcq'), ...extra
 });
+/** Publishes a fresh paper and returns it — robust when the store already holds
+    another exam, because the new row's position in `exams` is not promised. */
 async function publish(extra = {}) {
+  const before = new Set((env.db().exams || []).map(item => item.id));
   let db = await repo.saveDraft(fields(extra));
-  const id = db.exams[0].id;
+  const [id] = db.exams.map(item => item.id).filter(item => !before.has(item));
   await repo.requestApproval(id);
   db = await repo.review(id, 'publish', {}, MANAGER_ACTOR);
   return db.exams.find(exam => exam.id === id);
@@ -321,4 +324,86 @@ test('a paper that names no class keeps its board to the sheets it has', async (
   assert.deepEqual(rows.map(row => row.studentId), [one.id], 'শুধু যে উত্তরপত্র দিয়েছে');
   assert.equal(rows.some(row => row.name === 'অন্য শ্রেণির শিক্ষার্থী'), false, 'রোস্টার থেকে কারও নাম যোগ হয় না');
   assert.equal(rows[0].absent, false);
+});
+
+test('a sheet whose device never comes back is scored from what it saved', async () => {
+  /* The one thing that must not happen: a whole class waiting forever because a
+     phone was switched off after opening the paper. The saved answers are already
+     in the store, so closing the sheet from them is what that device would have
+     done at the bell — and the late-entry grace is granted first. */
+  setup();
+  const exam = await publish();
+  clock = startAt + 60000;
+  const first = await begin(exam, one, { q1: 'A' });
+  await submit(first, one);
+  const ghost = await begin(exam, two, { q1: 'A' });
+
+  clock = endAt + 60000;   // past the bell, still inside the ১০-minute grace
+  seedSession(one);
+  await repo.listForStudent(one.id);
+  assert.equal(env.db().attempts.find(a => a.id === ghost).status, 'active', 'grace শেষ হয়নি — কাউকে জমানো হয় না');
+  assert.equal(env.published(exam.id), false, 'তাই প্রকাশও নয়');
+
+  clock = endAt + exam.lateMinutes * 60000 + 60000;
+  const snapshot = await repo.listForStudent(one.id);
+  const closed = env.db().attempts.find(a => a.id === ghost);
+  assert.equal(closed.status, 'submitted', 'গ্রেস শেষে সংরক্ষিত উত্তর দিয়েই জমা');
+  assert.equal(closed.finishedAt, endAt, 'জমার সময় সেই শেষ সময়েই লেখা, ঘড়ি বাড়ে না');
+  assert.equal(closed.score, 1, 'যা বাছা ছিল সেটাই গণনা');
+  assert.equal(env.exam(exam.id).resultsPublished, true, 'আর ক্লাস ফলাফলের জন্য অপেক্ষা করে না');
+  assert.equal(env.exam(exam.id).resultsPublishedBy, 'auto');
+  const board = snapshot.exams.find(item => item.id === exam.id).classResults;
+  assert.ok(board.some(row => row.studentId === two.id && row.score === 1), 'যার ফোন বন্ধ ছিল তার সারিও বোর্ডে');
+});
+
+test('a queued sheet is never closed on someone else’s behalf', () => {
+  setup();
+  const exam = { id: 'E', type: 'mcq', status: 'published', className: 'দশম শ্রেণি', startAt, endAt,
+    lateMinutes: 10, passPercent: 33, negative: 0.5, questions: [{ id: 'q1', marks: 1 }],
+    participants: [], absentIds: [], resultsPublished: false };
+  const db = { exams: [exam], attempts: [
+    { id: 'A1', examId: 'E', studentId: one.id, status: 'queued', answers: {}, finishedAt: endAt },
+    { id: 'A2', examId: 'E', studentId: two.id, status: 'active', answers: {} }
+  ] };
+  const now = endAt + 11 * 60000;
+  assert.deepEqual(staleMcqAttempts(exam, db, now).map(a => a.id), ['A2'], 'শুধু যে কখনো জমায়নি সে-ই পুরনো');
+  assert.equal(closeStaleMcqAttempts(db, now), 1, 'একটাই বন্ধ হয়');
+  assert.equal(db.attempts[0].status, 'queued', 'অফলাইনে জমা হওয়া শিট অক্ষত — সেটা সংযোগ ফিরলেই পৌঁছাবে');
+  assert.equal(db.attempts[1].status, 'submitted', 'অন্যথায় পুরো ক্লাস আটকে থাকত');
+  assert.equal(mcqResultsReady(exam, db, now), false, 'queued শিট থাকলে প্রকাশ নয় — সেটাই সত্যিকারের অপেক্ষা');
+  db.attempts[0].status = 'submitted';
+  assert.equal(mcqResultsReady(exam, db, now), true, 'সেটা জমা হলেই প্রকাশের যোগ্য');
+  assert.equal(closeStaleMcqAttempts(db, endAt + 60000), 0, 'গ্রেসের ভেতরে কিছুই হয় না');
+});
+
+test('a published paper is frozen: nobody can move its marks afterwards', async () => {
+  /* Reported as "marks change after publication" and disproved here: an MCQ paper
+     can only publish when every sheet is already `submitted`, no sheet can be
+     started after the window, and the staff paths for a written paper refuse once
+     the results are out — so the class never reads two different answers. */
+  setup();
+  const exam = await publish();
+  const written = await publish({ type: 'written', template: examTemplate('written') });
+  clock = startAt + 60000;
+  const first = await begin(exam, one, { q1: 'A' });
+  await submit(first, one);
+  const second = await begin(exam, two, { q1: 'B' });
+  clock = endAt + 60000;
+  await submit(second, two);
+  assert.equal(env.published(exam.id), true);
+  seedSession(two);
+  await assert.rejects(() => repo.startAttempt(exam.id, two), /শুরু করা যাবে না/, 'প্রকাশের পর নতুন প্রচেষ্টা খোলা যায় না');
+  await assert.rejects(() => repo.publishResults(exam.id, MANAGER_ACTOR), /ইতিমধ্যে প্রকাশিত/, 'Manager দ্বিতীয়বার প্রকাশ করতে পারেন না');
+
+  // The written path: marks and absence freeze with publication. A লিখিত paper is
+  // held on its own class day, so the marks open only once that day has come.
+  clock = endAt + 3 * 86400000;
+  await repo.saveWrittenScore(written.id, one, { q1: 6, q2: 5 }, TEACHER_ACTOR);
+  for (const person of env.exam(written.id).participants.filter(item => item.id !== one.id)) {
+    await repo.markWrittenAbsent(written.id, person, TEACHER_ACTOR);
+  }
+  await repo.publishResults(written.id, MANAGER_ACTOR);
+  assert.equal(env.exam(written.id).resultsPublished, true);
+  await assert.rejects(() => repo.saveWrittenScore(written.id, one, { q1: 10, q2: 10 }, TEACHER_ACTOR), /প্রকাশ করেছেন/, 'প্রকাশের পর নম্বর বদলানো যায় না');
+  await assert.rejects(() => repo.markWrittenAbsent(written.id, two, TEACHER_ACTOR), /প্রকাশ করেছেন/, 'অনুপস্থিতির রেকর্ডও বদলানো যায় না');
 });

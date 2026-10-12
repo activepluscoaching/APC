@@ -839,6 +839,36 @@ export function autoPublishMcqResults(db, now = Date.now()) {
   return changed;
 }
 
+/** A sheet left `active` on a paper whose window closed long ago belongs to a
+ * device that is not coming back: a changed phone, an uninstalled app, an
+ * account that was removed. Its saved answers are already in the store, and the
+ * owner's own device would have submitted exactly those at the closing bell — so
+ * leaving them open must not hold the whole class's results hostage. The late
+ * entry window is granted first; a sheet is only closed once that grace is over
+ * too. A `queued` sheet is never touched: it is a real submission waiting for a
+ * connection, and the marks it carries have to arrive. */
+export function staleMcqAttempts(exam, db, now = Date.now()) {
+  if (!exam || exam.type !== 'mcq' || !isLiveExam(exam)) return [];
+  const endAt = Number(exam.endAt);
+  const grace = endAt + Math.max(0, Number(exam.lateMinutes) || 0) * 60000;
+  if (!(endAt > 0) || now < grace) return [];
+  return (db.attempts || []).filter(attempt => attempt.examId === exam.id && attempt.status === 'active');
+}
+
+/** Close those sheets with the answers on file. Mutates `db`; returns how many. */
+export function closeStaleMcqAttempts(db, now = Date.now()) {
+  let changed = 0;
+  for (const exam of db.exams || []) {
+    for (const attempt of staleMcqAttempts(exam, db, now)) {
+      attempt.finishedAt = Number(exam.endAt);
+      attempt.status = 'submitted';
+      Object.assign(attempt, scoreAttempt(exam, attempt));
+      changed++;
+    }
+  }
+  return changed;
+}
+
 /** The device's own copy of the class list, approved students only. A browser
  * whose roster is empty stays honest: the board then lists whoever actually sat,
  * and no name is invented. */
@@ -910,8 +940,13 @@ export const examRepository = {
      something is actually ready does the shared node see a transaction. */
   async sweepResults() {
     const db = read();
-    if (!(db.exams || []).some(exam => mcqResultsReady(exam, db))) return db;
-    return mutate(next => { autoPublishMcqResults(next); });
+    const exams = db.exams || [];
+    const due = exams.some(exam => mcqResultsReady(exam, db)) || exams.some(exam => staleMcqAttempts(exam, db).length > 0);
+    if (!due) return db;
+    return mutate(next => {
+      closeStaleMcqAttempts(next);
+      autoPublishMcqResults(next);
+    });
   },
   async list(actor = null) {
     if (actor?.role === 'student') return examRepository.listForStudent(actor.studentId || actor.id);

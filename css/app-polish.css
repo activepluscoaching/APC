@@ -183,6 +183,8 @@
   .exam-board-row.is-me { border-color:var(--color-primary);box-shadow:inset 0 0 0 1px var(--color-primary); }
   .exam-board-row.is-absent { opacity:.72; }
   .exam-board-rank { font-weight:700;text-align:center;font-variant-numeric:tabular-nums; }
+  .exam-board-row.is-podium { background:var(--color-surface);border-color:var(--color-primary); }
+  .exam-board-rank.is-podium { padding:2px 0;border-radius:8px;background:var(--color-primary-soft,var(--color-surface-muted));color:var(--color-primary); }
   .exam-board-name { min-width:0;overflow-wrap:anywhere; }
   .exam-board-marks { white-space:nowrap;font-variant-numeric:tabular-nums; }
   .exam-board-grade { min-width:2.4rem;text-align:center;font-weight:700; }

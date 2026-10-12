@@ -26,6 +26,14 @@ export function resultMarkup(db, e, includeRoster = false, { pdf = false } = {})
  * (marks only — no answer sheets, no attempt ids), so the board can only ever be
  * built for a paper that already matched this student's class/batch.
  */
+/* ১য়/২য়/৩য় is what a class reads a result board as; below the top three the
+   plain number carries better than ৪য়/৫য়. A shared rank keeps the shared label. */
+const BOARD_PODIUM = Object.freeze({ 1: '১য়', 2: '২য়', 3: '৩য়' });
+const boardRank = (value, absent = false) => {
+  if (absent) return '—';
+  return BOARD_PODIUM[Number(value)] || num(value);
+};
+
 export function classResultBoard(exam, rows, { meId = '', heading = 'পুরো ক্লাসের ফলাফল' } = {}) {
   if (!Array.isArray(rows) || !rows.length) return '';
   const total = totalMarks(exam);
@@ -39,8 +47,9 @@ export function classResultBoard(exam, rows, { meId = '', heading = 'পুর�
     const marks = row.absent
       ? `<span class="exam-board-absent">${row.markedAbsent ? 'অনুপস্থিত' : 'জমা দেয়নি'}</span>`
       : `<span class="exam-board-marks"><strong>${num(row.score)}</strong> / ${num(row.total ?? total)}</span><span class="exam-board-grade">${esc(row.grade || '—')}</span>`;
-    return `<li class="exam-board-row${row.absent ? ' is-absent' : ''}${mine ? ' is-me' : ''}" data-exam-board-row="${esc(String(row.studentId))}"${mine ? ' aria-current="true"' : ''}>
-      <span class="exam-board-rank">${row.absent ? '—' : num(row.rank)}</span>
+    const podium = !row.absent && Boolean(BOARD_PODIUM[Number(row.rank)]);
+    return `<li class="exam-board-row${row.absent ? ' is-absent' : ''}${mine ? ' is-me' : ''}${podium ? ' is-podium' : ''}" data-exam-board-row="${esc(String(row.studentId))}"${mine ? ' aria-current="true"' : ''}>
+      <span class="exam-board-rank${podium ? ' is-podium' : ''}">${boardRank(row.rank, row.absent)}</span>
       <span class="exam-board-name">${esc(row.name || '—')}${mine ? ' <small>(তুমি)</small>' : ''}</span>
       ${marks}
     </li>`;
@@ -51,7 +60,7 @@ export function classResultBoard(exam, rows, { meId = '', heading = 'পুর�
     <h3 id="examBoardTitle-${esc(exam.id)}">${esc(heading)}</h3>
     <p class="exam-note">${esc(exam.className || 'সব শ্রেণি')}${exam.group ? ` • ${esc(exam.group)}` : ''} • অংশগ্রহী ${num(ordered.length)} জন${absent.length ? ` • অনুপস্থিত/অনজ্চিত ${num(absent.length)} জন` : ''} • পূর্ণমান ${num(total)}${publishedAt}</p>
     <ol class="exam-board-list">${rowsHtml}</ol>
-    ${me && !me.absent ? `<p class="exam-note exam-board-me">তোমার অবস্থান: মেধাক্রম ${num(me.rank)} • ${num(me.score)} / ${num(me.total ?? total)} • গ্রেড ${esc(me.grade || '—')}</p>${detail}` : ''}
+    ${me && !me.absent ? `<p class="exam-note exam-board-me">তোমার অবস্থান: মেধাক্রম ${boardRank(me.rank)} • ${num(me.score)} / ${num(me.total ?? total)} • গ্রেড ${esc(me.grade || '—')}</p>${detail}` : ''}
     <p class="exam-note">সেরা মেধাক্রম সবার সেরা নম্বরে। এই ফলাফল তোমার ক্লাসের সব শিক্ষার্থীরাই দেখতে পাবে।</p>
   </section>`;
 }

@@ -7,7 +7,7 @@ import { allocateExamCode, examCodeParts, orderPaperForAttempt, timeLabel } from
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { authenticatedStudent } from './student-access.js';
 import { enabledClasses } from './config.js';
-import { KEYS, readRaw, writeRaw, newId } from './database.js';
+import { KEYS, listDocuments, readRaw, writeRaw, newId } from './database.js';
 import { questionBank } from './question-bank.js';
 export const EXAM_KEY = KEYS.exams;
 export const EXAM_TYPES = Object.freeze({ mcq: 'MCQ', written: 'লিখিত', short: 'সংক্ষিপ্ত উত্তর' });
@@ -549,6 +549,10 @@ function academicClassNames() {
   return enabledClasses;
 }
 function studentExamSnapshot(db, student) {
+  /* One roster read per snapshot, not one per paper — and only for a paper whose
+     results are out, so the common "no results yet" poll reads nothing extra. */
+  let roster = null;
+  const classRoster = () => (roster === null ? (roster = approvedRosterRows()) : roster);
   const exams = db.exams
     .filter(exam => isStudentVisibleExam(exam) && examMatchesStudent(exam, student))
     .map(exam => {
@@ -560,7 +564,7 @@ function studentExamSnapshot(db, student) {
       /* The class board travels with a published paper and nothing else: it is the
          one place a student may see another student's mark, and it carries marks
          only — no answer sheets, and never a paper from another class. */
-      const classResults = exam.resultsPublished === true ? classResultRows(db, exam) : undefined;
+      const classResults = exam.resultsPublished === true ? classResultRows(db, exam, classRoster()) : undefined;
       return {
         ...exam,
         questions,
@@ -835,14 +839,25 @@ export function autoPublishMcqResults(db, now = Date.now()) {
   return changed;
 }
 
+/** The device's own copy of the class list, approved students only. A browser
+ * whose roster is empty stays honest: the board then lists whoever actually sat,
+ * and no name is invented. */
+function approvedRosterRows() {
+  try {
+    return listDocuments('students')
+      .filter(person => person && person.status === 'approved' && typeof person.id === 'string' && person.id);
+  } catch { return []; }
+}
+
 /**
  * The rows one class may see once a paper's results are out — one row per
- * student, ranked, plus the students who never submitted. Deliberately shallow:
- * no answer sheet, no attempt id, no option order. Built from the exam db and
- * carried into the Student snapshot, so a student can only ever receive the
- * board of a paper that matched their own class/batch.
+ * student of that class/batch, ranked, and everyone else (who started the paper
+ * or not) as not submitted. Deliberately shallow: no answer sheet, no attempt
+ * id, no option order. Built from the exam db and carried into the Student
+ * snapshot, so a student can only ever receive the board of a paper that
+ * matched their own class/batch.
  */
-export function classResultRows(db, exam) {
+export function classResultRows(db, exam, roster = approvedRosterRows()) {
   const total = totalMarks(exam);
   const scored = examResults(db, exam);
   const rows = scored.map(row => ({
@@ -863,14 +878,25 @@ export function classResultRows(db, exam) {
   }));
   const seen = new Set(rows.map(row => row.studentId));
   const absentIds = new Set(exam.absentIds || []);
-  for (const person of exam.participants || []) {
-    if (!person || seen.has(person.id)) continue;
+  /* A student of this class who never opened the paper is still somebody the
+     class asked about ("কে কত পেয়েছে"), so they are listed — as not submitted,
+     never as a borrowed ০. Names come from the sheet when it exists, from the
+     class roster otherwise. */
+  const notSubmitted = person => {
+    if (!person || seen.has(person.id)) return;
+    seen.add(person.id);
     rows.push({
-      studentId: person.id, name: person.name, className: person.className, group: person.group || '',
+      studentId: person.id, name: person.name || '—', className: person.className || exam.className || '',
+      group: person.group || '',
       score: null, total, grade: null, rank: null, correct: null, wrong: null, unanswered: null,
       attempts: 0, autoSubmitted: false, absent: true, markedAbsent: absentIds.has(person.id)
     });
-  }
+  };
+  (exam.participants || []).forEach(notSubmitted);
+  /* The roster is the school's list, not this paper's — so it is filtered by the
+     same rule that decides what the student may see at all, and a student of
+     another class/batch never lands on this board. */
+  (roster || []).forEach(person => { if (examMatchesStudent(exam, person)) notSubmitted(person); });
   return rows;
 }
 export const examRepository = {

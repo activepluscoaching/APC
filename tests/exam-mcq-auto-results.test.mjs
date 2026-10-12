@@ -209,11 +209,33 @@ test('the class board carries marks to the class — and nothing else', async ()
   withRoster.exams[0].participants = [...withRoster.exams[0].participants, { id: 'AP-ABSENT-1', name: 'অনুপস্থিত শিক্ষার্থী', className: 'দশম শ্রেণি', group: '' }];
   withRoster.exams[0].absentIds = ['AP-ABSENT-1'];
   env.seedDb(withRoster);
+  // The class roster the student's device carries: two of them sat the paper, one
+  // never opened it, and two more must stay off the board (not approved yet).
+  const rosterRows = [...adminStudents,
+    { id: 'AP-QUIET-1', name: 'চুপচাপ শিক্ষার্থী', className: 'দশম শ্রেণি', status: 'approved' },
+    { id: 'AP-PENDING-1', name: 'অনুমোদনের অপেক্ষায় শিক্ষার্থী', className: 'দশম শ্রেণি', status: 'pending' }];
+  env.store.set(ROSTER_KEY, JSON.stringify(rosterRows));
   const db = env.db();
   const stored = db.exams.find(item => item.id === exam.id);
   const rows = classResultRows(db, stored);
   const total = totalMarks(stored);
-  assert.equal(rows.length, 3, 'যারা অংশ নেয়নি তারাও বোর্ডে থাকে');
+  /* The board is the class, not the guest list: every approved student of this
+     class has a row — from the paper when they sat it, from the device's roster
+     copy when they did not — and no student of another class ever appears. */
+  const classmates = rosterRows.filter(person => person.status === 'approved' && person.className === 'দশম শ্রেণি');
+  assert.equal(classmates.length, 3, 'দুজনে বসেছে, একজন বসেনি');
+  assert.equal(rows.length, classmates.length + 1, 'পুরো ক্লাস + যাকে উত্তরপত্র খুলতে দেখা গেছে');
+  const ids = rows.map(row => row.studentId);
+  for (const person of classmates) assert.ok(ids.includes(person.id), `${person.name}-এর সারি রোস্টার থেকে এসেছে`);
+  assert.ok(ids.includes('AP-ABSENT-1'), 'কার্ডে-থাকা অনুপস্থিতের সারি');
+  assert.equal(ids.includes(three.id), false, 'অন্য ক্লাসের শিক্ষার্থী বোর্ডে আসে না');
+  assert.ok(!rows.some(row => row.studentId === 'AP-PENDING-1'), 'অনুমোদিত নয় এমন শিক্ষার্থী বোর্ডে আসে না');
+  assert.ok(!rows.some(row => row.studentId === '260810019'), 'রোস্টারে বাতিল হওয়া শিক্ষার্থীও আসে না');
+  const quiet = rows.find(row => row.studentId === 'AP-QUIET-1');
+  assert.equal(quiet.absent, true, 'যে একবারও খোলেনি সে জমা দেয়নি');
+  assert.equal(quiet.score, null, 'তাকে ০ নম্বর দেওয়া হয় না');
+  assert.equal(quiet.rank, null, 'তার মেধাক্রম নেই');
+  assert.equal(classResultRows(db, stored, []).length, 3, 'রোস্টারের কপি না থাকলে শুধু যারা বসেছে তারাই — কিছু গড়া হয় না');
   const scored = rows.filter(row => !row.absent);
   assert.equal(scored.length, 2, 'জমা দেওয়া দুজনের সারি');
   assert.deepEqual(scored.map(row => row.rank), [1, 2], 'মেধাক্রম সাজানো');
@@ -227,7 +249,7 @@ test('the class board carries marks to the class — and nothing else', async ()
     assert.equal(row.autoSubmitted, false, 'সময় থাকতে দেওয়া সারি স্বয়ংক্রিয় বলে না');
   }
   const missing = rows.filter(row => row.absent);
-  assert.equal(missing.length, 1, 'যে অংশ নেয়নি তার সারিও আছে');
+  assert.equal(missing.length, classmates.length - 2 + 1, 'যে অংশ নেয়নি তার সারিও আছে');
   assert.equal(missing[0].markedAbsent, true, 'শিক্ষকের চিহ্নিত অনুপস্থিতি বোর্ডে ধরা পড়ে');
   for (const row of missing) {
     assert.equal(row.score, null, 'অনুপস্থিত শিক্ষার্থীকে ০ নম্বর দেওয়া হয় না');

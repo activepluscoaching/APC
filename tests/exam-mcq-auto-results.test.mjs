@@ -298,3 +298,27 @@ test('a student receives the board only after publication, and only for their ow
   const outsider = await repo.listForStudent(three.id);
   assert.equal(outsider.exams.some(item => item.id === exam.id), false, 'অন্য শ্রেণির শিক্ষার্থী বোর্ডও পায় না');
 });
+
+test('a paper that names no class keeps its board to the sheets it has', async () => {
+  /* Exams saved before the class picker carry no className, and that emptiness
+     means "visible to every class". Widening such a paper's board from the
+     roster would print the whole school's name list on one paper — so the roster
+     is only consulted for a paper that actually names a class. */
+  setup();
+  const exam = await publish();
+  clock = startAt + 60000;
+  const first = await begin(exam, one, { q1: 'A' });
+  await submit(first, one);
+  const legacy = env.db();
+  legacy.exams[0].className = '';
+  legacy.exams[0].participants = [];
+  env.seedDb(legacy);
+  env.store.set(ROSTER_KEY, JSON.stringify([
+    { id: 'AP-OTHER-CLASS', name: 'অন্য শ্রেণির শিক্ষার্থী', className: 'নবম শ্রেণি', status: 'approved' }
+  ]));
+  const stored = env.db().exams.find(item => item.id === exam.id);
+  const rows = classResultRows(env.db(), stored);
+  assert.deepEqual(rows.map(row => row.studentId), [one.id], 'শুধু যে উত্তরপত্র দিয়েছে');
+  assert.equal(rows.some(row => row.name === 'অন্য শ্রেণির শিক্ষার্থী'), false, 'রোস্টার থেকে কারও নাম যোগ হয় না');
+  assert.equal(rows[0].absent, false);
+});

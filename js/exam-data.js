@@ -895,8 +895,13 @@ export function classResultRows(db, exam, roster = approvedRosterRows()) {
   (exam.participants || []).forEach(notSubmitted);
   /* The roster is the school's list, not this paper's — so it is filtered by the
      same rule that decides what the student may see at all, and a student of
-     another class/batch never lands on this board. */
-  (roster || []).forEach(person => { if (examMatchesStudent(exam, person)) notSubmitted(person); });
+     another class/batch never lands on this board. A paper that names no class
+     at all (saved before the class picker existed) is school-wide by that rule,
+     so it keeps its participant list only: widening it would print every name in
+     the school on one paper's board. */
+  if (String(exam.className || '').trim()) {
+    (roster || []).forEach(person => { if (examMatchesStudent(exam, person)) notSubmitted(person); });
+  }
   return rows;
 }
 export const examRepository = {

@@ -1,0 +1,69 @@
+/* Notification centre, bell badge and Settings → Notification Settings.
+
+   Layout and states only — every colour is a token from css/foundation.css, so
+   light/dark/AMOLED all keep working. The wallet skin (css/ui-wallet.css)
+   still loads last and may refine any of these. */
+
+/* ---------- The bell badge: 🔔 3 / ১০+ / hidden at zero ---------- */
+.notification-dot{position:absolute;right:6px;top:6px;min-width:18px;height:18px;padding:0 4px;display:grid;place-items:center;border-radius:999px;background:var(--color-danger);color:#fff;font-size:11px;font-weight:700;line-height:1;letter-spacing:0;box-shadow:0 0 0 2px var(--pay-hero-a)}
+.notification-dot[hidden]{display:none}
+.notification-dot:empty{width:8px;height:8px;min-width:8px;padding:0}
+
+/* ---------- The inbox: filters, cards, unread state ---------- */
+.notice-filters{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-block:var(--space-2) var(--space-3)}
+.notice-filters .chip{min-height:36px}
+.notice-filters .notice-read-all{margin-left:auto}
+.notice-filters .notice-read-all[hidden]{display:none}
+.notice-read-status{margin:0 0 var(--space-2);color:var(--color-text-secondary);font-size:var(--font-sm)}
+.notice-read-status:empty{display:none}
+
+#apcNoticeModal [data-apc-notice-list],#noticeListStudent{display:grid;gap:var(--space-3);max-height:min(60vh,520px);overflow-y:auto;padding-right:2px}
+.notice-detail{position:relative;display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);overflow-wrap:anywhere}
+.notice-detail.unread{border-inline-start:3px solid var(--color-primary);background:var(--color-surface-muted)}
+.notice-detail.actionable{cursor:pointer}
+.notice-detail-icon{flex:0 0 auto;width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-sm);background:var(--color-surface-muted)}
+.notice-detail-icon svg{width:20px;height:20px}
+.notice-detail-copy{min-width:0;display:grid;gap:var(--space-1)}
+.notice-detail-copy h3{margin:0;font-size:var(--font-md);line-height:1.45}
+.notice-detail-copy p{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm);line-height:1.65;overflow-wrap:anywhere}
+.notice-detail:not(.unread) .notice-detail-copy{color:var(--color-text-secondary)}
+.notice-detail:not(.unread) h3{font-weight:500;color:var(--color-text-secondary)}
+.notice-time{color:var(--color-text-secondary);font-size:var(--font-xs)}
+.notice-section-chip{display:inline-block;width:fit-content;margin-inline-start:var(--space-2);padding:1px var(--space-2);border-radius:999px;background:var(--color-surface);border:1px solid var(--color-border);font-size:var(--font-xs);color:var(--color-text-secondary)}
+.notice-detail .mini-btn{margin-top:var(--space-2);width:fit-content}
+.notice-unread-dot{position:absolute;inset-inline-end:var(--space-3);inset-block-start:var(--space-3);width:8px;height:8px;border-radius:50%;background:var(--color-primary)}
+
+/* ---------- The pretty empty state (never a row of buttons) ---------- */
+.notice-empty{display:grid;justify-items:center;gap:var(--space-2);padding:var(--space-6) var(--space-4);border:1px dashed var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);text-align:center}
+.notice-empty-art{width:64px;height:64px;display:grid;place-items:center;border-radius:50%;background:var(--color-surface-muted);color:var(--color-success)}
+.notice-empty-art svg{width:30px;height:30px}
+.notice-empty strong{font-size:var(--font-md)}
+.notice-empty p{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm)}
+
+/* ---------- The in-app card: no acknowledgement button ---------- */
+.apc-alert-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-4)}
+.apc-alert-actions .mini-btn{width:auto;flex:0 0 auto}
+
+/* ---------- Settings → Notification Settings ---------- */
+#notificationSettings .profile-section{margin-bottom:var(--space-5)}
+.notice-permission-row,.settings-row-button{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);text-align:start}
+.settings-row-button{width:100%;cursor:pointer}
+.settings-row-button:disabled{opacity:.6;cursor:default}
+.notice-permission-row .settings-copy,.settings-row-button .settings-copy{flex:1;min-width:min(100%,220px)}
+.notice-permission-ok{flex:0 0 auto;color:var(--color-success);font-size:var(--font-sm);font-weight:600}
+.notice-setting-row{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface)}
+.notice-setting-row .settings-copy{flex:1;min-width:min(100%,220px)}
+.notice-setting-row input:disabled+.toggle-switch i,.notice-setting-row input:disabled~*{opacity:.6}
+.notice-history-list{display:grid;gap:var(--space-2)}
+.notice-history-row{display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);text-align:start}
+.notice-history-row.unread{border-inline-start:3px solid var(--color-primary)}
+.notice-history-copy{flex:1;min-width:0;display:grid;gap:2px}
+.notice-history-copy strong{font-size:var(--font-sm);overflow-wrap:anywhere}
+.notice-history-copy small{color:var(--color-text-secondary);font-size:var(--font-xs)}
+.notice-history-tag{flex:0 0 auto;padding:var(--space-1) var(--space-2);border-radius:999px;background:var(--color-surface-muted);font-size:var(--font-xs);color:var(--color-text-secondary)}
+
+@media(max-width:420px){
+  .notice-filters .notice-read-all{margin-left:0;width:100%}
+  .notice-detail{padding:var(--space-3)}
+  .notice-empty{padding:var(--space-4) var(--space-3)}
+}

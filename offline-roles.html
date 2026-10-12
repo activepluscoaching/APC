@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><script src="js/sanitize-url.js"></script><meta name="viewport" content="width=device-width,initial-scale=1"><title>Active Plus — Offline Role Workspace</title>    <link rel="stylesheet" href="css/foundation.css?v=266">
+  <link rel="stylesheet" href="css/ui-layout.css?v=266">
+  <link rel="stylesheet" href="css/ui-components.css?v=266">
+  <link rel="stylesheet" href="css/ui-forms.css?v=266">
+  <link rel="stylesheet" href="css/ui-features.css?v=266">
+  <link rel="stylesheet" href="css/notice-board.css?v=266">
+  <link rel="stylesheet" href="css/ui-status.css?v=266">
+  <link rel="stylesheet" href="css/ui-auth.css?v=266">
+  <link rel="stylesheet" href="css/app-polish.css?v=266">
+  <link rel="stylesheet" href="css/student-record.css?v=266">
+  <link rel="stylesheet" href="css/exam-archive.css?v=266">
+  <link rel="stylesheet" href="css/academics.css?v=266">
+  <link rel="stylesheet" href="css/notifications.css?v=266">
+  <link rel="stylesheet" href="css/course-hub.css?v=266">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=266">
+  <script type="module" src="js/ui-accessibility.js"></script>
+  <script src="js/launch-screen.js" defer></script>
+</head>
+<body><main><header><p class="eyebrow">ACTIVE PLUS • OFFLINE V2</p><h1>রোল ও অনুমোদন যাচাই</h1><p>পাঁচটি রোল • একই অফলাইন ডেটাবেজ</p></header>
+<aside>এটি নতুন অফলাইন পরীক্ষার workspace। পুরোনো প্যানেলের ডেটা অপরিবর্তিত। সব রোল একই ব্রাউজার ও origin-এ এই ডেটা ব্যবহার করে; অন্য ডিভাইসে স্বয়ংক্রিয় sync হয় না। ডিভাইসের মালিক সরাসরি storage বদলাতে পারেন—এটি server security নয়।</aside>
+<section id="entry"><h2>ডেমো দিয়ে শুরু করুন</h2><p>ষষ্ঠ–দ্বাদশ শ্রেণির ১৪টি সেকশনে পূর্ণ ডেমো তৈরি করুন। আগে তৈরি করা থাকলে admin.demo দিয়ে প্রবেশ করে “সব ক্লাসে আরও ডেমো যোগ করুন” চাপুন—আগের তথ্য মুছবে না। তারপর আলাদা রোলে login করে একই তথ্য ও approval পরীক্ষা করুন।</p><button id="seed">পূর্ণ ডেমো ডেটাবেজ তৈরি</button><p>ডেমো ID: <code>admin.demo</code>, <code>manager.demo</code>, <code>teacher.demo</code>, <code>payment.demo</code>, <code>student.demo</code><br>অতিরিক্ত ক্লাসের শিক্ষক: <code>teacher6a.demo</code> থেকে <code>teacher12b.demo</code>। শিক্ষার্থী: <code>student6a1.demo</code> থেকে <code>student12b6.demo</code>।<br>সবার ডেমো পাসওয়ার্ড: <code>Demo12345</code></p>
+<form id="login"><label>ইউজারনেম<input name="username" autocomplete="username" required></label><label>পাসওয়ার্ড<input name="password" type="password" autocomplete="current-password" required></label><button>প্রবেশ</button></form><details><summary>নতুন শিক্ষার্থী নিবন্ধন</summary><form id="registration"><label>নাম<input name="name" required></label><label>ইউজারনেম<input name="username" required></label><label>পাসওয়ার্ড<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label>ক্লাস<select name="classId" id="registrationClasses" required></select></label><button>Manager অনুমোদনের জন্য নিবন্ধন</button></form></details></section>
+<p id="message" role="status" aria-live="polite"></p>
+<section id="workspace" hidden><div class="toolbar"><h2 id="identity"></h2><button id="populateDemo" hidden>সব ক্লাসে আরও ডেমো যোগ করুন</button><button id="logout">লগআউট</button></div><nav id="menu" aria-label="অনুমোদিত বিভাগ"></nav><h2 id="sectionTitle"></h2><div id="actions"></div><div class="record-filters"><label>ক্লাস / সেকশন<select id="classFilter"></select></label><label>খুঁজুন<input id="recordSearch" type="search" placeholder="নাম, ID, বিষয় অথবা status"></label></div><div id="records"></div></section>
+<footer>পরীক্ষার ধাপ: Cash Counter এন্ট্রি → Manager অনুমোদন → Admin রিপোর্ট → Student নিজের রসিদ। Teacher ফলাফল → Manager প্রকাশ → Student ফলাফল।</footer>
+</main><script type="module" src="js/offline-role-ui.js"></script></body></html>

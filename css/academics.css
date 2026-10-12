@@ -1,0 +1,67 @@
+/* Academic Setup (Admin) + Teacher assignment picker (Manager).
+
+   One visual language for the class/subject structure that every other screen
+   reads from: a class card with its subject ticks, a pill row for the subject
+   list, and the cascading picker a Manager uses to hand a teacher a class.
+
+   Layout only — every colour comes from a token in css/foundation.css, so the
+   light/dark/AMOLED themes keep working without a rule here. */
+
+/* ---------- The two "add" forms: side by side on a wide screen ---------- */
+.academics-tools{display:grid;gap:var(--space-4);margin-bottom:var(--space-4)}
+.academics-form{display:grid;gap:var(--space-3);align-content:start;padding:var(--space-5);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);min-width:0}
+.academics-form label{display:grid;gap:var(--space-2);margin:0;font-size:var(--font-sm);font-weight:600;min-width:0}
+.academics-form input{min-width:0}
+.academics-form .admin-btn{width:100%}
+@media(min-width:720px){
+  .academics-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---------- One class: name + on/off switch + its subject ticks ---------- */
+.academics-class{padding:var(--space-5);margin-bottom:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);min-width:0}
+.academics-class.is-off{opacity:.62}
+.academics-class-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-2)}
+.academics-class-head>div{min-width:0}
+.academics-class-head h3{margin:0;font-size:var(--font-md);line-height:1.45;overflow-wrap:anywhere}
+.academics-class-head small{display:block;margin-top:var(--space-1);color:var(--color-text-secondary);font-size:var(--font-xs)}
+.academics-subjects{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--space-2);margin-top:var(--space-3)}
+.academics-subject{display:flex;align-items:center;gap:var(--space-2);min-height:44px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-muted);font-size:var(--font-sm);cursor:pointer;overflow-wrap:anywhere}
+.academics-subject input{flex:0 0 auto;width:18px;height:18px;margin:0;accent-color:var(--color-primary)}
+.academics-subject:has(input:checked){border-color:var(--color-primary)}
+.academics-subject:has(input:disabled){opacity:.6;cursor:not-allowed}
+
+/* ---------- The subject list: name + এটা/বন্ধ করুন as one pill ---------- */
+.academics-chips{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.academics-chip{display:inline-flex;align-items:center;gap:var(--space-2);max-width:100%;padding:var(--space-1) var(--space-2) var(--space-1) var(--space-3);border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface-muted);font-size:var(--font-sm)}
+.academics-chip.is-off{opacity:.62}
+.academics-chip .mini-btn{min-height:32px;padding-inline:var(--space-3);font-size:var(--font-xs)}
+
+/* ---------- The on/off switch shared by the class cards and System Settings ---------- */
+.switch{position:relative;display:inline-flex;flex:0 0 auto;align-items:center;width:52px;height:32px;cursor:pointer}
+.switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.switch-track{display:block;width:100%;height:100%;background:var(--color-surface-muted);border:1px solid var(--color-border);border-radius:999px;transition:background-color .15s ease,border-color .15s ease}
+.switch-track::after{content:"";display:block;width:24px;height:24px;margin:3px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:50%;transition:transform .15s ease}
+.switch input:checked+.switch-track{background:var(--color-primary);border-color:var(--color-primary)}
+.switch input:checked+.switch-track::after{transform:translateX(20px)}
+.switch input:focus-visible+.switch-track{outline:2px solid var(--color-primary);outline-offset:2px}
+.switch input:disabled{cursor:not-allowed}
+.switch input:disabled+.switch-track{opacity:.6}
+
+/* ---------- Manager: "which subjects will you teach?" checkbox list ---------- */
+.manager-subject-picker{margin:0;padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-muted);min-width:0}
+.manager-subject-picker legend{padding-inline:var(--space-2);font-size:var(--font-sm);font-weight:600}
+.manager-subject-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--space-2);margin-block:var(--space-2)}
+.manager-subject-option{display:flex;align-items:center;gap:var(--space-2);min-height:44px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);font-size:var(--font-sm);cursor:pointer;overflow-wrap:anywhere}
+.manager-subject-option input{flex:0 0 auto;width:18px;height:18px;margin:0;accent-color:var(--color-primary)}
+.manager-subject-option:has(input:checked){border-color:var(--color-primary);font-weight:600}
+.manager-subject-picker .admin-empty{margin:0;text-align:start}
+
+/* Assigned subjects on a saved assignment card: নাম + × chips. */
+.manager-subject-chips{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)}
+.manager-subject-chip{display:inline-flex;align-items:center;gap:var(--space-1);max-width:100%;padding:var(--space-1) var(--space-1) var(--space-1) var(--space-3);border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface-muted);font-size:var(--font-xs);overflow-wrap:anywhere}
+.manager-subject-chip .mini-btn{min-height:30px;min-width:30px;padding:0;border-radius:50%;font-size:var(--font-sm);line-height:1}
+
+/* Status line under the Admin forms and any inline error copy. */
+.academics-status{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-muted);color:var(--color-text-secondary);font-size:var(--font-sm);overflow-wrap:anywhere}
+.academics-status[hidden]{display:none}
+.admin-error-text{color:var(--color-danger)}

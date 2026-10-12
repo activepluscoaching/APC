@@ -1,5 +1,5 @@
 import { examRepository as repo, examMatchesStudent, retryEligibility, firstAttemptMean, examResults, totalMarks, watchExams, isStudentVisibleExam, gradeFor } from './exam-data.js';
-import { examMeta, resultMarkup, attemptStage, stageTag, codeTag, esc, num } from './exam-ui.js';
+import { examMeta, resultMarkup, classResultBoard, attemptStage, stageTag, codeTag, esc, num } from './exam-ui.js';
 import { downloadExamPDF } from './exam-pdf.js';
 import { setView } from './shell.js';
 
@@ -129,7 +129,7 @@ export function initStudentExams({ getStudent, getAccount }) {
       const retry = retryEligibility(db, e, getStudent().id);
       return `<article class="exam-card" data-student-exam="${esc(e.id)}">${examMeta(e)}<p class="exam-note">${stageTag(e)}${codeTag(e)}</p><p class="exam-note">${esc(e.instructions)}</p>${e.type === 'mcq' ? `<p class="exam-note">সব প্রশ্ন একসঙ্গে থাকবে। প্রতি ভুলে ${num(e.negative)} নম্বর কাটা হবে; সর্বনিম্ন মোট ০। প্রথম প্রবেশের সীমা ${num(e.lateMinutes)} মিনিট।</p>${queued ? `<p class="exam-message">${esc(attemptStage(attempts.find(a => a.status === 'queued'), e))}</p>` : ''}` : ''}
         <div class="exam-actions">${e.type === 'mcq' ? active && now < e.endAt ? button('resume', 'পরীক্ষায় ফিরে যাও', e.id, 'primary') : canFirst ? button('start', 'পরীক্ষা শুরু করো', e.id, 'primary') : retry ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : `<small>${now < e.startAt ? 'নির্ধারিত সময়ে পরীক্ষা শুরু হবে।' : now >= e.endAt ? 'পরীক্ষার সময় শেষ।' : attempts.length ? 'চলমান গড়ের নিচে হলে দ্বিতীয় সুযোগ এখানে আসবে।' : 'প্রথম প্রবেশের সময়সীমা শেষ।'}</small>` : now >= e.startAt ? button('paper', 'প্রশ্নপত্র PDF ডাউনলোড', e.id, 'primary') : '<small>শুরুর সময় হলে PDF পাওয়া যাবে।</small>'}
-        ${e.resultsPublished ? button('results', 'প্রকাশিত ফলাফল', e.id) : '<small>ফলাফল Manager-এর প্রকাশের অপেক্ষায়।</small>'}${e.type === 'mcq' && now >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF', e.id) : ''}</div></article>`;
+        ${e.resultsPublished ? button('results', 'প্রকাশিত ফলাফল ও ক্লাসের মেধাক্রম', e.id): e.type === 'mcq' ? `<small>সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।</small>` : '<small>ফলাফল Manager-এর প্রকাশের অপেক্ষায়।</small>'}${e.type === 'mcq' && now >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF', e.id) : ''}</div></article>`;
     }).join('') || `<p class="exam-card">${visible.length ? EMPTY_TAB_TEXT[tab] : 'Admin এখনও কোনো পরীক্ষা প্রকাশ করেননি।'}</p>`}</div>`;
     paintTabs();
   }
@@ -148,7 +148,7 @@ export function initStudentExams({ getStudent, getAccount }) {
     clock(); scrollTop();
   }
   function results(e, reset = true) {
-    if (!e.resultsPublished) { view = 'list'; examId = null; attemptId = null; list(); message('ফলাফল এখনো Manager প্রকাশ করেননি।'); return; }
+    if (!e.resultsPublished) { view = 'list'; examId = null; attemptId = null; list(); message(e.type === 'mcq' ? 'ফলাফল এখনো প্রকাশিত হয়নি — সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।' : 'ফলাফল এখনো Manager প্রকাশ করেননি।'); return; }
     view = 'results'; examId = e.id; attemptId = null;
     const mine = own(e), pending = mine.some(a => a.status === 'queued'), mean = firstAttemptMean(db, e.id);
     content.innerHTML = `<div class="exam-actions">${button('list', '← পরীক্ষার তালিকা')}${button('refresh', 'হালনাগাদ')}</div>${examMeta(e)}
@@ -158,7 +158,7 @@ export function initStudentExams({ getStudent, getAccount }) {
         return `<div class="exam-summary"><h3>তোমার প্রচেষ্টা ${num(a.number)} • ${esc(attemptStage(a, e))}${auto ? ' (সময় শেষে স্বয়ংক্রিয় জমা)' : ''}</h3><strong>${num(a.score)} / ${num(totalMarks(e))}</strong>${e.type === 'mcq' ? `<p>সঠিক ${num(a.correct)} • ভুল ${num(a.wrong)} • অনুত্তরিত ${num(a.unanswered)}</p>` : ''}${auto ? '<p>নির্ধারিত সময় শেষ হওয়ায় উত্তরপত্র নিজে থেকেই জমা হয়েছে — জমা হওয়ার আগে যেসব উত্তর বাছা ছিল সেগুলোই গণনা হয়েছে।</p>' : ''}</div>`;
       }).join('')}
       <p class="exam-note">${e.type === 'mcq' ? `দ্বিতীয় সুযোগ: জমা হওয়া প্রথম প্রচেষ্টার চলমান গড় ${mean === null ? 'এখনও নেই' : num(mean.toFixed(2))}। তার নিচে থাকলে সর্বোচ্চ দুইবার; শেষ সময় একই। শুরু করা দ্বিতীয় সুযোগ পরে গড় বদলালেও বাতিল হবে না।` : 'ক্লাসে পরীক্ষার পরে শিক্ষক নম্বর প্রকাশ করবেন।'}</p>
-      <div class="exam-actions">${retryEligibility(db, e, getStudent().id) ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : ''}${e.type === 'mcq' && Date.now() >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF ডাউনলোড', e.id, 'primary') : e.type === 'mcq' ? '<small>সঠিক উত্তরসহ PDF সবার পরীক্ষা শেষ হলে পাওয়া যাবে।</small>' : ''}</div>${resultMarkup(db, e)}`;
+      <div class="exam-actions">${retryEligibility(db, e, getStudent().id) ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : ''}${e.type === 'mcq' && Date.now() >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF ডাউনলোড', e.id, 'primary') : e.type === 'mcq' ? '<small>সঠিক উত্তরসহ PDF সবার পরীক্ষা শেষ হলে পাওয়া যাবে।</small>' : ''}</div>${e.classResults ? classResultBoard(e, e.classResults, { meId: getStudent().id }) : resultMarkup(db, e)}`;
     if (reset) scrollTop();
   }
   function repaint() {

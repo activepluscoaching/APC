@@ -20,6 +20,42 @@ export function resultMarkup(db, e, includeRoster = false, { pdf = false } = {})
     <div class="exam-results">${rows.map(a => `<article class="exam-card"><span class="exam-tag">মেধাক্রম ${num(a.rank)}</span><h3>${esc(a.name)}</h3><small>${esc(a.className)} • চেষ্টা ${num(a.number)}</small><p><strong>${num(a.score)} / ${num(totalMarks(e))}</strong> • গ্রেড ${esc(a.grade)}</p>${e.type === 'mcq' ? `<small>সঠিক ${num(a.correct)} • ভুল ${num(a.wrong)} • অনুত্তরিত ${num(a.unanswered)}</small>` : ''}${pdf ? `<div class="exam-actions"><button type="button" data-exam-action="student-pdf" data-id="${esc(e.id)}" data-attempt="${esc(a.id)}">এই শিক্ষার্থীর উত্তরপত্র PDF</button></div>` : ''}</article>`).join('') || '<p class="exam-note">এখনও কোনো ফলাফল প্রকাশ হয়নি।</p>'}</div>
     ${includeRoster ? `<h3>অংশগ্রহণ / জমার অবস্থা</h3><p class="exam-note">অংশ নিয়েছে ${num(new Set(db.attempts.filter(a => a.examId === e.id).map(a => a.studentId)).size)} জন • জমা অপেক্ষমাণ ${num(new Set(pending.map(a => a.studentId)).size)} জন</p><div class="exam-results">${absent.map(s => `<article class="exam-card"><strong>${esc(s.name)}</strong><p>${esc(s.className)} • ${e.type === 'mcq' ? (Date.now() >= e.endAt ? 'অনুপস্থিত' : 'এখনও অংশ নেয়নি') : (e.absentIds || []).includes(s.id) ? 'অনুপস্থিত' : 'নম্বর/উপস্থিতি নথিভুক্ত হয়নি'}</p></article>`).join('')}</div>` : ''}`;
 }
+/**
+ * The class-wide board: once a paper's results are out, every student of that
+ * class sees who got what. Rows come from the Student snapshot's `classResults`
+ * (marks only — no answer sheets, no attempt ids), so the board can only ever be
+ * built for a paper that already matched this student's class/batch.
+ */
+export function classResultBoard(exam, rows, { meId = '', heading = 'পুরো ক্লাসের ফলাফল' } = {}) {
+  if (!Array.isArray(rows) || !rows.length) return '';
+  const total = totalMarks(exam);
+  const ordered = [...rows.filter(row => !row.absent && Number.isFinite(Number(row.rank)))].sort((a, b) => a.rank - b.rank || String(a.name).localeCompare(String(b.name), 'bn'));
+  const absent = rows.filter(row => row.absent);
+  const listed = [...ordered, ...absent];
+  const me = meId ? rows.find(row => row.studentId === meId) || null : null;
+  const publishedAt = Number(exam.resultsPublishedAt) ? ` • প্রকাশিত: ${esc(when(exam.resultsPublishedAt))}` : '';
+  const rowsHtml = listed.map(row => {
+    const mine = me && row.studentId === me.studentId;
+    const marks = row.absent
+      ? `<span class="exam-board-absent">${row.markedAbsent ? 'অনুপস্থিত' : 'জমা দেয়নি'}</span>`
+      : `<span class="exam-board-marks"><strong>${num(row.score)}</strong> / ${num(row.total ?? total)}</span><span class="exam-board-grade">${esc(row.grade || '—')}</span>`;
+    return `<li class="exam-board-row${row.absent ? ' is-absent' : ''}${mine ? ' is-me' : ''}" data-exam-board-row="${esc(String(row.studentId))}"${mine ? ' aria-current="true"' : ''}>
+      <span class="exam-board-rank">${row.absent ? '—' : num(row.rank)}</span>
+      <span class="exam-board-name">${esc(row.name || '—')}${mine ? ' <small>(তুমি)</small>' : ''}</span>
+      ${marks}
+    </li>`;
+  }).join('');
+  const detail = me && !me.absent && exam.type === 'mcq' && Number.isFinite(Number(me.correct))
+    ? `<p class="exam-note">তোমার প্রতিটি উত্তর: সঠিক ${num(me.correct)} • ভুল ${num(me.wrong)} • অনুত্তরিত ${num(me.unanswered)}${me.autoSubmitted ? ' • সময় শেষে স্বয়ংক্রিয়ভাবে জমা' : ''}</p>` : '';
+  return `<section class="exam-board" data-exam-board aria-labelledby="examBoardTitle-${esc(exam.id)}">
+    <h3 id="examBoardTitle-${esc(exam.id)}">${esc(heading)}</h3>
+    <p class="exam-note">${esc(exam.className || 'সব শ্রেণি')}${exam.group ? ` • ${esc(exam.group)}` : ''} • অংশগ্রহী ${num(ordered.length)} জন${absent.length ? ` • অনুপস্থিত/অনজ্চিত ${num(absent.length)} জন` : ''} • পূর্ণমান ${num(total)}${publishedAt}</p>
+    <ol class="exam-board-list">${rowsHtml}</ol>
+    ${me && !me.absent ? `<p class="exam-note exam-board-me">তোমার অবস্থান: মেধাক্রম ${num(me.rank)} • ${num(me.score)} / ${num(me.total ?? total)} • গ্রেড ${esc(me.grade || '—')}</p>${detail}` : ''}
+    <p class="exam-note">সেরা মেধাক্রম সবার সেরা নম্বরে। এই ফলাফল তোমার ক্লাসের সব শিক্ষার্থীরাই দেখতে পাবে।</p>
+  </section>`;
+}
+
 export function downloadResults(db, e) {
   const rows = examResults(db, e), best = new Map(rows.map(a => [a.studentId, a])), mean = firstAttemptMean(db, e.id);
   const cells = value => `"${String(value ?? '').replace(/^[=+\-@\t\r]/, match => "'" + match).replace(/"/g, '""')}"`;

@@ -557,9 +557,14 @@ function studentExamSnapshot(db, student) {
         const { answer, answerText, ...safeQuestion } = question;
         return safeQuestion;
       });
+      /* The class board travels with a published paper and nothing else: it is the
+         one place a student may see another student's mark, and it carries marks
+         only — no answer sheets, and never a paper from another class. */
+      const classResults = exam.resultsPublished === true ? classResultRows(db, exam) : undefined;
       return {
         ...exam,
         questions,
+        ...(classResults ? { classResults } : {}),
         participants: (exam.participants || []).filter(person => person.id === student.id).map(person => ({ ...person })),
         absentIds: (exam.absentIds || []).filter(id => id === student.id)
       };
@@ -796,9 +801,90 @@ export function examResults(db, exam) {
   const rows = [...best.values()].sort((a, b) => b.score - a.score || a.finishedAt - b.finishedAt);
   return rows.map((a, index) => ({ ...a, rank: rows.findIndex(other => other.score === a.score) + 1, grade: gradeFor(a.score, totalMarks(exam), exam.passPercent) }));
 }
+
+/* ---------- Auto-published MCQ results ----------
+   An MCQ paper marks itself: `scoreAttempt` runs the moment an answer sheet is
+   in (including the sheet the timer submits for a student who walked away). So
+   once the window has closed and every sheet of that paper is in, there is no
+   human decision left to wait for — publishing then is the honest state of the
+   data, not an assumption. Written and short papers keep waiting for their
+   teacher's marks and the Manager's publish. */
+
+/** True when this MCQ paper's marks are complete and its window is closed.
+    A sheet still `active` or `queued` (a device that has not come online yet)
+    holds publication back: a board with someone missing is not a result. */
+export function mcqResultsReady(exam, db, now = Date.now()) {
+  if (!exam || exam.type !== 'mcq' || exam.resultsPublished === true) return false;
+  if (!isLiveExam(exam) || !(Number(exam.endAt) > 0) || now < Number(exam.endAt)) return false;
+  const attempts = (db.attempts || []).filter(attempt => attempt.examId === exam.id);
+  if (!attempts.length) return false;
+  if (attempts.some(attempt => attempt.status !== 'submitted')) return false;
+  return true;
+}
+
+/** Publish every ready paper. Mutates `db`; returns how many changed. */
+export function autoPublishMcqResults(db, now = Date.now()) {
+  let changed = 0;
+  for (const exam of db.exams || []) {
+    if (!mcqResultsReady(exam, db, now)) continue;
+    exam.resultsPublished = true;
+    exam.resultsPublishedAt = now;
+    exam.resultsPublishedBy = 'auto';
+    changed++;
+  }
+  return changed;
+}
+
+/**
+ * The rows one class may see once a paper's results are out — one row per
+ * student, ranked, plus the students who never submitted. Deliberately shallow:
+ * no answer sheet, no attempt id, no option order. Built from the exam db and
+ * carried into the Student snapshot, so a student can only ever receive the
+ * board of a paper that matched their own class/batch.
+ */
+export function classResultRows(db, exam) {
+  const total = totalMarks(exam);
+  const scored = examResults(db, exam);
+  const rows = scored.map(row => ({
+    studentId: row.studentId,
+    name: row.name,
+    className: row.className,
+    group: row.group || '',
+    score: row.score,
+    total,
+    grade: row.grade,
+    rank: row.rank,
+    correct: row.correct ?? null,
+    wrong: row.wrong ?? null,
+    unanswered: row.unanswered ?? null,
+    attempts: row.number || 1,
+    autoSubmitted: Number.isFinite(Number(row.finishedAt)) && Number(row.finishedAt) >= Number(exam.endAt),
+    absent: false
+  }));
+  const seen = new Set(rows.map(row => row.studentId));
+  const absentIds = new Set(exam.absentIds || []);
+  for (const person of exam.participants || []) {
+    if (!person || seen.has(person.id)) continue;
+    rows.push({
+      studentId: person.id, name: person.name, className: person.className, group: person.group || '',
+      score: null, total, grade: null, rank: null, correct: null, wrong: null, unanswered: null,
+      attempts: 0, autoSubmitted: false, absent: true, markedAbsent: absentIds.has(person.id)
+    });
+  }
+  return rows;
+}
 export const examRepository = {
+  /* Read-side sweep: a paper whose window closed while every device was away
+     must still be published the next time anyone opens a list — and only when
+     something is actually ready does the shared node see a transaction. */
+  async sweepResults() {
+    const db = read();
+    if (!(db.exams || []).some(exam => mcqResultsReady(exam, db))) return db;
+    return mutate(next => { autoPublishMcqResults(next); });
+  },
   async list(actor = null) {
     if (actor?.role === 'student') return examRepository.listForStudent(actor.studentId || actor.id);
+    await examRepository.sweepResults().catch(() => null);
     if (actor?.role === 'teacher') { await requireRoleSession('teacher'); return teacherExamSnapshot(read(), actor); }
     if (actor?.role === 'manager') { await requireRoleSession('manager'); return read(); }
     if (actor?.role === 'admin') { await requireRoleSession('admin'); return read(); }
@@ -810,6 +896,7 @@ export const examRepository = {
   },
   async listForStudent(studentId) {
     const student = await authenticatedStudent(studentId);
+    await examRepository.sweepResults().catch(() => null);
     return studentExamSnapshot(read(), student);
   },
   async listStudents() { return teachingRepository.listStudents(); },
@@ -1175,6 +1262,8 @@ export const examRepository = {
       if (attempt.status !== 'active') return;
       attempt.finishedAt = Math.min(Date.now(), exam.endAt); attempt.status = navigator.onLine === false ? 'queued' : 'submitted';
       if (attempt.status === 'submitted') Object.assign(attempt, scoreAttempt(exam, attempt));
+      /* The sheet that closes a paper publishes it: no separate step, no wait. */
+      autoPublishMcqResults(db);
     });
     return studentExamSnapshot(db, actual);
   },
@@ -1186,6 +1275,7 @@ export const examRepository = {
         if (attempt.status === 'active' && Date.now() >= exam.endAt) { attempt.finishedAt = exam.endAt; attempt.status = 'queued'; }
         if (attempt.status === 'queued' && navigator.onLine !== false) { attempt.status = 'submitted'; Object.assign(attempt, scoreAttempt(exam, attempt)); }
       }
+      autoPublishMcqResults(db);
     });
     return studentExamSnapshot(db, actual);
   },

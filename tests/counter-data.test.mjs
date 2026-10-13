@@ -51,7 +51,7 @@ test('receipt projections strip PII even from historical/imported transactions',
 test('a simple save is durable/pending, exact-numbered and returns no full ledger/profile',async()=>{
  const result=await saveCounterPayment({studentId:person.id,amount:'৮০০',feeType:'মাসিক বেতন',month:monthLabel(),method:'নগদ (Cash)',status:'approved',className:'FORGED',mobile:'FORGED'});
  assert.equal(result.transaction.amount,800);assert.equal(result.transaction.status,'pending');
- assert.match(result.transaction.receiptNo,/^R\d{9}$/);
+ assert.match(result.transaction.receiptNo,/^C[0-9A-F]{8}-\d{6}$/);
  assert.equal('className' in result.transaction,false);
  assert.equal('mobile' in result.transaction,false);
  const stored=JSON.parse(ctx.window.localStorage.getItem(KEYS.transactions));

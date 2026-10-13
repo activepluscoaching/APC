@@ -40,7 +40,7 @@ test('a student registers on their own phone', async () => {
   const result = await studentPhone.run('register-student', { username: 'rahim.student', pin: '4827' });
   assert.equal(result.registered, true, result.message);
   studentId = result.account?.student?.id || result.account?.studentId;
-  assert.match(String(studentId), /^s\d{9}-/, 'collision-free Student ID');
+  assert.match(String(studentId), /^S[0-9A-F]{8}-\d{6}$/, 'collision-free Student ID');
 });
 
 test('the Admin phone lists it as a new registration', async () => {

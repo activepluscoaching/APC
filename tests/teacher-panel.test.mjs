@@ -63,7 +63,7 @@ test('the header and welcome hero show the teacher name from the staff profile',
   const updated = await updateStaffProfile('teacher', { fullName: 'পরীক্ষা শিক্ষক' });
   assert.equal(updated.ok, true);
   ctx.window.dispatchEvent(new ctx.window.CustomEvent('teaching-data-updated'));
-  await settle();
+  await ctx.waitFor(() => $('#teacherHomeTitle').textContent === 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHeaderName').hidden, false);
   assert.equal($('#teacherHeaderName').textContent, 'পরীক্ষা শিক্ষক');

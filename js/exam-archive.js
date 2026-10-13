@@ -1,3 +1,4 @@
+import { nowEpoch } from './time.js';
 /* Date-wise Examination archive.
    Pure helpers shared by the Manager/Teacher examination screens: filtering,
    date-wise grouping, the workflow timeline and the permission matrix. No DOM
@@ -70,7 +71,7 @@ export function groupExamsByDate(exams, { direction = 'desc' } = {}) {
     }));
 }
 /** Published/approved papers whose window has not closed yet, soonest first. */
-export function upcomingExams(exams, now = Date.now()) {
+export function upcomingExams(exams, now = nowEpoch()) {
   return exams
     .filter(exam => (isLiveExam(exam) || exam.status === 'approved') && Number(exam.endAt) > Number(now) && Number(exam.startAt) >= Number(now) - 86400000)
     .sort((a, b) => Number(a.startAt) - Number(b.startAt));
@@ -114,7 +115,7 @@ export const classOptions = exams => [...new Set(exams.map(exam => exam.classNam
 export const subjectOptions = exams => [...new Set(exams.map(exam => exam.subject).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'bn'));
 
 /** One row per exam, exactly the columns the date-wise dashboard shows. */
-export function examSummaryRow(exam, now = Date.now()) {
+export function examSummaryRow(exam, now = nowEpoch()) {
   return {
     id: exam.id,
     date: examDateKey(exam),
@@ -147,17 +148,18 @@ export function workflowSteps(status) {
 /* ---------------- Permissions -------------------------------------------------
    One place decides what a role may do with a record; the repository enforces
    the same rules server-side (locally: on the stored record). */
-export function examPermissions(actor, exam, { attempts = 0, openAttempts = 0, now = Date.now() } = {}) {
+export function examPermissions(actor, exam, { attempts = 0, openAttempts = 0, now = nowEpoch() } = {}) {
   const role = actor?.role;
   const manager = role === 'manager';
+  const admin = role === 'admin';
   const teacher = role === 'teacher';
   const expectedId = actor?.id && actor.id !== 'TCH-001' ? actor.id : currentTeacherId();
-  const own = teacher ? isOwnTeacherRecord(exam?.teacherId, expectedId) : true;
+  const own = teacher && isOwnTeacherRecord(exam?.teacherId, expectedId);
   const editable = isEditableExam(exam) && attempts === 0 && (manager || own);
   const live = isLiveExam(exam);
   return {
-    view: manager || own,
-    questions: manager || own,
+    view: manager || admin || own,
+    questions: manager || admin || own,
     edit: editable,
     duplicate: manager || (teacher && own),
     request: editable && ['draft', 'rejected'].includes(exam.status),
@@ -169,8 +171,8 @@ export function examPermissions(actor, exam, { attempts = 0, openAttempts = 0, n
     archive: manager && exam.status !== 'archived' && openAttempts === 0,
     restore: manager && exam.status === 'archived',
     remove: ['draft', 'rejected', 'archived'].includes(exam.status) && attempts === 0 && (manager || own),
-    results: manager || own,
-    grade: (manager || own) && live && exam.type !== 'mcq',
+    results: manager || admin || own,
+    grade: (manager || admin || own) && live && exam.type !== 'mcq',
     reschedule: manager && exam.status !== 'archived' && attempts === 0
   };
 }

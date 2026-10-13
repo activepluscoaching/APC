@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "emulate": "firebase emulators:start --only auth,firestore,functions",
-    "test:rules": "firebase emulators:exec --only firestore \"node --test test/firestore-rules.test.js\"",
+    "bootstrap:admin": "node bootstrap-first-admin.cjs",
+    "test:rules": "firebase emulators:exec --project demo-apc-phase3 --only firestore \"node --test test/firestore-rules.test.js test/firestore-phase3-gates.test.js\"",
     "deploy": "firebase deploy --only functions,firestore:rules",
     "test:rtdb-rules": "firebase emulators:exec --only database \"node --test test/rtdb-rules.test.js\""
   },

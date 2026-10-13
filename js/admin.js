@@ -1,3 +1,6 @@
+import { dhakaKey } from './time.js';
+import { initExamManager } from './exam-manager.js';
+import { backupOverdue } from './storage-safety.js';
 import { studentRecordMarkup } from './student-record.js';
 import { initAdminAcademics } from './admin-academics.js';
 import { mountV2Migration } from './admin-migration.js';
@@ -54,6 +57,13 @@ initFixedShell();
 registerServiceWorker();
 runMigrations();
 
+// The Admin backup format stores these existing collection values as raw JSON
+// strings. Keep the export/restore allowlist explicit: no sessions, staff
+// credentials, local account secrets or device keys in a downloaded backup.
+const BACKUP_KEYS = Object.freeze([
+  KEYS.students, KEYS.transactions, KEYS.notices, KEYS.routine,
+  KEYS.teaching, KEYS.exams, KEYS.settings
+]);
 const bn = toBanglaNumber;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => Array.from(document.querySelectorAll(selector));
@@ -228,7 +238,17 @@ function navigate(view, source) {
 /* ---------- Dashboard ---------- */
 
 
+let adminExamWorkspace;
+function renderGradeAudit() {
+  if (!adminExamWorkspace) adminExamWorkspace = initExamManager('#adminExamWorkspace', 'admin');
+  const audit = $('#gradeAuditList');
+  if (audit && access.has(CAPABILITIES.BACKUP_MANAGE)) {
+    const rows = [...(readJSON(KEYS.exams, { auditLog: [] })?.auditLog || []), ...(readJSON(KEYS.teaching, { auditLog: [] })?.auditLog || [])].sort((a,b) => a.at - b.at);
+    audit.innerHTML = rows.length ? rows.slice(-200).reverse().map(row => `<p>${escapeHtml(row.who)} • ${escapeHtml(row.role)} • ${escapeHtml(row.examId)} / ${escapeHtml(row.studentId)} • ${escapeHtml(new Date(row.at).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }))}<br>আগে: ${escapeHtml(JSON.stringify(row.before))} → পরে: ${escapeHtml(JSON.stringify(row.after))} • কারণ: ${escapeHtml(row.reason || '—')}</p>`).join('') : '<p>এখনো কোনো সম্পাদনা নেই।</p>';
+  }
+}
 function renderDashboard() {
+  renderBackupReminder();
   $('#dashStudentCount').textContent = bn(state.students.length);
   $('#dashClassCount').textContent = bn(state.enabled.size);
   if ($('#dashStaffCount')) $('#dashStaffCount').textContent = bn(state.staffCounts.active || 0);
@@ -248,7 +268,7 @@ function renderDashboard() {
   }
   const today = new Date();
   $('#adminTodayDate').textContent = dateLabel(today);
-  $('#adminTodayDate').dateTime = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  $('#adminTodayDate').dateTime = dhakaKey(today);
 }
 
 /* ---------- Students ---------- */
@@ -434,7 +454,7 @@ function saveStudentEdit(student) {
   let monthlyFee = null;
   if (feeRaw !== '') {
     monthlyFee = Number(feeRaw);
-    if (!Number.isFinite(monthlyFee) || monthlyFee < 0 || monthlyFee > 1000000) return fail('মাসিক ফি সঠিক সংখ্যা দিন।');
+    if (!Number.isSafeInteger(monthlyFee) || monthlyFee < 0 || monthlyFee > 1000000) return fail('মাসিক ফি সঠিক সংখ্যা দিন।');
   }
   const className = $('#editStudentClass').value;
   Object.assign(student, {
@@ -909,7 +929,12 @@ async function runFactoryReset() {
   }
 }
 
+function renderBackupReminder() {
+  const reminder = $('#backupReminder');
+  if (reminder) reminder.hidden = !backupOverdue(readJSON(BACKUP_STAMP_KEY, null));
+}
 function renderBackup() {
+  renderBackupReminder();
   paintIcon($('#backupExportButton .apc-icon'), 'download', 'apc-icon');
   paintIcon($('#backupRestoreButton .apc-icon'), 'upload', 'apc-icon');
   const badge = $('#backupLastBadge');
@@ -1171,6 +1196,7 @@ const VIEW_REFRESHERS = {
   roles: () => renderRoles(),
   data: () => renderDataManagement(),
   backup: () => renderBackup(),
+  audit: () => renderGradeAudit(),
   security: () => renderSecurity(),
   profile: () => { renderAdminProfile(); refreshStaffOverviews(); },
   staff: () => { void renderStaff(); },
@@ -1193,6 +1219,7 @@ function renderAll() {
   if (viewExists('roles')) renderRoles();
   if (viewExists('data')) renderDataManagement();
   if (viewExists('backup')) renderBackup();
+  if (viewExists('audit')) renderGradeAudit();
   if (viewExists('security')) renderSecurity();
   if (viewExists('academics')) renderAcademics();
   if (viewExists('migration')) renderMigration();

@@ -30,13 +30,14 @@ test('the notification feed includes the birthday card for that student', () => 
 });
 
 test('Admin, Manager and Teacher are told the day before, with class and name', () => {
-  const now = new Date(2026, 9, 8, 18, 0, 0).getTime();
+  const now = Date.parse('2026-10-08T10:00:00Z');
   const roster = [
     { id: 'S-BD', name: 'রাফি আহমেদ', className: 'দশম শ্রেণি', group: 'বিজ্ঞান', birthDate: '2008-10-09', status: 'approved' },
     { id: 'S-OTHER', name: 'মিম', className: 'নবম শ্রেণি', birthDate: '2009-01-01', status: 'approved' }
   ];
   const admin = birthdayAdvanceItems(roster, { kind: 'staff', role: 'admin' }, now);
   assert.equal(admin.length, 1);
+  assert.equal(birthdayAdvanceItems(roster, { kind: 'staff', role: 'admin' }, Date.parse('2026-10-08T18:00:00Z')).length, 0, 'Dhaka is already on the birthday');
   assert.equal(admin[0].kind, 'birthday-soon');
   assert.match(admin[0].body, /দশম শ্রেণি/);
   assert.match(admin[0].body, /রাফি/);

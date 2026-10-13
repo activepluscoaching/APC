@@ -114,21 +114,17 @@ test('different question weights, wrong/unanswered, change answer, zero floor, i
   assert.deepEqual(scoreAttempt(e, { answers: { q1: 'B' } }), { score: 0, correct: 0, wrong: 1, unanswered: 1 });
   assert.deepEqual(scoreAttempt(e, { answers: { q1: 'B', q2: 'C' } }), { score: 0.5, correct: 1, wrong: 1, unanswered: 0 });
 });
-test('running FIRST attempt mean enables one retry only, ignores second scores and keeps best score', async () => {
+test('one attempt per student; legacy aggregate remains readable without a new retry', async () => {
   setup(); const e = await publish(); clock = start;
-  let { a } = await attempt(e, one, { q1: 'A' }); let db = await repo.finishAttempt(a.id, one.id); assert.equal(retryEligibility(db, e, one.id), false);
+  let { a } = await attempt(e, one, { q1: 'A' }); let db = await repo.finishAttempt(a.id, one.id);
   ({ a } = await attempt(e, two, { q1: 'A', q2: 'C' })); db = await repo.finishAttempt(a.id, two.id);
-  db = await repo.list(MANAGER_ACTOR);
-  assert.equal(firstAttemptMean(db, e.id), 1.5); assert.equal(retryEligibility(db, e, one.id), true);
+  assert.equal(firstAttemptMean(db, e.id), 1.5);
+  assert.equal(retryEligibility(db, e, one.id), false);
   seedStudentSession(one);
-  const studentSnapshot = await repo.listForStudent(one.id);
-  assert.equal(firstAttemptMean(studentSnapshot, e.id), 1.5, 'the Student gets only the aggregate required for the retry rule');
-  assert.equal(studentSnapshot.attempts.every(row => row.studentId === one.id), true, 'another Student’s attempt stays hidden');
-  assert.equal(retryEligibility(studentSnapshot, e, one.id), true, 'the Student view exposes the eligible retry action without peer rows');
-  clock = start + 20 * 60000; ({ a } = await attempt(e, one, { q1: 'B' })); assert.equal(a.number, 2);
-  db = await repo.finishAttempt(a.id, one.id); assert.equal(firstAttemptMean(db, e.id), 1.5);
-  assert.equal(examResults(db, e).find(a => a.studentId === one.id).score, 1);
-  assert.equal(retryEligibility(db, e, one.id), false); await assert.rejects(repo.startAttempt(e.id, one));
+  const mine = await repo.listForStudent(one.id);
+  assert.equal(mine.attempts.length, 1);
+  assert.equal(mine.attempts.every(row => row.studentId === one.id), true);
+  await assert.rejects(repo.startAttempt(e.id, one));
 });
 test('offline queue survives reload; deadline locks; later sync grades exactly once', async () => {
   setup(); const e = await publish(); clock = start; const { a } = await attempt(e, one, { q1: 'A', q2: 'C' }); navigator.onLine = false;
@@ -151,6 +147,25 @@ test('written/short next-day physical grading and explicit absence; invalid scor
   db = await repo.publishResults(e.id, MANAGER_ACTOR); assert.equal(db.exams[0].resultsPublished, true);
   await assert.rejects(repo.saveWrittenScore(e.id, one, { q1: 1, q2: 1 }));
   await assert.rejects(repo.saveWrittenScore(e.id, one, { q1: 1, q2: 1 }, ADMIN_ACTOR));
+});
+test('written score corrections are audited atomically; after seven days Manager must explain', async () => {
+  setup(); const exam = await publish({ type: 'short', template: examTemplate('short') });
+  const marks = Object.fromEntries(exam.questions.map(q => [q.id, q.marks]));
+  clock = Date.parse('2026-10-02T12:00:00+06:00');
+  let db = await repo.saveWrittenScore(exam.id, one, marks);
+  assert.equal(db.auditLog, undefined, 'teacher snapshot cannot read the audit');
+  const initial = await repo.list(MANAGER_ACTOR);
+  assert.equal(initial.auditLog.length, 1);
+  assert.equal(initial.auditLog[0].before, null);
+  const revised = Object.fromEntries(exam.questions.map(q => [q.id, 0]));
+  clock += 8 * 86400000;
+  await assert.rejects(repo.saveWrittenScore(exam.id, one, revised), /৭ দিন/);
+  await assert.rejects(repo.saveWrittenScore(exam.id, one, revised, MANAGER_ACTOR), /কারণ/);
+  db = await repo.saveWrittenScore(exam.id, one, { ...revised, reason: 'পুনঃমূল্যায়ন' }, MANAGER_ACTOR);
+  assert.equal(db.auditLog.length, 2);
+  assert.equal(db.auditLog[1].before.score, initial.attempts[0].score);
+  assert.equal(db.auditLog[1].after.score, 0);
+  assert.equal(db.auditLog[1].reason, 'পুনঃমূল্যায়ন');
 });
 test('invalid/corrupt storage and quota failure never reset data or announce success', async () => {
   let env = setup(); env.store.set(EXAM_KEY, '{broken'); await assert.rejects(repo.list()); await assert.rejects(repo.saveDraft(fields())); assert.equal(env.store.get(EXAM_KEY), '{broken');

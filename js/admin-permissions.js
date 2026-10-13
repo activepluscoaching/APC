@@ -127,6 +127,7 @@ export const VIEW_CAPABILITIES = Object.freeze({
   data: CAPABILITIES.DATA_MANAGE,
   migration: CAPABILITIES.SECURITY_MANAGE,
   backup: CAPABILITIES.BACKUP_MANAGE,
+  audit: CAPABILITIES.BACKUP_MANAGE,
   security: CAPABILITIES.SECURITY_MANAGE,
   academics: CAPABILITIES.SETTINGS_MANAGE,
   settings: CAPABILITIES.SETTINGS_MANAGE,
@@ -156,13 +157,14 @@ export const ADMIN_SYSTEM_NAV = Object.freeze([
 
 /** ডেটা hub cards — data management, then the one backup screen. */
 export const ADMIN_DATA_NAV = Object.freeze([
-  { view: 'backup', label: 'ব্যাকআপ ও রিস্টোর', hint: 'সম্পূর্ণ ব্যাকআপ নিন ও ফিরিয়ে আনুন', icon: 'backup', capability: CAPABILITIES.BACKUP_MANAGE, order: 1 }
+  { view: 'backup', label: 'ব্যাকআপ ও রিস্টোর', hint: 'সম্পূর্ণ ব্যাকআপ নিন ও ফিরিয়ে আনুন', icon: 'backup', capability: CAPABILITIES.BACKUP_MANAGE, order: 1 },
+  { view: 'audit', label: 'নম্বর/উপস্থিতি অডিট লগ', hint: 'সম্পাদনার ইতিহাস ও কারণ দেখুন', icon: 'reports', capability: CAPABILITIES.BACKUP_MANAGE, order: 2 }
 ]);
 
 /** Which seat lights up for a view that lives inside a hub. */
 export const VIEW_SEAT = Object.freeze({
   roles: 'system', security: 'system', settings: 'system', academics: 'system', migration: 'system',
-  backup: 'data',
+  backup: 'data', audit: 'data',
   students: 'dashboard'
 });
 

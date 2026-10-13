@@ -2,11 +2,11 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src 'self' https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https: wss:; manifest-src 'self'; worker-src 'self'; base-uri 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <script src="js/sanitize-url.js"></script>
-  <script src="js/app-entry.js?v=272" data-entry="admin"></script>
-  <script type="module" src="js/admin.js?v=272"></script>
+  <script src="js/app-entry.js?v=307" data-entry="admin"></script>
+  <script type="module" src="js/admin.js?v=307"></script>
   <script src="js/topbar-connectivity.js?v=25161005-syncborder" defer></script>
   <script type="module" src="js/realtime-sync-entry.js"></script>
   <script src="js/appearance-boot.js"></script>
@@ -35,62 +35,26 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=272">
-  <link rel="stylesheet" href="css/ui-layout.css?v=272">
-  <link rel="stylesheet" href="css/ui-components.css?v=272">
-  <link rel="stylesheet" href="css/ui-forms.css?v=272">
-  <link rel="stylesheet" href="css/ui-features.css?v=272">
-  <link rel="stylesheet" href="css/notice-board.css?v=272">
-  <link rel="stylesheet" href="css/ui-status.css?v=272">
-  <link rel="stylesheet" href="css/ui-auth.css?v=272">
-  <link rel="stylesheet" href="css/app-polish.css?v=272">
-  <link rel="stylesheet" href="css/student-record.css?v=272">
-  <link rel="stylesheet" href="css/exam-archive.css?v=272">
-  <link rel="stylesheet" href="css/academics.css?v=272">
-  <link rel="stylesheet" href="css/notifications.css?v=272">
-  <link rel="stylesheet" href="css/course-hub.css?v=272">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=272">
+  <link rel="stylesheet" href="css/foundation.css?v=307">
+  <link rel="stylesheet" href="css/ui-layout.css?v=307">
+  <link rel="stylesheet" href="css/ui-components.css?v=307">
+  <link rel="stylesheet" href="css/ui-forms.css?v=307">
+  <link rel="stylesheet" href="css/ui-features.css?v=307">
+  <link rel="stylesheet" href="css/notice-board.css?v=307">
+  <link rel="stylesheet" href="css/ui-status.css?v=307">
+  <link rel="stylesheet" href="css/ui-auth.css?v=307">
+  <link rel="stylesheet" href="css/app-polish.css?v=307">
+  <link rel="stylesheet" href="css/student-record.css?v=307">
+  <link rel="stylesheet" href="css/exam-archive.css?v=307">
+  <link rel="stylesheet" href="css/academics.css?v=307">
+  <link rel="stylesheet" href="css/notifications.css?v=307">
+  <link rel="stylesheet" href="css/course-hub.css?v=307">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=307">
   <script type="module" src="js/ui-accessibility.js"></script>
   <script src="js/launch-screen.js" defer></script>
 </head>
 <body>
-  <script>
-    /* Safety fallback: admin.js must never leave this protected entry blank.
-       It no longer sends anyone to another page on its own — the panel locks in
-       place and offers the two ways onward as buttons (js/panel-lockdown.js
-       shows the same card when the module itself is what failed). */
-    window.setTimeout(() => {
-      const shell = document.getElementById('adminShell');
-      if (!shell || !shell.hidden || document.getElementById('apcPanelLock')) return;
-      const card = document.createElement('section');
-      card.id = 'apcPanelLockBoot';
-      card.className = 'apc-lock-card';
-      card.setAttribute('role', 'alert');
-      const eyebrow = document.createElement('p');
-      eyebrow.className = 'apc-lock-eyebrow';
-      eyebrow.textContent = 'এক প্যানেল থেকে অন্য প্যানেলে নয়';
-      const title = document.createElement('h1');
-      title.textContent = 'এডমিন প্যানেল খোলা হয়নি';
-      const copy = document.createElement('p');
-      copy.textContent = 'প্যানেল চালু করা যায়নি। আবার চেষ্টা করুন, অথবা লগইন পেজ থেকে নিজের ইউজারনেম ও পাসওয়ার্ড দিয়ে প্রবেশ করুন।';
-      const actions = document.createElement('div');
-      actions.className = 'apc-lock-actions';
-      const retry = document.createElement('button');
-      retry.type = 'button';
-      retry.id = 'apcPanelBootRetry';
-      retry.textContent = 'আবার চেষ্টা করুন';
-      retry.addEventListener('click', () => window.location.reload());
-      const login = document.createElement('button');
-      login.type = 'button';
-      login.id = 'apcPanelBootLogin';
-      login.className = 'apc-lock-primary';
-      login.textContent = 'লগইন পেজে যান';
-      login.addEventListener('click', () => window.location.assign('./index.html'));
-      actions.append(retry, login);
-      card.append(eyebrow, title, copy, actions);
-      document.body.append(card);
-    }, 4000);
-  </script>
+  <!-- apcPanelBootLogin is created by the CSP-safe boot guard. --><script src="js/admin-boot-guard.js" defer></script>
   <!-- First use lives on the login page only (index.html → "প্রথমবার ব্যবহার
        করছেন? Admin Account তৈরি করুন"). This panel never offers it again, and
        js/staff-auth.js refuses createInitialAdmin() once one Admin exists. -->
@@ -102,6 +66,7 @@
       <!-- System overview: identity, staff, data and security snapshots.
            No daily collection, routine or notice entry lives here. -->
       <section class="admin-view active" data-view-panel="dashboard" aria-labelledby="dashTitle">
+        <p id="backupReminder" role="status" hidden style="padding:16px;background:#fff4d6;color:#332400">৭ দিন ব্যাকআপ নেওয়া হয়নি। <a href="#backup">ব্যাকআপ এক্সপোর্ট করুন</a></p>
         <article class="admin-hero">
           <div class="admin-hero-head">
             <div class="admin-hero-title">
@@ -362,6 +327,12 @@
             <span class="apc-icon" aria-hidden="true"></span><span>রিস্টোর করুন</span>
           </button>
         </article>
+      </section>
+
+      <section class="admin-view" data-view-panel="audit" aria-labelledby="auditTitle">
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="data" aria-label="ডেটা মেনুতে ফিরুন">←</button><div><h1 id="auditTitle">নম্বর ও উপস্থিতি অডিট লগ</h1></div></div>
+        <p>কে, কখন, আগে/পরে কী ছিল এবং পরিবর্তনের কারণ। সর্বশেষ ২০০টি দেখা যাচ্ছে।</p>
+        <div id="gradeAuditList"></div><h2>লিখিত পরীক্ষার নম্বর সংশোধন</h2><div id="adminExamWorkspace"></div>
       </section>
 
       <!-- Security -->

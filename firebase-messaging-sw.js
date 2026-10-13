@@ -7,19 +7,9 @@
    notification block is present the Firebase SDK displays it itself; this file
    only displays the data-only message so a payload can never appear twice. */
 
-importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging-compat.js');
-
-firebase.initializeApp({
-  apiKey: 'AIzaSyAD1OsM47YTu8Z6itpUkvDFdPXaCh1Bmrw',
-  authDomain: 'active-plus-coaching.firebaseapp.com',
-  databaseURL: 'https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: 'active-plus-coaching',
-  storageBucket: 'active-plus-coaching.firebasestorage.app',
-  messagingSenderId: '876005018709',
-  appId: '1:876005018709:web:26de8a656e96ac631d58dc',
-  measurementId: 'G-R4TYJ6ECDJ'
-});
+// The local classic bundle also selects the matching dev/prod PUBLIC web config.
+importScripts('./vendor/firebase/messaging-compat.js');
+firebase.initializeApp(self.apcMessagingFirebaseConfig);
 
 const messaging = firebase.messaging();
 

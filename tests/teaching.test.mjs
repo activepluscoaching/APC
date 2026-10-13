@@ -112,3 +112,27 @@ test('approved active account is included, pending excluded, existing ID dedupli
   env.storage.set(STORAGE_KEYS.account, JSON.stringify({ status: 'active', student: { ...student, name: 'নতুন নাম' } }));
   assert.equal((await repo.listStudents()).length, count); assert.equal((await repo.listStudents())[0].name, 'নতুন নাম');
 });
+
+test('attendance edits are logged, teacher closes after seven days and Manager explains', async () => {
+  const original = Date.now;
+  const now = Date.parse('2026-10-03T08:00:00Z');
+  try {
+    Date.now = () => now;
+    setup();
+    const created = await repo.saveActivity(make({ type: 'routine' }));
+    const id = created.activities[0].id;
+    await repo.saveProgress(id, { [student.id]: 'present' });
+    const first = await repo.listForManager();
+    assert.equal(first.auditLog.length, 1);
+    assert.equal(first.auditLog[0].before, null);
+    assert.equal((await repo.listForStudent(student.id)).auditLog, undefined);
+    Date.now = () => now + 8 * 86400000;
+    await assert.rejects(repo.saveProgress(id, { [student.id]: 'absent' }), /৭ দিন/);
+    await assert.rejects(repo.saveProgress(id, { [student.id]: 'absent' }, { role: 'manager' }), /কারণ/);
+    const changed = await repo.saveProgress(id, { [student.id]: 'absent' }, { role: 'manager', id: 'MANAGER' }, 'পুনরায় যাচাই');
+    assert.equal(changed.auditLog.length, 2);
+    assert.equal(changed.auditLog[1].before.value, 'present');
+    assert.equal(changed.auditLog[1].after.value, 'absent');
+    assert.equal(changed.auditLog[1].reason, 'পুনরায় যাচাই');
+  } finally { Date.now = original; }
+});

@@ -167,6 +167,9 @@ test('every panel installs the lockdown guard and remembers its own page', () =>
   // The Admin boot fallback hands over only on a tap, never on a timer.
   const admin = readFileSync(new URL('../admin.html', import.meta.url), 'utf8');
   assert.equal(/window\.location\.replace\(/.test(admin), false, 'the boot fallback must not jump anywhere');
-  assert.match(admin, /apcPanelBootLogin/);
-  assert.match(admin, /apcPanelBootRetry/);
+  assert.match(admin, /js\/admin-boot-guard\.js/);
+  const guard = readFileSync(new URL('../js/admin-boot-guard.js', import.meta.url), 'utf8');
+  assert.match(guard, /apcPanelBootLogin/);
+  assert.match(guard, /apcPanelBootRetry/);
+  assert.doesNotMatch(guard, /window\.location\.replace\(/);
 });

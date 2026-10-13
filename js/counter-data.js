@@ -1,6 +1,8 @@
+import { dhakaKey } from './time.js';
 /* Narrow counter-facing API. Private roster/ledger rows never reach the UI:
    search returns identity only; reads return only this counter's today entries.
    This is device-local minimisation, not a replacement for server RBAC. */
+import { taka } from './money.js';
 import { listDocumentsStrict, newId } from './database.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { financeRepository, stampTransaction, dateLabel, latinDigits, newestTransactions } from './finance-data.js';
@@ -48,7 +50,7 @@ function isToday(tx, now) {
   const timestamp = Number.isFinite(tx.recordedAt) ? tx.recordedAt : Date.parse(tx.createdAt || '');
   if (Number.isFinite(timestamp)) {
     const day = new Date(timestamp);
-    return day.getFullYear() === now.getFullYear() && day.getMonth() === now.getMonth() && day.getDate() === now.getDate();
+    return dhakaKey(day) === dhakaKey(now);
   }
   // Legacy entries carry a Bengali date rather than a machine timestamp.
   return latinDigits(tx.date).trim() === latinDigits(dateLabel(now));

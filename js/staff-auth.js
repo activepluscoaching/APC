@@ -16,6 +16,7 @@
      with the tab. */
 
 import { STAFF_KEYS, KEYS, readJSON, writeJSON } from './database.js';
+import { backendMode } from '../sync/cloud-access.js';
 import {
   adminInitializationStatus, claimFirstAdmin,
   ADMIN_EXISTS_MESSAGE, ADMIN_VERIFY_REQUIRED_MESSAGE, ADMIN_CLAIM_FAILED_MESSAGE
@@ -627,6 +628,7 @@ async function readStaffSession(role) {
 }
 
 export async function hasStaffSession(role) {
+  if (backendMode() === 'firebase') return false;
   const spec = staffSpec(role);
   if (!spec) return false;
   const { local, tab } = sessionStores(spec);

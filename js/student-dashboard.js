@@ -1,3 +1,4 @@
+import { dhakaKey, nowEpoch } from './time.js';
 import { iconMarkup } from './icons.js';
 /* Data-driven student home dashboard. The UI only shows records already stored
    for this student; absent classes, results or fees are never filled with demo values. */
@@ -33,10 +34,10 @@ function routineCard(item, index, kind = 'class') {
 }
 
 function renderRoutine(student, teachingActivities) {
-  const key = DAY_FOR_DATE[new Date().getDay()];
+  const key = DAY_FOR_DATE[new Date(`${dhakaKey()}T12:00:00Z`).getUTCDay()];
   const dayClasses = key ? loadRoutine()[key]?.classes || [] : [];
   const officeClasses = student ? dayClasses.filter(item => matchesClassSection(item, student)) : dayClasses;
-  const today = new Date().toLocaleDateString('en-CA');
+  const today = dhakaKey();
   const teacherClasses = teachingActivities.filter(item => item.type === 'routine' && item.date === today);
   const cards = [
     ...officeClasses.map((item, index) => routineCard(item, index)),
@@ -107,9 +108,9 @@ export function calculateStudentHomeStats({
   const averageResultLabel = averageResultPercent === null ? '—' : `${bn(averageResultPercent)}%`;
 
   // 3. Weekly Progress % (last 7 days homework + attendance sessions)
-  const refTime = now instanceof Date ? now.getTime() : Date.now();
-  const todayStr = new Date(refTime).toISOString().slice(0, 10);
-  const weekAgoStr = new Date(refTime - 7 * 86400000).toISOString().slice(0, 10);
+  const refTime = now instanceof Date ? now.getTime() : nowEpoch();
+  const todayStr = dhakaKey(refTime);
+  const weekAgoStr = dhakaKey(refTime - 7 * 86400000);
   const weeklyItems = scopedActivities.filter(item =>
     ['homework', 'routine'].includes(item.type)
     && typeof item.date === 'string'

@@ -6,13 +6,25 @@ import { KEYS } from '../js/database.js';
 import { STORAGE_KEYS } from '../js/config.js';
 import { TEACHER_ASSIGNMENTS_KEY } from '../js/teacher-assignments.js';
 import { homeworkItems, nextHomeworkBoundary, examItems } from '../js/notification-rules.js';
+import { dhakaKey } from '../js/time.js';
 
-const dayKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-const shiftDay = (date, days) => { const next = new Date(date); next.setDate(next.getDate() + days); return next; };
+// Notification deadlines use Dhaka dates, not the test runner's OS timezone.
+// A UTC runner crosses into the next Dhaka day at 18:00 UTC.
+const dayKey = date => dhakaKey(date.getTime());
+const shiftDay = (date, days) => new Date(date.getTime() + days * 86400000);
 const student = { kind: 'student', studentId: 'S-1', className: 'দশম শ্রেণি', group: 'বিজ্ঞান বিভাগ' };
 const homework = (id, date, extra = {}) => ({
   id, type: 'homework', title: `কাজ ${id}`, subject: 'গণিত', className: 'দশম শ্রেণি', group: 'বিজ্ঞান',
   status: 'published', date, time: '18:00', updatedAt: `2026-10-01T10:00:00.000Z`, progress: {}, ...extra
+});
+
+test('homework notification fixture follows Dhaka midnight on a UTC test runner', () => {
+  const now = new Date('2026-10-13T18:01:00Z');
+  const date = dayKey(now);
+  assert.equal(date, '2026-10-14');
+  assert.equal(dayKey(shiftDay(now, 1)), '2026-10-15');
+  assert.deepEqual(homeworkItems({ activities: [homework('HW-DHAKA', date)] }, student, now.getTime())
+    .map(item => item.sourceId), ['HW-DHAKA']);
 });
 
 test('homework due today/tomorrow is scoped, actionable, and timed for the next local-day change', () => {
@@ -38,7 +50,7 @@ test('homework due today/tomorrow is scoped, actionable, and timed for the next 
   assert.equal(dueTomorrow.action, 'open-homework');
   assert.equal(dueTomorrow.actionLabel, 'বাড়ির কাজ খুলুন');
   assert.equal(dueTomorrow.actionable, undefined, 'an upgrade does not pop every existing assignment as fresh');
-  assert.equal(nextHomeworkBoundary(db, student, now), new Date(`${tomorrow}T00:00:00`).getTime());
+  assert.equal(nextHomeworkBoundary(db, student, now), new Date(`${tomorrow}T00:00:00+06:00`).getTime());
   assert.deepEqual(homeworkItems(db, { ...student, kind: 'staff', role: 'teacher' }, now), []);
 });
 

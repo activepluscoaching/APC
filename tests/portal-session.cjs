@@ -63,7 +63,7 @@ async function enterPortal(page, role, panel = role) {
 }
 
 /** Sign a student in on the shared card and open the student app. */
-async function enterStudentApp(page, { id = 'AP-1024', name = 'রাইসা', className = 'দশম শ্রেণি' } = {}) {
+async function enterStudentApp(page, { id = 'AP-1024', name = 'রাইসা', className = 'দশম শ্রেণি', waitForNetworkIdle = true } = {}) {
   const account = {
     mobile: '01700000000',
     registrationMobile: '01700000000',
@@ -83,7 +83,7 @@ async function enterStudentApp(page, { id = 'AP-1024', name = 'রাইসা',
   await page.fill('#loginMobile', account.username);
   await page.fill('#loginPin', account.pin);
   await page.click('#loginForm button[type=submit]');
-  await page.waitForLoadState('networkidle');
+  if (waitForNetworkIdle) await page.waitForLoadState('networkidle');
   return page;
 }
 

@@ -1,3 +1,4 @@
+import { safeSetItem, showStorageError } from './storage-safety.js';
 export const COLLECTIONS = Object.freeze({
   students: 'students',
   transactions: 'transactions',
@@ -90,7 +91,7 @@ export function readJSON(key, fallback = null) {
 
 export function writeJSON(key, value) {
   try {
-    storage().setItem(key, JSON.stringify(value));
+    safeSetItem(storage(), key, JSON.stringify(value));
     return true;
   } catch {
     return false;
@@ -98,7 +99,7 @@ export function writeJSON(key, value) {
 }
 
 export function writeJSONStrict(key, value) {
-  storage().setItem(key, JSON.stringify(value));
+  safeSetItem(storage(), key, JSON.stringify(value));
 }
 
 export function listDocuments(collection) {
@@ -247,7 +248,7 @@ export function mergeExamFromFirestore(examDoc, keyDoc = null) {
 export const localStorageAdapter = Object.freeze({
   kind: 'localStorage',
   readRaw: key => storage().getItem(key),
-  writeRaw: (key, value) => storage().setItem(key, value)
+  writeRaw: (key, value) => safeSetItem(storage(), key, value)
 });
 
 let activeAdapter = localStorageAdapter;

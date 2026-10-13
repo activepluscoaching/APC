@@ -1,3 +1,4 @@
+import { downloadReceipt, createReceiptPDF } from './finance-receipt.js';
 /* Student ফি — read-only. The ledger belongs to the Cash Counter and the
    Manager (js/finance-data.js); this screen only reads the student's own rows
    through the same repository the Home fee card uses. There is no form, no
@@ -27,7 +28,7 @@ function when(tx) {
   if (!raw) return '—';
   const date = new Date(raw);
   return Number.isFinite(date.getTime())
-    ? date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })
+    ? date.toLocaleDateString('bn-BD', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'long', year: 'numeric' })
     : esc(raw);
 }
 
@@ -59,7 +60,7 @@ export function initStudentFee({ getStudent }) {
         <article class="student-fee-row" data-fee-row="${esc(tx.id)}">
           <div><strong>${amount(tx.amount)}</strong><small>${esc(tx.feeType || 'ফি')}${tx.month ? ` • ${esc(tx.month)}` : ''}</small></div>
           <div><small>${esc(when(tx))}</small><span class="student-fee-status ${esc(tx.status || 'approved')}">${esc(STATUS_LABELS[tx.status] || STATUS_LABELS.approved)}</span></div>
-          <small class="student-fee-receipt">রসিদ ${esc(tx.id)}${isFinalizedTransaction(tx) ? '' : ' • হিসাবে ধরা হয়নি'}</small>
+          <small class="student-fee-receipt">রসিদ ${esc(tx.receiptNo || tx.id)}${isFinalizedTransaction(tx) ? '' : ' • হিসাবে ধরা হয়নি'}</small><div class="student-fee-actions"><button type="button" data-own-receipt="${esc(tx.id)}" data-receipt-action="download">রসিদ ডাউনলোড</button><button type="button" data-own-receipt="${esc(tx.id)}" data-receipt-action="share">শেয়ার</button></div>
         </article>`).join('') : '<p class="teacher-empty">এই ফোনে এখনো কোনো পরিশোধের তথ্য নেই। Cash Counter এন্ট্রি করলে এখানে দেখা যাবে।</p>'}</div>`;
   }
 
@@ -75,6 +76,24 @@ export function initStudentFee({ getStudent }) {
     }
   }
 
+  mount.addEventListener('click', async event => {
+    const button = event.target.closest('[data-own-receipt]');
+    if (!button) return;
+    button.disabled = true;
+    try {
+      // Re-authorize on every click; never use cached or another student's row.
+      const own = await financeRepository.listTransactions({ role: 'student', studentId: getStudent()?.id });
+      const tx = own.find(row => row.id === button.dataset.ownReceipt && row.studentId === getStudent()?.id);
+      if (!tx) throw new Error('নিজের রসিদ পাওয়া যায়নি।');
+      if (button.dataset.receiptAction === 'share' && navigator.share) {
+        const pdf = await createReceiptPDF(tx);
+        const file = new File([pdf], `${tx.receiptNo || tx.id}.pdf`, { type: 'application/pdf' });
+        if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'আমার ফি রসিদ' });
+        else await downloadReceipt(tx);
+      } else await downloadReceipt(tx);
+    } catch (error) { if (error.name !== 'AbortError') mount.insertAdjacentHTML('afterbegin', '<p role="alert">রসিদ প্রস্তুত করা যায়নি। আবার চেষ্টা করুন।</p>'); }
+    finally { button.disabled = false; }
+  });
   window.addEventListener('storage', event => {
     if (!event.key || event.key === KEYS.transactions) void refresh();
   });

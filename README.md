@@ -2,12 +2,91 @@
 
 **Fixed tagline:** “শিখতে থাকো, এগিয়ে যাও”
 
-Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive Web App (PWA)। Chrome থেকে ইনস্টল করে অ্যাপের মতো ব্যবহার করা যায়। শিক্ষার্থী অ্যাপ, আলাদা শিক্ষক প্যানেল ও এডমিন প্যানেল তৈরি করা হয়েছে। সব ডেটা আপাতত লোকাল ডিভাইসেই থাকে—চালু কোনো সার্ভার বা API-এর উপর নির্ভর করে না। Firebase (Cloud Functions, `firestore.rules`) ইন্টিগ্রেশনের কোড ও নিয়ম প্রস্তুত করা আছে, কিন্তু এখনো সক্রিয় নয়।
+Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive Web App (PWA)। Chrome থেকে ইনস্টল করে অ্যাপের মতো ব্যবহার করা যায়। শিক্ষার্থী অ্যাপ এবং আলাদা শিক্ষক/ম্যানেজার/এডমিন/ক্যাশ প্যানেল রয়েছে। ডেটার মূল adapter এখনও localStorage; পূর্বের anonymous RTDB compatibility bridge সক্রিয়, কিন্তু তার role-level security নেই। Firebase Auth + Firestore production cutover এখনও হয়নি।
+
+### Firebase migration — ধাপ ১ (infrastructure; deploy করা হয়নি)
+
+- `.firebaserc`-এ বিদ্যমান project-এর `prod` alias; প্রকৃত **dev** project ID/সংশ্লিষ্ট public Web config মালিককে দিয়ে পূরণ করতে হবে। Dev Hosting host বা loopback `?firebaseProject=dev`-এ ভুলবশত prod config ব্যবহৃত হয় না; অসম্পূর্ণ dev config fail-closed।
+- `npm ci && npm run build:firebase` SDK ও FCM worker-এর same-origin bundles তৈরি করে (`vendor/firebase/`); UI/layout/data schema অপরিবর্তিত। Firestore index file এখন ফাঁকা; Hosting emulator যোগ হয়েছে; callables-এর region `asia-south1`, পূর্বের RTDB triggers `asia-southeast1`।
+- CSP meta ও Hosting header-এ localhost emulator connect origins আছে; `sw.js` v304-এ bundles, Auth-policy ও staged read-only gateway modules precache এবং Firebase API traffic cache bypass। App Check-এর per-project site key এখনও ফাঁকা—Console registration ও নিরাপদ enforcement পরে করতে হবে।
+- **নতুন Firestore sync চালু নয়।** `js/database.js` localStorage adapter-ই ব্যবহার করে; Auth/Firestore UI integration, কঠোর rules, offline persistence ও data migration বাকি। বর্তমান anonymous RTDB bridge-কে নিরাপদ Firestore sync ভাববেন না। ধাপে ধাপে setup ও non-deploy নির্দেশ: [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md)।
+
+### Firebase migration — ধাপ ২ (identity foundation; deploy করা হয়নি)
+
+- `sync/backend-selection.js`-এ `?backend=local|firebase` tab-scoped selector, default **local**; `sanitize-url.js` শুধু স্বীকৃত public selector ধরে রেখে URL-এর সব query মুছে ফেলে, credentials সংরক্ষণ করে না। এখনও UI/Firestore cutover নয়। পুরোনো anonymous RTDB bridge **local mode-এ সক্রিয়**, কিন্তু `firebase` opt-in-এ বন্ধ থাকে যাতে email Auth session shared bridge-এ ব্যবহৃত না হয়। Local mode থেকে bridge পুরোপুরি সরানোর migration বাকি।
+- Staged `signInCloudEmail` কেবল বাস্তব Email/Password Auth ও server-issued role/status claims গ্রহণ করে; UID/email/role/status-এর সঙ্গে `users/{uid}` (Student হলে `students/{uid}`-ও) মিলতে হবে। Local account, username থেকে বানানো email বা anonymous Auth থেকে Firebase role পাওয়া যায় না। বর্তমান login UI এখনও local; `?backend=firebase` opt-in-এ local login/registration submit এবং পুরোনো student/staff local session দিয়ে panel entry নিষিদ্ধ, কিন্তু `?backend=local`-এ সংরক্ষিত session/data অক্ষত থাকে। নতুন Auth দিয়ে panel unlock হয় না।
+- Source code-এ পুরোনো `us-central1`-এর public `createFirstAdmin` callable deny-all stub; **deploy হয়নি**, তাই live পুরোনো URL বন্ধ হয়েছে ধরে নেওয়া যাবে না। প্রথম Admin কেবল operator-এর interactive, ADC/emulator-ভিত্তিক Admin SDK CLI দিয়ে bootstrap করতে হবে। `adminCreateAccount` এখন real-email staff provisioning; Student-এর যাচাইকৃত email registration ধাপ ৭-এ server-side staged হলেও UI cutover ও পুরোনো Admin migration এখনও বাকি। আগে dev project-এ rehearsal, prod deploy নয়।
+
+### Firebase migration — ধাপ ৩ (Firestore authorization staging; deploy করা হয়নি)
+
+- `firestore.rules`-এ `users/{uid}` profile ও approval/status, private student তথ্য, summary projection, টাকা/receipt ledger, exam/answer key/result এবং submission-এর **client mutation বন্ধ**। Admin SDK-র server workflow ছাড়া Browser-নির্ভর role/score/পেমেন্ট সিদ্ধান্ত গ্রহণ করা হয় না। Teacher ও payment counter পূর্ণ legacy Student document পড়তে পারে না—শুধু সীমিত approved summary। Student নিজের রেকর্ড পড়তে পারে; payment counter অন্য counter-এর ledger পড়তে পারে না। Question bank/notice/routine-এর Student read scope যাচাই না হওয়া পর্যন্ত বন্ধ।
+- `releaseExamResults` এখন কেবল সক্রিয় claim ও প্রকাশিত/শেষ হওয়া পরীক্ষায় কাজ করার কথা এবং বৈধ Firestore document path `exams/{examId}/releasedKey/answers` ব্যবহার করে। Firestore rules-এর পরীক্ষায় emulator-ভিত্তিক বিরূপ role/forgery cases যোগ হয়েছে, **কিন্তু এই পরিবেশে Java/Firestore emulator নেই বলে সেগুলো চালানো যায়নি**। Static tests rules engine-এর বিকল্প নয়।
+- এটি **production-ready backend নয়**: staged registration/attempt/Teacher/payment/reversal ও Admin হিসাব-পাঠ এখনও emulator-এ প্রমাণিত নয়; প্রকৃত refund/settlement verification এবং student-scoped notices-এর নিরাপদ server workflow, migration/index inventory, App Check configuration ও staging pilot বাকি। `?backend=firebase`-এ panel access আগের মতোই বন্ধ; localStorage adapter, `?backend=local` fallback, schema ও পুরোনো ডেটা অপরিবর্তিত। কোনো Firebase deploy করবেন না। বিস্তারিত [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md)।
+
+### Firebase migration — ধাপ ৪ (read-only adapter staging; deploy করা হয়নি)
+
+- নতুন `sync/cloud-read-gateway.js` কেবল server-issued email Auth claims + মেলা `users/{uid}`/Student `students/{uid}` যাচাই করে **নিজের সংক্ষিপ্ত profile** এবং অনুমোদিত staff role-এর **সীমিত student summary** ফেরায়। প্রতিটি read-এর আগে নতুন ID token পরীক্ষা, Firebase mode ও legacy RTDB listener gate, strict document ID এবং role/status/class যাচাই হয়। Password hash বা private fields response-এ নেই; কোনো client write/merge/outbox নেই। এটি Firestore Security Rules-এর **বিকল্প নয়**।
+- `sync/cloud-read.js` lazy browser wrapper শুধু **পৃথক dev project-এর Auth + Firestore emulator** চালু থাকলে পড়তে পারে; production config, default local mode বা unreloaded legacy bridge-এ fail-closed। এটি `js/database.js`-এর active adapter বা কোনো panel-এ ইনস্টল করা হয়নি—পুরোনো unsafe `createFirestoreAdapter().flush()`-এর পরিবর্তেও নয়। Dev project Web config এখনও অজানা, তাই live data পড়া/মাইগ্রেট করা হয়নি। Local session/data/UI অপরিবর্তিত।
+- প্রদত্ত production Firebase config আগে থেকেই আছে; **Analytics স্বয়ংক্রিয়ভাবে চালু করা হয়নি**—consent/privacy সিদ্ধান্ত আলাদা প্রয়োজন। বাকি কাজ: staged registration/attempt/payment/reversal/হিসাব-পাঠের বাস্তব dev emulator integration, settlement/refund flows, verified role-scoped adapter ও rules পরীক্ষা। বিস্তারিত [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md)।
+
+### Firebase migration — ধাপ ৫ (Teacher MCQ submission staging; deploy করা হয়নি)
+
+- `functions/staged-exam-core.cjs`-এ Teacher-এর ভবিষ্যৎ **pending** MCQ ও `exams/{id}/private/key` এক Admin SDK transaction-এ create-only হয়। প্রশ্ন/option/answer, সময়সীমা, unique IDs, class claim এবং সক্রিয় email Auth-এর সঙ্গে `users/{uid}` profile যাচাই; client-এর অজানা field মূল exam-এ যায় না। Retry-এ একই private request hash মিললে idempotent ফল, ভিন্ন payload/owner বা key-only collision হলে প্রত্যাখ্যান। Hash-ও private key document-এ, public paper-এ নয়।
+- নতুন `teacherSubmitExamForReview` callable-এ **App Check enforcement**; `managerReviewExam` এখন শুধু যাচাইকৃত staged paper+private key ও ভবিষ্যৎ start time থাকলে publish করে। অনিরাপদ পুরোনো Firestore draft (বা nested answer leak) publish হয় না; এটি চলতি local পরীক্ষার flow-তে যুক্ত হয়নি। বাস্তব dev project, App Check key, Functions/Firestore emulator integration এবং পুরোনো data migration **বাকি**। Default local UI/ডেটা অপরিবর্তিত; production-এ deploy করবেন না।
+
+### Firebase migration — ধাপ ৬ (Student MCQ attempt ও release lock staging; deploy করা হয়নি)
+
+- `studentSubmitExamAttempt` callable-এ App Check + approved Student-এর real email Auth, `studentId === Auth UID` claim, মিলতে থাকা `users/{uid}` ও `students/{uid}`, নিজ ক্লাস/গ্রুপ, প্রকাশিত MCQ, window এবং প্রতিটি প্রশ্নে A–D/ফাঁকা উত্তর যাচাই হয়। Server transaction exam-সহ পড়ে **একটি** `attempts/att_<hash>` রেকর্ড create করে—Student/browser Firestore-এ সরাসরি লিখতে পারে না; duplicate retry একই উত্তর হলে read-only success, ভিন্ন উত্তর/late নতুন submit নিষিদ্ধ। Scoring key ছাত্র-পথে পড়া হয় না।
+- `releaseExamResults` প্রথমে exam document-এ durable `closing` lock দেয়; সেই doc পড়া কোনো in-flight attempt transaction তখন retry করে lock দেখে থামে। সব জমা attempt যাচাই ছাড়া একটিও score বা released answer লেখা হয় না; Firestore rules final `resultsReleased` marker না আসা পর্যন্ত Student-এর আংশিক score/answer read বন্ধ রাখে এবং অন্য group-এর answer-ও আটকায়। ব্যর্থ release-এ lock রক্ষিত থাকে, বৈধ retry ফল সম্পূর্ণ করে; result ID `res_<hash>` deterministic এবং exam/student ID-র ambiguous concatenation নয়। **এটি এখনও UI/panel cutover বা emulator-proven integration নয়।** Local data, default mode ও পুরোনো exam schema অপরিবর্তিত; বাস্তব dev project, App Check ও emulator matrix ছাড়া deploy নয়।
+
+### Firebase migration — ধাপ ৭ (verified Student enrollment ও Manager review staging; deploy করা হয়নি)
+
+- পৃথক dev Firebase project-এ **আলাদা** Email/Password Auth account তৈরি ও email verify করার পরে, App Check-সহ `studentRegisterForReview` callable শুধু নিজের Auth UID/email গ্রহণ করে। Password/PIN/UID/role/status/fee client payload হিসেবে নেওয়া হয় না। নির্ধারিত ক্লাস, মোবাইল, স্থায়ী username ও সম্মতির সত্যতা-ঘোষণা যাচাই করে এক transaction-এ `usernameIndex/{username}`, `users/{uid}`, `students/{uid}` pending create হয়; তারপর server-issued pending claim দেওয়া হয়। একই payload retry claim-update ব্যর্থতাও সারায়; ভিন্ন data বা অন্য UID একই username নিতে পারে না। Pending/Rejected Student কোনো Firebase panel বা পরীক্ষায় ঢোকে না।
+- App Check-সহ `managerReviewStudent` এখন Auth verified email, profile/username UID link এবং pending status যাচাই করে Manager-এর অনুমোদন/কারণসহ প্রত্যাখ্যান transaction-এ audit করে; Auth claim update ব্যর্থ হলে **একই** সিদ্ধান্ত retry করা যায়, উল্টো সিদ্ধান্তে state বদলানো যায় না। Reject-এর পরে username স্বয়ংক্রিয়ভাবে মুক্ত হয় না। Approved Student summary/fee এখনও **তৈরি হয় না**—payment flow ও প্রকৃত Student ID মাইগ্রেশন আলাদা কাজ। Browser registration/login অপরিবর্তিত; dev config ও App Check key ফাঁকা, Java emulator নেই, তাই **এখনও deploy/UI cutover নয়**।
+
+### Firebase migration — ধাপ ৮ (Counter pending receipt ও Manager review staging; deploy করা হয়নি)
+
+- `adminConfigureStudentFee`: active Admin প্রকৃত approved Auth/Student/profile মিলিয়ে **একবার** সীমিত `studentSummaries/{uid}` projection-এ যাচাইকৃত পূর্ণ টাকায় monthly fee সেট করে; অননুমোদিত field বা বদলানো fee/classে retry প্রত্যাখ্যাত। ধাপ ৭-এর approved Student-দের জন্য summary নিজে থেকে তৈরি হয় না; এই explicit ধাপ ও প্রকৃত ফি সিদ্ধান্ত জরুরি।
+- `counterSubmitPayment`: active Cash Counter-এর verified profile, approved Student ও বর্তমান summary মিললে এক transaction-এ pending `transactions/pay_<hash>`, counter sequence, globally reserved receipt number এবং non-cash transaction reference create করে। একই counter+`requestId`+payload retry নতুন রসিদ/ক্রমিক নম্বর খরচ করে না; অন্য amount/reference দিয়ে retry প্রত্যাখ্যাত। Client role/status, receipt number, reviewed state বা fractional/negative amount দিতে পারে না। Local ledger বা পুরোনো রসিদ বদলায় না।
+- `managerInspectPayment` শুধু **পরিচিত** receipt ID-র review-প্রয়োজনীয় সীমিত projection দেখায়; Manager-এর সরাসরি Firestore finance-ledger read বন্ধ। `managerReviewPayment` pending receipt-কে একবার approve/reject করে, rejection-এ কারণ বাধ্যতামূলক; উল্টো সিদ্ধান্ত/Browser write নিষিদ্ধ। চার callable-এ App Check বাধ্যতামূলক। এটি **payment gateway settlement-এর প্রমাণ নয়**: non-cash `trxRef`-ও শুধু counter-দেওয়া তথ্য, cash শারীরিকভাবে যাচাই করতে হবে। Reversal ধাপ ৯-এ কেবল হিসাব-সংশোধনের staging; reconciled billing, migration, Firebase UI cutover ও emulator পরীক্ষা বাকি। Default local mode অপরিবর্তিত; production deploy নয়।
+
+### Firebase migration — ধাপ ৯ (দুই ভূমিকায় হিসাব-সংশোধন staging; deploy করা হয়নি)
+
+- Manager `managerRequestPaymentReversal`-এ **শুধু অনুমোদিত, server-number-যাচাইকৃত** রসিদের ID+নম্বর ও কারণ (৮–৫০০ অক্ষর) দিয়ে একটি `paymentReversals/{receiptId}` pending অনুরোধ তৈরি করেন। মূল `transactions/{receiptId}` বা receipt number/reference reservation **বদলায় না**। একই Manager-এর একই কারণের retry read-only; অন্য বা দ্বিতীয় অনুরোধ নিষিদ্ধ।
+- পৃথক Admin `adminDecidePaymentReversal` দিয়ে কারণসহ একবার অনুমোদন/প্রত্যাখ্যান করেন। অনুমোদিত সংশোধনই ভবিষ্যতের **যাচাইকৃত হিসাব-পাঠে** ওই রসিদের net contribution শূন্য করবে; pending বা rejected correction মূল approved অঙ্ক অক্ষত রাখবে। `netApprovedAmount()`-এর pure contract ও unit tests আছে; ধাপ ১০-এ শুধু Admin-এর bounded server-side read-এ ব্যবহার হয়েছে, **live local হিসাব বা Firebase UI-তে wired নয়**—reversal document না পড়ে পুরোনো raw ledger sum দিয়ে বকেয়া গণনা করা যাবে না। Reject হলে একই রসিদের আবেদন স্বয়ংক্রিয়ভাবে আবার খোলে না। Browser-এ reversal write বন্ধ; Admin-only read, Manager direct ledger read এখনও নিষিদ্ধ; উভয় callable-এ App Check বাধ্যতামূলক।
+- এটি **নগদ টাকা ফেরত, বিকাশ/ব্যাংক refund, processor settlement বা পুরোনো ledger migration নয়**। মানুষের evidence/financial reconciliation, নিরাপদ per-student totals, index/backup, dev Auth/Rules/Functions emulator test, বাস্তব App Check key ও UI migration ছাড়া deploy নয়; default local adapter ও data অপরিবর্তিত।
+
+### Firebase migration — ধাপ ১০ (Admin-এর read-only verified payment position staging; deploy করা হয়নি)
+
+- `adminReadStudentPaymentPosition` App Check-সহ active Admin-এর নিজের profile ও approved Student-এর fee summary মিলিয়ে **একটি read-only Firestore transaction**-এ ওই Student-এর সব staged receipt ও correction query করে। প্রত্যেক receipt-এর server-issued নম্বর, digital reference ও correction document যাচাই হয়; ওই UID-র orphan correction, queried Student-এর legacy/forged/ভিন্ন-মালিক row বা ১০০টির বেশি receipt/correction থাকলে আংশিক মোট না দেখিয়ে fail-closed। UID-বিহীন পুরোনো row স্বয়ংক্রিয়ভাবে আবিষ্কৃত হয় না—migration inventory জরুরি। শুধু একটি মাসের সারাংশ ফেরালেও যাচাইয়ে অন্য মাসের row-ও বাদ যায় না। Query-দুটি `transactions.studentId == uid` ও `paymentReversals.studentId == uid`—default single-field index; composite index যোগ করা হয়নি।
+- অনুমোদিত gross থেকে শুধু **Admin-approved** correction বাদ দিয়ে net amount; pending/rejected receipt বা pending/rejected correction বকেয়া কমায় না। মাসিক tuition-এর net amount-ই configured monthlyFee থেকে due কমায়—অন্য fee type নয়। Server fee configuration-এর **Dhaka মাসের আগে** বা চলতি মাসের পরে ঐতিহাসিক/ভবিষ্যৎ fee schedule অনুমান করে due দেখায় না। Response-এ aggregate অঙ্ক/সংখ্যা ও Student UID থাকে, private profile বা raw ledger থাকে না।
+- এটি **live Student/Counter balance, money settlement, billing history বা UI adapter নয়**। পুরোনো local হিসাব অপরিবর্তিত; report snapshot-এর পরে নতুন receipt/decision এলে পরের read-এ পরিবর্তন দেখা যেতে পারে। সম্পূর্ণ emulator role/query/transaction পরীক্ষা, প্রকৃত dev config/App Check, historical fee schedule, pagination, verified financial evidence ও reconciliation ছাড়া deploy/cutover নয়।
+
+### Firebase migration — ধাপ ১১ (পুরোনো ledger-এর offline preflight; import নয়)
+
+- Admin-এর বিদ্যমান Backup & Restore export-এর অনুপস্থিত `BACKUP_KEYS` allowlist সংজ্ঞায়িত করা হয়েছে; students/transactions-সহ পরিচিত সাতটি collection-ই আগের version 1 raw-string format-এ যায়, account/session/password-hash keys নয়। `npm run preflight:ledger -- --backup /private/APC-backup.json --links /private/reviewed-links.json`: ওই Admin export-এর **raw-string** students/transactions collection এবং আলাদাভাবে মানুষ-যাচাইকৃত `{"kind":"apc-reviewed-student-links","version":1,"links":[{"legacyStudentId":"OLD_ID","uid":"REAL_AUTH_UID"}]}` ফাইল **শুধু পড়ে**। নিজে mobile/name দেখে UID অনুমান, localStorage/Firestore/RTDB-তে write, network request বা Firebase Auth account তৈরি করে না। Backup-এ password hash/ব্যক্তিগত তথ্য থাকতে পারে: ফাইল repository-তে রাখবেন বা chat-এ দেবেন না।
+- রিপোর্টে কেবল সংখ্যা ও blocker code—duplicate/orphan ID বা receipt, অনুপস্থিত/দ্ব্যর্থক UID mapping, ভগ্নাংশ/নেতিবাচক টাকা, অনির্দিষ্ট monthlyFee, যাচাইহীন পুরোনো approval status/audit, month/method ও duplicate digital reference। কোনো নাম, মোবাইল, Student ID, UID, receipt/reference বা password hash ফেরায় না। Input সীমা ৩২ MiB/১ লক্ষ row; ভুল input-এ raw parser text দেখায় না। Exit ০ = এই offline inventory-তে blocker নেই, ২ = blocker আছে, ১ = invalid input। **সব সময় `importAllowed:false`:** বাস্তব Firebase Auth ownership, পুরোনো deletion history, cash/processor reconciliation এবং emulator/backups যাচাই ছাড়া import অনুমোদিত নয়। Stage ১০-এর strict report-এ legacy ID row ঢোকানোও হয়নি। Default local UI/data ও Analytics অপরিবর্তিত; কোনো deploy নয়।
+
+### মার্জ-পূর্ব যাচাই — ঢাকা মধ্যরাতের regression (cache 307)
+
+- Notification Action Center-এর homework test এখন পরীক্ষার মেশিনের OS timezone নয়, অ্যাপের Asia/Dhaka দিন ব্যবহার করে। UTC ১৮:০০-র পরে ঢাকা-দিন বদলালেও existing homework-এর read/unread history ঠিক থাকার পরীক্ষা স্থিতিশীল। অ্যাপের নিয়ম/ডেটা, RTDB permissions বা Firebase production deploy এতে বদলায়নি।
+
+### Firebase RTDB sync — পৃথক dev project প্রস্তুতি (preview; production চালু নয়)
+
+- Default `?backend=local`-এ আগের anonymous `activePlusSync/v1` bridge login-এর পর চালুর চেষ্টা করে; `?backend=firebase` হলো staged Firestore/Email-Auth mode, **RTDB sync switch নয়**। বর্তমান `database.rules.json`-এর `auth != null` anonymous caller-কে roster, ledger ও password hash পড়া/বদলানোর সুযোগ দেয়—এটি production-এ নিরাপদ নয়। পুরোনো runbook-এর production rules deploy নির্দেশনা অনুসরণ করবেন না।
+- `*.e2b.app` live preview এখন **dev Firebase only**: প্রকৃত পৃথক dev Web config না থাকলে fail-closed, production DB-তে fallback নয়। `firebase/firebase-config.dev.js`-এ বাস্তব dev project's **public** `apiKey`, `authDomain`, `appId`, `projectId`, এবং একই dev project's `databaseURL` বসাতে হবে; এই repo-তে কোনো প্রকৃত dev project-এর তথ্য নেই। Production project ID/DB URL দিয়ে preview চালু করা যায় না। কোনো service-account/private key নয়।
+- কেবল ফাঁকা dev project ও নতুন browser profile-এ **কৃত্রিম** account/transaction নিয়ে পরীক্ষা করুন; বাস্তব ডেটা থাকা device/profile দিয়ে dev preview-তে login করবেন না—bridge local records upload করতে পারে। Developer-কে আলাদাভাবে dev Auth Anonymous provider, RTDB rules ও App Check/authorized-domain settings যাচাই করতে হবে; এই পরিবর্তন কোনো Console setting বা deploy করে না। নির্দেশনা: `FIREBASE_SETUP.md`।
+
+### Firebase migration — ধাপ ১২ (দুই–চারটি Admin backup-এর offline তুলনা; merge/import নয়)
+
+- `npm run compare:ledger-backups -- --backup /private/device-A.json --backup /private/device-B.json` (সর্বোচ্চ চারটি `--backup`) **নিজস্ব offline machine-এ** চালান। কেবল version 1 `active-plus-backup`-এর students/transactions raw-string arrays পড়ে; কোনো Firebase/RTDB/localStorage/network access, export, merge বা write করে না। প্রতি ফাইলে সর্বোচ্চ ৩২ MiB, প্রতি collection-এ ১ লক্ষ row। বাস্তব backup repo/chat/CI-তে রাখবেন না; ব্যক্তিগত তথ্য/credential থাকতে পারে।
+- একই ID-র ভিন্ন content (property order উপেক্ষা করে), ভিন্ন transaction ID-তে একই receipt বা একই method-এর case-insensitive reference, এক/একাধিক snapshot-এ ID অনুপস্থিত, একই snapshot-এ duplicate/invalid ID, invalid timestamp/method/reference—সবই শুধু **aggregate blocker count**। Missing row মানেই deletion নয়; timestamp দিয়ে newer-wins বেছে নেওয়া বা অনুপস্থিত row auto-union নিরাপদ নয়। পুরোনো `tools/merge-backups.html`-এর downloadable union **financial migration-এর জন্য ব্যবহার করবেন না**। Report-এ raw ID, নাম, মোবাইল, receipt/reference, টাকা, filename/path বা credential নেই।
+- Exit `0` = তুলনায় blocker নেই, `2` = blocker আছে, `1` = invalid input (generic error)। `importAllowed:false` ও `sourceCompletenessVerified:false` **সব সময়**; clean comparison-ও পূর্ণ backup, Auth ownership বা টাকা/processor settlement প্রমাণ নয়। প্রতিটি উৎসে পৃথক ধাপ ১১-এর explicit UID-link preflight, missing/changed records-এর source-device ও signed evidence review, deletion history এবং dev emulator rehearsal ছাড়া import/deploy নয়। Default local UI/data ও production অপরিবর্তিত।
 
 ## বর্তমান সীমাবদ্ধতা
 
-- **ডেটা প্রতি ডিভাইসেই আলাদা** — শিক্ষার্থী, লেনদেন, রুটিন, ফলাফল সবই ঐ ব্রাউজার/ডিভাইসের localStorage-এ থাকে; এক ডিভাইসে যা জমা হয় অন্য ডিভাইসে যায় না, আলাদা ক্লাউড ব্যাকআপও নেই।
-- **Firebase sync চালু নয়** — `functions/` ও `firestore.rules` প্রস্তুত থাকলেও ক্লাউড সিঙ্ক এখনো সক্রিয় করা হয়নি; এই PWA এখন সম্পূর্ণ লোকালভাবেই চলে।
+- **নিরাপদ role-separated Firestore sync চালু নয়** — localStorage মূল store; legacy anonymous RTDB bridge কিছু রেকর্ড mirror করে, কিন্তু Auth claims দিয়ে ব্যক্তি/role আলাদা করে না। একাধিক ডিভাইসে এই bridge-কে নির্ভরযোগ্য বা নিরাপদ backup ধরে নেবেন না।
+- **Firebase foundation ≠ production cutover** — Functions/rules-এর পুরোনো খসড়া ও ধাপ ১-এর SDK/emulator/index scaffolding আছে; যথার্থ Auth, Firestore rules, App Check enforcement, migration ও pilot এখনও বাকি।
 - **বাস্তব শিক্ষার্থীর তথ্য বা টাকার হিসাব রাখার আগে Firebase sync বাধ্যতামূলকভাবে চালু ও যাচাই করতে হবে** — নাহলে রেকর্ড এক ডিভাইসেই বন্ধ থাকবে এবং একাধিক কাউন্টার/প্যানেল ভাগ করে ব্যবহারে হিসাব অসঙ্গতিপূর্ণ হবে।
 
 ## এই ধাপে যা আছে
@@ -927,3 +1006,64 @@ records আছে। এগুলো কৃত্রিম তথ্য, কো�
 | পরীক্ষা (চলমান / আসন্ন) | `js/exam-data.js` (`KEYS.exams` = `activePlus.exams.v1`) ও `js/student-exams.js` | **Teacher** (`teacher.html` প্রশ্ন তৈরি ও অনুমোদনের আবেদন) → **Manager** (`manager.html` `"পরীক্ষা অনুমোদন"` তালিকা থেকে প্রশ্ন/উত্তর/নম্বর যাচাই করে প্রকাশ বা কারণসহ ফেরত; **Admin** শুধু রিপোর্ট দেখে) |
 | ফলাফল ও শ্রেণি ফলাফল বোর্ড | `js/exam-data.js` (`classResultRows`), `js/student-exams.js`, `js/student-teaching.js` | **Teacher** (লিখিত পরীক্ষার নম্বর ও ≤২০০ অক্ষরের মন্তব্য) + **Manager** (ফলাফল প্রকাশ; ফলাফল কার্ডে নাম/শ্রেণি/নম্বর শুধুমাত্র একই শ্রেণি-বিভাগের শিক্ষার্থীরা দেখে) |
 | নোটিশ ইনবক্স ও বেল ব্যাজ | `js/office-data.js` (`KEYS.notices` = `activePlus.admin.notices.v1`), `js/notification-rules.js`, `js/student-notice-board.js` | **Teacher** (`teacher.html` নিজ শ্রেণি-বিভাগে নোটিশ প্রকাশ) + **Manager** (`manager.html` সাধারণ ও শ্রেণিভিত্তিক নোটিশ প্রকাশ) |
+
+
+### ২০২৬-১০-১৩: টাকা (ধাপ ১)
+নতুন লেনদেন ও স্থানীয় পুরোনো ভগ্নাংশযুক্ত লেনদেন সম্পূর্ণ টাকায় (নিকটতম পূর্ণ টাকা, অর্ধেক হলে ওপরের দিকে) রূপান্তরিত হয়; অপরিবর্তনীয় পুরোনো রসিদ/ID অক্ষত থাকে। কোটা শেষ হলে পুরোনো ledger অপরিবর্তিত থাকে। `js/money.js`-এ নিরাপদ পূর্ণসংখ্যা যাচাই ও যোগ।
+
+### ২০২৬-১০-১৩: ঢাকা সময় (ধাপ ২)
+ফি-র মাস/তারিখ, Counter-এর আজ এবং পরীক্ষার স্থানীয় সময়ের জন্য `js/time.js` (Asia/Dhaka) ব্যবহৃত। `setTimeProvider`-এ পরবর্তী সময়ে সার্ভারের যাচাইকৃত সময় বসাতে হবে; এখন ঘড়ি পিছোলে সেশনে বাংলা সতর্কবার্তা দেখায়। ডিভাইসের ঘড়ি নিরাপদ সার্ভার-টাইমের বিকল্প নয়।
+
+### ২০২৬-১০-১৩: অফলাইন ডেটা (ধাপ ৩)
+অ্যাপ চালুতে `navigator.storage.persist()` অনুরোধ; localStorage কোটা শেষ হলে পুরোনো ডেটা না মুছে সতর্কতা ও Admin-এর ব্যাকআপ লিংক। Admin হোমে শেষ সফল ব্যাকআপের সাত দিন পর রিমাইন্ডার। অন্য ডিভাইসে ডেটা থাকবেই এমন নিশ্চয়তা নেই; নিয়মিত ব্যাকআপ নিন।
+
+### ২০২৬-১০-১৩: ID (ধাপ ৪)
+নতুন শিক্ষার্থী ID `S<ডিভাইস-চিহ্ন>-000001`, নতুন রসিদ `C<ডিভাইস-চিহ্ন>-000001`; পুরোনো ID/রসিদ অপরিবর্তিত, transaction `.id` সিঙ্ক কী হিসেবে অপরিবর্তিত। `createIdGenerator({allocateOrdinal, prefix})`-এ পরবর্তীতে সার্ভারের atomic counter বসাতে হবে—ডিভাইস-লোকাল ক্রমিক ক্লাউডের uniqueness-এর বিকল্প নয়।
+
+### ২০২৬-১০-১৩: ফি, অভিভাবক ও সম্মতি (ধাপ ৫–৭)
+শিক্ষার্থীর “আমার ফি” শুধু নিজের লেনদেন দেখায়; প্রতিবার রসিদ ডাউনলোড/শেয়ারের আগে নিজের সেশন দিয়ে পুনরায় যাচাই হয়। Teacher ও Manager অভিভাবকের কাছে অনুপস্থিতি/ফলাফল/বকেয়া বিষয়ে WhatsApp খসড়া খুলতে পারেন; অ্যাপ কোনো বার্তা নিজে পাঠায় না। রেজিস্ট্রেশনে অভিভাবকের সম্মতি বাধ্যতামূলক; privacy.html দেখুন।
+
+### ২০২৬-১০-১৩: নম্বর অডিট (ধাপ ৮)
+লিখিত পরীক্ষার নম্বর ও উপস্থিতির পরিবর্তন পরীক্ষার মূল রেকর্ডের `auditLog`-এ একই atomic write-এ কে/কখন/আগে/পরে/কারণসহ থাকে। শিক্ষক ৭ দিনের পর সংশোধন করতে পারেন না; Manager-এর ৭ দিন পর কারণ লাগে। Admin হোমে লগ দেখা যায়; শিক্ষার্থীর snapshot বা শিক্ষকের snapshot-এ অডিট পাঠানো হয় না। সার্ভার-রুলস ছাড়া স্থানীয় অডিট tamper-proof নয়।
+
+### ২০২৬-১০-১৩: MCQ চেষ্টা (ধাপ ৯)
+নতুন পরীক্ষায় প্রতি শিক্ষার্থী একবারই চেষ্টা করতে পারবেন। আগে সংরক্ষিত দ্বিতীয় প্রচেষ্টা ইতিহাসে থাকবে। নির্ধারিত প্রশ্ন/অপশন seed-ক্রম, `endAt`-ভিত্তিক টাইমার, saved answers এবং সময় শেষে auto-submit বিদ্যমান; পরীক্ষার সেশন রিফ্রেশেও ফিরে আসে। অফলাইন ডিভাইসের ঘড়ি অনির্ভরযোগ্য—সার্ভার সময় ছাড়া cheating প্রতিরোধ নিশ্চিত নয়।
+
+### ২০২৬-১০-১৩: আপডেট ও রক্ষণাবেক্ষণ (ধাপ ১০–১২)
+নতুন service worker সক্রিয় হলে “নতুন সংস্করণ আছে” ব্যানার; রিফ্রেশের সিদ্ধান্ত ব্যবহারকারীর। GitHub Actions-এ push/PR-এ `npm ci && npm test`, Dependabot সাপ্তাহিক। লাইসেন্স: মালিকের পছন্দ অনুযায়ী সর্বস্বত্ব সংরক্ষিত (MIT নয়)। Firebase Hosting headers-এ CSP ও নিরাপত্তা হেডার; self-hosted Bengali WOFF2 ইতিমধ্যে precache-এ আছে।
+
+### ২০২৬-১০-১৩: ক্লাস উপস্থিতি (ধাপ ৮-এর পরিপূরক)
+শিক্ষকের ক্লাস উপস্থিতির প্রতিটি নতুন/বদল/মুছে দেওয়া মানের কে/কখন/আগে/পরে একই teaching record-এর `auditLog`-এ সংরক্ষিত হয়। পুরোনো উপস্থিতি ৭ দিনের পর শিক্ষক বদলাতে বা ক্লাস মুছতে পারেন না; Manager একাডেমিক রেকর্ড থেকে কারণ লিখে সংশোধন করতে পারেন। Admin-এ পরীক্ষা ও ক্লাসের লগ একসাথে দেখা যায়।
+
+### ২০২৬-১০-১৩: ঢাকা তারিখ ও পূর্ণ টাকার সংহতি
+হোমে আজকের ক্লাস/সাপ্তাহিক অগ্রগতি, শিক্ষক ক্লাস ও রিপোর্টের ফি হিসাব ঢাকা তারিখ ও পূর্ণ টাকায় গণনা করা হয়। রসিদের নতুন নম্বর এক জায়গায় `idGenerator` বরাদ্দ করে; legacy daily format কেবল পড়া হয়।
+
+### ২০২৬-১০-১৩: শিক্ষার্থী ফি মাইগ্রেশন
+পুরোনো roster-এর `monthlyFee` ভগ্নাংশ হলে পাঠের সময় পূর্ণ টাকায় রূপান্তর ও atomic write; নতুন roster/account/studentProfile সংরক্ষণেও একই নিয়ম। খালি ফি null-ই থাকে; অকারণে default ফি লেখা হয় না।
+
+### ২০২৬-১০-১৩: স্বতন্ত্র Admin অডিট পাতা
+Admin → ডেটা → নম্বর/উপস্থিতি অডিট লগ (`#audit`)। এই পাতার access guard Admin-only backup capability-এর সমান; শিক্ষক/শিক্ষার্থীর snapshot-এ লগ যায় না।
+
+### ২০২৬-১০-১৩: Admin নম্বর সংশোধন
+Admin-এর অডিট পাতায় লিখিত পরীক্ষা বেছে নম্বর সংশোধনের ফর্ম আছে। Manager-ও একই গ্রেডিং ফর্ম পান; ৭ দিন পেরোলে দুজনকেই কারণ দিতে হয়। প্রকাশ/অনুমোদন Admin-এর জন্য খোলা হয়নি।
+
+### ২০২৬-১০-১৩: ঘড়ি পেছানো সনাক্ত
+একই ট্যাব সেশনে সর্বশেষ জানা wall time `sessionStorage`-এ থাকে; ঘড়ি দুই সেকেন্ডের বেশি পিছোলে সতর্কবার্তা (রিফ্রেশের পরেও)। এটি সতর্কতা মাত্র—পরীক্ষার বিশ্বস্ত deadline enforcement-এর জন্য Firebase server time দরকার।
+
+### ২০২৬-১০-১৩: পরীক্ষার schedule ইনপুট
+`datetime-local`-এর পাঠ/লেখা এখন সর্বত্র Asia/Dhaka নির্দিষ্ট (+06:00), ডিভাইসের সিস্টেম-জোনের উপর নির্ভর করে না। পরীক্ষার শেষ/শুরু দেখানো ও deadline স্টেজে একই ঘড়ির abstraction।
+
+### ২০২৬-১০-১৩: নোটিফিকেশন সময়
+জন্মদিন, আগামীকালের কাজ ও পরীক্ষার নোটিফিকেশনের আজ/আগামীকাল ও সীমা ঢাকা মধ্যরাতে বদলায়; স্থানীয় OS timezone বদলালেও ছাত্রের day key স্থিতিশীল।
+
+### ২০২৬-১০-১৩: WhatsApp খসড়ার পরিমার্জন
+Teacher/Manager তিন ধরনের খসড়া বেছে নিতে পারেন। শিক্ষক বকেয়া টাকার গোপন লেজার পড়তে পারেন না, তাই তাঁর খসড়ায় ভুল ৳০ দেখানো হয় না; Manager কেবল অনুমোদিত লেনদেনের ভিত্তিতে সঠিক বকেয়া লেখেন।
+
+### Lighthouse যাচাই (১৩ অক্টোবর ২০২৬)
+লোকাল স্ট্যাটিক সার্ভারে Chromium 153 ও Lighthouse 11.7.1-এ `--only-categories=pwa,accessibility,best-practices` চালিয়ে ফল: **PWA 100, Accessibility 100, Best Practices 96**। Maskable icon এবং রঙের contrast অডিট পাস করেছে; ফি/অভিভাবক/অডিটের নতুন টাচ টার্গেট ন্যূনতম ৪৮px। ৯০-এর নিচে কোনো স্কোর নেই। Best Practices-এর ৪ পয়েন্ট কমার কারণ restricted পরীক্ষার পরিবেশ থেকে Firebase/CDN-এ `ERR_CONNECTION_CLOSED` কনসোল ত্রুটি; প্রোডাকশন নেটওয়ার্কে পুনরায় যাচাই করতে হবে। লোকাল HTTP সার্ভারে Firebase Hosting response headers প্রয়োগ হয় না—ডিপ্লয়ের পর headers আলাদাভাবে পরীক্ষা করতে হবে। Lighthouse 13-এ PWA category নেই বলে 11.7.1 ব্যবহার করা হয়েছে।
+
+### ২০২৬-১০-১৩: লোড বাজেট
+`js/main.js` এখন service worker registration ডাইনামিকভাবে লোড করে; ঢাকা clock ও integer finance helpers যোগের পরও প্রথম-পেইন্ট মডিউল-সংখ্যা/বাইট বাজেট বজায় থাকে।
+
+### ২০২৬-১০-১৩: পরীক্ষার UI স্পষ্টীকরণ
+নতুন পরীক্ষার ফর্মে প্রশ্ন ও অপশন বাধ্যতামূলক shuffle; পুরোনো fixed খসড়া/রেকর্ডের তথ্য অক্ষত। পরীক্ষার নির্দেশনায় একবারের চেষ্টার নিয়ম ও Asia/Dhaka সময় দেখানো হয়।

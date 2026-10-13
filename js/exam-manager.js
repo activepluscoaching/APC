@@ -1,3 +1,4 @@
+import { nowEpoch, dhakaDateTimeInput, parseDhakaDateTime, dhakaKey } from './time.js';
 /* Examination workspace (Manager + Teacher).
    Date-wise on purpose: the landing screen is a grouped, filterable history
    where questions stay collapsed behind View Questions — no exam ever lies
@@ -309,7 +310,7 @@ export function initExamManager(container, role) {
     view = 'home'; selected = null; openQuestion = null;
     const visible = db.exams;
     const list = filterExams(visible, filters);
-    content.innerHTML = `${role === 'admin' ? '<p class="exam-note">Admin দেখতে পারেন; অনুমোদন ও প্রকাশ Manager-এর কাজ।</p>' : ''}
+    content.innerHTML = `${role === 'admin' ? '<p class="exam-note">Admin নম্বর সংশোধন করতে পারেন; অনুমোদন ও প্রকাশ Manager-এর কাজ।</p>' : ''}
       ${hubMarkup(visible)}${teacherRejectedBanner(visible)}${approvalQueueMarkup(visible)}${filterMarkup(visible)}
       <h2 class="exam-section-title">পরীক্ষার ইতিহাস — তারিখ অনুযায়ী</h2>
       ${groupsMarkup(list)}`;
@@ -435,10 +436,10 @@ export function initExamManager(container, role) {
   }
   function editor(type, e = null) {
     view = 'edit'; selected = e?.id || null; openQuestion = null;
-    const nextDay = new Date(Date.now() + 86400000); nextDay.setHours(18, 0, 0, 0);
-    const localTime = ms => { const d = new Date(ms); return new Date(ms - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+    const nextDay = parseDhakaDateTime(`${dhakaKey(nowEpoch() + 86400000)}T18:00`);
+    const localTime = dhakaDateTimeInput;
     const classNames = roleClasses();
-    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: nextDay.getTime(), endAt: nextDay.getTime() + 3600000, lateMinutes: 10, negative: 0, passPercent: 33, template: '', instructions: '' };
+    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: nextDay, endAt: nextDay + 3600000, lateMinutes: 10, negative: 0, passPercent: 33, template: '', instructions: '' };
     const classOptions2 = value => `<option value="">শ্রেণি নির্বাচন করুন</option>${classNames.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('')}`;
     const field = (name, label, kind = 'text', extra = '') => `<label>${label}<input name="${name}" type="${kind}" value="${esc(['startAt', 'endAt'].includes(name) ? localTime(data[name]) : data[name])}" ${extra}></label>`;
     content.innerHTML = `${back()}<h2>${e ? 'সম্পাদনা' : 'নতুন পরীক্ষা'} — ${EXAM_TYPES[type]}${e ? ` <small>(${esc(shortExamId(e.id))})</small>` : ''}</h2>
@@ -453,11 +454,11 @@ export function initExamManager(container, role) {
       <label>কোন বিষয়ের পরীক্ষা *<span data-exam-subject-slot>${subjectSelectMarkup(data.className, data.subject)}</span></label>
       <label>অধ্যায়<input name="chapterName" maxlength="120" list="examChapters" value="${esc(data.chapterName || '')}" placeholder="যেমন: অধ্যায় ১ — বীজগণিত"><datalist id="examChapters" data-exam-chapters>${(data.className && data.subject ? listChapters(data.className, data.subject) : []).map(item => `<option value="${esc(item.name)}"></option>`).join('')}</datalist><small class="exam-note">এখানে লিখলে অধ্যায়টি Academic Setup-এও যুক্ত হবে, তাই পরের পরীক্ষায় তালিকায় পাবেন।</small></label>
       <label>টপিক / অংশ<input name="topic" maxlength="120" value="${esc(data.topic || '')}" placeholder="যেমন: বহুপদী সমীকরণ"></label>
-      <label>প্রশ্নের ক্রম<select name="questionOrder"><option value="shuffle" ${data.questionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option><option value="fixed" ${data.questionOrder === 'fixed' ? 'selected' : ''}>সবাই একই ক্রমে পাবে</option></select></label>
-      <label>অপশনের ক্রম<select name="optionOrder"><option value="shuffle" ${data.optionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option><option value="fixed" ${data.optionOrder === 'fixed' ? 'selected' : ''}>সবাই একই ক্রমে পাবে</option></select></label>
+      <label>প্রশ্নের ক্রম<select name="questionOrder"><option value="shuffle" ${data.questionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.questionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
+      <label>অপশনের ক্রম<select name="optionOrder"><option value="shuffle" ${data.optionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.optionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
       <label>Batch / Group<input name="group" maxlength="80" list="examAssignedGroups" value="${esc(data.group || '')}" placeholder="Full-class assignment হলে ফাঁকা রাখুন"><datalist id="examAssignedGroups">${[...new Set(listTeacherAssignments(teachingScopeUsername()).filter(item => item.group).map(item => item.group))].map(group => `<option value="${esc(group)}"></option>`).join('')}</datalist></label>
       ${field('startAt', type === 'mcq' ? 'শুরুর সময় *' : 'প্রশ্ন ডাউনলোড শুরুর সময় *', 'datetime-local', 'required')}${field('endAt', type === 'mcq' ? 'সবার জন্য শেষ সময় *' : 'আজকের প্রস্তুতির শেষ সময় *', 'datetime-local', 'required')}
-      <p class="exam-note">সময় এই মোবাইলের স্থানীয় সময় অনুযায়ী। পরীক্ষার তারিখ ও সময়কাল নিচে আলাদা করে দেখানো হয়। ${type === 'mcq' ? 'মোট দুইবার; চলমান প্রথম-প্রচেষ্টার গড়ের নিচে থাকলে দ্বিতীয় সুযোগ। সময় বাড়বে না। সেরা নম্বর ফলাফলে থাকবে।' : 'শুরুর তারিখের পরের দিন (বাংলাদেশ সময়) ক্লাসে পরীক্ষা হবে। শিক্ষার্থী PDF নেবে, খাতায় উত্তর দেবে।'}</p>
+      <p class="exam-note">সময় Asia/Dhaka (বাংলাদেশ) অনুযায়ী। পরীক্ষার তারিখ ও সময়কাল নিচে আলাদা করে দেখানো হয়। ${type === 'mcq' ? 'প্রতি শিক্ষার্থী একবারই চেষ্টা করতে পারবে। রিফ্রেশে জমা না-দেওয়া উত্তর ও একই শেষ সময় ফিরে আসবে।' : 'শুরুর তারিখের পরের দিন (বাংলাদেশ সময়) ক্লাসে পরীক্ষা হবে। শিক্ষার্থী PDF নেবে, খাতায় উত্তর দেবে।'}</p>
       <p class="exam-note" data-duration-readout></p>
       ${type === 'mcq' ? field('lateMinutes', 'দেরিতে প্রথম প্রবেশ: শুরুর পর কত মিনিট', 'number', 'required min="1" step="1"') : ''}
       ${type === 'mcq' ? field('negative', 'প্রতি ভুল উত্তরে কাটা নম্বর (০ হলে কাটবে না)', 'number', 'min="0" max="1000" step="0.01" required') : ''}
@@ -524,7 +525,7 @@ export function initExamManager(container, role) {
         /* A chapter typed into the paper is registered in Academic Setup first,
            so every later examination can pick it from the list. */
         if (String(values.chapterName || '').trim()) await ensureChapter(values.className, values.subject, values.chapterName, actor.role === 'teacher' ? 'TEACHER' : 'MANAGER');
-        return repo.saveDraft({ ...values, type, id: e?.id, startAt: new Date(values.startAt).getTime(), endAt: new Date(values.endAt).getTime() }, actor);
+        return repo.saveDraft({ ...values, type, id: e?.id, startAt: parseDhakaDateTime(values.startAt), endAt: parseDhakaDateTime(values.endAt) }, actor);
       }, 'খসড়া সংরক্ষিত। এখন অনুমতির জন্য পাঠাতে পারেন।', () => home());
     });
     scrollTop();
@@ -536,10 +537,10 @@ export function initExamManager(container, role) {
   }
   async function grade(e) {
     view = 'grade'; selected = e.id;
-    const students = await repo.listStudents();
-    content.innerHTML = `${back()}${examRecord(e)}<p class="exam-note">ক্লাসে খাতা দেখে প্রশ্নভিত্তিক নম্বর দিন। উপস্থিত না থাকলে অনুপস্থিত হিসেবে রাখুন।</p><form class="exam-form" data-grade-form><label>শিক্ষার্থী<select name="studentId" required><option value="">শিক্ষার্থী নির্বাচন করুন</option>${students.map(s => `<option value="${esc(s.id)}">${esc(s.name)} • ${esc(s.className)} • ${esc(s.id)}</option>`).join('')}</select></label>${e.questions.map(q => `<label>${esc(q.text)} (পূর্ণমান ${num(q.marks)})<input name="${q.id}" type="number" min="0" max="${q.marks}" step="0.01" placeholder="নম্বর দিন"></label>`).join('')}<label>মন্তব্য (সর্বোচ্চ ২০০ অক্ষর, ঐচ্ছিক)<input name="comment" type="text" maxlength="200" placeholder="শিক্ষার্থীর জন্য সংক্ষিপ্ত মন্তব্য"></label><div class="exam-actions"><button type="submit" name="decision" value="marks" class="primary">নম্বর প্রকাশ করুন</button><button type="submit" name="decision" value="absent">অনুপস্থিত রাখুন</button></div></form>`;
+    const students = await repo.listStudents(actor);
+    content.innerHTML = `${back()}${examRecord(e)}<p class="exam-note">ক্লাসে খাতা দেখে প্রশ্নভিত্তিক নম্বর দিন। উপস্থিত না থাকলে অনুপস্থিত হিসেবে রাখুন।</p><form class="exam-form" data-grade-form><label>শিক্ষার্থী<select name="studentId" required><option value="">শিক্ষার্থী নির্বাচন করুন</option>${students.map(s => `<option value="${esc(s.id)}">${esc(s.name)} • ${esc(s.className)} • ${esc(s.id)}</option>`).join('')}</select></label>${e.questions.map(q => `<label>${esc(q.text)} (পূর্ণমান ${num(q.marks)})<input name="${q.id}" type="number" min="0" max="${q.marks}" step="0.01" placeholder="নম্বর দিন"></label>`).join('')}<label>সম্পাদনার কারণ (৭ দিন পরে বাধ্যতামূলক)<input name="reason" maxlength="500" placeholder="কেন পরিবর্তন হচ্ছে"></label><label>মন্তব্য (সর্বোচ্চ ২০০ অক্ষর, ঐচ্ছিক)<input name="comment" type="text" maxlength="200" placeholder="শিক্ষার্থীর জন্য সংক্ষিপ্ত মন্তব্য"></label><div class="exam-actions"><button type="submit" name="decision" value="marks" class="primary">নম্বর প্রকাশ করুন</button><button type="submit" name="decision" value="absent">অনুপস্থিত রাখুন</button></div></form>`;
     $('[name=studentId]').addEventListener('change', event => { const saved = db.attempts.find(a => a.examId === e.id && a.studentId === event.target.value); e.questions.forEach(q => { $(`[name=${q.id}]`).value = saved?.questionScores?.[q.id] ?? ''; }); if ($('[name=comment]')) $('[name=comment]').value = saved?.comment ?? ''; });
-    $('[data-grade-form]').addEventListener('submit', event => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget)); const student = students.find(s => s.id === values.studentId); run(() => event.submitter.value === 'absent' ? repo.markWrittenAbsent(e.id, student, actor) : repo.saveWrittenScore(e.id, student, values, actor), 'নম্বর/উপস্থিতি সংরক্ষিত হয়েছে।', () => grade(db.exams.find(item => item.id === e.id))); });
+    $('[data-grade-form]').addEventListener('submit', event => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget)); const student = students.find(s => s.id === values.studentId); run(() => event.submitter.value === 'absent' ? repo.markWrittenAbsent(e.id, student, actor, values.reason) : repo.saveWrittenScore(e.id, student, values, actor), 'নম্বর/উপস্থিতি সংরক্ষিত হয়েছে।', () => grade(db.exams.find(item => item.id === e.id))); });
     scrollTop();
   }
 

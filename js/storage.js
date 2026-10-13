@@ -1,3 +1,6 @@
+import { taka } from './money.js';
+import { backendMode } from '../sync/cloud-access.js';
+import { safeSetItem } from './storage-safety.js';
 /* Device account, session and username index. Document collections live in database.js.
    Phase 1 security: the student password (PIN) and the recovery answer are stored
    only as PBKDF2 hashes — never as plaintext — and sessions are random tokens
@@ -29,7 +32,7 @@ export function readJSON(key, fallback = null) {
 }
 
 export function writeJSON(key, value) {
-  try { const storage = getStorage(); if (!storage) return false; storage.setItem(key, JSON.stringify(value)); return true; }
+  try { const storage = getStorage(); if (!storage) return false; safeSetItem(storage, key, JSON.stringify(value)); return true; }
   catch { return false; }
 }
 
@@ -40,7 +43,7 @@ export function loadStudent() {
 export function saveStudent(student) {
   const account = loadAccount();
   const value = account?.student?.id && account.student.id === student.id ? { ...student, studentMobile: account.registrationMobile || account.mobile } : student;
-  return writeJSON(STORAGE_KEYS.student, value);
+  return writeJSON(STORAGE_KEYS.student, value?.monthlyFee == null || value.monthlyFee === '' ? value : { ...value, monthlyFee: taka(value.monthlyFee) });
 }
 
 export function loadAccount() {
@@ -71,10 +74,11 @@ export async function persistAccount(account) {
   const previous = raw === null ? null : JSON.parse(raw);
   const value = protectAccountIdentity(account, previous);
   const stored = await hashSecrets(value, account);
+  if (stored.student?.monthlyFee != null && stored.student.monthlyFee !== '') stored.student = { ...stored.student, monthlyFee: taka(stored.student.monthlyFee) };
   // Cross-device merge tiebreak: the newest local change must not be replaced
   // by an older cloud copy (e.g. a password changed while offline).
   stored.updatedAt = new Date().toISOString();
-  storage.setItem(STORAGE_KEYS.account, JSON.stringify(stored));
+  safeSetItem(storage, STORAGE_KEYS.account, JSON.stringify(stored));
   rememberAccount(stored);
   return stored;
 }
@@ -234,6 +238,7 @@ async function readStudentSession() {
 }
 
 export async function hasSession() {
+  if (backendMode() === 'firebase') return false;
   // Only a real session obtained after credential verification may open the app.
   const record = await readStudentSession();
   if (!record) return false;

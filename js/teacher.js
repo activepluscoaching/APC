@@ -1,3 +1,4 @@
+import { guardianDraft } from './guardian-message.js';
 import { loadRoutine, loadNotices, saveNotices, WEEK_DAYS } from './office-data.js';
 import { normalizeClassId, normalizeSectionId } from './class-key.js';
 import { listTeacherAssignments, syncTeacherAssignmentFromDirectory, effectiveTeacherAssignments } from './teacher-assignments.js';
@@ -216,7 +217,7 @@ function renderStudents() {
   }
   const students = searchTeachingStudents(state.students, $('#teacherStudentSearch').value).filter(s => className === 'all' || s.className === className);
   $('#teacherStudentCount').textContent = `${bn(students.length)} জন অনুমোদিত শিক্ষার্থী`;
-  $('#teacherStudentList').innerHTML = students.map(s => `<article class="teaching-card"><span class="student-avatar" aria-hidden="true">${esc(s.name.charAt(0))}</span><h3>${esc(s.name)}</h3><small>Student ID: ${esc(s.id)}</small><p>${esc(s.className)} • ${esc(s.group || '—')}</p><small>মোবাইল: ${esc(s.mobile || s.studentMobile || '—')}</small><div class="teaching-actions"><button type="button" data-student-detail="${esc(s.id)}">শেখার অগ্রগতি</button></div></article>`).join('') || '<p class="teacher-empty">কোনো শিক্ষার্থী পাওয়া যায়নি</p>';
+  $('#teacherStudentList').innerHTML = students.map(s => `<article class="teaching-card"><span class="student-avatar" aria-hidden="true">${esc(s.name.charAt(0))}</span><h3>${esc(s.name)}</h3><small>Student ID: ${esc(s.id)}</small><p>${esc(s.className)} • ${esc(s.group || '—')}</p><small>মোবাইল: ${esc(s.mobile || s.studentMobile || '—')}</small><div class="teaching-actions"><button type="button" data-student-detail="${esc(s.id)}">শেখার অগ্রগতি</button><button type="button" data-guardian-student="${esc(s.id)}">অভিভাবককে জানান</button></div></article>`).join('') || '<p class="teacher-empty">কোনো শিক্ষার্থী পাওয়া যায়নি</p>';
 }
 const weekdayNames = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 function renderTeacherClasses() {
@@ -997,6 +998,8 @@ document.addEventListener('click', event => {
     const a = own().find(item => item.id === record.dataset.id); if (!a) return;
     ({ detail: showDetail, edit: a => showEditor(a.type, a), progress: showProgress, delete: showDelete })[record.dataset.recordAction]?.(a);
   }
+  const guardian = event.target.closest('[data-guardian-student]');
+  if (guardian) { const row = state.students.find(s => s.id === guardian.dataset.guardianStudent); if (row) { const kind = window.prompt('বার্তার ধরন: absence / result / due', 'absence'); if (kind) { try { window.open(guardianDraft(row, kind), '_blank', 'noopener,noreferrer'); } catch (error) { toast(error.message); } } } return; }
   const student = event.target.closest('[data-student-detail]'); if (student) showStudent(student.dataset.studentDetail);
 });
 $('#teacherModalClose').addEventListener('click', closeModal);

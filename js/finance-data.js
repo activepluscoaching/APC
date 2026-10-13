@@ -1,6 +1,9 @@
+import { idGenerator } from './idGenerator.js';
+import { dhakaParts, nowEpoch } from './time.js';
 /* Finance domain helpers. Records live in the transactions collection.
    Swap the database adapter for Firestore later; the payment UI awaits its save. */
 import { KEYS, listDocumentsStrict, replaceDocumentsStrict } from './database.js';
+import { taka, addTaka, migrateAmounts } from './money.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { authenticatedStudent } from './student-access.js';
 import { latinDigits as sharedLatinDigits, searchStudentsByQuery } from './student-search.js';
@@ -9,8 +12,8 @@ export const DEFAULT_MONTHLY_FEE = 1500;
 export const MONTHS = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
 export const latinDigits = sharedLatinDigits;   // one implementation, see js/student-search.js
 const banglaDigits = value => String(value).replace(/\d/g, digit => '০১২৩৪৫৬৭৮৯'[digit]);
-export const monthLabel = (date = new Date()) => `${MONTHS[date.getMonth()]} ${banglaDigits(date.getFullYear())}`;
-export const dateLabel = (date = new Date()) => `${banglaDigits(date.getDate())} ${monthLabel(date)}`;
+export const monthLabel = (date = new Date(nowEpoch())) => { const p = dhakaParts(date); return `${MONTHS[p.month - 1]} ${banglaDigits(p.year)}`; };
+export const dateLabel = (date = new Date(nowEpoch())) => `${banglaDigits(dhakaParts(date).day)} ${monthLabel(date)}`;
 
 export const searchStudents = searchStudentsByQuery;
 
@@ -18,7 +21,7 @@ function paymentDate(value) {
   const text = latinDigits(value).trim();
   const [day, month, year] = text.split(/\s+/);
   const index = MONTHS.indexOf(month);
-  if (index >= 0 && Number(day) && Number(year)) return new Date(Number(year), index, Number(day)).getTime();
+  if (index >= 0 && Number(day) && Number(year)) return Date.UTC(Number(year), index, Number(day)) - 6 * 3600000;
   const parsed = Date.parse(text);
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -51,20 +54,23 @@ export function studentFeeSummary(student, transactions, now = new Date()) {
   const monthly = own.filter(tx => tx.month === month);
   const configured = student.monthlyFee;
   const monthlyFee = configured != null && configured !== '' && Number.isFinite(Number(configured)) && Number(configured) >= 0
-    ? Number(configured) : DEFAULT_MONTHLY_FEE;
-  const paid = monthly.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-  const tuitionPaid = monthly.filter(tx => tx.feeType === 'মাসিক বেতন').reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    ? taka(configured) : DEFAULT_MONTHLY_FEE;
+  const paid = monthly.reduce((sum, tx) => addTaka(sum, tx.amount), 0);
+  const tuitionPaid = monthly.filter(tx => tx.feeType === 'মাসিক বেতন').reduce((sum, tx) => addTaka(sum, tx.amount), 0);
   return { month, monthlyFee, paid, tuitionPaid, due: Math.max(0, monthlyFee - tuitionPaid), lastPayment: newestTransactions(own)[0] || null };
 }
 
 function validTransaction(tx) {
-  return Boolean(tx && tx.id && tx.studentId && Number.isFinite(Number(tx.amount))
+  return Boolean(tx && tx.id && tx.studentId && Number.isFinite(Number(tx.amount)) && Number(tx.amount) >= 0
     && (tx.status == null || ['pending', 'approved', 'rejected'].includes(tx.status))
     && (tx.reviewHistory == null || Array.isArray(tx.reviewHistory)));
 }
 
 function readTransactions() {
-  return listDocumentsStrict('transactions', validTransaction);
+  const records = listDocumentsStrict('transactions', validTransaction);
+  const { rows, changed } = migrateAmounts(records);
+  if (changed) replaceDocumentsStrict('transactions', rows); // atomic: old raw data survives quota failure
+  return rows;
 }
 
 function accessDenied(message = 'এই লেনদেনের ডেটা দেখার অনুমতি নেই।') {
@@ -77,27 +83,13 @@ async function requireFinanceRole(role) {
   return account;
 }
 
-// Display receipts are short and daily; transaction IDs remain collision-resistant.
-// Allocate inside the SAME ledger lock/write, using plain and historical
-// suffixed receipts as the floor. No previous receipt is renamed.
-function counterReceiptNumber(records, now) {
-  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) throw new Error('রসিদের তারিখ সঠিক নয়।');
-  const prefix = `R${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-  const pattern = new RegExp(`^${prefix}(\\d{3,})(?:-[a-f0-9]{16})?$`, 'i');
-  const last = records.reduce((maximum, row) => {
-    const match = String(row.receiptNo || '').match(pattern);
-    return match ? Math.max(maximum, Number(match[1])) : maximum;
-  }, 0);
-  if (last >= 999) throw new Error('আজকের রসিদের ক্রমিক সীমা ৯৯৯ পূর্ণ হয়েছে। পেমেন্ট সংরক্ষণ হয়নি।');
-  return `${prefix}${String(last + 1).padStart(3, '0')}`;
-}
-
+// Receipts are allocated by idGenerator under the ledger lock. Historical numbers are retained.
 // Public Transaction ID: T + two-digit year + a running ordinal (minimum
 // three digits), NOT a daily counter. Keep .id as the immutable sync key so
 // independent offline devices cannot overwrite rows with a short display ID.
 function publicTransactionNumber(records, now) {
   if (!(now instanceof Date) || !Number.isFinite(now.getTime())) throw new Error('ট্রানজ্যাকশনের তারিখ সঠিক নয়।');
-  const prefix = `T${String(now.getFullYear()).slice(-2)}`;
+  const prefix = `T${String(dhakaParts(now).year).slice(-2)}`;
   const pattern = new RegExp(`^${prefix}(\\d{3,})$`);
   const last = records.reduce((maximum, row) => {
     const match = String(row.transactionNo || row.id || '').match(pattern);
@@ -143,13 +135,13 @@ export const financeRepository = {
     const role = actor?.role || 'payment';
     if (role !== 'payment') throw accessDenied('শুধু পেমেন্ট কাউন্টার নতুন লেনদেন সংরক্ষণ করতে পারবে।');
     await requireFinanceRole(role);
-    const save = () => {
+    const save = async () => {
       // Re-read before writing so another tab's collections are not overwritten.
       const records = readTransactions();
       if (!records.some(tx => tx.id === transaction.id)) {
-        const entry = { ...transaction, status: 'pending', reviewHistory: [] };
+        const entry = { ...transaction, amount: taka(transaction.amount), status: 'pending', reviewHistory: [] };
         if (serialTransaction) entry.transactionNo = publicTransactionNumber(records, receiptDate);
-        if (counterReceipt) entry.receiptNo = counterReceiptNumber(records, receiptDate);
+        if (counterReceipt) entry.receiptNo = await idGenerator.nextReceiptNo(records);
         // New collection attempts can never self-approve through this write path.
         delete entry.reviewedAt; delete entry.reviewedBy; delete entry.reviewNote;
         records.unshift(entry);

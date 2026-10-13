@@ -26,7 +26,6 @@ const TOKENS_ROOT = 'activePlusSync/v1/pushTokens';
    instance (two copies would install two write bridges). */
 const SYNC_MODULE = './realtime-sync.js';
 
-const SDK = 'https://www.gstatic.com/firebasejs/12.2.1';
 
 export function pushState() {
   const record = readJSON(PUSH_LOCAL_KEY, null);
@@ -40,6 +39,11 @@ function permission() {
 
 function supported() {
   try {
+    // The FCM worker cannot inherit a page-only ?firebaseProject=dev flag on
+    // loopback. Never register a production worker for a dev Firebase app.
+    if (['localhost', '127.0.0.1'].includes(location.hostname)
+      && (new URLSearchParams(location.search).get('firebaseProject') === 'dev'
+        || sessionStorage.getItem('apc.firebaseProject') === 'dev')) return false;
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
     if (window.isSecureContext === false) return false;
     return true;
@@ -72,12 +76,12 @@ async function firebase() {
   // in again here) keeps one identity per device.
   const sync = await import(SYNC_MODULE);
   await sync.ensureCloudAuth();
-  const databaseModule = await import(`${SDK}/firebase-database.js`);
+  const databaseModule = await import('../firebase/firebase-services.js');
   return { firebaseApp, databaseModule };
 }
 
 async function messagingModule() {
-  return import(`${SDK}/firebase-messaging.js`);
+  return import('../firebase/firebase-services.js');
 }
 
 function writeLocal(state) {
@@ -154,6 +158,10 @@ async function publishToken({ token, viewer }) {
 }
 
 export async function disablePush() {
+  if (!supported()) {
+    writeLocal({ status: 'off', at: Date.now(), permission: permission() });
+    return { ok: true, status: 'off' };
+  }
   const state = pushState();
   try {
     if (state?.token) {

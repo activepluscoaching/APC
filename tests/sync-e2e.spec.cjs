@@ -23,14 +23,14 @@ const { STUB_SOURCE } = require('./sync-cloud-stub.cjs');
 test.use({ serviceWorkers: 'block', viewport: { width: 420, height: 800 } });
 
 const GREEN = 'rgb(14, 159, 110)';
-const RED = 'rgb(184, 50, 57)';
+const RED = 'rgb(185, 28, 28)'; // css/foundation.css --color-danger
 const SETTLE = 450;   // longer than the 300ms border-top-color transition
 
 test('a real sync cycle drives the colour-only topbar indicator', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(String(error.message)));
   // Only the cloud boundary is faked.
-  await page.route('https://www.gstatic.com/firebasejs/**', route =>
+  await page.route('**/vendor/firebase/sdk.js', route =>
     route.fulfill({ status: 200, contentType: 'text/javascript', body: STUB_SOURCE }));
 
   const readout = () => page.evaluate(() => {
@@ -46,7 +46,7 @@ test('a real sync cycle drives the colour-only topbar indicator', async ({ page 
       if (predicate(await readout())) { await page.waitForTimeout(SETTLE); return readout(); }
       await page.waitForTimeout(250);
     }
-    throw new Error(`sync state did not arrive: ${JSON.stringify(await readout())}`);
+    throw new Error(`sync state did not arrive: ${JSON.stringify(await readout())}; page errors: ${JSON.stringify(pageErrors)}`);
   };
   const cloudHas = name => page.evaluate(
     marker => JSON.stringify(window.__cloud?.data?.activePlusSync?.v1?.notices || {}).includes(marker), name);
@@ -58,7 +58,9 @@ test('a real sync cycle drives the colour-only topbar indicator', async ({ page 
   }, { id, body });
 
   // 1 ── a signed-in device completes a sync.
-  await enterStudentApp(page);
+  // This test deliberately keeps a live RTDB listener open: never await
+  // networkidle, which is undefined while the sync stream is connected.
+  await enterStudentApp(page, { waitForNetworkIdle: false });
   const synced = await waitFor(s => s.sync === 'online' && s.visual === 'synced' && s.lastSync);
   expect(synced.connected).toBe('connected');
   expect(synced.border).toBe(GREEN);

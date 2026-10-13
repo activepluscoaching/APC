@@ -48,6 +48,7 @@ function fillRegistration(overrides = {}) {
   for (const [id, value] of Object.entries(values)) ctx.$(`#${id}`).value = value;
   ctx.$('#studentMobile').value = values.regMobile;
   ctx.$('#terms').checked = true;
+  ctx.$('#guardianConsent').checked = true;
 }
 
 test('the registration form asks for a permanent username and validates it live', () => {

@@ -1,3 +1,4 @@
+import { taka } from './money.js';
 /* Live office records: roster, notices and weekly routine.
    An empty browser starts empty. Sample arrays in admin-data.js stay available
    as fixtures for tests; they are not loaded here. */
@@ -41,7 +42,7 @@ export function accountToRosterStudent(account) {
     status: rosterStatus(account.status),
     attendance: Number(student.attendance) || 0,
     average: Number(student.average) || 0,
-    monthlyFee: student.monthlyFee ?? null,
+    monthlyFee: student.monthlyFee == null || student.monthlyFee === '' ? null : taka(student.monthlyFee),
     enrolledAt: account.createdAt ? new Date(account.createdAt).toLocaleDateString('bn-BD') : '',
     // Machine-readable application time (the notification list sorts by it).
     registeredAt: typeof account.createdAt === 'string' ? account.createdAt : '',
@@ -68,11 +69,14 @@ function mergeAccount(list) {
 }
 
 export function loadRoster() {
-  return mergeAccount(listDocuments('students')).map(row => withClassKey(row));
+  const saved = listDocuments('students');
+  const clean = saved.map(row => row.monthlyFee == null || row.monthlyFee === '' ? row : { ...row, monthlyFee: taka(row.monthlyFee) });
+  if (clean.some((row, index) => row.monthlyFee !== saved[index].monthlyFee)) replaceDocumentsStrict('students', clean);
+  return mergeAccount(clean).map(row => withClassKey(row));
 }
 
 export function saveRoster(students) {
-  return writeJSON(ROSTER_KEY, students);
+  return writeJSON(ROSTER_KEY, students.map(row => row.monthlyFee == null || row.monthlyFee === '' ? row : { ...row, monthlyFee: taka(row.monthlyFee) }));
 }
 
 /** Manager-only operational edits. Identifiers and approval state are copied
@@ -92,7 +96,7 @@ export async function updateStudentOperationalInfo(studentId, patch = {}) {
   const guardianMobile = String(patch.guardianMobile ?? current.guardianMobile ?? '').trim();
   const className = String(patch.className ?? current.className ?? '').trim();
   const group = String(patch.group ?? current.group ?? '').trim();
-  const monthlyFee = Number(patch.monthlyFee ?? current.monthlyFee ?? 1500);
+  const monthlyFee = taka(patch.monthlyFee ?? current.monthlyFee ?? 1500);
   if (!name || name.length > 100 || mobile.length > 32 || guardianMobile.length > 32 || group.length > 80) throw new Error('শিক্ষার্থীর নাম, মোবাইল বা batch/group তথ্য সঠিক নয়।');
   const { listClasses } = await import('./academics.js');
   if (!listClasses().some(item => item.active !== false && item.name === className)) throw new Error('সঠিক সক্রিয় শ্রেণি নির্বাচন করুন।');
@@ -202,7 +206,7 @@ export async function syncStudentProfileFromRoster(studentId) {
     group: row.group ?? current.group,
     studentMobile: row.mobile ?? current.studentMobile,
     guardianMobile: row.guardianMobile ?? current.guardianMobile,
-    monthlyFee: row.monthlyFee ?? current.monthlyFee
+    monthlyFee: row.monthlyFee == null ? current.monthlyFee : taka(row.monthlyFee)
   };
   const nextAccount = {
     ...account,

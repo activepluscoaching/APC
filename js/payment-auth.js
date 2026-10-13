@@ -1,7 +1,8 @@
-/* Payment-desk credentials. The only login is payment.html — the student
-   login page does not accept these credentials. All password handling is
-   delegated to staff-auth.js: PBKDF2 hashes, device-bound session tokens, and
-   a mandatory password change after first-use setup or migration. */
+/* Payment-desk credentials. Sign-in happens on the shared login form on
+   index.html (js/login.js routes the `payment` role to payment.html); payment.html
+   itself has no credential form. All password handling is delegated to
+   staff-auth.js: PBKDF2 hashes, device-bound session tokens, and a mandatory
+   password change after first-use setup or migration. */
 
 import {
   STAFF_ACCOUNTS,
@@ -21,7 +22,7 @@ export const PAYMENT_USER_ID = STAFF_ACCOUNTS.payment.username;
 export const PAYMENT_ACCOUNT_KEY = STAFF_ACCOUNTS.payment.accountKey;
 export const PAYMENT_SESSION_KEY = STAFF_ACCOUNTS.payment.sessionKey;
 export const PAYMENT_PORTAL_PATH = 'payment.html';
-export const PAYMENT_REMEMBER_DAYS = STAFF_SESSION_RULES.rememberDays;
+export const PAYMENT_REMEMBER_DAYS = STAFF_SESSION_RULES.rememberDays.payment;
 
 /** { ok, needsSetup?, needsPasswordChange?, error? } for the desk login form. */
 export async function authenticatePayment(userId, password) {

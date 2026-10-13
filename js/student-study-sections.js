@@ -14,6 +14,7 @@ import { toBanglaNumber as bn } from './ui.js';
 import { setView } from './shell.js';
 import { classByName, subjectsForClass, listChapters } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
+import { courseRepository, courseProgress, watchCourses, COURSES_KEY } from './course-data.js';
 import { listQuestionsForStudent, questionRowsFromPastExams, QUESTION_TYPES } from './question-bank.js';
 import { examRepository as examRepo, examMatchesStudent, isStudentVisibleExam, watchExams, examResults, totalMarks, gradeFor } from './exam-data.js';
 import { downloadExamPDF } from './exam-pdf.js';
@@ -243,13 +244,39 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     if (count) count.textContent = `${num(rows.length)}টি উপকরণ • ${text(student().className) || 'শ্রেণি'}`;
   }
 
+
+  function renderStudentCourses() {
+    const host = $('#studentCourseChaptersList');
+    if (!host) return;
+    const courses = courseRepository.readStudentCoursesSync(student());
+    if (!courses.length) {
+      host.innerHTML = '<p class="teacher-empty">আপনার শ্রেণি ও বিভাগের জন্য এখনো কোনো কোর্স প্রকাশিত হয়নি।</p>';
+      return;
+    }
+    host.innerHTML = courses.map(course => {
+      const prog = course.progress || courseProgress(course);
+      return `<article class="teaching-card" data-student-course="${esc(course.id)}">
+        <div class="teaching-card-head"><span class="teaching-kind">${esc(course.subject)}</span><span class="teaching-status published">সম্পন্ন ${num(prog.percent)}%</span></div>
+        <h3>${esc(course.title || course.subject)}</h3>
+        <small>${esc(course.className)} • ${esc(course.group || 'সব বিভাগ')}${course.teacherName ? ` • শিক্ষক: ${esc(course.teacherName)}` : ''}</small>
+        <p class="teaching-progress-line ${prog.completed === prog.total && prog.total > 0 ? 'clear' : 'idle'}">অধ্যায় অগ্রগতি: ${num(prog.completed)}/${num(prog.total)} শেষ • ${num(prog.running)} চলছে • ${num(prog.notStarted)} শুরু হয়নি</p>
+        <div class="course-chapter-list">${course.chapters.length ? course.chapters.map(ch => `<div class="teacher-progress-row" data-student-chapter="${esc(ch.id)}" style="display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0">
+          <span>${num(ch.order)}. ${esc(ch.title)}</span>
+          <span class="badge ${ch.status === 'শেষ' ? 'badge-approved' : ch.status === 'চলছে' ? 'badge-pending' : ''}">${esc(ch.status)}${ch.status === 'শেষ' && ch.completedDate ? ` (${esc(num(ch.completedDate))})` : ''}</span>
+        </div>`).join('') : '<p class="teacher-empty">এই কোর্সে এখনো কোনো অধ্যায় যোগ করা হয়নি।</p>'}</div>
+      </article>`;
+    }).join('');
+  }
+
   function paintCounts() {
+    renderStudentCourses();
     const counts = teaching?.activityCounts?.() || { homework: 0, suggestion: 0 };
     const set = (key, value) => {
       const badge = bar.querySelector(`[data-study-count="${key}"]`);
       if (badge) badge.textContent = num(value);
     };
-    set('courses', subjects().length);
+    const publishedCourses = courseRepository.readStudentCoursesSync(student());
+    set('courses', publishedCourses.length);
     set('homework', counts.homework || 0);
     set('suggestion', (counts.suggestion || 0) + suggestionRecords.length);
     set('bank', bankRows.length);
@@ -467,6 +494,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
   onSelect($(SELECTORS.materials.subject), value => { materialSubject = value; materialChapter = ''; fillFilters(); renderMaterials(); });
   onSelect($(SELECTORS.materials.chapter), value => { materialChapter = value; renderMaterials(); });
 
+  watchCourses(() => void refresh());
   window.addEventListener('apc-course-updated', () => void refresh());
   window.addEventListener('apc-academics-updated', () => void refresh());
   window.addEventListener('teaching-data-updated', () => { loadShelves(); });

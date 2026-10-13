@@ -30,6 +30,7 @@ const {
   mobileProposals,
   v2StudentRecord
 } = require('./v2-roster-migration.js');
+const { scoreAttempt, keyAnswers } = require('./exam-scoring.js');
 
 initializeApp();
 const auth = getAuth();
@@ -280,7 +281,90 @@ exports.adminSetAccountStatus = onCall(async request => {
   // teacherId/studentId always equal the account's own Auth uid.
   await auth.setCustomUserClaims(uid, { ...user.customClaims, status, ...v2IdentityClaims(accountRole || String(user.customClaims?.role || ''), uid) });
   await auth.updateUser(uid, { disabled: status !== 'active' });
+  // Staff deactivate/re-activate rewrites the account's authorization: every
+  // refresh token dies so no device keeps serving the old role/status view.
+  await auth.revokeRefreshTokens(uid);
   return { ok: true, uid, status };
+});
+
+/**
+ * Release one finished exam: score every attempt against the private answer
+ * key and publish the answers. Scoring and answer release live here so no
+ * client can ever read the key or mint a score early:
+ *
+ *   • the exam window must have ended (`endAt` in the past);
+ *   • the key is read from `exams/{examId}/private/key` (student-inaccessible);
+ *   • every `attempts` row of the exam is scored and written to `results` as
+ *     `{examId}_{studentId}` (Admin SDK — the rules make results immutable to
+ *     clients; re-running the release stays idempotent);
+ *   • the answers are copied to `exams/{examId}/releasedKey` with a
+ *     `releasedAt` stamp — the only answer document students may read, and
+ *     only after release.
+ *
+ * Callers: Admin/Manager always; the owning teacher for their own paper. */
+exports.releaseExamResults = onCall(async request => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'লগইন প্রয়োজন।');
+  const examId = String(request.data?.examId || '');
+  if (!safeQuestionKey(examId)) throw new HttpsError('invalid-argument', 'examId সঠিক নয়।');
+  const callerUid = request.auth.uid;
+  const callerRole = String(request.auth.token?.role || '');
+  const examRef = db.doc(`exams/${examId}`);
+  const examSnapshot = await examRef.get();
+  if (!examSnapshot.exists) throw new HttpsError('not-found', 'পরীক্ষাটি পাওয়া যায়নি।');
+  const exam = examSnapshot.data();
+  const ownsPaper = callerRole === 'teacher' && exam.teacherUid === callerUid;
+  const adminLike = callerRole === 'admin' || callerRole === 'staff-admin';
+  if (!adminLike && callerRole !== 'manager' && !ownsPaper) {
+    throw new HttpsError('permission-denied', 'এই পরীক্ষার ফলাফল প্রকাশের অনুমতি নেই।');
+  }
+  const endAt = Number(exam.endAt);
+  if (!Number.isFinite(endAt) || endAt <= 0 || Date.now() < endAt) {
+    throw new HttpsError('failed-precondition', 'পরীক্ষা শেষ হওয়ার আগে ফলাফল প্রকাশ করা যাবে না।');
+  }
+  const keySnapshot = await examRef.collection('private').doc('key').get();
+  if (!keySnapshot.exists) {
+    throw new HttpsError('failed-precondition', 'উত্তরমালা (exams/{id}/private/key) পাওয়া যায়নি।');
+  }
+  const key = keySnapshot.data();
+  const attemptsSnapshot = await db.collection('attempts').where('examId', '==', examId).get();
+  const releasedAt = FieldValue.serverTimestamp();
+  let attemptsScored = 0;
+  const writes = [];
+  attemptsSnapshot.forEach(attemptDoc => {
+    const attempt = attemptDoc.data();
+    const studentId = String(attempt.studentId || '');
+    if (!studentId) return;
+    attemptsScored += 1;
+    const scored = scoreAttempt(key, attempt);
+    writes.push(db.collection('results').doc(`${examId}_${studentId}`).set({
+      id: `${examId}_${studentId}`,
+      examId,
+      studentId,
+      className: attempt.className != null ? attempt.className : (exam.className != null ? exam.className : ''),
+      score: scored.score,
+      total: scored.total,
+      correct: scored.correct,
+      wrong: scored.wrong,
+      unanswered: scored.unanswered,
+      scoredBy: 'releaseExamResults',
+      gradedAt: releasedAt
+    }, { merge: true }));
+  });
+  await Promise.all(writes);
+  await examRef.collection('releasedKey').set({
+    examId,
+    answers: keyAnswers(key),
+    questions: Array.isArray(key.questions)
+      ? key.questions.map(question => ({
+        uid: question && question.uid != null ? question.uid : (question && question.id != null ? question.id : ''),
+        answer: question && question.answer != null ? question.answer : ''
+      }))
+      : [],
+    releasedAt,
+    releasedBy: callerUid
+  }, { merge: true });
+  await examRef.set({ resultsReleased: true, resultsReleasedAt: releasedAt }, { merge: true });
+  return { ok: true, examId, attemptsScored };
 });
 
 
@@ -617,6 +701,9 @@ exports.adminProvisionV2Identities = onCall(async request => {
     throw new HttpsError('failed-precondition', 'শুধু সক্রিয় Teacher অ্যাকাউন্ট লিংক করা যায়।');
   }
   await auth.setCustomUserClaims(uid, claims);
+  // Linking rewrites the account's role/status claims — a role change for
+  // every session already in flight. Force every device to re-authenticate.
+  await auth.revokeRefreshTokens(uid);
 
   const migration = migrationForTeacher(legacyValue, username, identity);
   if (applyAssignments && migration.assignments.length) {

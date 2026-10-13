@@ -1,6 +1,7 @@
 /* Local exam workflow adapter, NOT secure online authentication/proctoring.
    A production API must own authorization, time, answer keys and accepted submissions. */
-import { teachingRepository, DEMO_TEACHER, teachingScopeUsername, currentTeacherProfile } from './teaching-data.js';
+import { teachingRepository, DEMO_TEACHER, teachingScopeUsername, currentTeacherProfile, currentTeacherId, isOwnTeacherRecord, isTeacherAllowedSubject, resolveTeacherName } from './teaching-data.js';
+import { normalizeClassId, normalizeSectionId, matchesClassSection } from './class-key.js';
 import { isTeacherAssigned, subjectsForTeacherClass } from './teacher-assignments.js';
 import { isSubjectEnabled, academicCodes, chapterByName, ensureChapter as ensureAcademicChapter } from './academics.js';
 import { allocateExamCode, examCodeParts, orderPaperForAttempt, timeLabel } from './exam-core.js';
@@ -521,6 +522,8 @@ export function normalizeExam(exam) {
   if (!Number.isFinite(exam.negativeMarks)) exam.negativeMarks = Number(exam.negative) || 0;
   if (typeof exam.startTime !== 'string') exam.startTime = timeLabel(exam.startAt);
   if (typeof exam.endTime !== 'string') exam.endTime = timeLabel(exam.endAt);
+  exam.classId = normalizeClassId(exam);
+  exam.sectionId = normalizeSectionId(exam);
   if (exam.questions) restampExamQuestions(exam, exam.questions);
   return exam;
 }
@@ -535,11 +538,11 @@ export function classExamDate(startAt) {
 /* Exams saved before the class picker existed carry no className and stay
    visible to every class; new exams name the class they belong to. */
 export function examMatchesClass(exam, className) {
-  return !exam.className || exam.className === className;
+  const cId = normalizeClassId(exam);
+  return !cId || cId === normalizeClassId(className);
 }
 export function examMatchesStudent(exam, student) {
-  const normalize = value => String(value || '').normalize('NFC').trim().replace(/\s*বিভাগ$/, '').trim();
-  return examMatchesClass(exam, student?.className) && (!exam.group || normalize(exam.group) === normalize(student?.group));
+  return matchesClassSection(exam, student, { requireViewerClass: true, allowGlobalItem: true });
 }
 function academicClassNames() {
   try {
@@ -564,9 +567,12 @@ function studentExamSnapshot(db, student) {
       /* The class board travels with a published paper and nothing else: it is the
          one place a student may see another student's mark, and it carries marks
          only — no answer sheets, and never a paper from another class. */
-      const classResults = exam.resultsPublished === true ? classResultRows(db, exam, classRoster()) : undefined;
+      const classResults = exam.resultsPublished === true ? classResultRows(db, exam, classRoster(), student) : undefined;
+      const teacherName = resolveTeacherName(exam.teacherId, exam.teacherName);
       return {
         ...exam,
+        teacherName,
+        createdBy: teacherName || exam.createdBy,
         questions,
         ...(classResults ? { classResults } : {}),
         participants: (exam.participants || []).filter(person => person.id === student.id).map(person => ({ ...person })),
@@ -660,8 +666,10 @@ async function mutate(fn) {
   return navigator.locks ? navigator.locks.request(EXAM_KEY, task) : task();
 }
 function examById(db, id) { const e = db.exams.find(e => e.id === id); if (!e) fail('পরীক্ষাটি পাওয়া যায়নি।'); return e; }
+const effectiveTeacherId = actor => (actor?.id && actor.id !== DEMO_TEACHER.id ? actor.id : currentTeacherId());
 function teacherOwns(exam, actor) {
-  if (actor?.role !== 'teacher' || actor.id !== exam.teacherId || !isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || '')) fail('শুধু দায়িত্বপ্রাপ্ত শিক্ষক এবং Manager-assigned class এই কাজ করতে পারবেন।');
+  const expectedId = effectiveTeacherId(actor);
+  if (actor?.role !== 'teacher' || !isOwnTeacherRecord(exam?.teacherId, expectedId) || !isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || '') || !isTeacherAllowedSubject(teachingScopeUsername(), exam.className, exam.subject, exam.group || '')) fail('শুধু দায়িত্বপ্রাপ্ত শিক্ষক এবং Manager-assigned class এই কাজ করতে পারবেন।');
 }
 function requireManager(actor) { if (actor?.role !== 'manager') fail('শুধু Manager পরীক্ষা অনুমোদন করতে পারবেন।'); }
 async function requireRoleSession(role) {
@@ -711,7 +719,12 @@ function nextOccurrence(startAt, now) {
   return next.getTime();
 }
 function teacherExamSnapshot(db, actor = TEACHER_ACTOR) {
-  const exams = db.exams.filter(exam => exam.teacherId === actor.id && isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || ''));
+  const expectedId = effectiveTeacherId(actor);
+  const exams = db.exams.filter(exam =>
+    isOwnTeacherRecord(exam.teacherId, expectedId)
+    && isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || '')
+    && isTeacherAllowedSubject(teachingScopeUsername(), exam.className, exam.subject, exam.group || '')
+  );
   const ids = new Set(exams.map(exam => exam.id));
   return { ...db, exams, attempts: db.attempts.filter(attempt => ids.has(attempt.examId)) };
 }
@@ -887,9 +900,34 @@ function approvedRosterRows() {
  * snapshot, so a student can only ever receive the board of a paper that
  * matched their own class/batch.
  */
-export function classResultRows(db, exam, roster = approvedRosterRows()) {
+export function classResultRows(db, exam, roster = approvedRosterRows(), viewer = null) {
   const total = totalMarks(exam);
-  const scored = examResults(db, exam);
+  const rosterList = Array.isArray(roster) ? roster : [];
+  const partList = Array.isArray(exam?.participants) ? exam.participants : [];
+  const findGroup = (studentId, fallback = '') => {
+    if (fallback) return fallback;
+    const found = rosterList.find(p => p?.id === studentId) || partList.find(p => p?.id === studentId);
+    return found?.group || '';
+  };
+  const sameSectionAsViewer = person => {
+    if (!viewer || !normalizeClassId(viewer)) return true;
+    const pClass = normalizeClassId(person);
+    if (pClass && pClass !== normalizeClassId(viewer)) return false;
+    const vSec = normalizeSectionId(viewer);
+    const pSec = normalizeSectionId(person);
+    if (vSec && pSec && vSec !== pSec) return false;
+    if (!vSec && pSec) return false;
+    return true;
+  };
+  const matchesBoardScope = person => {
+    if (String(exam?.className || '').trim() && String(person?.className || '').trim()) {
+      if (!examMatchesStudent(exam, person)) return false;
+    }
+    return sameSectionAsViewer(person);
+  };
+  const scored = examResults(db, exam)
+    .map(row => ({ ...row, group: findGroup(row.studentId, row.group) }))
+    .filter(matchesBoardScope);
   const rows = scored.map(row => ({
     studentId: row.studentId,
     name: row.name,
@@ -908,29 +946,21 @@ export function classResultRows(db, exam, roster = approvedRosterRows()) {
   }));
   const seen = new Set(rows.map(row => row.studentId));
   const absentIds = new Set(exam.absentIds || []);
-  /* A student of this class who never opened the paper is still somebody the
-     class asked about ("কে কত পেয়েছে"), so they are listed — as not submitted,
-     never as a borrowed ০. Names come from the sheet when it exists, from the
-     class roster otherwise. */
   const notSubmitted = person => {
     if (!person || seen.has(person.id)) return;
+    const enriched = { ...person, className: person.className || exam.className || '', group: findGroup(person.id, person.group) };
+    if (!matchesBoardScope(enriched)) return;
     seen.add(person.id);
     rows.push({
-      studentId: person.id, name: person.name || '—', className: person.className || exam.className || '',
-      group: person.group || '',
+      studentId: person.id, name: person.name || '—', className: enriched.className,
+      group: enriched.group,
       score: null, total, grade: null, rank: null, correct: null, wrong: null, unanswered: null,
       attempts: 0, autoSubmitted: false, absent: true, markedAbsent: absentIds.has(person.id)
     });
   };
-  (exam.participants || []).forEach(notSubmitted);
-  /* The roster is the school's list, not this paper's — so it is filtered by the
-     same rule that decides what the student may see at all, and a student of
-     another class/batch never lands on this board. A paper that names no class
-     at all (saved before the class picker existed) is school-wide by that rule,
-     so it keeps its participant list only: widening it would print every name in
-     the school on one paper's board. */
+  partList.forEach(notSubmitted);
   if (String(exam.className || '').trim()) {
-    (roster || []).forEach(person => { if (examMatchesStudent(exam, person)) notSubmitted(person); });
+    rosterList.forEach(person => { if (examMatchesStudent(exam, person)) notSubmitted(person); });
   }
   return rows;
 }
@@ -1003,7 +1033,7 @@ export const examRepository = {
         ...(old || {}),
         ...fields,
         id: old?.id || newId('E'),
-        teacherId: actor.role === 'teacher' ? actor.id : (old?.teacherId || ''),
+        teacherId: actor.role === 'teacher' ? effectiveTeacherId(actor) : (old?.teacherId || ''),
         teacherName: actor.role === 'teacher' ? name : (old?.teacherName || ''),
         status: 'draft',
         reviewNote: '',
@@ -1084,6 +1114,7 @@ export const examRepository = {
   },
   async approve(id, actor = MANAGER_ACTOR) { return examRepository.review(id, 'approve', {}, actor); },
   async publish(id, actor = MANAGER_ACTOR) { return examRepository.review(id, 'publish', {}, actor); },
+  async reject(id, note = '', actor = MANAGER_ACTOR) { return examRepository.review(id, 'reject', { note }, actor); },
   /* Unpublish keeps the questions, participants and every saved answer — it
      only takes the paper out of the students' list until it is published
      again. A paper with work in flight cannot be pulled at all. */
@@ -1162,7 +1193,7 @@ export const examRepository = {
     return mutate(db => {
       const source = examById(db, id);
       if (actor.role === 'teacher') {
-        if (source.teacherId && source.teacherId !== actor.id) fail('অন্য শিক্ষকের পরীক্ষা Duplicate করা যাবে না।');
+        if (source.teacherId && !isOwnTeacherRecord(source.teacherId, effectiveTeacherId(actor))) fail('অন্য শিক্ষকের পরীক্ষা Duplicate করা যাবে না।');
         if (!isTeacherAssigned(username, String(options.className ?? source.className ?? ''), String(options.group ?? source.group ?? ''))) fail('এই class/batch-এর জন্য Manager assignment নেই।');
       }
       const now = Date.now();
@@ -1186,7 +1217,7 @@ export const examRepository = {
         id: newId('E'),
         /* A copy is a new paper: the code is issued fresh by stampExamCodes. */
         code: '', codeLockedAt: undefined,
-        teacherId: actor.role === 'teacher' ? actor.id : '',
+        teacherId: actor.role === 'teacher' ? effectiveTeacherId(actor) : '',
         teacherName: actor.role === 'teacher' ? name : '',
         status: 'draft', reviewNote: '',
         createdAt: now, updatedAt: now,
@@ -1368,9 +1399,12 @@ export const examRepository = {
       if (e.questions.some(q => !Object.hasOwn(questionScores, q.id) || !['string', 'number'].includes(typeof questionScores[q.id]) || !String(questionScores[q.id]).trim() || !Number.isFinite(Number(questionScores[q.id])) || round(Number(questionScores[q.id])) !== Number(questionScores[q.id]) || Number(questionScores[q.id]) < 0 || Number(questionScores[q.id]) > q.marks)) fail('প্রতিটি প্রশ্নের নম্বর শূন্য থেকে পূর্ণমানের মধ্যে দিন।');
       const score = round(e.questions.reduce((sum, q) => sum + Number(questionScores[q.id]), 0));
       let a = db.attempts.find(a => a.examId === e.id && a.studentId === person.id);
-      if (!a) { a = { id: newId('A'), examId, studentId: person.id, name: person.name, className: person.className, number: 1, startedAt: Date.now(), order: [], answers: {} }; db.attempts.push(a); }
+      if (!a) { a = { id: newId('A'), examId, studentId: person.id, name: person.name, className: person.className, group: person.group || '', number: 1, startedAt: Date.now(), order: [], answers: {} }; db.attempts.push(a); }
+      const comment = String(questionScores?.comment || '').trim();
+      if (comment.length > 200) fail('মন্তব্য সর্বোচ্চ ২০০ অক্ষরের হতে পারে।');
       const cleanScores = Object.fromEntries(e.questions.map(q => [q.id, Number(questionScores[q.id])]));
-      Object.assign(a, { score, questionScores: cleanScores, status: 'submitted', finishedAt: Date.now() });
+      Object.assign(a, { score, questionScores: cleanScores, ...(comment ? { comment } : {}), status: 'submitted', finishedAt: Date.now() });
+      if (!comment) delete a.comment;
       e.absentIds = (e.absentIds || []).filter(id => id !== person.id);
       if (!e.participants.some(s => s.id === person.id)) e.participants.push(person);
     });

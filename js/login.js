@@ -1,15 +1,4 @@
 import { LEGACY_CLOUD_ENABLED, CLOUD_PAUSED_MESSAGE, cloudPausedResult } from '../sync/cloud-access.js';
-/* Login feature: one door for everyone.
-   A student signs in with username/mobile + password and lands in the student app.
-   Staff (admin, manager, teacher, payment counter) sign in on the same form with their
-   reserved username + password; the session is written first, so the panel
-   opens directly on arrival — no second credential prompt.
-
-   Security (Phase 1): passwords are checked against PBKDF2 hashes, legacy
-   plaintext records are upgraded on the spot, and a role that has never set a
-   password — or whose password is due for a change — gets the shared staff
-   password dialog before the panel opens. */
-
 import { defaultStudent } from './config.js';
 import { $, $$, setAuthMessage, scrollToTop, toBanglaNumber } from './ui.js';
 import { contactNumber, normalizeUsername } from './account-policy.js';
@@ -58,11 +47,6 @@ export function switchAuthTab(tab) {
   scrollToTop();
 }
 
-/* The login box accepts both a student's numeric PIN and a staff member's
-   alphanumeric password. Always offer the full keyboard: switching inputmode
-   asynchronously after looking up a role leaves mobile keyboards stuck in
-   numeric mode when the password field was already focused. */
-
 function staffRolePanelOf(staff) {
   const role = staff?.role;
   if (role === 'manager') return 'manager';
@@ -72,9 +56,6 @@ function staffRolePanelOf(staff) {
   return null; // "other" staff have no panel of their own yet
 }
 
-/* Switching is deliberate and password-gated: the target role's own credentials
-   were just verified, and the session they replace is named out loud. No logout
-   step is needed, and no tap alone can move this device to another panel. */
 async function enterStaffPanel(role, remember, identity = null) {
   const previous = (await activeStaffRoles()).filter(name => name !== role);
   if (!(await saveStaffSession(role, remember, identity))) {
@@ -105,8 +86,6 @@ async function handleStaffLogin(role, typedId, pin) {
     return;
   }
   const remember = $('#rememberMe')?.checked !== false;
-  /* The device role account signs in as itself: the session carries that
-     username so panels never confuse it with a Staff Directory identity. */
   const identity = { username: normalizeStaffUsername(typedId), staffId: '', fullName: '' };
   if (result.needsPasswordChange) {
     openStaffPasswordDialog({
@@ -121,8 +100,6 @@ async function handleStaffLogin(role, typedId, pin) {
   await enterStaffPanel(role, remember, identity);
 }
 
-/* A staff identity created in Staff Management: same password rules, same
-   forced-change flow, and a deactivated account simply cannot get in. */
 async function handleDirectoryStaffLogin(directory, remember) {
   const { staff, mustChangePassword } = directory;
   const role = staffRolePanelOf(staff);
@@ -134,8 +111,6 @@ async function handleDirectoryStaffLogin(directory, remember) {
     setAuthMessage('শিক্ষক প্যানেল প্রবেশ এই মুহূর্তে এডমিন কর্তৃক বন্ধ রাখা হয়েছে।');
     return;
   }
-  /* The person who signed in is the Staff Directory record — its Login User ID
-     and Staff ID are the keys every panel must fetch that person's data with. */
   const identity = {
     username: normalizeStaffUsername(staff.username),
     staffId: String(staff.staffId || ''),
@@ -154,15 +129,8 @@ async function handleDirectoryStaffLogin(directory, remember) {
   await enterStaffPanel(role, remember, identity);
 }
 
-/* The online bridge is an optional convenience, never a gate. localStorage is
-   the source of truth on this device, so a CDN that is slow, blocked or simply
-   unreachable (school network, ad blocker, captive portal) must never hold the
-   login button hostage: the import and the hydrate each get a short budget and
-   the device's own records are used either way. */
 const ONLINE_BRIDGE_BUDGET_MS = 2500;
 const LOGIN_BRIDGE_IMPORT_MS = 15000;
-/* Slow phones pay for Firebase + App Check + the student lookup. 8s was
-   cutting a real account short and showing “ক্লাউড থেকে অ্যাকাউন্ট আনা যায়নি”. */
 const LOGIN_IDENTITY_BUDGET_MS = 25000;
 function withinBudget(promise, what, budget = ONLINE_BRIDGE_BUDGET_MS) {
   let timer;
@@ -185,12 +153,6 @@ async function hydrateStaffAccountsOnline(what, budget = ONLINE_BRIDGE_BUDGET_MS
   }
 }
 
-/* Login User IDs created on another device (Staff Directory, the claimed-id
-   registry and the student login) are pulled in here, so the same ID and
-   password sign in on this phone. Records this device already has are left
-   untouched — they stay the authoritative credentials on it.
-   Returns true only when the cloud lookup ran and finished; false when the
-   device is offline, the budget ran out, or the cloud refused the request. */
 async function loadSyncBridge(budget = LOGIN_BRIDGE_IMPORT_MS) {
   return withinBudget(import('../sync/sync-core.js?v=20260929-protected'), 'online identity import', budget);
 }
@@ -220,8 +182,6 @@ async function hydrateUserIdentifiersOnline(what, identifier = '', password = ''
   }
 }
 
-/** The identifier belongs to this device's account: User ID, mobile, the full
-    Student ID, or its short prefix. */
 function isOwnIdentifier(account, identifier) {
   if (matchesLoginIdentifier(account, identifier)) return true;
   const typed = normalizeUsername(identifier);
@@ -473,21 +433,6 @@ export function initLogin({ state, onAuthenticated }) {
 const KANUNGOPARA = Object.freeze({ lat: 22.35803, lon: 92.12380 });
 const WEATHER_CACHE_KEY = 'activePlus.authWeather.kanungopara.v2';
 
-/* ── Auth sky engine: সময় · ঋতু · আবহাওয়া ──────────────────────────────────
-   The login sky is a living scene, never a frozen backdrop:
-
-     • the sun/moon is a DOM orb riding an arc computed from the clock and
-       the real sunrise/sunset (open-meteo, seasonal fallback offline) — it
-       rises in the morning, peaks at noon and sets at dusk instead of
-       standing glued to one corner of a photograph;
-     • the six Bengali seasons each carry their own sunrise/sunset windows
-       and a colour wash, so a December dawn differs from a June one;
-     • the day's weather picks the photograph and hides the orb behind a
-       full cloud deck.
-
-   Everything is recomputed every minute through one pure function, so a
-   tab left open crosses dawn → day → dusk → night on its own. */
-
 const SEASONS = Object.freeze([
   { key: 'sheet',   label: 'শীত',   from: [12, 15], to: [2, 14],  sunrise: 375, sunset: 1025 },
   { key: 'basant',  label: 'বসন্ত',  from: [2, 15],  to: [4, 14],  sunrise: 355, sunset: 1085 },
@@ -514,9 +459,6 @@ export function seasonFromDate(date = new Date()) {
   }) || SEASONS[0];
 }
 
-/* Local minutes since midnight → which arc the sun is on. The windows sit
-   around the real (or seasonal-fallback) sunrise/sunset, so the sky turns
-   with the length of the day instead of hard clock hours. */
 export function daypartFromClock(date = new Date(), times = null) {
   const season = seasonFromDate(date);
   const sunrise = Number(times?.sunrise) || season.sunrise;
@@ -529,7 +471,6 @@ export function daypartFromClock(date = new Date(), times = null) {
   return { daypart, sunrise, sunset, season };
 }
 
-/* WMO weather codes → the visual condition. Temperature only adds 'heat'. */
 export function skyConditionFromWeather(code, tempC, daypart) {
   const n = Number(code);
   const t = Number(tempC);
@@ -555,9 +496,6 @@ export function skyFromWeather(code, tempC, date = new Date(), times = null) {
   return { dawn: 'dawn', day: 'clear-day', dusk: 'dusk', night: 'clear-night' }[daypart];
 }
 
-/* Where the sun/moon stands right now: an arc across the sky. x grows from
-   east (left) to west (right); y is height above the horizon band; the body
-   swells and warms near the horizon the way real light does. */
 export function orbFromClock(date = new Date(), times = null, celestial = 'sun') {
   const { sunrise, sunset } = daypartFromClock(date, times);
   const minute = date.getHours() * 60 + date.getMinutes();
@@ -591,8 +529,6 @@ function greetingFromHour(hour) {
   return 'শুভ রাত্রি';
 }
 
-/* One pure function decides the whole scene — tests drive it with any
-   clock, any weather and any sunrise/sunset. */
 export function authSkyState(date = new Date(), weather = null, times = null) {
   const { daypart, sunrise, sunset, season } = daypartFromClock(date, times);
   const sky = weather
@@ -611,9 +547,6 @@ export function authSkyState(date = new Date(), weather = null, times = null) {
 export function applyAuthState(state) {
   const screen = $('#authScreen');
   if (!screen) return;
-  /* The orb glides between minute paints, but the FIRST placement and a
-     sun↔moon swap must land instantly — never a slow flight from the CSS
-     fallback corner (or across the sky when the body changes). */
   const orb = screen.querySelector('.auth-orb');
   const instant = screen.dataset.orbSettle !== '1' || (screen.dataset.celestial || '') !== state.celestial;
   if (instant && orb) orb.style.transition = 'none';
@@ -641,7 +574,7 @@ function readWeatherCache() {
   try {
     const cached = JSON.parse(sessionStorage.getItem(WEATHER_CACHE_KEY) || 'null');
     if (cached && Number.isFinite(Number(cached.at))) return cached;
-  } catch { /* ignore bad cache */ }
+  } catch { }
   return null;
 }
 
@@ -666,8 +599,6 @@ async function fetchWeatherSnapshot() {
   };
 }
 
-/* Recompute the scene from clock + cached (or freshly fetched) weather.
-   The clock part always runs — even fully offline the sun still moves. */
 export async function paintAuthSky(now = new Date()) {
   let snapshot = readWeatherCache();
   if (!snapshot || Date.now() - Number(snapshot.at) > 30 * 60 * 1000) {
@@ -675,9 +606,9 @@ export async function paintAuthSky(now = new Date()) {
       const fresh = await fetchWeatherSnapshot();
       if (fresh) {
         snapshot = fresh;
-        try { sessionStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(fresh)); } catch { /* quota */ }
+        try { sessionStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(fresh)); } catch { }
       }
-    } catch { /* offline: clock + season drive the sky */ }
+    } catch { }
   }
   const weather = snapshot ? { code: snapshot.code, tempC: snapshot.tempC } : null;
   const times = snapshot ? { sunrise: snapshot.sunrise, sunset: snapshot.sunset } : null;
@@ -693,36 +624,13 @@ function startAuthSkyClock() {
   });
 }
 
-/* ---------------------------------------------------------------------------
-   First use only — the one-time, INSTITUTION-WIDE Admin Account form.
-
-   The Admin Account is created once for the coaching centre, not once per
-   device, so this gate never decides from localStorage alone:
-
-     APP START → this device already has an Admin record (or a live session
-                 was restored by js/main.js)                     → Login
-               → the cloud holds an Admin record / the global
-                 initialization marker is set                     → Login
-               → the cloud verified there is no Admin at all     → creation form
-               → the cloud could not be asked (offline, blocked
-                 CDN, cloud error)                               → Login + why
-
-   The gate is fail-closed on purpose: a fresh device can only ever reach the
-   creation form after the cloud has confirmed that the institution has no
-   Admin account. Once one exists, the panel and its trigger are REMOVED from
-   the DOM, and even a direct console call to createInitialAdmin() is refused by
-   js/staff-auth.js, which re-verifies the cloud before writing anything.
-   ------------------------------------------------------------------------- */
-
 let firstAdminState = { available: false, preview: '' };
 
-/** Every username already claimed on this device (case-insensitive compare). */
 function claimedUsernames() {
   const index = readJSON(KEYS.usernames, {}) || {};
   return [...Object.keys(index), ...STAFF_USERNAMES];
 }
 
-/** Live preview: the id the form will create for the typed name. */
 function renderFirstAdminPreview() {
   const name = $('#firstAdminName')?.value || '';
   const box = $('#firstAdminIdPreview');
@@ -748,15 +656,12 @@ async function lockFirstAdminSetup(reason = '') {
   if (reason) setAuthMessage(reason, 'success');
 }
 
-/** The workflow is closed for now, but the panel stays in the DOM: the reason
-    belongs in the live message area, and the panel must not look "completed". */
 function closeFirstAdminOption() {
   firstAdminState.available = false;
   const footnote = $('#firstAdminFootnote');
   if (footnote) footnote.hidden = true;
 }
 
-/** Close the one-time workflow for good and hand the screen back to Login. */
 async function closeFirstAdminSetup(message = '') {
   await lockFirstAdminSetup();
   switchAuthTab('login');
@@ -764,12 +669,6 @@ async function closeFirstAdminSetup(message = '') {
   if (message) setAuthMessage(message, 'success');
 }
 
-/**
- * The startup decision: Login, or the one-time Admin creation form?
- *
- * localStorage is never the sole evidence: a device with an empty store asks
- * the cloud, and an unverifiable cloud keeps creation closed.
- */
 async function refreshFirstAdminSetup({ openWhenUninitialized = false } = {}) {
   const panel = $('#firstAdminPanel');
   if (!panel) return { available: false, reason: 'no-workflow' };
@@ -782,15 +681,10 @@ async function refreshFirstAdminSetup({ openWhenUninitialized = false } = {}) {
   const status = await adminInitializationStatus();
   if (!status.ok) {
     closeFirstAdminOption();
-    /* A device that has never stored any account is the one that would have
-       seen the creation option, so it is the one told why it is missing. */
     if (isFreshDevice()) setAuthMessage(ADMIN_VERIFY_REQUIRED_MESSAGE);
     return { available: false, reason: status.reason };
   }
   if (status.initialized) {
-    /* The Admin Account exists and simply keeps its usual place: the login
-       screen. No first-use wording is pushed at a device that never asked for
-       it — the message appears if someone tries the creation workflow. */
     await lockFirstAdminSetup();
     return { available: false, reason: 'cloud-admin' };
   }
@@ -802,7 +696,6 @@ async function refreshFirstAdminSetup({ openWhenUninitialized = false } = {}) {
   return { available: true, reason: 'uninitialized' };
 }
 
-/** Nothing of our own is stored here yet: no student account, no staff role. */
 function isFreshDevice() {
   try {
     if (loadAccount()) return false;
@@ -857,9 +750,6 @@ async function handleFirstAdminSubmit(event) {
     error.hidden = !message;
   };
   showError('');
-  /* Re-check at submit time: another device may have created the Admin while
-     this form was open, and the network may have gone — either way, nothing
-     is created here from an unverified answer. */
   const status = await adminInitializationStatus();
   if (!status.ok) {
     showError(ADMIN_VERIFY_REQUIRED_MESSAGE);
@@ -885,9 +775,6 @@ async function handleFirstAdminSubmit(event) {
         await closeFirstAdminSetup(result.error || ADMIN_EXISTS_MESSAGE);
         return;
       }
-      /* The institution's Admin Account was created in the cloud, but this
-         device could not keep its own copy. The workflow is still over (an
-         Admin Account now exists) and the same ID and password sign in here. */
       if (result.code === 'LOCAL_WRITE_FAILED') {
         form.reset();
         await lockFirstAdminSetup();

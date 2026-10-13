@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoleStore, ROLE_DB_KEY } from '../js/offline-role-store.js';
+import { createRoleStore, ROLE_DB_KEY } from '../demo/js/offline-role-store.js';
 const memory = () => { const rows = new Map(); return { getItem: k => rows.get(k) ?? null, setItem: (k, v) => rows.set(k, v) }; };
 async function fixture() { const storage = memory(); const db = createRoleStore(storage); await db.seedDemo(); return { storage, db }; }
 const login = (db, role) => db.login(`${role}.demo`, 'Demo12345');

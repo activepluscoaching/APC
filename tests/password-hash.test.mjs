@@ -5,9 +5,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pbkdf2Sync } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import {
   hashPassword, verifyPassword, isPasswordRecord, passwordNeedsUpgrade, PASSWORD_HASH_INFO
 } from '../js/password-hash.js';
+import { pbkdf2, toHex, fromHex } from '../js/password-hash-worker.js';
 
 const realCrypto = globalThis.crypto;
 function withSubtle(available) {
@@ -87,4 +89,35 @@ test('isPasswordRecord recognises only well-formed records', () => {
   assert.equal(isPasswordRecord({ algo: 'PBKDF2', hash: 'SHA-1', iterations: 1000, salt: 'aa'.repeat(16), digest: 'bb'.repeat(32) }), false);
   assert.equal(isPasswordRecord({ algo: 'PBKDF2', hash: 'SHA-256', iterations: 0, salt: 'aa'.repeat(16), digest: 'bb'.repeat(32) }), false);
   assert.equal(isPasswordRecord({ algo: 'PBKDF2', hash: 'SHA-256', iterations: 1000, salt: 'short', digest: 'bb'.repeat(32) }), false);
+});
+
+test('the pure-JS work factor stays cheap phones-safe (≤ 1 00 000) and runs off-thread', () => {
+  // Cheap-phone budget: the fallback count never exceeds 100 000 iterations…
+  assert.ok(PASSWORD_HASH_INFO.iterationsFallback <= 100000,
+    `fallback work factor is ${PASSWORD_HASH_INFO.iterationsFallback}, above the 100000 ceiling`);
+  assert.ok(PASSWORD_HASH_INFO.iterationsFallback < PASSWORD_HASH_INFO.iterationsSubtle);
+  // …and the core lives in the worker module, with no second copy drifting in
+  // the main module.
+  const core = readFileSync(new URL('../js/password-hash-worker.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../js/password-hash.js', import.meta.url), 'utf8');
+  assert.match(core, /export function pbkdf2\(/);
+  assert.match(core, /WorkerGlobalScope/); // module doubles as the Web Worker
+  assert.doesNotMatch(main, /SHA256_K/, 'password-hash.js must not keep its own copy of the core');
+  assert.match(main, /from '\.\/password-hash-worker\.js'/);
+  assert.match(main, /new Worker\(new URL\('\.\/password-hash-worker\.js'/, 'the fallback runs in a Worker when available');
+});
+
+test('a record created with a lighter work factor keeps verifying as-is', async () => {
+  // Per-record iteration counts: a 60 000-iteration record (any older release)
+  // still verifies after the work factor is revisited — nothing is re-hashed
+  // behind the user's back.
+  withSubtle(true);
+  const modern = await hashPassword('legacy-kept');
+  const salt = fromHex(modern.salt);
+  for (const legacyIterations of [60000, 100000, PASSWORD_HASH_INFO.iterationsFallback]) {
+    const digest = pbkdf2('legacy-kept', salt, legacyIterations, 32);
+    const legacy = { ...modern, iterations: legacyIterations, digest: toHex(digest) };
+    assert.equal(await verifyPassword('legacy-kept', legacy), true);
+    assert.equal(await verifyPassword('wrong', legacy), false);
+  }
 });

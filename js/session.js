@@ -35,16 +35,35 @@ export function getDeviceId() {
 
 export const DAY_MS = 86400000;
 
+/* Remember-device lifetimes per role — one constant table so js/session.js,
+   the panels' session-policy copy and the README can never drift:
+   Admin & Payment ৭ days (office desks), Teacher ৩০ days, Student ৯০ days.
+   A session record stores an absolute expiry, so changing this table never
+   breaks records already issued. */
+export const SESSION_TTL_DAYS = Object.freeze({
+  admin: 7,
+  manager: 7,
+  payment: 7,
+  teacher: 30,
+  student: 90
+});
+
+/** The remember-device window for a role (student default for unknowns). */
+export function sessionTtlDays(role) {
+  return SESSION_TTL_DAYS[role] ?? SESSION_TTL_DAYS.student;
+}
+
 export function newSessionToken() {
   return randomId();
 }
 
 /** A fresh session record for this device. */
-export function buildSessionRecord({ owner = '', ttlDays = 90, now = Date.now() } = {}) {
+export function buildSessionRecord({ owner = '', staffId = '', ttlDays = SESSION_TTL_DAYS.student, now = Date.now() } = {}) {
   return {
     token: newSessionToken(),
     deviceId: getDeviceId(),
     owner: String(owner || ''),
+    ...(staffId ? { staffId: String(staffId) } : {}),
     issuedAt: now,
     expiry: now + ttlDays * DAY_MS
   };

@@ -2,7 +2,13 @@
 
 **Fixed tagline:** “শিখতে থাকো, এগিয়ে যাও”
 
-Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive Web App (PWA)। Chrome থেকে ইনস্টল করে অ্যাপের মতো ব্যবহার করা যায়। শিক্ষার্থী অ্যাপ, আলাদা শিক্ষক প্যানেল ও এডমিন প্যানেল তৈরি করা হয়েছে। সব ডেটা লোকাল ডিভাইসে থাকে—কোনো সার্ভার বা API-এর উপর নির্ভর করে না।
+Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive Web App (PWA)। Chrome থেকে ইনস্টল করে অ্যাপের মতো ব্যবহার করা যায়। শিক্ষার্থী অ্যাপ, আলাদা শিক্ষক প্যানেল ও এডমিন প্যানেল তৈরি করা হয়েছে। সব ডেটা আপাতত লোকাল ডিভাইসেই থাকে—চালু কোনো সার্ভার বা API-এর উপর নির্ভর করে না। Firebase (Cloud Functions, `firestore.rules`) ইন্টিগ্রেশনের কোড ও নিয়ম প্রস্তুত করা আছে, কিন্তু এখনো সক্রিয় নয়।
+
+## বর্তমান সীমাবদ্ধতা
+
+- **ডেটা প্রতি ডিভাইসেই আলাদা** — শিক্ষার্থী, লেনদেন, রুটিন, ফলাফল সবই ঐ ব্রাউজার/ডিভাইসের localStorage-এ থাকে; এক ডিভাইসে যা জমা হয় অন্য ডিভাইসে যায় না, আলাদা ক্লাউড ব্যাকআপও নেই।
+- **Firebase sync চালু নয়** — `functions/` ও `firestore.rules` প্রস্তুত থাকলেও ক্লাউড সিঙ্ক এখনো সক্রিয় করা হয়নি; এই PWA এখন সম্পূর্ণ লোকালভাবেই চলে।
+- **বাস্তব শিক্ষার্থীর তথ্য বা টাকার হিসাব রাখার আগে Firebase sync বাধ্যতামূলকভাবে চালু ও যাচাই করতে হবে** — নাহলে রেকর্ড এক ডিভাইসেই বন্ধ থাকবে এবং একাধিক কাউন্টার/প্যানেল ভাগ করে ব্যবহারে হিসাব অসঙ্গতিপূর্ণ হবে।
 
 ## এই ধাপে যা আছে
 
@@ -22,8 +28,8 @@ Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive
 - **নোটিফিকেশন (ইন-অ্যাপ + ঐচ্ছিক পুশ)** — টপবারের ঘণ্টায় অপঠিত সংখ্যা ও সব নোটিশ/জরুরি ঘোষণা/পরীক্ষা-ফলাফলের তালিকা; চালু করলে অ্যাপ খোলা বা ব্যাকগ্রাউন্ডে থাকলে ফোনের নোটিফিকেশন ট্রেতেও আসে, আর FCM পুশ প্রস্তুত থাকলে অ্যাপ বন্ধ থাকলেও আসে (`NOTIFICATIONS.md`)।
 - **ID চিপে ট্যাপ-টু-কপি** — প্রোফাইলে Student ID ও ইউজারনেম চিপে এক ট্যাপে কপি (কীবোর্ড Enter/Space-ও কাজ করে), টোস্ট কনফার্মেশনসহ (`js/copy.js`)
 - **ভিউ ডিপ-লিংক ও ব্রাউজার Back** — ছাত্র অ্যাপের প্রতিটি ভিউর নিজস্ব হ্যাশ রুট (`#routine`, `#courses`, `#results`, `#profile`); ট্যাব বদলালে URL আপডেট হয়, ব্রাউজার/অ্যান্ড্রয়েড Back আগের ভিউতে ফেরে, রিফ্রেশ বা শেয়ার করা লিংক ঠিক সেই ভিউই খোলে
-- শিক্ষার্থীর অফলাইন হোম ড্যাশবোর্ড — ShopLedGer স্টাইলে নতুন ডিজাইন: ফ্ল্যাট ব্যাকগ্রাউন্ড, সাদা কার্ড, গ্রিন প্রাইমারি, স্বাগত কার্ড, "আজকের পড়াশোনা" স্ট্যাট কার্ড, দ্রুত কাজ গ্রিড ও লিস্ট রো
-- **সব প্যানেলে এক টপবার** — শিক্ষার্থী, এডমিন, ম্যানেজার, শিক্ষক ও পেমেন্ট কাউন্টার সব জায়গায় হুবহু এক: বাঁয়ে লোগো + স্লোগানই (প্যানেলের নামের লাইন নেই), ডানে শুধু **নোটিফিকেশনের ঘণ্টা** ও **লগআউট**। পুরোনো তারিখ/ঘড়ি, নাম-চিপ, থিম বাটন, পিন ও শর্টকাট সরানো হয়েছে। টপবারের উপরের বর্ডারই সিঙ্কের রং জানায় — লাল = অফলাইন, সবুজ = অনলাইন, নীল = ক্লাউড সিঙ্ক চালু (`css/topbar.css`)।
+- শিক্ষার্থীর অফলাইন হোম ড্যাশবোর্ড — ফ্ল্যাট ব্যাকগ্রাউন্ড, সাদা কার্ড, গ্রিন প্রাইমারির নতুন ডিজাইন, স্বাগত কার্ড, "আজকের পড়াশোনা" স্ট্যাট কার্ড, দ্রুত কাজ গ্রিড ও লিস্ট রো
+- **সব প্যানেলে এক টপবার** — শিক্ষার্থী, এডমিন, ম্যানেজার, শিক্ষক ও পেমেন্ট কাউন্টার সব জায়গায় হুবহু এক: বাঁয়ে লোগো + স্লোগানই (প্যানেলের নামের লাইন নেই), ডানে শুধু **নোটিফিকেশনের ঘণ্টা** ও **লগআউট**। পুরোনো তারিখ/ঘড়ি, নাম-চিপ, থিম বাটন, পিন ও শর্টকাট সরানো হয়েছে। টপবারের উপরের বর্ডারই সিঙ্কের রং জানায় — লাল = অফলাইন, সবুজ = অনলাইন, নীল = ক্লাউড সিঙ্ক চালু (`css/ui-status.css`)।
 - সাপ্তাহিক অগ্রগতি, উপস্থিতি, গড় ফলাফল ও বাকি কাজ
 - ক্লাস রুটিন — দিনভিত্তিক ফিল্টারসহ
 - চলমান কোর্স ও অধ্যায়ভিত্তিক অগ্রগতি
@@ -124,18 +130,18 @@ AMOLED-এ কী আলাদা আচরণ করে:
 
 ## এডমিন প্যানেল
 
-`admin.html` খুললে এডমিন এন্ট্রি স্ক্রিন দেখা যায়। ইউজারনেম **`admin.apc`** — কোনো বিল্ট-ইন ডিফল্ট পাসওয়ার্ড নেই। এই ডিভাইসে প্রথমবার প্রবেশের সময় একটি পাসওয়ার্ড নির্ধারণ করতে হয় (PBKDF2 হ্যাশ আকারে সঙ্গ্রহৃদ) — বাধ্যতামূলক প্রথম লগইনে। এক ক্লিকে ঢোকা বা আগে থেকে লেখা পাসওয়ার্ড নেই। “এই ডিভাইসে মনে রাখুন” চেক থাকলে সেশন যেমন ডিভাইস-বাউন্ড টোকেন থাকে ২০ দিন। শিক্ষার্থী লগইন পেজে আলাদা কোনো স্টাফ ট্যাব বা লিঙ্ক নেই, কিন্তু একই লগইন ফরমে `admin.apc` ও পাসওয়ার্ড দিলে সরাসরি এই প্যানেল খুলে যায় (সেশন আগেই জমা হয়); `admin.html` সরাসরি খুলেই লগইন করা যায়। প্যানেল থেকে **লগআউট** করলে সেশন মুছে সোজা ওই একই লগইন পেইজে ফেরে।
+`admin.html` খুললে এডমিন এন্ট্রি স্ক্রিন দেখা যায়। ইউজারনেম **`admin.apc`** — কোনো বিল্ট-ইন ডিফল্ট পাসওয়ার্ড নেই। এই ডিভাইসে প্রথমবার প্রবেশের সময় একটি পাসওয়ার্ড নির্ধারণ করতে হয় (PBKDF2 হ্যাশ আকারে সংরক্ষিত) — বাধ্যতামূলক প্রথম লগইনে। এক ক্লিকে ঢোকা বা আগে থেকে লেখা পাসওয়ার্ড নেই। “এই ডিভাইসে মনে রাখুন” চেক থাকলে ডিভাইস-বাউন্ড টোকেন থাকে ৭ দিন (Admin/Manager/Payment ৭ দিন, Teacher ৩০ দিন, Student ৯০ দিন — `js/session.js`-এর `SESSION_TTL_DAYS` একমাত্র উৎস)। শিক্ষার্থী লগইন পেজে আলাদা কোনো স্টাফ ট্যাব বা লিঙ্ক নেই, কিন্তু একই লগইন ফরমে `admin.apc` ও পাসওয়ার্ড দিলে সরাসরি এই প্যানেল খুলে যায় (সেশন আগেই জমা হয়); `admin.html` সরাসরি খুলেই লগইন করা যায়। প্যানেল থেকে **লগআউট** করলে সেশন মুছে সোজা ওই একই লগইন পেইজে ফেরে।
 
 প্যানেলে আছে (খালি ব্রাউজারে খালি শুরু হয়):
 
-- **সংক্ষিপ্ত ড্যাশবোর্ড** — বর্তমান তারিখ, মোট শিক্ষার্থী, চলমান ক্লাস; নিচে **অনুমতি-ভিত্তিক বিভাগ গ্রিড** (বড় আইকন + স্পষ্ট লেবেল: শিক্ষার্থী, হিসাব, রিপোর্ট, নোটিশ, রুটিন, পরীক্ষা, ক্লাস সেটিংস, অ্যাপ কন্ট্রোল — কেবল Role-এর অনুমোদিত বিভাগ), এরপর ফি গ্রহণের দ্রুত বাটন ও **অর্থ ব্যবস্থাপনা ও ফি সারাংশ কার্ড** — আজকের আদায় (লেনদেন সংখ্যাসহ), এই মাসের আদায়, চলতি মাসের বকেয়া ও সর্বমোট আদায়; "বিস্তারিত হিসাব" চাপলে হিসাব পেজে যায়। অনুমোদনের অপেক্ষমাণ সারাংশ, নোটিশের সংখ্যা, পুনরাবৃত্ত শিক্ষার্থী/ক্লাস তালিকা ও অ্যাপের বিস্তারিত status কার্ড নেই — অনুমোদন Manager প্যানেলের কাজ (নিচে দেখুন)।
-- **৫টি মোবাইল নেভিগেশন** — ড্যাশবোর্ড, শিক্ষার্থী, হিসাব, রুটিন ও আরও; প্রতিটিতে AI-generated আইকন + লেবেল, নির্বাচিত ট্যাবের আইকন সামান্য বড় হয়ে গ্লোসহ স্থায়ীভাবে হাইলাইট থাকে। **আরও**-এর মধ্যে পরীক্ষা, নোটিশ, রিপোর্ট সেন্টার, শিক্ষার্থী অ্যাপ ও ক্লাস সেটিংস; প্রতিটি পেজ থেকে আরও-তে ফেরার বাটন আছে। এই পেজগুলোতেও ফুটারের আরও বাটন সক্রিয় থাকে। আলাদা desktop sidebar বা desktop navigation নেই; বড় স্ক্রিনেও একই মোবাইল নেভিগেশন থাকে।
+- **সংক্ষিপ্ত ড্যাশবোর্ড** — বর্তমান তারিখ, মোট শিক্ষার্থী, স্টাফ সংখ্যা ও অনুমোদিত ক্যাপাবিলিটি টাইল (`নিবন্ধন অনুমোদন`)। পরীক্ষা অনুমোদন/প্রকাশ, রুটিন এন্ট্রি বা দৈনন্দিন নোটিশ এডমিন প্যানেলে নেই — পরীক্ষা অনুমোদনের একক ভূমিকা Manager (`manager.html`), আর এডমিন শুধু রিপোর্ট দেখে (`js/admin-permissions.js`)।
+- **৬টি মোবাইল নেভিগেশন (`ADMIN_BOTTOM_NAV`)** — হোম, স্টাফ, রিপোর্ট, সিস্টেম, ডেটা ও অ্যাকাউন্ট (`js/admin-permissions.js`)। আলাদা desktop sidebar নেই; বড় স্ক্রিনেও একই মোবাইল নেভিগেশন থাকে।
 - **ইউনিক আইডি ও অডিট ট্র্যাকিং** — প্রতিটি এন্ট্রি (শিক্ষার্থী ID, ট্রানজেকশন ID, রসিদ ভাউচার, নোটিশ স্মারক, রুটিন ক্লাস কোড, কোর্স কোড ও স্টেটমেন্ট মেমো)-তে স্ট্যান্ডার্ড ইউনিক অডিট কোড সংরক্ষণ
 - **শিক্ষার্থী** — নাম/ID/মোবাইল দিয়ে স্মার্ট সার্চ, লাইভ অটো-হাইড, স্ট্যাটাস ফিল্টার, রেকর্ড দেখা, পাসওয়ার্ড রিসেট (নতুন পাসওয়ার্ড ডেমোভাবে দেখায়)। **শ্রেণি ফিল্টার** — সার্চের নিচের ড্রপডাউন থেকে শ্রেণি বেছে নিলে তালিকায় শুধু সেই শ্রেণির শিক্ষার্থীরা থাকে।
 - **রিপোর্ট সেন্টার (আরও → রিপোর্ট)** — একটি ফর্মে: **রিপোর্ট বেছে নিন** (শুধু role-এর অনুমোদিত রিপোর্টগুলো) → **শুধু সেই রিপোর্টের filter** (daily / weekly / monthly / custom পিরিয়ডসহ, প্রতিটি ধরন নিজের একটি মাত্র তারিখ ঘর দেখায়; যে রিপোর্ট daily/weekly/monthly/custom-নির্ধারিত সেটি নিজের ধরনেই খোলে) → **Generate Report** → **A4 প্রিভিউ** → **Download PDF**; **← Back** প্রিভিউ থেকে ফিরে এসে নির্বাচিত রিপোর্ট ও তার filter ধরে রাখে। প্রিভিউ ও PDF একই ডকুমেন্ট থেকে তৈরি হয় — একই ডেটা, হিসাব, সারি ও মোট; ফাইলের নাম `ActivePlus_<রিপোর্ট>_YYYY-MM-DD.pdf`। ক্যাটালগ (`js/report-catalog.js` + `js/report-builders.js`) যা ঘোষণা করে তাই দেখানো হয়: শিক্ষার্থী (তালিকা, প্রোফাইল, শ্রেণি/ব্যাচ/স্ট্যাটাস), ফি ও হিসাব (দৈনিক/সাপ্তাহিক/মাসিক/কাস্টম কালেকশন, বকেয়া, লেনদেন, রসিদ, পেমেন্ট স্ট্যাটাস), ক্যাশ কাউন্টার, একাডেমিক (ক্লাস/ব্যাচ, উপস্থিতি, অ্যাসাইনমেন্ট, অগ্রগতি), পরীক্ষা ও ফলাফল (প্রশ্নপত্র, উত্তর, মার্কশিট, কম্বাইন্ড), নোটিশ, স্টাফ, ম্যানেজমেন্ট সারাংশ ও "আমার রিপোর্ট"। যে রিপোর্টে একজন শিক্ষার্থী বা একটি পরীক্ষা নির্দিষ্ট করতে হয়, সেখানে "সব" নেই — না বাছলে সেই ঘর খালি থাকে এবং Generate স্পষ্ট বার্তা দিয়ে থামে। data না পেলে ডকুমেন্টের ভিতরেই "No data found for the selected filters." নোট যায় — কোনো জাল সারি নেই। অনুমতি `js/report-access.js` থেকে নির্ধারিত: অননুমোদিত রিপোর্ট তালিকায় থাকে না, সরাসরি চেষ্টায় ব্লক হয় এবং generate-এর আগেই enforceAccess চলে — অননুমোদিত ডেটা লোডই হয় না। সবকিছু অফলাইন, কোনো API/ক্লাউড ছাড়াই।
-- **অর্থব্যবস্থাপনা ও ফি কালেকশন** — মোট ফি আদায়, চলতি মাসের কালেকশন ও বকেয়া হিসাবের ড্যাশবোর্ড; নতুন ফি গ্রহণ (নগদ/বিকাশ/নগদ/রকেট), অফিশিয়াল মানি রসিদ তৈরি ও সরাসরি PDF ডাউনলোড; শিক্ষার্থী লেজার ও সাম্প্রতিক লেনদেন—বড় টেবিল বা প্রিন্ট অপশন ছাড়া; বিস্তারিত কালেকশন/বকেয়া/লেনদেন রিপোর্ট এখন রিপোর্ট সেন্টারের ফি ও হিসাব ক্যাটাগরিতে।
+- **অর্থব্যবস্থাপনা ও ফি কালেকশন** — মোট ফি আদায়, চলতি মাসের কালেকশন ও বকেয়া হিসাবের ড্যাশবোর্ড; নতুন ফি গ্রহণ (ক্যাশ/বিকাশ/নগদ/রকেট/ব্যাংক), অফিশিয়াল মানি রসিদ তৈরি ও সরাসরি PDF ডাউনলোড; শিক্ষার্থী লেজার ও সাম্প্রতিক লেনদেন—বড় টেবিল বা প্রিন্ট অপশন ছাড়া; বিস্তারিত কালেকশন/বকেয়া/লেনদেন রিপোর্ট এখন রিপোর্ট সেন্টারের ফি ও হিসাব ক্যাটাগরিতে।
 - **নোটিশ** — শিরোনাম, বিবরণ ও প্রাপক নির্বাচন করে নতুন নোটিশ প্রকাশ ও পুরনো নোটিশ মুছে ফেলা
-- **ক্লাস রুটিন** — দিনভিত্তিক রুটিন দেখা, নতুন ক্লাস যোগ ও মুছে ফেলা। নতুন ক্লাস যোগ করার সময় **কোন শ্রেণির জন্য** তা ড্রপডাউন থেকে নির্বাচন করা যায় (সব enabled শ্রেণি), **শিক্ষকের নাম লিখে** যোগ করা যায় (আগে যোগ করা নাম সাজেশন হিসেবে আসে) এবং **বিষয় একবার টাইপ করলেই অটোফিল** হয় — পরের এন্ট্রিতে টাইপ করার সময় আগের বিষয়গুলো সাজেশন হিসেবে দেখায়; সেভের পরেও বিষয়টি পরের এন্ট্রির জন্য মনে থাকে। রুটিনের প্রতিটি সারিতে শ্রেণি ব্যাজ দেখা যায়। খালি ব্রাউজারে রুটিন খালি থাকে।
+- **সাপ্তাহিক ক্লাস রুটিন (`manager.html`)** — সাপ্তাহিক রুটিনের মালিক Manager (`manager.html`)। দিনভিত্তিক রুটিন দেখা, নতুন ক্লাস যোগ ও মুছে ফেলা ম্যানেজার প্যানেলেই হয়; এডমিন প্যানেল থেকে রুটিন এন্ট্রি করা হয় না (এডমিন কেবল রিপোর্ট দেখে)। নতুন ক্লাস যোগ করার সময় **কোন শ্রেণির জন্য** তা ড্রপডাউন থেকে এবং **শিক্ষক** স্টাফ তালিকার ড্রপডাউন থেকে (`teacherId`-সহ) নির্বাচন করা হয়। খালি ব্রাউজারে রুটিন খালি থাকে।
 - **শিক্ষক রেজিস্ট্রেশন নিয়ন্ত্রণ** — শিক্ষার্থী অ্যাপ ম্যানেজমেন্টের "শিক্ষক রেজিস্ট্রেশন নিয়ন্ত্রণ" কার্ড থেকে টগল করে শিক্ষক প্যানেলের নতুন রেজিস্ট্রেশন/প্রবেশ খোলা ও বন্ধ করা যায়; সেভ করলে `teacher.html`-এ সঙ্গে সঙ্গে কার্যকর হয় — বন্ধ থাকলে এন্ট্রি স্ক্রিনে ব্যাখ্যাসহ নোটিশ দেখায় ও প্রবেশ বাটন নিষ্ক্রিয় থাকে। কার্ডে বর্তমানে যুক্ত শিক্ষকদের তালিকাও দেখা যায় (রুটিনের শিক্ষক তালিকা থেকে স্বয়ংক্রিয়)।
 - **ক্লাস সেটিংস** — `config.js`-এর enabled class তালিকা থেকে ক্লাস চালু/বন্ধ করা
 
@@ -213,8 +219,7 @@ Admin প্যানেল কোনো নতুন রোল বা স্ট
   (`index.html`) নিজের ইউজারনেম ও পাসওয়ার্ড দিয়ে ঢোকে এবং সে রোলের প্যানেলে পৌঁছায় —
   কোনো আলাদা ফর্ম বা সেশন স্কিম নেই (`js/login.js` → `authenticateDirectoryStaff()`)।
   দেওয়া পাসওয়ার্ডটি সাময়িক হলে প্রবেশের আগেই বদল করতে হয়; নিষ্ক্রিয় অ্যাকাউন্ট কোনো
-  পাসওয়ার্ড দিয়েই ঢুকতে পারে না। প্রতি রোলে এই ডিভাইসে একটি অ্যাকাউন্ট থাকে, তাই একই
-  রোলের একাধিক স্টাফ সেই রোলের প্যানেলেই প্রবেশ করে।
+  পাসওয়ার্ড দিয়েই ঢুকতে পারে না। স্টাফ ম্যানেজমেন্টে তৈরি প্রতিটি শিক্ষক নিজস্ব ইউজারনেম ও `staffId` (`teacherId`) নিয়ে লগইন করে এবং কেবল তার নির্ধারিত শ্রেণি ও বিষয়ের কাজ দেখতে ও তৈরি করতে পারে।
 
 ### এডমিন প্যানেলের আইকন সিস্টেম — একটি নির্দিষ্ট কন্টেইনারে একটি আইকন
 
@@ -249,13 +254,13 @@ primary/secondary, surface, card, border, radius ও shadow টোকেন — 
 
 এডমিন প্যানেলের বাইরে আলাদা, খুব হালকা একটি কাউন্টার পেজ — ইউনিক ইউসার আইডি ও পাসওয়ার্ড দিয়ে প্রবেশ; কোনো নেভিগেশন, রিপোর্ট বা ম্যানেজমেন্ট নেই। ধারাবাহিকতা: **লগইন → সার্চ → সংক্ষিপ্ত তথ্য → পেমেন্ট → রসিদ**। পেজটি এখন অ্যাপ-শেল স্টাইলে: স্থির টপবার, একটি স্ক্রল করা কলাম ও নিচে স্থির “টাকা নিন” বার।
 
-- **একই লগইন পেজ থেকেও প্রবেশ** — শিক্ষার্থী লগইন ফর্মে কাউন্টারের ইউজারনেম **`payment.apc`** ও নিজের নির্ধারিত পাসওয়ার্ড দিলে সেশন জমা হয়ে সরাসরি ডেস্ক খোলে (`payment.html` নিজেও এন্ট্রি ফর্ম দেখায়)। ভুল হলে বাংলা ত্রুটি-বার্তা। “এই ডিভাইসে মনে রাখুন” চেক থাকলে সেশন ৯০ দিন, না হলে ট্যাব-সেশন। সেশন থাকলে ডেস্ক সরাসরি খোলে। **লগআউট** করলে সেশন মুছে সোজা লগইন পেইজে (`index.html`) ফেরে।
+- **একই লগইন পেজ থেকেও প্রবেশ** — শিক্ষার্থী লগইন ফর্মে কাউন্টারের ইউজারনেম **`payment.apc`** ও নিজের নির্ধারিত পাসওয়ার্ড দিলে সেশন জমা হয়ে সরাসরি ডেস্ক খোলে (`payment.html` নিজেও এন্ট্রি ফর্ম দেখায়)। ভুল হলে বাংলা ত্রুটি-বার্তা। “এই ডিভাইসে মনে রাখুন” চেক থাকলে সেশন ৭ দিন, না হলে ট্যাব-সেশন। সেশন থাকলে ডেস্ক সরাসরি খোলে। **লগআউট** করলে সেশন মুছে সোজা লগইন পেইজে (`index.html`) ফেরে।
 - **প্রবেশাধিকার** — ইউজারনেম ছোট-বড় হরফে লেখা যায়; ফর্মে আগে থেকে লেখা থাকে না। ডেস্ক সেটিংস কার্ডের **পাসওয়ার্ড পরিবর্তন** বাটনে বর্তমান পাসওয়ার্ড যাচাই করে নতুন পাসওয়ার্ড (৬–৩২ অক্ষর) দুইবার লিখে বদলানো যায় — অ্যাকাউন্ট `activePlus.paymentAccount.v1`, সেশন `activePlus.paymentSession.v1`। **প্রস্থান** আইকনে লগআউট।
 - **আজকের আদায় এক নজরে** — ডেস্কের উপরেই বড় কার্ডে আজকের আদায় (লেনদেন সংখ্যাসহ), এই মাসের আদায় ও কত জনের বকেয়া; নিচে **আজকের লেনদেন** তালিকা — যেকোনো সারিতে চাপলে সেই রসিদ আবার খোলে, রিফ্রেশ আইকনে অন্য ট্যাবের কালেকশনসহ তালিকা হালনাগাদ হয়।
 - **সার্চবার** — শিক্ষার্থীর নাম, মোবাইল নম্বর, Student ID **অথবা অভিভাবকের মোবাইল নম্বর** দিয়ে খোঁজা যায় (বাংলা সংখ্যা ও `+880` ফরম্যাটসহ)। ফলাফলে প্রতিজনের বকেয়াও দেখা যায়; কীবোর্ডে `/` চাপলেই সার্চ ঘরে ফোকাস। এডমিন প্যানেলের ফি-সার্চেও এখন অভিভাবকের নম্বর কাজ করে।
 - **টাইপ না করে এক চাপে** — সার্চের নিচে **যাদের বকেয়া আছে** ও **সাম্প্রতিক পেমেন্ট** চিপ; চাপলেই সেই শিক্ষার্থী নির্বাচিত।
 - **সংক্ষিপ্ত তথ্য** — নির্বাচন করলেই শ্রেণি-বিভাগ, শিক্ষার্থী ও অভিভাবকের মোবাইল, সর্বশেষ পেমেন্ট, নির্ধারিত মাসিক ফি, চলতি মাসে পরিশোধ ও বকেয়া; বকেয়া বড় করে হিরো ব্লকে দেখায়, সঙ্গে কোন নম্বরে রসিদ যাবে তার হিন্ট। নিচের স্থির বারে শিক্ষার্থীর নাম ও বকেয়া থাকে, তাই যেকোনো জায়গা থেকে এক চাপে পেমেন্ট ফর্ম খোলা/জমা দেওয়া যায়।
-- **পেমেন্ট** — ফি ধরন, মাস, দ্রুত পরিমাণ চিপ (পূর্ণ বকেয়া/মাসিক ফি/অর্ধেক), **বড় অঙ্কের ঘর ও থাম্ব-ফ্রেন্ডলি কীপ্যাড** (১–৯, ০, ০০, ⌫), মাধ্যমের জন্য **পিল বাটন** (নগদ/বিকাশ/Nagad/রকেট/ব্যাংক — `paymentMethods` থেকেই তৈরি), Trx ID ও নোট। সেভ বাটনে লাইভ পরিমাণ (“৳৭০০ জমা নিন ও রসিদ দিন”) দেখা যায়; **বাতিল** বাটনে ফর্ম বন্ধ। একই `financeRepository` localStorage contract-এ সংরক্ষণ — এডমিন প্যানেলের হিসাব, লেজার ও রিপোর্টে সঙ্গে সঙ্গে দেখা যায়। সংরক্ষণ ব্যর্থ হলে রসিদ হয় না।
+- **পেমেন্ট** — ফি ধরন, মাস, দ্রুত পরিমাণ চিপ (পূর্ণ বকেয়া/মাসিক ফি/অর্ধেক), **বড় অঙ্কের ঘর ও থাম্ব-ফ্রেন্ডলি কীপ্যাড** (১–৯, ০, ০০, ⌫), মাধ্যমের জন্য **পিল বাটন** (ক্যাশ/বিকাশ/নগদ/রকেট/ব্যাংক — `paymentMethods` থেকেই তৈরি), Trx ID ও নোট। সেভ বাটনে লাইভ পরিমাণ (“৳৭০০ জমা নিন ও রসিদ দিন”) দেখা যায়; **বাতিল** বাটনে ফর্ম বন্ধ। একই `financeRepository` localStorage contract-এ সংরক্ষণ — এডমিন প্যানেলের হিসাব, লেজার ও রিপোর্টে সঙ্গে সঙ্গে দেখা যায়। সংরক্ষণ ব্যর্থ হলে রসিদ হয় না।
 - **হোয়াটসঅ্যাপে রসিদ (সরাসরি শিক্ষার্থীর নম্বরে)** — রসিদ সেভ হলেই সাফল্যের চিহ্নসহ মোডাল খোলে; "হোয়াটসঅ্যাপে পাঠান" বাটনে চাপ দিলে **শিক্ষার্থীর নিজের মোবাইল নম্বরে** হোয়াটসঅ্যাপ চ্যাট খুলে যায় (`https://wa.me/880…`) এবং রসিদের বিবরণ (নাম, ID, শ্রেণি, ফি, রসিদ নং, তারিখ) লেখা থাকে। রসিদের ছবিটি (অফলাইন canvas PNG) তখনই ডাউনলোড হয় — চ্যাটে ছবিটি যুক্ত করে পাঠিয়ে দিলেই হলো, কারণ wa.me লিংকে ছবি সংযুক্ত করা যায় না। শিক্ষার্থীর নম্বর না থাকলে অভিভাবকের নম্বর ব্যবহার হয়; দুটোই না থাকলে স্পষ্ট বার্তা দেখায়। বাটনেই কোন নম্বরে যাবে তা লেখা থাকে, আর প্রোফাইল সারাংশেও নম্বরটি দেখানো হয়। আগে এটি সিস্টেমের শেয়ার মেনু খুলত (তারপর WhatsApp ও কনট্যাক্ট বেছে নিতে হতো) — এখন সরাসরি নির্দিষ্ট নম্বরে যায়।
 - সীমাবদ্ধতা: এটি ডেমো — WhatsApp-এ সরাসরি সার্ভার-সাইড পাঠানো নেই; মোবাইলে OS শেয়ার মেনু/চ্যাট খোলে, চূড়ান্ত "Send" চাপা ব্যবহারকারীর হাতে।
 - **এক প্যানেল থেকে অন্য প্যানেলে যাওয়া বন্ধ** (`js/panel-lockdown.js`) — এডমিনের হিসাব কার্ড থেকে পেমেন্ট প্যানেলের
@@ -308,7 +313,7 @@ Admin শুধু পর্যবেক্ষণ করে: রিপোর্�
 
 ### Admin workflow পরীক্ষা
 
-Fixed-shell tests-এ scroll-এর সময় header/footer অবস্থান, শেষ কনটেন্ট দেখা, view reset, resize, login ও pending screen যাচাই করা হয়। Mobile-layout tests-এ শিক্ষার্থী/Admin login, পাঁচটি student view, narrow/wide/landscape viewport, এক-কলামের ফর্ম, overflow ও mobile report filters যাচাই করা হয়। Navigation tests-এ ৫টি ফুটার বাটন (প্রতিটিতে একটি আইকন + লেবেল; নির্বাচিত ট্যাব রঙ/ব্যাকগ্রাউন্ডে আলাদা, আইকন তার নির্দিষ্ট কন্টেইনারের বাইরে বাড়ে না), আরও মেনু ও ফেরত আসা, অনুমতি-ভিত্তিক ড্যাশবোর্ড গ্রিড, রোল-বহির্ভূত এলিমেন্ট অনুপস্থিতি, hash route গার্ড, dashboard shortcuts, সিস্টেম সেটিংস ও স্টাফ তৈরি যাচাই করা হয়। `tests/payment-panel.spec.cjs` পেমেন্ট রিসিভ প্যানেল যাচাই করে: ইউনিক আইডি+পাসওয়ার্ড লগইন (ভুল প্রবেশাধিকার বাতিল, সেশন মনে রাখা, লগআউট), পাসওয়ার্ড পরিবর্তন (পুরনো পাসওয়ার্ড যাচাই, নতুন পাসওয়ার্ড-এ প্রবেশ), খালি কাউন্টার লেআউট, নাম/মোবাইল/ID/অভিভাবকের মোবাইল-সার্চ (বাংলা সংখ্যাসহ), সংক্ষিপ্ত প্রোফাইল, financeRepository-তে পেমেন্ট সংরক্ষণ, রসিদ PDF ডাউনলোড এবং হোয়াটসঅ্যাপ শেয়ার (Web Share ফাইল-শেয়ার ও wa.me fallback দুই পথেই)। `tests/payment-entry.spec.cjs` লগইন পেজ থেকে সরাসরি প্রবেশ (পেমেন্ট কাউন্টার ট্যাব ও শিক্ষার্থী লগইন ঘরে আইডি+পাসওয়ার্ড → অটো-লগিন), কীপ্যাড, মাধ্যমের পিল, স্থির “টাকা নিন” বার ও আজকের তালিকা যাচাই করে।
+Fixed-shell tests-এ scroll-এর সময় header/footer অবস্থান, শেষ কনটেন্ট দেখা, view reset, resize, login ও pending screen যাচাই করা হয়। Mobile-layout tests-এ শিক্ষার্থী/Admin login, পাঁচটি student view, narrow/wide/landscape viewport, এক-কলামের ফর্ম, overflow ও mobile report filters যাচাই করা হয়। Navigation tests-এ ৫টি ফুটার বাটন (প্রতিটিতে একটি আইকন + লেবেল; নির্বাচিত ট্যাব রঙ/ব্যাকগ্রাউন্ডে আলাদা, আইকন তার নির্দিষ্ট কন্টেইনারের বাইরে বাড়ে না), আরও মেনু ও ফেরত আসা, অনুমতি-ভিত্তিক ড্যাশবোর্ড গ্রিড, রোল-বহির্ভূত এলিমেন্ট অনুপস্থিতি, hash route গার্ড, dashboard shortcuts, সিস্টেম সেটিংস ও স্টাফ তৈরি যাচাই করা হয়। `tests/payment-panel.spec.cjs` পেমেন্ট রিসিভ প্যানেল যাচাই করে: ইউনিক আইডি+পাসওয়ার্ড লগইন (ভুল প্রবেশাধিকার বাতিল, সেশন মনে রাখা, লগআউট), পাসওয়ার্ড পরিবর্তন (পুরনো পাসওয়ার্ড যাচাই, নতুন পাসওয়ার্ড-এ প্রবেশ), খালি কাউন্টার লেআউট, নাম/মোবাইল/ID/অভিভাবকের মোবাইল-সার্চ (বাংলা সংখ্যাসহ), সংক্ষিপ্ত প্রোফাইল, financeRepository-তে পেমেন্ট সংরক্ষণ, রসিদ PDF ডাউনলোড এবং হোয়াটসঅ্যাপ শেয়ার (Web Share ফাইল-শেয়ার ও wa.me fallback দুই পথেই)। `tests/payment-entry.spec.cjs` লগইন পেজ থেকে সরাসরি প্রবেশ (কাউন্টার আইডি+পাসওয়ার্ড শিক্ষার্থীদের একই লগইন ঘরেই দিলে অটো-লগিন — লগইন পেজে আলাদা কোনো স্টাফ ট্যাব বা “পেমেন্ট কাউন্টার ট্যাব” নেই), কীপ্যাড, মাধ্যমের পিল, স্থির “টাকা নিন” বার ও আজকের তালিকা যাচাই করে।
 
 `tests/admin-panel-shell.test.mjs` আসল `admin.html` + `js/admin.js` jsdom-এ চালিয়ে যাচাই করে: Admin-এর ক্ষমতার সেট (সিস্টেম কন্ট্রোল আছে, দৈনন্দিন অপারেশন নেই), প্রতিটি ফুটার ট্যাবে একটি করে আইকন + লেবেল, অনুমতি-ভিত্তিক ড্যাশবোর্ড গ্রিড, রোল-বহির্ভূত সব এলিমেন্টের অনুপস্থিতি (অনুমোদন শর্টকাট, ফি-গ্রহণের ফর্ম, নোটিশ/রুটিন এন্ট্রি, শিক্ষক/পেমেন্ট প্যানেল লিংক), কোনো publish কন্ট্রোল নেই, hash route গার্ড, এবং ক্ষমতাহীন রোলে প্যানেল সম্পূর্ণ ফাঁকা।
 
@@ -332,82 +337,193 @@ Unit tests: search normalization, মাস/বছর, partial/overpayment, fee 
 কোনো external font, CDN বা remote API ব্যবহার করা হয়নি। HTML শুধু page structure রাখে; feature logic ও style আলাদা module-এ ভাগ করা হয়েছে।
 
 ```text
-index.html              page structure and SVG icon sprite
-admin.html              Admin Panel — username/password entry screen + panel
-styles.css              CSS entry point (feature imports)
-css/
-  admin.css             Admin Panel styles (mobile entry screen, summary, navigation, modal)
-  tokens.css            design tokens and reset (ShopLedGer palette)
-  auth.css              login, registration and recovery
-  dashboard.css         student home dashboard (ShopLedGer-style home)
-  routine.css           routine timeline
-  courses.css           courses and progress
-  results.css           results cards
-  profile.css           profile and settings
-  shell.css             app header (two-row topbar) and shell
-  navigation.css        bottom navigation (mint icon chips)
-  overlays.css          modals, install and toast
-  responsive.css        responsive rules
-  glass.css             flat solid-card layer (formerly translucent glass)
-  theme.css             time-of-day topbar strip tint
-  typography.css        local font and mobile reading sizes
-  scroll-header.css      scroll-aware topbar transition
-  liquid-glass.css      Global Glass Design System — সব portal-এ একই glass material,
-                        water-drop icon, floating bottom bar ও animation (presentation only)
-  admin-panel-ui.css    Admin Panel shell: permission grid, bottom-bar icons/labels,
-                        typography ও contrast
-  admin-icon-system.css Admin icon geometry: একটি নির্দিষ্ট কন্টেইনারে একটি আইকন,
-                        কোনো ওভারল্যাপ/স্কেল নয় (admin.html-এ সবার শেষে)
-  admin-staff.css       স্টাফ ম্যানেজমেন্ট, Roles, Data, Backup, Security, Profile
-                        (মোবাইল-ফার্স্ট, admin.html-এ সবার শেষে)
-assets/fonts/
-  NotoSansBengali-Variable.ttf  offline UI/PDF-ready Bengali font
-assets/icons/
-  app-logo.png         1254² master mark (green ring, black A, red +) — PDF/receipt printing
-  icon-192.png         PWA "any" icon, 192² (Android install prompt needs this)
-  icon-512.png         PWA "any" icon, 512² (splash/store card)
-  maskable-192.png     Android maskable, artwork inside the 66% safe zone
-  maskable-512.png     Android maskable, artwork inside the 66% safe zone
-  logo-128.png         small in-app header logo (loaded at 30–54 px)
-  apple-touch-icon.png 180² opaque iOS home-screen icon
-  favicon-32/16.png    browser tab icons; favicon.ico at the repo root
-  glass/*.png          shared water-drop glass icon family (home, routine, finance, …)
-  admin/*.png          Admin Panel icon set — dashboard, users, finance, payment,
-                       reports, notices, classes, app, exams (AI-generated soft-3D glass)
-js/
-  main.js               application composition root
-  login.js              one login form: student (mobile + password) and staff handoff
-  register.js           step-by-step registration and Student ID
-  recovery.js           password recovery via security question
-  logout.js             logout confirmation modal and session clearing
-  storage.js            localStorage/sessionStorage adapter
-  routine.js            routine rendering and day tabs
-  profile.js            profile editing
-  navigation.js         page/action routing
-  modals.js             notice and modal triggers
-  install.js            PWA install prompt
-  connectivity.js       offline status indicator
-  service-worker.js     service worker registration
-  config.js             classes, schedule and local defaults
-  theme.js              time and weather visual states
-    ui.js                 shared DOM and feedback helpers
-  admin.js              Admin Panel UI: views, actions, modals
-  admin-permissions.js  Admin capability catalog + role map + route/visibility guards
-  admin-panel-ui.js     Admin shell: bottom bar, "More" menu, dashboard icon grid
-  admin-icons.js        Admin icon set — প্রতিটি প্রতীক একটি inline SVG (কোনো emoji নয়)
-  staff-directory.js    স্টাফ পরিচয়: Staff ID, রোল-ভিত্তিক অনুমতি, Admin-only CRUD
-  staff-management.js   স্টাফ ম্যানেজমেন্ট UI: কার্ড, ফর্ম, প্রোফাইল, রিসেট, ডিলিট
-  payment.js            Standalone Payment Receive desk: search, payment, receipt, WhatsApp
-    admin-data.js         dummy student/notice/enrollment dataset
+index.html              student portal — page structure and SVG icon sprite
+manager.html            Manager Panel — review queue, student approvals, notices, routine
+admin.html              Admin Panel — entry screen + panel
+teacher.html            Teacher Panel — class work, grading, attendance
+payment.html            Payment Receive desk (session-guarded; sign-in is on index.html)
+manifest.json           PWA manifest — #f7f8fc canvas, #0e7a55 theme color, orientation any
+sw.js                   service worker — APP_SHELL precache + CACHE_VERSION
+firebase-messaging-sw.js  optional FCM push receiver
+firebase.json           Firebase Hosting + functions config
+firestore.rules         Cloud Firestore security rules (prepared, not yet enabled)
+database.rules.json     Realtime Database rules
+database.rules.v2.draft.json  RTDB v2 rules draft
+package.json            npm scripts (test, test:e2e)
+playwright.config.cjs   Playwright config
+demo/
+  offline-roles.html    offline role-explainer (demo only — production pages do not link it)
+  js/offline-role-store.js, offline-role-demo.js, offline-role-ui.js
+css/                    (design-system.css লোড ক্রমে)
+  design-system.css     CSS entry — @import cascade in load order
+  foundation.css        design tokens and reset (single palette + AMOLED dark)
+  ui-layout.css         app shell: topbar and page frame
+  ui-components.css     buttons, chips, cards
+  ui-forms.css          form controls
+  ui-features.css       modals, alert backdrop (glass blur), toasts
+  notice-board.css      notice board
+  ui-status.css         status surfaces + sync-colored topbar border
+  ui-auth.css           login, registration and recovery
+  app-polish.css        final polish layer
+  student-record.css    student record panels
+  exam-archive.css      exam archive
+  academics.css         class routines and teaching
+  notifications.css     notifications
+  course-hub.css        course hub
+  ui-wallet.css         wallet/payment skin (loaded last on student pages)
+  ui-interior.css       interior glass skins
+  ui-modern.css         modern surfaces
+  student-notebook.css  notebook features
+assets/fonts/           NotoSansBengali-Variable.ttf/.woff2 (OFL.txt) — offline UI/PDF font
+assets/icons/           app-logo.png, icon-192/512.png, maskable-192/512.png, logo-128.png +
+                        logo-128-dark.png, apple-touch-icon.png, favicon-32/16.png, favicon.ico
+js/                     (১২৭টি ES module; নিচে প্রধানগুলো মন্তব্যসহ)
+  academics.js                — class routines and teaching
+  account-policy.js           — username protection (protectAccountIdentity)
+  admin-academics.js         
+  admin-data.js               — sample dataset + feeCategories/paymentMethods
+  admin-icons.js             
+  admin-initialization.js    
+  admin-migration.js         
+  admin-panel-ui.js          
+  admin-permissions.js        — Admin capability catalog + route guards
+  admin.js                    — Admin Panel UI: views, actions, modals
+  app-entry.js                — shared entry bootstrap
+  appearance-boot.js          — pre-paint theme boot (no flash)
+  appearance.js               — THEME_COLOR + applyTheme (Light/AMOLED)
+  backup-merge.js            
+  brand.js                   
+  config.js                   — classes, schedule and local defaults
+  copy.js                     — tap-to-copy chips
+  counter-data.js             — counter payment save/validate
+  counter-privacy.js          — privacy-first student search keys
+  counter-report-data.js     
+  counter-reports.js         
+  course-content.js          
+  course-editor.js           
+  course-hub.js              
+  daily-quote.js             
+  database.js                 — local database adapter
+  demo-data.js               
+  exam-archive.js             — exam archive
+  exam-core.js               
+  exam-data.js               
+  exam-manager.js            
+  exam-pdf.js                
+  exam-ui.js                 
+  factory-reset.js            — factory reset
+  finance-data.js            
+  finance-receipt.js          — receipts and PDF
+  firebase-config.js          — Firebase web config (public client identifier)
+  firebase-diagnostic-ui.js  
+  firebase-diagnostics.js    
+  firebase-online-test.js    
+  fixed-shell.js              — fixed header/footer measurement
+  icon-set.js                
+  icons.js                   
+  install.js                  — PWA install prompt
+  launch-screen.js           
+  local-write-mark.js        
+  login.js                    — one login form: student + staff (admin/manager/teacher/payment) handoff
+  logout.js                   — logout confirmation modal and session clearing
+  main.js                     — application composition root
+  manager.js                  — Manager Panel UI
+  material-pdf.js            
+  navigation.js               — page/action routing
+  notice-center.js            — notice center
+  notification-rules.js      
+  notification-settings.js   
+  notification-store.js      
+  notifications.js            — notifications
+  office-data.js             
+  panel-lockdown.js          
+  panel-route.js             
+  password-hash-worker.js     — module worker — hashing off the main thread
+  password-hash.js            — PBKDF2 hashing (Web Crypto + pure-JS fallback)
+  password-policy.js          — empty-password error, reset policy, random 6-digit passwords
+  payment-auth.js             — payment-counter credentials and session
+  payment.js                  — Payment Receive desk: search, entry, receipt, share
+  print-tokens.js            
+  profile.js                  — profile editing
+  pull-to-refresh.js         
+  push-notifications.js      
+  question-bank.js            — question bank
+  realtime-sync-entry.js      — RTDB sync entry (prepared)
+  realtime-sync.js           
+  realtime-value-codec.js    
+  record-sync.js              — record sync (prepared)
+  recovery.js                 — password recovery via security question
+  register.js                 — step-by-step registration and Student ID
+  registration-review.js     
+  report-access.js           
+  report-builders.js         
+  report-catalog.js          
+  report-layout.js           
+  report-sources.js          
+  reports.js                 
+  routine.js                  — routine rendering and day tabs
+  rtdb-keys.js               
+  sanitize-url.js             — safe URL/phone-link handling
+  sanitize.js                 — output escaping (escapeHtml)
+  secure-store.js             — device-bound secret storage
+  service-worker.js           — service worker registration
+  session.js                  — SESSION_TTL_DAYS — remember-device TTLs (single source)
+  settings-hub.js            
+  shell.js                    — view aliases + panel shell
+  staff-auth.js               — staff accounts, PBKDF2 verify, device-bound session tokens
+  staff-directory.js         
+  staff-management.js        
+  staff-overview.js          
+  staff-password-dialog.js    — one-time reveal dialog for generated reset passwords
+  status-surface.js          
+  storage.js                  — localStorage/sessionStorage adapter
+  student-access.js          
+  student-dashboard.js        — student home dashboard
+  student-exams.js           
+  student-features.js        
+  student-hubs.js            
+  student-more.js            
+  student-notice-board.js    
+  student-practice.js        
+  student-record.js           — student record panel
+  student-search.js           — student search (name/ID/mobile)
+  student-study-sections.js  
+  student-teaching.js        
+  sync-collections.js        
+  sync-merge.js              
+  sync-session.js            
+  sync-status.js              — sync status
+  teacher-assignments.js     
+  teacher.js                  — Teacher Panel UI
+  teaching-data.js           
+  theme-entry.js             
+  theme-logos.js             
+  theme.js                    — time and weather visual states
+  topbar-connectivity.js      — sync-colored topbar border
+  ui-accessibility.js        
+  ui.js                       — shared DOM and feedback helpers
+  user-id.js                 
+  username-sync-codec.js     
+  storage/migration.js  localStorage schema migration
+firebase/               firebase-config.js, firebase-init.js, firebase-services.js
+sync/                   cloud-sync modules (prepared, not yet enabled): sync-core, sync-auth,
+                        sync-guard, sync-queue, sync-retry, sync-config, sync-status,
+                        cloud-access, cloud-auth, question-bank-v2-sync/policy (+ docs)
+functions/              Cloud Functions (prepared): index.js (revokeRefreshTokens,
+                        releaseExamResults), exam-scoring.js, notification-payload.js,
+                        question-bank-projection.js, migrations + test/firestore-rules.test.js
+tests/                  unit tests (tests/*.test.mjs) + browser tests (tests/*.spec.cjs)
+tools/                  spec-selector-audit.mjs, security/scan-secrets.mjs
+scripts/preview-server.py  static preview server
 ```
 
 ভবিষ্যতে Admin Panel-এর **শিক্ষার্থী অ্যাপ ম্যানেজমেন্ট** অংশ থেকে enabled class, routine, course, notice ও result data নিয়ন্ত্রণ করার জন্য config ও storage adapter আলাদা রাখা হয়েছে। API যুক্ত করার সময় মূল UI feature files বদলানোর প্রয়োজন হবে না।
 
-## Glass Design System (`css/liquid-glass.css`)
+## Glass Design System
 
-চারটি portal — শিক্ষার্থী (`index.html`), শিক্ষক (`teacher.html`), এডমিন (`admin.html`)
-ও পেমেন্ট (`payment.html`) — একই visual language ব্যবহার করে। পুরো design system একটি
-ফাইলে থাকে এবং প্রতিটি পেজে **সবার শেষে** load হয়, তাই এক জায়গায় পরিবর্তন করলেই সব
+পাঁচটি portal — শিক্ষার্থী (`index.html`), ম্যানেজার (`manager.html`), শিক্ষক (`teacher.html`), এডমিন (`admin.html`)
+ও পেমেন্ট (`payment.html`) — একই visual language ব্যবহার করে। Design tokens (`css/foundation.css`) ও glass skin (`css/ui-features.css`, `css/ui-interior.css`) একই জায়গায় থাকে
+এবং প্রতিটি পেজে একই ক্রমে load হয়, তাই এক জায়গায় পরিবর্তন করলেই সব
 portal-এ একই সঙ্গে প্রয়োগ হয়।
 
 এটি **presentation layer only** — কোনো markup hook, script, data key, route বা
@@ -443,9 +559,9 @@ business logic এখানে নেই। শুধু existing element-গু
 
 নতুন নোটিশ এলে (বা সিস্টেম নোটিফিকেশন বন্ধ থাকলে) নিচ থেকে একটা **পপ-আপ শিট** ওঠে।
 পেছনের পর্দা ব্লার হয়ে যায়, তাই পপ-আপটা স্পষ্ট আলাদা দেখায় — টপবার, কার্ড, বটম-নেভ
-সবই কাচের মতো ঝাপসা থাকে (`css/ui-interior.css`-এর গ্লাস স্কিন `.apc-alert-backdrop`-কে
+সবই কাচের মতো ঝাপসা থাকে (`css/ui-features.css`-এর গ্লাস স্কিন `.apc-alert-backdrop`-কে
 `--glass-blur-thin` — লাইটে ৬px, AMOLED-এ ৮px — দিয়ে ব্লার করে; কেউ
-"কম স্বচ্ছতা" চাইলে শুধু ডিম থাকবে, ব্লার নয়)।
+"কম স্বচ্ছতা" চাইলে শুধু ম্লান (dim) টোন থাকবে, ব্লার নয়)।
 
 | অংশ | কী থাকে |
 | --- | --- |
@@ -583,7 +699,7 @@ Browser suite চালাতে Playwright Chromium বা `CHROMIUM_EXECUTABLE
 - পুরোনো অ্যাকাউন্টের বর্তমান সংরক্ষিত login mobile স্থায়ী নম্বর হিসেবে নেওয়া হয়। পূর্বে বদলে যাওয়া আসল নম্বরের history এই অ্যাপে নেই; সেটি পুনরুদ্ধার করা যায় না। আলাদা legacy profile contact থাকলে সেটিকে অতিরিক্ত নম্বর হিসেবে রাখা হয়।
 - `persistAccount` সর্বশেষ saved account থেকে মূল নম্বর/আগের অতিরিক্ত নম্বর ধরে রাখে এবং লিখে সফল snapshot ফেরত দেয়। ব্যর্থ সংরক্ষণে নতুন contact/পাসওয়ার্ড সফল হয়েছে দেখায় না।
 - শিক্ষক প্যানেলে এখন ইউজারনেম `teacher.apc` ও পাসওয়ার্ড লাগে। এটি এখনও লোকাল credential, সার্ভার-ভিত্তিক শিক্ষক অ্যাকাউন্ট নয়।
-- ডিফল্ট স্টাফ পাসওয়ার্ড সম্পূর্ণভাবে সরায়া হয়েছে — বিস্তারিত নিইমে ডেটাবেস সেকশনে দেখানো হয়। বর্তমানে জুড়ে থেকা প্লেইনটেক্সট অ্যাকাউন্ট প্রথম লগইনে হ্যাশ করা হয় এবং পাসওয়ার্ড বদলাতে বাধ্য হয়। বাকী প্লেইনটেক্সট অ্যাকাউন্ট একবার হ্যাশ করে আপগ্রেড করা হয়।
+- ডিফল্ট স্টাফ পাসওয়ার্ড সম্পূর্ণভাবে সরানো হয়েছে — বিস্তারিত নিয়মে ডেটাবেস সেকশনে দেখানো হয়। বর্তমানে যুক্ত থাকা প্লেইনটেক্সট অ্যাকাউন্ট প্রথম লগইনে হ্যাশ করা হয় এবং পাসওয়ার্ড বদলাতে বাধ্য হয়। বাকী প্লেইনটেক্সট অ্যাকাউন্ট একবার হ্যাশ করে আপগ্রেড করা হয়।
 
 ## নিরাপত্তা — ধাপ ১ (হ্যাশড পাসওয়ার্ড, শক্তিশালী সেশন)
 
@@ -647,7 +763,7 @@ Firebase Authentication + role-based security rules, সার্ভার-অ�
 
 - **পরীক্ষার কোড:** প্রতিটি পরীক্ষা সংরক্ষণ করলেই একটি স্থায়ী কোড পায় — `M2608BN01` = ধরন (M = MCQ, S = সংক্ষিপ্ত, R = লিখিত) + বছর + শ্রেণির কোড + বিষয়ের কোড + ক্রমিক নম্বর। কোড একবার লেখা হয়, তারপর কখনো বদলায় না: তারিখ বদলালে রেকর্ড নতুন তারিখে সাজে, ক্লাস/বিষয়ের নাম বদলালেও পুরোনো কাগজের কোড অটুট থাকে। পুরোনো রেকর্ড প্রথম লেখার সময়েই কোড পেয়ে যায় (`examRepository.ensureCodes()`), তাই কোথাও ডেটা হারায় না।
 - **প্রশ্নের ক্রম:** প্রতিটি শিক্ষার্থীর প্রশ্ন ও অপশনের ক্রম `examCode + studentId + attemptId` থেকে তৈরি হয় (fixed/suffle দুটোই পরীক্ষার সেটিংসে আছে)। ফলাফল হিসেবে উত্তর সবসময় **অপশনের ID** ধরে সংরক্ষিত থাকে, তাই ক্রম বদলালেও নম্বর মেলে; একই প্রচেষ্টা আবার খুললে হুবহু একই প্রশ্নপত্র ফিরে আসে।
-- **প্রশ্ন সংরক্ষণ করুন (প্রশ্ন ব্যাংক):** `QUESTION-0001` ধারায় স্থায়ী আইডি, চার ধরনের প্রশ্ন (MCQ, সত্য/মিথ্যা, সংক্ষিপ্ত উত্তর, লিখিত), অধ্যায়/টপিক/কঠিন্যের ট্যাগ এবং কোড/শ্রেণি/বিষয়/অধ্যায়/টপিক/ধরন/তারিখ ধরে সার্বজনীন অনুসন্ধান ও পাতা-ভাগ (এক পাতায় ২০টি, তাই কখনো হাজার প্রশ্ন একসঙ্গে রেন্ডার হয় না)। পরীক্ষা থেকে প্রশ্ন সংরক্ষণ করলে ব্যাংকে **কপি** জমা হয় — পরীক্ষা বদলায় না, ব্যাংক থেকে মুছলেও কোনো পরীক্ষার প্রশ্ন মুছে যায় না। ব্যাংক থেকে সরাসরি খোলা পরীক্ষায় প্রশ্ন যোগ করা যায়।
+- **প্রশ্ন সংরক্ষণ করুন (প্রশ্ন ব্যাংক):** `QUESTION-0001` ধারায় স্থায়ী আইডি, চার ধরনের প্রশ্ন (MCQ, সত্য/মিথ্যা, সংক্ষিপ্ত উত্তর, লিখিত), অধ্যায়/টপিক/কঠিনতার ট্যাগ এবং কোড/শ্রেণি/বিষয়/অধ্যায়/টপিক/ধরন/তারিখ ধরে সার্বজনীন অনুসন্ধান ও পাতা-ভাগ (এক পাতায় ২০টি, তাই কখনো হাজার প্রশ্ন একসঙ্গে রেন্ডার হয় না)। পরীক্ষা থেকে প্রশ্ন সংরক্ষণ করলে ব্যাংকে **কপি** জমা হয় — পরীক্ষা বদলায় না, ব্যাংক থেকে মুছলেও কোনো পরীক্ষার প্রশ্ন মুছে যায় না। ব্যাংক থেকে সরাসরি খোলা পরীক্ষায় প্রশ্ন যোগ করা যায়।
 - **PDF:** প্রতিটি পাতা একই ব্র্যান্ড মডিউল (`js/brand.js`) থেকে নাম, স্লোগান ও লোগো নেয় (অ্যাপের বিদ্যমান লোগো ফাইল, আলাদা কপি নেই)। প্রশ্নপত্রের মাথায় পূর্ণ পরিচয়পত্র — পরীক্ষার কোড, শ্রেণি, বিষয় (কোডসহ), ধরন, অধ্যায়, Batch, তারিখ, সময়, সময়কাল, মোট প্রশ্ন, পূর্ণমান, পাস নম্বর। শিক্ষার্থীর PDF তার নিজের ক্রমে ছাপে; উত্তরপত্রে প্রতিটি প্রশ্ন নম্বর ও স্থায়ী আইডি ধরে সঠিক অপশনের আইডি ও লেখা থাকে।
 - **কোর্স হাব (শিক্ষার্থী → কোর্স):** শ্রেণি → বিষয় → চ্যাপ্টার → কনটেন্ট; বিভাগগুলো — পড়ুন, নোট, গুরুত্বপূর্ণ, সাজেশন, প্রশ্ন, MCQ, পূর্বের প্রশ্ন, মডেল টেস্ট, পরীক্ষা, আমার ফলাফল। বিষয় তালিকা Academic Setup থেকে আসে, শিক্ষার্থী শুধু নিজের শ্রেণির **প্রকাশিত** কনটেন্ট দেখে, আর “পরীক্ষা” ও “আমার ফলাফল” বিভাগ দুটি আলাদা ব্যবস্থা নয় — হুবহু বিদ্যমান Examination ও Result ডেটা পড়ে। শিক্ষক/Manager “পড়াশোনা পরিচালনা করুন” পাতা থেকে শুধু নিজের assigned ক্লাস ও বিষয়ের কনটেন্ট লেখেন।
 
@@ -738,7 +854,7 @@ Firebase SDK এই ধাপে যোগ করা হয়নি। কা�
 
 ## Offline role workspace v2 — নতুন নীতির পরীক্ষার সংস্করণ
 
-`offline-roles.html` খুলুন। **ডেমো ডেটাবেজ তৈরি** একবার চাপুন।
+`demo/offline-roles.html` খুলুন। **ডেমো ডেটাবেজ তৈরি** একবার চাপুন।
 Login: `admin.demo`, `manager.demo`, `teacher.demo`, `payment.demo`, `student.demo`।
 শুধু ডেমোর পাসওয়ার্ড: `Demo12345`। বাস্তব তথ্যের জন্য এই credentials ব্যবহার করবেন না।
 
@@ -795,3 +911,19 @@ records আছে। এগুলো কৃত্রিম তথ্য, কো�
 `student6a1.demo` … `student12b6.demo` (grade 6–12, section a/b, roll 1–6)।
 নতুন নমুনায় সবার password `Demo12345`। Teacher ও Student তাদের নির্ধারিত scope-ই দেখেন।
 ক্লাস/সেকশন dropdown ও search ব্যবহার করে বড় তালিকা ফিল্টার করুন।
+
+
+## শিক্ষার্থী প্যানেল ডেটা কাভারেজ ম্যাট্রিক্স (v272)
+
+শিক্ষার্থী প্যানেলের প্রতিটি অংশে কোনো স্ট্যাটিক ডেমো ডেটা নেই; সব তথ্য সরাসরি শিক্ষক বা ম্যানেজার প্যানেলের কাজ থেকে আসে এবং একক শ্রেণি-বিভাগ কী (`classId` + `sectionId`, `js/class-key.js`) দিয়ে ফিল্টার হয়:
+
+| শিক্ষার্থী প্যানেল অংশ | ডেটার উৎস (ফাইল / স্টোরেজ কী) | কোন ভূমিকা ও ফিচার থেকে আসে |
+| --- | --- | --- |
+| হোম স্ট্যাটস, সাপ্তাহিক অগ্রগতি, উপস্থিতি %, গড় ফলাফল, এই টার্মের অগ্রগতি, বাকি কাজ ও আজকের পড়াশোনা | `js/student-dashboard.js` (`calculateStudentHomeStats`) → `KEYS.teaching`, `KEYS.exams`, `KEYS.routine`, `KEYS.courses` | **Teacher** (উপস্থিতি, বাড়ির কাজ, কোর্স/অধ্যায়, নম্বর) + **Manager** (রুটিন, পরীক্ষা প্রকাশ) |
+| রুটিন (হোম ও সাপ্তাহিক রুটিন) | `js/routine.js`, `js/student-dashboard.js`, `js/student-hubs.js` → `KEYS.routine` (`activePlus.admin.routine.v1`) ও `KEYS.teaching` (`routine` সেশন) | **Manager** (`manager.html` সাপ্তাহিক রুটিন, `teacherId` ড্রপডাউনসহ) + **Teacher** (`teacher.html` তারিখভিত্তিক উপস্থিতি, রুম/নোট ও একদিনের অতিরিক্ত ক্লাস) |
+| আমার কোর্স ও অধ্যায়ভিত্তিক অগ্রগতি | `js/course-data.js` (`courseRepository`, `activePlus.courses.v1`) ও `js/student-study-sections.js` | **Teacher** (`teacher.html` → আরও → কোর্স ও অধ্যায়: কোর্স তৈরি/সম্পাদনা, অধ্যায় যোগ, এক ট্যাপে `শুরু হয়নি` → `চলছে` → `শেষ`, খসড়া/প্রকাশিত) |
+| বাড়ির কাজ, সংক্ষিপ্ত লিখিত উত্তর ও শিক্ষকের মন্তব্য | `js/teaching-data.js` (`KEYS.teaching` = `activePlus.teaching.v1`) ও `js/student-teaching.js` | **Teacher** (`teacher.html` বাড়ির কাজ প্রকাশ, শিক্ষার্থীর উত্তর পড়ে `"দেখা হয়েছে"` চিহ্ন ও ≤২০০ অক্ষরের মন্তব্য) + **Student** (≤৫০০ অক্ষরের লিখিত উত্তর জমা) |
+| সাজেশন ও সহায়ক উপকরণ | `js/teaching-data.js` (`KEYS.teaching`) ও `js/course-content.js` (`KEYS.courseContent`) | **Teacher** (`teacher.html` সাজেশন ও উপকরণ প্রকাশ) + **Manager** (`manager.html` পড়াশোনা পরিচালনা) |
+| পরীক্ষা (চলমান / আসন্ন) | `js/exam-data.js` (`KEYS.exams` = `activePlus.exams.v1`) ও `js/student-exams.js` | **Teacher** (`teacher.html` প্রশ্ন তৈরি ও অনুমোদনের আবেদন) → **Manager** (`manager.html` `"পরীক্ষা অনুমোদন"` তালিকা থেকে প্রশ্ন/উত্তর/নম্বর যাচাই করে প্রকাশ বা কারণসহ ফেরত; **Admin** শুধু রিপোর্ট দেখে) |
+| ফলাফল ও শ্রেণি ফলাফল বোর্ড | `js/exam-data.js` (`classResultRows`), `js/student-exams.js`, `js/student-teaching.js` | **Teacher** (লিখিত পরীক্ষার নম্বর ও ≤২০০ অক্ষরের মন্তব্য) + **Manager** (ফলাফল প্রকাশ; ফলাফল কার্ডে নাম/শ্রেণি/নম্বর শুধুমাত্র একই শ্রেণি-বিভাগের শিক্ষার্থীরা দেখে) |
+| নোটিশ ইনবক্স ও বেল ব্যাজ | `js/office-data.js` (`KEYS.notices` = `activePlus.admin.notices.v1`), `js/notification-rules.js`, `js/student-notice-board.js` | **Teacher** (`teacher.html` নিজ শ্রেণি-বিভাগে নোটিশ প্রকাশ) + **Manager** (`manager.html` সাধারণ ও শ্রেণিভিত্তিক নোটিশ প্রকাশ) |

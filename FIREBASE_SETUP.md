@@ -450,3 +450,14 @@ They do not certify deployed Firebase rules, Console settings or real mobile
 network performance. Exam syncing retains its separate existing merge engine;
 its pending-write tracking and identity password changes do not yet have the
 same durable outbox guarantees as the listed application collections.
+
+
+## Firestore ও Auth অ্যাডাপ্টার (`js/database.js` ও `firestore.rules`)
+
+- **অফলাইন-প্রথম স্থাপত্য:** ইউআই কোড (`teachingRepository`, `examRepository`, `courseRepository`, `financeRepository`, `notices`, `routine`) সরাসরি `js/database.js`-এর মাধ্যমে চলে। প্রথমে লোকাল স্টোরেজে (`localStorageAdapter` ফলোব্যাক) ডেটা লেখা হয় এবং পরে `createFirestoreAdapter` আউটবক্স থেকে Firestore-এ সিঙ্ক করে।
+- **Idempotent ID ও দ্বন্দ্ব নিরসন (`resolveConflictByUpdatedAt`):** প্রতিটি ডকুমেন্ট `newId(prefix)` দিয়ে তৈরি স্থির আইডিতে সংরক্ষিত হয়। অফলাইন/অনলাইন কনফ্লিক্টে সর্বশেষ `updatedAt` জিতবে।
+- **পরীক্ষার উত্তর-চাবি পৃথকীকরণ (`splitExamForFirestore`):** মূল পরীক্ষা ডকুমেন্ট `exams/{examId}`-এ কোনো সঠিক উত্তর থাকে না; উত্তর-চাবি আলাদাভাবে `exams/{examId}/private/key`-তে থাকে এবং পরীক্ষা শেষ হলে ক্লাউড ফাংশনের মাধ্যমে `exams/{examId}/releasedKey`-তে প্রকাশিত হয়।
+- **নিরাপত্তা নিয়ম (`firestore.rules`):**
+  - শিক্ষার্থী শুধু নিজ শ্রেণি-বিভাগের প্রকাশিত (`status == 'published'`) পরীক্ষা, কাজ, কোর্স ও নোটিশ পড়তে পারে।
+  - শিক্ষক শুধু নিজ `teacherId` / `teacherUid`-এর রেকর্ড তৈরি ও সম্পাদনা করতে পারেন।
+  - কোনো আসল প্রজেক্ট সিক্রেট বা সার্ভিস অ্যাকাউন্ট কী রিপোজিটরিতে কমিট করবেন না।

@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { readFileSync, readdirSync } from 'node:fs';
 
-const PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html']);
+const PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
 const PAGES = Object.freeze(['index.html', ...PANELS]);
 const LINK_CLASSES = Object.freeze(['pay-panel-link', 'teacher-panel-link', 'manager-panel-link', 'admin-panel-link', 'portal-link']);
 const CROSS_PANEL_CAPS = Object.freeze(['payment.panel', 'teaching.panel', 'manager.panel']);
@@ -32,6 +32,13 @@ test('no page links to another portal', () => {
       const other = PANELS.includes(target) && target !== file;
       assert.equal(other, false, `${file}: the page links to another portal (${href})`);
       assert.equal(/(^|\/)index\.html$/.test(href), false, `${file}: a portal may not link back to the login page from its UI`);
+    }
+    // The demo workspace (demo/) is out of the production deploy — no shipped
+    // page may link into it.
+    for (const anchor of document.querySelectorAll('[href], [src]')) {
+      const ref = String(anchor.getAttribute('href') || anchor.getAttribute('src') || '');
+      assert.equal(ref.startsWith('demo/') && !file.startsWith('demo/'), false,
+        `${file}: links into the demo workspace (${ref})`);
     }
   }
 });

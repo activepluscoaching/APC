@@ -111,7 +111,7 @@ test('the payment username is recognised without creating the account; other nam
   assert.equal(browser.localStorage.getItem(PAYMENT_ACCOUNT_KEY), null);
 });
 
-test('remembered sessions last 90 days in localStorage; tab sessions do not survive a closed tab', async () => {
+test('remembered sessions last the payment-desk window (7 days) in localStorage; tab sessions do not survive a closed tab', async () => {
   const browser = freshBrowser();
   assert.equal(await hasPaymentSession(), false);
 

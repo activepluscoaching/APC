@@ -1,80 +1,37 @@
-/* Notification rules — pure functions only.
-   No DOM, no Firebase, no storage access: everything here is data in → data out
-   so the delivery decisions can be tested without a browser and reused by the
-   page engine (js/notifications.js) and by the sender (functions/*).
-
-   The system has two halves:
-     • the notification centre (each device keeps its own read/seen receipts)
-     • the push transport (FCM token per device, filled in by Cloud Functions)
-
-   Secrets never appear here: a token record carries a role and an ID, never a
-   password hash or a session token. */
-
 export const NOTIFY_PREFIX = 'activePlus.notifications.';
-/* The local-write mark lives in its own tiny module so the boot path never
-   pulls this file in; re-exported here for every existing importer. */
 export { LOCAL_WRITE_KEY, markLocalSource } from './local-write-mark.js';
+import { normalizeClassId, normalizeSectionId, matchesClassSection } from './class-key.js';
 export const SEEN_KEY_PREFIX = `${NOTIFY_PREFIX}seen.v1:`;
 export const BOOT_KEY_PREFIX = `${NOTIFY_PREFIX}boot.v1:`;
 export const PROMPT_HIDDEN_KEY = `${NOTIFY_PREFIX}promptHiddenAt.v1`;
-/* The same event reaches a phone twice when the app is open — once through the
-   sync bridge and once as an FCM push. Both paths claim the record here first,
-   so exactly one notification is shown whichever arrives first. */
 export const SHOWN_KEY = `${NOTIFY_PREFIX}shown.v1`;
 export const SHOWN_WINDOW_MS = 2 * 60 * 1000;
 
-/* A record written on this device is not announced back to the person who wrote
-   it. The window is short on purpose: a genuinely re-published record notifies
-   again a few minutes later. */
 export const SELF_AUTHOR_WINDOW_MS = 10 * 60 * 1000;
-/* Seen keys are a rolling window, not a permanent archive. */
 export const MAX_SEEN = 300;
-/* A backlog (offline for hours) must not fire twenty system notifications. */
 export const MAX_BURST = 3;
 
 const isObject = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const text = value => (typeof value === 'string' ? value.trim() : '');
 
-/** Stable identity of the person using this device. */
 export function viewerKeyOf(viewer) {
   if (!viewer) return 'guest';
   if (viewer.kind === 'staff') return `staff:${text(viewer.username) || text(viewer.role) || 'unknown'}`;
   return `student:${text(viewer.studentId) || text(viewer.username) || 'guest'}`;
 }
 
-/** Audience strings written by the Manager notice form. */
 export const AUDIENCES = Object.freeze(['সকল শিক্ষার্থী', 'অভিভাবক', 'শিক্ষার্থী ও অভিভাবক']);
 
-/** Normalised comparison for class / batch names (Bengali text mixes forms). */
 const scopeKey = value => text(value).normalize('NFC').toLowerCase().replace(/\s+/g, ' ');
 
-/**
- * Does a class/batch-targeted notice reach this viewer?
- *
- * A Teacher (or a Manager) may address one class and one batch instead of the
- * whole school. A notice without `className`/`group` keeps reaching everyone
- * exactly as before, so every stored notice stays visible; a notice that names
- * a class reaches only that class, and one that names a batch only that batch
- * inside the class.
- */
 export function noticeScopeMatches(notice, viewer) {
   if (!notice || !viewer) return true;
-  const className = text(notice.className || notice.targetClass);
-  const group = text(notice.group || notice.batch || notice.targetGroup);
-  if (!className && !group) return true;
-  if (className && scopeKey(className) !== scopeKey(viewer.className)) return false;
-  if (group && scopeKey(group) !== scopeKey(viewer.group)) return false;
-  return true;
+  const classId = normalizeClassId(notice);
+  const sectionId = normalizeSectionId(notice);
+  if (!classId && !sectionId) return true;
+  return matchesClassSection(notice, viewer, { requireViewerClass: true, allowGlobalItem: true });
 }
 
-/**
- * Does this notice belong on this device's notice screen?
- *
- * The student app is where a student — or the guardian holding that phone —
- * signs in, so those three audiences all reach it. A record addressed to some
- * other group (a future staff-only audience) is not shown to students.
- * Staff devices see every notice: staff publish them and answer for them.
- */
 export function audienceMatches(notice, viewer) {
   if (!notice) return false;
   if (viewer?.kind === 'staff') return true;
@@ -101,7 +58,6 @@ const NOTICE_CATEGORY_ALIASES = Object.freeze({
   exam: 'exam', exams: 'exam', পরীক্ষা: 'exam', পরীক্ষার: 'exam'
 });
 
-/** A published notice always belongs to exactly one Notice Board category. */
 export function noticeCategory(notice) {
   const raw = typeof notice === 'string' ? notice : notice?.category ?? notice?.noticeCategory ?? notice?.type ?? '';
   const value = text(raw).toLowerCase().replace(/[🔴📚🏫💰📝]/gu, '').trim();
@@ -116,7 +72,6 @@ export function noticeCategoryInfo(value) {
   return NOTICE_CATEGORIES.find(category => category.id === id) || NOTICE_CATEGORIES[1];
 }
 
-/** Revision of a notice: editing the text makes it unread / newsworthy again. */
 export function noticeRevision(notice) {
   return text(notice?.updatedAt) || text(notice?.createdAt) ||
     `${text(notice?.title)}|${text(notice?.body)}|${text(notice?.date)}`;
@@ -143,7 +98,6 @@ export function noticeItem(notice) {
   };
 }
 
-/** Urgent banner from System Settings — reaches every device, not a class. */
 export function broadcastItem(config) {
   const message = text(config?.broadcastMessage);
   if (!config?.broadcastAlert || !message) return null;
@@ -163,7 +117,6 @@ export function broadcastItem(config) {
   };
 }
 
-/** Bengali-friendly date/time for a notification body. */
 export function bnWhen(ms) {
   const when = new Date(Number(ms));
   if (!Number.isFinite(when.getTime())) return '';
@@ -178,21 +131,12 @@ const participantIds = exam => (Array.isArray(exam?.participants) ? exam.partici
   .map(person => text(person?.id))
   .filter(Boolean);
 
-/**
- * A published paper is news until it is over. Sender
- * (functions/notification-payload.js) and client share this rule, so a push
- * always has a matching entry in the in-app notification list.
- */
 export function stillOpenExam(exam, now = Date.now()) {
   if (exam?.resultsPublished === true) return false;
   const endsAt = Number(exam?.endAt) || Number(exam?.startAt) || 0;
   return endsAt === 0 || endsAt > Number(now);
 }
 
-/**
- * Exam news for one student device: a published paper that is not over yet,
- * and a result the office has released. Only participants are told.
- */
 export function examItems(examDb, viewer, now = Date.now()) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return [];
   const studentId = text(viewer.studentId);
@@ -218,9 +162,6 @@ export function examItems(examDb, viewer, now = Date.now()) {
         audience: 'অংশগ্রহণকারী'
       });
     } else if ((exam.status === 'published' || exam.status === 'completed') && stillOpenExam(exam, now)) {
-      /* A published paper is an action card, not just a generic alert. The
-         title names the exact paper; the CTA goes straight to its exam card and
-         starts it when the paper is currently available. */
       const startsAt = Number(exam.startAt) || 0;
       const endsAt = Number(exam.endAt) || startsAt;
       const attempts = (Array.isArray(examDb.attempts) ? examDb.attempts : [])
@@ -272,7 +213,6 @@ function homeworkActivities(teachingDb, viewer) {
   });
 }
 
-/** Incomplete homework due today or tomorrow, scoped to the student's class. */
 export function homeworkItems(teachingDb, viewer, now = Date.now()) {
   const timestamp = Number(now);
   const current = new Date(Number.isFinite(timestamp) ? timestamp : Date.now());
@@ -310,13 +250,11 @@ export function homeworkItems(teachingDb, viewer, now = Date.now()) {
 const pad2 = value => String(value).padStart(2, '0');
 const isLeapYear = year => year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 
-/** `MM-DD` from a stored ISO birth date. Empty when the profile has none. */
 export function birthMonthDay(birthDate) {
   const match = text(birthDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return match ? `${match[2]}-${match[3]}` : '';
 }
 
-/** True on the student's birthday (29 Feb falls on 1 Mar in a common year). */
 export function isStudentBirthday(birthDate, now = Date.now()) {
   const stamp = birthMonthDay(birthDate);
   if (!stamp) return false;
@@ -327,7 +265,6 @@ export function isStudentBirthday(birthDate, now = Date.now()) {
   return stamp === '02-29' && !isLeapYear(date.getFullYear()) && today === '03-01';
 }
 
-/** One greeting per year, only for the signed-in student, only on the day. */
 export function birthdayItems(viewer, now = Date.now()) {
   if (viewer?.kind !== 'student' || !text(viewer.studentId) || !isStudentBirthday(viewer.birthDate, now)) return [];
   const date = new Date(Number(now) || Date.now());
@@ -355,7 +292,6 @@ export function nextBirthdayBoundary(now = Date.now()) {
 
 const BIRTHDAY_STAFF = Object.freeze(['admin', 'manager', 'teacher']);
 
-/** One-day heads-up for Admin, Manager and Teacher: whose birthday is tomorrow. */
 export function birthdayAdvanceItems(students, viewer, now = Date.now()) {
   if (viewer?.kind !== 'staff' || !BIRTHDAY_STAFF.includes(text(viewer.role))) return [];
   const current = new Date(Number(now) || Date.now());
@@ -390,7 +326,6 @@ export function birthdayAdvanceItems(students, viewer, now = Date.now()) {
   return items;
 }
 
-/** Next local-day transition that changes a homework reminder. */
 export function nextHomeworkBoundary(teachingDb, viewer, now = Date.now()) {
   const timestamp = Number(now);
   if (viewer?.kind !== 'student' || !Number.isFinite(timestamp)) return 0;
@@ -412,15 +347,8 @@ export function nextHomeworkBoundary(teachingDb, viewer, now = Date.now()) {
   return next;
 }
 
-/* Staff roles that decide on a student registration (js/admin-permissions.js
-   STUDENTS_APPROVE): both see the same "new registration" item. */
 export const REGISTRATION_REVIEWERS = Object.freeze(['admin', 'manager']);
 
-/**
- * One actionable item per registration still waiting for a decision. The item
- * disappears by itself once the student is approved or rejected (on any
- * device), because only `pending` rows produce one.
- */
 export function registrationItems(students, viewer) {
   if (viewer?.kind !== 'staff' || !REGISTRATION_REVIEWERS.includes(text(viewer.role))) return [];
   const items = [];
@@ -445,14 +373,6 @@ export function registrationItems(students, viewer) {
   return items;
 }
 
-/* ---- Role notifications (owner request 2026-09-30: "all necessary ones") ----
-
-   Every rule below is derived from records that already sync to the device, so
-   no new cloud node is needed. Items that ask someone to act are `actionable`
-   (they keep the bell dot until opened, decided or cleared) and every item may
-   carry a `target` — the panel view a tap opens. */
-
-/** How long before the start a participant is reminded. */
 export const EXAM_REMINDER_MS = 10 * 60 * 1000;
 
 const examName = exam => {
@@ -463,7 +383,6 @@ const examName = exam => {
 const money = value => `৳${Number(value) || 0}`;
 const stamp = value => Date.parse(text(value)) || Number(value) || 0;
 
-/** Student: the office decided on this student's own registration. */
 export function studentDecisionItems(students, viewer) {
   if (viewer?.kind !== 'student') return [];
   const id = text(viewer.studentId);
@@ -488,10 +407,6 @@ export function studentDecisionItems(students, viewer) {
   }];
 }
 
-/**
- * Student: "starts soon" in the reminder window and "started" while the paper
- * is open. A student who already started (or submitted) is not told to start.
- */
 export function examTimingItems(examDb, viewer, now = Date.now(), reminderMs = EXAM_REMINDER_MS) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return [];
   const studentId = text(viewer.studentId);
@@ -531,7 +446,6 @@ export function examTimingItems(examDb, viewer, now = Date.now(), reminderMs = E
   return items;
 }
 
-/** The next moment an exam timing item appears or changes (for a timer). */
 export function nextExamBoundary(examDb, viewer, now = Date.now(), reminderMs = EXAM_REMINDER_MS) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return 0;
   const studentId = text(viewer.studentId);
@@ -546,7 +460,6 @@ export function nextExamBoundary(examDb, viewer, now = Date.now(), reminderMs = 
   return next;
 }
 
-/** Student: a fee the counter recorded was confirmed by the Manager. */
 export function studentPaymentItems(transactions, viewer) {
   if (viewer?.kind !== 'student') return [];
   const id = text(viewer.studentId);
@@ -562,7 +475,6 @@ export function studentPaymentItems(transactions, viewer) {
     }));
 }
 
-/** Manager: a fee entry waiting for approval (disappears once decided). */
 export function paymentReviewItems(transactions, viewer) {
   if (viewer?.kind !== 'staff' || text(viewer.role) !== 'manager') return [];
   return (Array.isArray(transactions) ? transactions : [])
@@ -576,7 +488,6 @@ export function paymentReviewItems(transactions, viewer) {
     }));
 }
 
-/** Payment counter: an entry the Manager rejected, with the reason. */
 export function paymentRejectedItems(transactions, viewer) {
   if (viewer?.kind !== 'staff' || text(viewer.role) !== 'payment') return [];
   return (Array.isArray(transactions) ? transactions : [])
@@ -590,7 +501,6 @@ export function paymentRejectedItems(transactions, viewer) {
     }));
 }
 
-/** Manager: a teacher sent a paper for approval. */
 export function examReviewItems(examDb, viewer) {
   if (viewer?.kind !== 'staff' || text(viewer.role) !== 'manager' || !isObject(examDb)) return [];
   return (Array.isArray(examDb.exams) ? examDb.exams : [])
@@ -605,7 +515,6 @@ export function examReviewItems(examDb, viewer) {
     }));
 }
 
-/** Teacher: the Manager's answer on a paper — returned (with reason) or published. */
 export function teacherExamItems(examDb, viewer) {
   if (viewer?.kind !== 'staff' || text(viewer.role) !== 'teacher' || !isObject(examDb)) return [];
   const items = [];
@@ -633,12 +542,10 @@ export function teacherExamItems(examDb, viewer) {
   return items;
 }
 
-/** Newest first, stable for equal timestamps. */
 export function sortNewestFirst(items) {
   return [...items].sort((left, right) => (right.at || 0) - (left.at || 0));
 }
 
-/** The complete notification list for one device, deduplicated by key. */
 export function notificationFeed({ notices = [], config = null, examDb = null, teachingDb = null, viewer = null, now = Date.now(), localWrites = null, students = null, transactions = null, cleared = null } = {}) {
   const items = [];
   const broadcast = broadcastItem(config);
@@ -666,11 +573,6 @@ export function notificationFeed({ notices = [], config = null, examDb = null, t
   return [...unique.values()].map(item => ({ ...item, selfAuthored: isSelfAuthored(item, localWrites, now) }));
 }
 
-/* ---- "written on this device" marker ---------------------------------------
-   saveNotices()/saveAppConfig() stamp what this device wrote. The person who
-   typed the notice should not receive their own push. */
-
-
 export function isSelfAuthored(item, localWrites, now = Date.now(), windowMs = SELF_AUTHOR_WINDOW_MS) {
   if (!item || !isObject(localWrites)) return false;
   const map = localWrites[item.source];
@@ -680,17 +582,6 @@ export function isSelfAuthored(item, localWrites, now = Date.now(), windowMs = S
   return now - stamp <= windowMs;
 }
 
-/* ---- Delivery planning ------------------------------------------------------ */
-
-/**
- * Which items should raise a system notification, and which keys become seen.
- *
- * `firstRun` is the first time this device runs the engine: the existing list is
- * recorded silently, because a fresh install must not replay old news. Later,
- * only keys that were never seen — and that this device did not write itself —
- * are announced, up to `maxBurst`, newest first. Everything in the feed is
- * marked seen either way, so a notification is never repeated.
- */
 export function planDeliveries({ feed = [], seen = [], firstRun = false, maxBurst = MAX_BURST, maxSeen = MAX_SEEN } = {}) {
   const seenSet = new Set(Array.isArray(seen) ? seen : []);
   const ordered = sortNewestFirst(feed);
@@ -709,8 +600,6 @@ export function planDeliveries({ feed = [], seen = [], firstRun = false, maxBurs
 export const CLEARED_KEY_PREFIX = `${NOTIFY_PREFIX}cleared.v1:`;
 export const MAX_CLEARED = 500;
 
-/** Keys the person emptied from the list. Only keys that still exist in the
-    feed are worth remembering, so the record never grows without bound. */
 export function clearedRecord(keys, liveKeys = null, at = Date.now()) {
   let list = [...new Set((Array.isArray(keys) ? keys : []).filter(key => typeof key === 'string' && key))];
   if (Array.isArray(liveKeys)) { const live = new Set(liveKeys); list = list.filter(key => live.has(key)); }
@@ -721,10 +610,6 @@ export function seenRecord(keys, at = Date.now()) {
   return { version: 1, at: Number(at) || Date.now(), keys: Array.isArray(keys) ? keys : [] };
 }
 
-/**
- * Claim a record for display. The first caller wins; a second caller inside the
- * window is told 'already shown' instead of raising a duplicate notification.
- */
 export function claimDelivery(shown, id, at = Date.now(), windowMs = SHOWN_WINDOW_MS) {
   const record = isObject(shown) ? { ...shown } : {};
   const stamp = Number(record[text(id)]);
@@ -734,23 +619,10 @@ export function claimDelivery(shown, id, at = Date.now(), windowMs = SHOWN_WINDO
   return { claim: true, record };
 }
 
-/* ---- In-app alert card (owner decision 2026-09-30) ---------------------------
-   "Showing notifications when the app is opened is enough": new items appear
-   on a card inside the app, with no phone permission needed. Each item is shown
-   on the card once; it stays in the bell list afterwards. */
-
 export const INAPP_KEY_PREFIX = `${NOTIFY_PREFIX}inapp.v1:`;
 export const INAPP_MAX_ITEMS = 3;
-/* Always current, so worth showing even on the very first run. */
 const ALWAYS_CURRENT = new Set(['exam-soon', 'exam-live']);
 
-/**
- * Which items the card shows now, and the receipt list to store.
- * `feed` is what the list shows (cleared items removed); `known` is every key
- * the device may remember (the full feed), so receipts cannot grow forever.
- * `initialise` (no receipt file yet: a new install, or the first run after this
- * update) shows only waiting tasks and running exams — old news stays quiet.
- */
 export function planInAppAlerts({ feed = [], known = [], shown = null, initialise = false } = {}) {
   const items = (Array.isArray(feed) ? feed : []).filter(item => isObject(item) && text(item.key));
   const keep = new Set((Array.isArray(known) ? known : []).map(item => text(isObject(item) ? item.key : item)).filter(Boolean));
@@ -765,9 +637,6 @@ export function planInAppAlerts({ feed = [], known = [], shown = null, initialis
   return { show: sortNewestFirst(show), record };
 }
 
-/* ---- Push transport --------------------------------------------------------- */
-
-/** FCM payload shown by the service worker. Kept identical to the sender's. */
 export function pushPayload(item) {
   const body = text(item?.body);
   return {
@@ -786,10 +655,6 @@ export function pushPayload(item) {
   };
 }
 
-/**
- * The record a device stores in the cloud so the sender knows where to push.
- * No password, hash or session token may ever be added here.
- */
 export function pushTokenRecord({ token, viewer, deviceId, at = Date.now(), platform = '', locale = '' } = {}) {
   const value = text(token);
   if (value.length < 20) return null;
@@ -806,12 +671,6 @@ export function pushTokenRecord({ token, viewer, deviceId, at = Date.now(), plat
   };
 }
 
-/** One device may hold several roles: the node key is device + person.
-    The encoding must be injective — replacing a forbidden character with `-`
-    gave `dev.1` and `dev-1` the same slot, so one device's push token could
-    overwrite another's. Percent-encoding keeps every device separate, and the
-    `%` is folded to `~` so the node key stays readable in the console; dots are
-    encoded too because Realtime Database rejects `.` in a key. */
 export function tokenPathKey(deviceId, viewer) {
   const raw = `${text(deviceId) || 'device'}|${viewerKeyOf(viewer)}`;
   return encodeURIComponent(raw).replace(/%/g, '~').replace(/\./g, '~2E').slice(0, 200);

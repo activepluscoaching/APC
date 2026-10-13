@@ -1,9 +1,3 @@
-/* Document database for Active Plus.
-   Collection names below are the Firestore names to use later.
-   This adapter only talks to localStorage. Do not import the Firebase SDK here.
-   Passwords and security answers stay on this device — never copy them
-   into a synced collection. */
-
 export const COLLECTIONS = Object.freeze({
   students: 'students',
   transactions: 'transactions',
@@ -14,6 +8,7 @@ export const COLLECTIONS = Object.freeze({
   settings: 'settings',
   academics: 'academics',
   courseContent: 'courseContent',
+  courses: 'courses',
   questionBank: 'questionBank',
   account: 'account',
   accounts: 'accounts',
@@ -21,7 +16,6 @@ export const COLLECTIONS = Object.freeze({
   studentProfile: 'studentProfile'
 });
 
-/** These must not be uploaded when Firebase is added. */
 export const LOCAL_ONLY = Object.freeze([
   COLLECTIONS.account,
   COLLECTIONS.accounts,
@@ -29,10 +23,6 @@ export const LOCAL_ONLY = Object.freeze([
   COLLECTIONS.studentProfile
 ]);
 
-/** Safe to mirror. Staff passwords are not in this list.
-    `exams` is listed but is NOT mirrored by the generic array path — its
-    document shape ({ exams: [], attempts: [] }) uses the dedicated id-keyed
-    examDb mirror in js/realtime-sync.js. */
 export const SYNCABLE = Object.freeze([
   COLLECTIONS.students,
   COLLECTIONS.transactions,
@@ -42,7 +32,8 @@ export const SYNCABLE = Object.freeze([
   COLLECTIONS.exams,
   COLLECTIONS.settings,
   COLLECTIONS.academics,
-  COLLECTIONS.courseContent
+  COLLECTIONS.courseContent,
+  COLLECTIONS.courses
 ]);
 
 export const STAFF_KEYS = Object.freeze({
@@ -71,6 +62,7 @@ export const KEYS = Object.freeze({
   notifications: 'activePlus.notifications.records.v1',
   academics: 'activePlus.academics.v1',
   courseContent: 'activePlus.courseContent.v1',
+  courses: 'activePlus.courses.v1',
   questionBank: 'activePlus.questionBank.v1',
   notificationSettings: 'activePlus.notificationSettings.v1'
 });
@@ -84,7 +76,7 @@ export function readRaw(key) {
 }
 
 export function writeRaw(key, value) {
-  storage().setItem(key, value);
+  activeAdapter.writeRaw(key, value);
 }
 
 export function readJSON(key, fallback = null) {
@@ -162,7 +154,6 @@ export function newId(prefix, now = new Date()) {
   return `${cleanPrefix}${date}${String(sequence).padStart(3, '0')}-${recordNonce()}`;
 }
 
-/** Fields safe to sync. Secrets never leave the device account. */
 export function publicStudent(student) {
   if (!student || typeof student !== 'object') return null;
   const copy = { ...student };
@@ -190,7 +181,6 @@ export function syncableAccount(account) {
   };
 }
 
-/** Mirror the device account into a student-id map, without the password. */
 export function rememberAccount(account) {
   const doc = syncableAccount(account);
   if (!doc) return false;
@@ -198,4 +188,159 @@ export function rememberAccount(account) {
   if (!map || typeof map !== 'object' || Array.isArray(map)) return false;
   map[doc.id] = doc;
   return writeJSON(KEYS.accounts, map);
+}
+
+const KEY_TO_COLLECTION = Object.freeze(
+  Object.fromEntries(Object.entries(KEYS).filter(([k]) => SYNCABLE.includes(k)).map(([k, v]) => [v, k]))
+);
+
+export function updatedAtMillis(doc) {
+  if (!doc || typeof doc !== 'object') return 0;
+  for (const field of ['updatedAt', 'reviewedAt', 'publishedAt', 'createdAt', 'recordedAt']) {
+    const val = doc[field];
+    if (typeof val === 'number' && Number.isFinite(val)) return val;
+    if (typeof val === 'string') {
+      const parsed = Date.parse(val);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+}
+
+export function resolveConflictByUpdatedAt(localDoc, remoteDoc) {
+  if (!remoteDoc) return localDoc;
+  if (!localDoc) return remoteDoc;
+  const localTs = updatedAtMillis(localDoc);
+  const remoteTs = updatedAtMillis(remoteDoc);
+  return remoteTs > localTs ? { ...localDoc, ...remoteDoc } : { ...remoteDoc, ...localDoc };
+}
+
+export function splitExamForFirestore(exam) {
+  if (!exam || typeof exam !== 'object') return { examDoc: null, keyDoc: null };
+  const answers = {};
+  const publicQuestions = (Array.isArray(exam.questions) ? exam.questions : []).map((q, idx) => {
+    const qId = q.uid || q.id || `${exam.id}-q${idx + 1}`;
+    const { answer, answerText, answerKey, correct, correctAnswer, ...rest } = q || {};
+    if (answer !== undefined || answerText !== undefined) {
+      answers[qId] = { ...(answer !== undefined ? { answer } : {}), ...(answerText !== undefined ? { answerText } : {}) };
+    }
+    return rest;
+  });
+  const { answerKey, answers: topAnswers, answer: topAnswer, ...restExam } = exam;
+  return {
+    examDoc: { ...restExam, questions: publicQuestions },
+    keyDoc: { examId: exam.id, answers, updatedAt: exam.updatedAt || Date.now() }
+  };
+}
+
+export function mergeExamFromFirestore(examDoc, keyDoc = null) {
+  if (!examDoc || typeof examDoc !== 'object') return null;
+  const answers = keyDoc?.answers || {};
+  const questions = (Array.isArray(examDoc.questions) ? examDoc.questions : []).map((q, idx) => {
+    const qId = q.uid || q.id || `${examDoc.id}-q${idx + 1}`;
+    const keyEntry = answers[qId];
+    return keyEntry ? { ...q, ...keyEntry } : { ...q };
+  });
+  return { ...examDoc, questions };
+}
+
+export const localStorageAdapter = Object.freeze({
+  kind: 'localStorage',
+  readRaw: key => storage().getItem(key),
+  writeRaw: (key, value) => storage().setItem(key, value)
+});
+
+let activeAdapter = localStorageAdapter;
+
+export function getDatabaseAdapter() {
+  return activeAdapter;
+}
+
+export function setDatabaseAdapter(adapter) {
+  activeAdapter = adapter && typeof adapter.writeRaw === 'function' ? adapter : localStorageAdapter;
+  return activeAdapter;
+}
+
+function extractRecordsForCollection(collection, parsed) {
+  if (!parsed) return [];
+  if (collection === 'teaching') return Array.isArray(parsed.activities) ? parsed.activities : [];
+  if (collection === 'courses') return Array.isArray(parsed.courses) ? parsed.courses : [];
+  if (collection === 'exams') return Array.isArray(parsed.exams) ? parsed.exams : [];
+  if (collection === 'routine' && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return Object.entries(parsed).flatMap(([day, info]) =>
+      (info?.classes || []).map((item, idx) => ({ ...item, id: item.id || `${day}-${idx}`, day, updatedAt: item.updatedAt || info.date || 0 }))
+    );
+  }
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+export function createFirestoreAdapter({ auth = null, store = null } = {}) {
+  const outbox = new Map(); // `${collection}:${id}` -> doc
+  const remoteMirror = new Map(); // `${collection}:${id}` -> doc
+  const keyMirror = new Map(); // `exams:${id}:private/key` -> keyDoc
+
+  const writeRemoteDoc = async (path, data) => {
+    if (store && typeof store.setDoc === 'function') {
+      await store.setDoc(path, data);
+    } else {
+      remoteMirror.set(path, structuredClone ? structuredClone(data) : JSON.parse(JSON.stringify(data)));
+    }
+  };
+  const readRemoteDoc = async path => {
+    if (store && typeof store.getDoc === 'function') return await store.getDoc(path);
+    return remoteMirror.get(path) || null;
+  };
+
+  async function flush() {
+    if (auth && !auth.currentUser) return { flushed: 0, pending: outbox.size };
+    let flushed = 0;
+    for (const [entryKey, doc] of [...outbox.entries()]) {
+      const [collection, id] = entryKey.split(':');
+      if (!collection || !id) { outbox.delete(entryKey); continue; }
+      if (collection === 'exams') {
+        const { examDoc, keyDoc } = splitExamForFirestore(doc);
+        const existing = await readRemoteDoc(`exams/${id}`);
+        const winner = resolveConflictByUpdatedAt(examDoc, existing);
+        await writeRemoteDoc(`exams/${id}`, winner);
+        if (keyDoc) {
+          keyMirror.set(`exams/${id}/private/key`, keyDoc);
+          await writeRemoteDoc(`exams/${id}/private/key`, keyDoc);
+        }
+      } else {
+        const existing = await readRemoteDoc(`${collection}/${id}`);
+        const winner = resolveConflictByUpdatedAt(doc, existing);
+        await writeRemoteDoc(`${collection}/${id}`, winner);
+      }
+      outbox.delete(entryKey);
+      flushed++;
+    }
+    return { flushed, pending: outbox.size };
+  }
+
+  function enqueueFromKeyWrite(key, rawValue) {
+    const collection = KEY_TO_COLLECTION[key];
+    if (!collection) return;
+    try {
+      const parsed = JSON.parse(rawValue);
+      for (const rec of extractRecordsForCollection(collection, parsed)) {
+        if (!rec || !rec.id) continue;
+        const entryKey = `${collection}:${rec.id}`;
+        const prior = outbox.get(entryKey);
+        outbox.set(entryKey, resolveConflictByUpdatedAt(rec, prior));
+      }
+    } catch { }
+  }
+
+  return {
+    kind: 'firestore',
+    readRaw(key) { return localStorageAdapter.readRaw(key); },
+    writeRaw(key, value) {
+      localStorageAdapter.writeRaw(key, value);
+      enqueueFromKeyWrite(key, value);
+    },
+    flush,
+    pendingCount: () => outbox.size,
+    getRemoteDoc: path => readRemoteDoc(path),
+    getPrivateKeyDoc: examId => keyMirror.get(`exams/${examId}/private/key`) || null
+  };
 }

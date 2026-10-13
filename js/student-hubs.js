@@ -5,6 +5,7 @@ import { subjectsForClass, classByName } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
 import { examRepository as examRepo, examMatchesStudent, isStudentVisibleExam } from './exam-data.js';
 import { toBanglaNumber as bn } from './ui.js';
+import { resolveTeacherName } from './teaching-data.js';
 
 const DAY_LABELS = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 
@@ -33,7 +34,7 @@ function renderList(id, html) {
 
 function classCards(rows, empty) {
   if (!rows.length) return `<p class="teacher-empty">${empty}</p>`;
-  return rows.map(item => `<article class="routine-item"><div class="routine-time"><strong>${esc(item.time || '')}</strong><small>${esc(item.period || '')}</small></div><div class="routine-body"><span><strong>${esc(item.subject || 'ক্লাস')}</strong><small>${esc([item.teacher, item.room].filter(Boolean).join(' · '))}</small></span></div></article>`).join('');
+  return rows.map(item => `<article class="routine-item"><div class="routine-time"><strong>${esc(item.time || '')}</strong><small>${esc(item.period || '')}</small></div><div class="routine-body"><span><strong>${esc(item.subject || 'ক্লাস')}</strong><small>${esc([resolveTeacherName(item.teacherId, item.teacherName || item.teacher), item.room].filter(Boolean).join(' · '))}</small></span></div></article>`).join('');
 }
 
 export function initStudentHubs({ getStudent } = {}) {

@@ -5,14 +5,14 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src 'self' https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https: wss:; manifest-src 'self'; worker-src 'self'; base-uri 'self'; object-src 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <script src="js/sanitize-url.js"></script>
-  <script src="js/app-entry.js?v=266" data-entry="student"></script>
-  <script type="module" src="js/main.js?v=266"></script>
+  <script src="js/app-entry.js?v=272" data-entry="student"></script>
+  <script type="module" src="js/main.js?v=272"></script>
   <script src="js/topbar-connectivity.js?v=25161005-syncborder" defer></script>
   <script type="module" src="js/realtime-sync-entry.js"></script>
   <script src="js/appearance-boot.js"></script>
   <script src="js/theme-logos.js?v=158"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="theme-color" content="#f7f8fc">
+  <meta name="theme-color" content="#0e7a55">
   <meta name="description" content="Active Plus Coaching শিক্ষার্থী অ্যাপ — অফলাইনে রুটিন, ক্লাস, ফলাফল ও নোটিশ দেখুন।">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,21 +33,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=266">
-  <link rel="stylesheet" href="css/ui-layout.css?v=266">
-  <link rel="stylesheet" href="css/ui-components.css?v=266">
-  <link rel="stylesheet" href="css/ui-forms.css?v=266">
-  <link rel="stylesheet" href="css/ui-features.css?v=266">
-  <link rel="stylesheet" href="css/notice-board.css?v=266">
-  <link rel="stylesheet" href="css/ui-status.css?v=266">
-  <link rel="stylesheet" href="css/ui-auth.css?v=266">
-  <link rel="stylesheet" href="css/app-polish.css?v=266">
-  <link rel="stylesheet" href="css/student-record.css?v=266">
-  <link rel="stylesheet" href="css/exam-archive.css?v=266">
-  <link rel="stylesheet" href="css/academics.css?v=266">
-  <link rel="stylesheet" href="css/notifications.css?v=266">
-  <link rel="stylesheet" href="css/course-hub.css?v=266">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=266">
+  <link rel="stylesheet" href="css/foundation.css?v=272">
+  <link rel="stylesheet" href="css/ui-layout.css?v=272">
+  <link rel="stylesheet" href="css/ui-components.css?v=272">
+  <link rel="stylesheet" href="css/ui-forms.css?v=272">
+  <link rel="stylesheet" href="css/ui-features.css?v=272">
+  <link rel="stylesheet" href="css/notice-board.css?v=272">
+  <link rel="stylesheet" href="css/ui-status.css?v=272">
+  <link rel="stylesheet" href="css/ui-auth.css?v=272">
+  <link rel="stylesheet" href="css/app-polish.css?v=272">
+  <link rel="stylesheet" href="css/student-record.css?v=272">
+  <link rel="stylesheet" href="css/exam-archive.css?v=272">
+  <link rel="stylesheet" href="css/academics.css?v=272">
+  <link rel="stylesheet" href="css/notifications.css?v=272">
+  <link rel="stylesheet" href="css/course-hub.css?v=272">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=272">
   <script type="module" src="js/ui-accessibility.js"></script>
   <script src="js/launch-screen.js" defer></script>
 </head>
@@ -250,6 +250,12 @@
             <div><svg class="apc-glyph-icon" data-icon="clock" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2.2"/></svg><span><strong id="dashboardPendingCount">০টি কাজ</strong><small>বাকি আছে</small></span></div>
             <div><svg class="apc-glyph-icon" data-icon="clipboard" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4.5" width="16" height="17" rx="2"/><rect x="8" y="2.5" width="8" height="4" rx="1.2"/><path d="M8 11h8M8 15h5M8 18h5"/></svg><span><strong id="dashboardExamCount">০টি পরীক্ষা</strong><small>প্রকাশিত</small></span></div>
           </div>
+          <div class="study-progress-stats" id="homeRealStatsRow">
+            <div><span><strong id="dashboardWeeklyProgress">—</strong><small>সাপ্তাহিক অগ্রগতি</small></span></div>
+            <div><span><strong id="dashboardAttendanceRate">—</strong><small>উপস্থিতি %</small></span></div>
+            <div><span><strong id="dashboardAverageResult">—</strong><small>গড় ফলাফল</small></span></div>
+            <div><span><strong id="dashboardTermProgress">—</strong><small>এই টার্মের অগ্রগতি</small></span></div>
+          </div>
           <p class="study-progress-note" id="studyProgressNote">শিক্ষকের প্রকাশিত কাজের ভিত্তিতে অগ্রগতি দেখানো হবে।</p>
         </section>
         </div>
@@ -367,7 +373,7 @@
         <div class="study-section-panel" data-study-panel="courses">
           <section class="course-hub-block" aria-labelledby="courseHubTitle">
             <div class="learning-heading"><div><h2 id="courseHubTitle">আমার পড়াশোনা</h2><p class="course-hub-note">বিষয় বেছে অধ্যায় খুলে পড়া, নোট, প্রশ্ন, অনুশীলন, মডেল টেস্ট ও ফলাফল দেখো</p></div></div>
-            <div id="courseHub" class="course-hub"></div>
+            <div id="studentCourseChaptersList" class="learning-list"><p class="teacher-empty">আপনার শ্রেণি ও বিভাগের জন্য এখনো কোনো কোর্স প্রকাশিত হয়নি।</p></div><div id="courseHub" class="course-hub"></div>
           </section>
         </div>
       </section>

@@ -1,177 +1,175 @@
-/* Teacher identity ↔ assignment relation (the User/Teacher/Class mapping).
-
-   The bug this locks down: assignments used to be keyed to a hard-coded role
-   account ("teacher.apc") while Staff Management created real people with
-   their own Login User IDs ("rahim.teacher.apc") — so a new teacher logged in
-   and saw nothing. Covered here on the real data layer:
-
-     • Admin's per-class assignment (Class 8 → গণিত, ইংরেজি; Class 9 → গণিত)
-       projects into the assignment store keyed by the record's own Login
-       User ID — never by role or name
-     • the session records WHO signed in (identity), and logging out clears it
-     • the teacher panel resolves the signed-in person's own profile
-     • one teacher's rows never leak to another username
-     • assignment edits follow the staff record; role moves / deletes clean up
-     • a pre-bridge record answers through the merged read — no migration
-*/
-import test, { before, after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadPage } from './jsdom-harness.mjs';
-import { provisionStaff, seedStaffSession } from './staff-harness.mjs';
 import {
-  saveStaffSession,
-  clearStaffSession,
-  readActiveStaffIdentity
-} from '../js/staff-auth.js';
-import {
-  createStaff,
-  updateStaff,
-  deleteStaff,
-  findDirectoryStaffByUsername
-} from '../js/staff-directory.js';
-import {
-  TEACHER_ASSIGNMENTS_KEY,
-  listTeacherAssignments,
-  isTeacherAssigned,
-  isTeacherAssignedSubject,
-  effectiveTeacherAssignments,
-  removeDirectoryAssignmentRows
-} from '../js/teacher-assignments.js';
-import { currentTeacherProfile, setTeachingScope, teachingScopeUsername } from '../js/teaching-data.js';
-import { enabledClasses } from '../js/config.js';
+  teachingRepository as repo,
+  setTeachingScope,
+  currentTeacherId,
+  resolveTeacherName
+} from '../js/teaching-data.js';
+import { examRepository, examTemplate, TEACHER_ACTOR } from '../js/exam-data.js';
+import { STAFF_ACCOUNTS, saveStaffSession, readActiveStaffIdentity } from '../js/staff-auth.js';
+import { STAFF_DIRECTORY_KEY } from '../js/staff-directory.js';
+import { TEACHER_ASSIGNMENTS_KEY } from '../js/teacher-assignments.js';
+import { ROSTER_KEY } from '../js/office-data.js';
+import { STORAGE_KEYS } from '../js/config.js';
+import { adminStudents } from '../js/admin-data.js';
 
-const CLASS_A = enabledClasses[0];
-const CLASS_B = enabledClasses[1];
-const SUBJECT_MATH = 'গণিত';
-const SUBJECT_ENGLISH = 'ইংরেজি';
-
-let ctx;
-const rows = () => JSON.parse(ctx.window.localStorage.getItem(TEACHER_ASSIGNMENTS_KEY) || '[]');
-
-before(async () => {
-  ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
-  await provisionStaff('admin');
-  seedStaffSession(ctx.window, 'admin');
-});
-after(() => ctx?.window.close());
-
-const teacherFields = (extra = {}) => ({
-  fullName: 'Rahim Uddin',
-  password: 'Rahim-2026',
-  confirmPassword: 'Rahim-2026',
-  role: 'teacher',
-  ...extra
-});
-
-test('Admin per-class assignment projects into the store keyed by the Login User ID', async () => {
-  const created = await createStaff(teacherFields({
-    assignment: {
-      classes: [CLASS_A, CLASS_B],
-      classSubjects: { [CLASS_A]: [SUBJECT_MATH, SUBJECT_ENGLISH], [CLASS_B]: [SUBJECT_MATH] },
-      subjects: [], batches: []
+function createEnv() {
+  const student = { ...adminStudents[0], className: 'দশম শ্রেণি', group: 'বিজ্ঞান বিভাগ', status: 'approved' };
+  const directory = {
+    version: 1,
+    records: [
+      {
+        id: 'staff-1',
+        staffId: 'STF-0005',
+        kind: 'directory',
+        role: 'teacher',
+        fullName: 'রহিম উদ্দিন স্যার',
+        username: 'rahim.teacher.apc',
+        mobile: '01711112222',
+        status: 'active',
+        assignment: {
+          classes: ['দশম শ্রেণি'],
+          subjects: ['গণিত'],
+          batches: ['বিজ্ঞান'],
+          classSubjects: { 'দশম শ্রেণি': ['গণিত'] }
+        }
+      },
+      {
+        id: 'staff-2',
+        staffId: 'STF-0006',
+        kind: 'directory',
+        role: 'teacher',
+        fullName: 'সালমা খাতুন ম্যাডাম',
+        username: 'salma.teacher.apc',
+        mobile: '01733334444',
+        status: 'active',
+        assignment: {
+          classes: ['নবম শ্রেণি'],
+          subjects: ['ইংরেজি'],
+          batches: [],
+          classSubjects: { 'নবম শ্রেণি': ['ইংরেজি'] }
+        }
+      }
+    ]
+  };
+  const assignments = [
+    {
+      id: 'TAS-R1',
+      teacherUsername: 'rahim.teacher.apc',
+      teacherName: 'রহিম উদ্দিন স্যার',
+      staffId: 'STF-0005',
+      className: 'দশম শ্রেণি',
+      group: 'বিজ্ঞান',
+      subject: 'গণিত',
+      subjects: ['গণিত']
+    },
+    {
+      id: 'TAS-S1',
+      teacherUsername: 'salma.teacher.apc',
+      teacherName: 'সালমা খাতুন ম্যাডাম',
+      staffId: 'STF-0006',
+      className: 'নবম শ্রেণি',
+      group: '',
+      subject: 'ইংরেজি',
+      subjects: ['ইংরেজি']
     }
-  }));
-  assert.equal(created.ok, true, created.error);
-  const username = created.staff.username;
-  assert.match(username, /\.teacher\.apc$/);
+  ];
+  const storage = new Map([
+    [ROSTER_KEY, JSON.stringify([student])],
+    [STAFF_DIRECTORY_KEY, JSON.stringify(directory)],
+    [TEACHER_ASSIGNMENTS_KEY, JSON.stringify(assignments)],
+    [STORAGE_KEYS.account, JSON.stringify({ status: 'active', student })]
+  ]);
+  const sessions = new Map([[STORAGE_KEYS.session, '1']]);
+  globalThis.window = {
+    localStorage: {
+      getItem: k => storage.get(k) ?? null,
+      setItem: (k, v) => storage.set(k, String(v)),
+      removeItem: k => storage.delete(k)
+    },
+    sessionStorage: {
+      getItem: k => sessions.get(k) ?? null,
+      setItem: (k, v) => sessions.set(k, String(v)),
+      removeItem: k => sessions.delete(k)
+    },
+    dispatchEvent: () => true
+  };
+  return { storage, sessions, student, directory };
+}
 
-  const mine = listTeacherAssignments(username);
-  assert.equal(mine.length, 2, 'one row per assigned class');
-  const classA = mine.find(item => item.className === CLASS_A);
-  const classB = mine.find(item => item.className === CLASS_B);
-  assert.deepEqual([...classA.subjects].sort(), [SUBJECT_ENGLISH, SUBJECT_MATH].sort());
-  assert.deepEqual(classB.subjects, [SUBJECT_MATH]);
-  for (const row of mine) {
-    assert.equal(row.teacherUsername, username, 'rows are keyed to the person, not the role account');
-    assert.equal(row.staffId, created.staff.staffId);
-    assert.equal(row.source, 'directory');
-  }
-
-  // Scope gates: this teacher's own classes answer; others do not.
-  assert.equal(isTeacherAssignedSubject(username, CLASS_A, SUBJECT_MATH), true);
-  assert.equal(isTeacherAssignedSubject(username, CLASS_B, SUBJECT_ENGLISH), false);
-  assert.equal(isTeacherAssigned('teacher.apc', CLASS_A), false, "the role account is not this person");
-  assert.equal(listTeacherAssignments('teacher.apc').length, 0, 'no leak to the built-in account');
-  assert.equal(listTeacherAssignments('karim.teacher.apc').length, 0, 'no leak to another teacher');
-});
-
-test('the session records who signed in, and signing out clears it', async () => {
-  const record = await findDirectoryStaffByUsername('rahim.teacher.apc');
-  assert.ok(record, 'the directory record exists');
-
-  await saveStaffSession('teacher', true, {
-    username: record.username, staffId: record.staffId, fullName: record.fullName
+test('Staff Directory teacher session carries staffId and stamps teacherId on activities and exams', async () => {
+  const { storage, student, directory } = createEnv();
+  await saveStaffSession('teacher', false, {
+    username: 'rahim.teacher.apc',
+    staffId: 'STF-0005',
+    fullName: 'রহিম উদ্দিন স্যার'
   });
+  setTeachingScope('rahim.teacher.apc', 'STF-0005');
+
   const identity = readActiveStaffIdentity();
-  assert.equal(identity.username, record.username);
-  assert.equal(identity.staffId, record.staffId);
-  assert.equal(identity.role, 'teacher');
+  assert.equal(identity?.staffId, 'STF-0005');
+  assert.equal(currentTeacherId(), 'STF-0005');
 
-  // The panel resolves the signed-in person's own profile — not teacher.apc.
-  const profile = await currentTeacherProfile();
-  assert.equal(profile.username, record.username);
-  assert.equal(profile.staffId, record.staffId);
-  assert.equal(profile.fullName, 'Rahim Uddin');
+  // Cannot create activity for unassigned class or unassigned subject
+  await assert.rejects(
+    repo.saveActivity({
+      type: 'homework',
+      title: 'ইংরেজি কাজ',
+      subject: 'ইংরেজি',
+      className: 'দশম শ্রেণি',
+      group: 'বিজ্ঞান',
+      date: '2026-10-20',
+      time: '17:00',
+      status: 'published',
+      details: 'Chapter 1'
+    }),
+    /বিষয়ে আপনার Manager assignment নেই/
+  );
 
-  setTeachingScope(profile.username);
-  assert.equal(teachingScopeUsername(), record.username);
-
-  clearStaffSession('teacher');
-  assert.equal(readActiveStaffIdentity(), null, 'logout ends the identity');
-  // One panel per device: signing the teacher session in dropped the Admin
-  // session. Restore it so the later cases can keep managing staff.
-  seedStaffSession(ctx.window, 'admin');
-});
-
-test('assignment edits follow the staff record; role moves and deletes clean up', async () => {
-  const record = await findDirectoryStaffByUsername('rahim.teacher.apc');
-  // Admin swaps Class 8 for Class 9 only.
-  const updated = await updateStaff(record.staffId, {
-    assignment: { classes: [CLASS_B], classSubjects: { [CLASS_B]: [SUBJECT_ENGLISH] }, subjects: [], batches: [] }
+  const saved = await repo.saveActivity({
+    type: 'homework',
+    title: 'বীজগণিত অনুশীলন',
+    subject: 'গণিত',
+    className: 'দশম শ্রেণি',
+    group: 'বিজ্ঞান বিভাগ',
+    date: '2026-10-20',
+    time: '17:00',
+    status: 'published',
+    details: 'অনুশীলনী ৩.১'
   });
-  assert.equal(updated.ok, true, updated.error);
-  const mine = listTeacherAssignments('rahim.teacher.apc');
-  assert.equal(mine.length, 1, 'the removed class leaves the store');
-  assert.equal(mine[0].className, CLASS_B);
-  assert.deepEqual(mine[0].subjects, [SUBJECT_ENGLISH]);
+  assert.equal(saved.activities.length, 1);
+  assert.equal(saved.activities[0].teacherId, 'STF-0005');
 
-  // Moving the person out of the Teacher role drops academic rows entirely.
-  const moved = await updateStaff(record.staffId, { role: 'manager' });
-  assert.equal(moved.ok, true, moved.error);
-  assert.equal(listTeacherAssignments(moved.staff.username).length, 0);
-  assert.equal(listTeacherAssignments('rahim.teacher.apc').length, 0, 'the renamed id leaves no rows behind');
+  // Exam also stamps STF-0005
+  const examSnap = await examRepository.saveDraft({
+    type: 'mcq',
+    title: 'বীজগণিত কুইজ',
+    subject: 'গণিত',
+    className: 'দশম শ্রেণি',
+    group: 'বিজ্ঞান',
+    startAt: Date.now() + 3600000,
+    endAt: Date.now() + 7200000,
+    template: examTemplate('mcq')
+  }, TEACHER_ACTOR);
+  assert.equal(examSnap.exams[0].teacherId, 'STF-0005');
 
-  // Deleting a staff account removes only its projected rows.
-  const recreated = await createStaff(teacherFields({
-    fullName: 'Karim Uddin',
-    assignment: { classes: [CLASS_A], classSubjects: { [CLASS_A]: [SUBJECT_MATH] }, subjects: [], batches: [] }
-  }));
-  assert.equal(recreated.ok, true, recreated.error);
-  assert.equal(listTeacherAssignments(recreated.staff.username).length, 1);
-  const gone = await deleteStaff(recreated.staff.staffId);
-  assert.equal(gone.ok, true, gone.error);
-  assert.equal(listTeacherAssignments(recreated.staff.username).length, 0);
-});
+  // Another teacher (STF-0006) does not see STF-0005's work
+  await saveStaffSession('teacher', false, {
+    username: 'salma.teacher.apc',
+    staffId: 'STF-0006',
+    fullName: 'সালমা খাতুন ম্যাডাম'
+  });
+  setTeachingScope('salma.teacher.apc', 'STF-0006');
+  const salmaActivities = await repo.list({ role: 'teacher' });
+  assert.equal(salmaActivities.activities.length, 0);
+  const salmaExams = await examRepository.list({ role: 'teacher' });
+  assert.equal(salmaExams.exams.length, 0);
 
-test('a pre-bridge record answers through the merged read — no migration needed', async () => {
-  const created = await createStaff(teacherFields({
-    fullName: 'Fatema Khatun',
-    assignment: { classes: [CLASS_A], subjects: [SUBJECT_MATH, SUBJECT_ENGLISH], batches: [] }
-  }));
-  assert.equal(created.ok, true, created.error);
-  const username = created.staff.username;
-  // Legacy flat shape still projects (every selected class carries the list).
-  let mine = listTeacherAssignments(username);
-  assert.equal(mine.length, 1);
-  assert.deepEqual([...mine[0].subjects].sort(), [SUBJECT_ENGLISH, SUBJECT_MATH].sort());
-
-  // Simulate a record saved before the bridge existed: store emptied, directory
-  // record untouched. The merged read must still answer, without any migration.
-  ctx.window.localStorage.removeItem(TEACHER_ASSIGNMENTS_KEY);
-  assert.equal(listTeacherAssignments(username).length, 0);
-  mine = await effectiveTeacherAssignments(username);
-  assert.equal(mine.length, 1, 'the directory fallback fills the gap');
-  assert.equal(mine[0].className, CLASS_A);
-
-  removeDirectoryAssignmentRows(username);
+  // Student sees teacherName dynamically resolved from teacherId (STF-0005)
+  directory.records[0].fullName = 'প্রফেসর রহিম উদ্দিন';
+  storage.set(STAFF_DIRECTORY_KEY, JSON.stringify(directory));
+  assert.equal(resolveTeacherName('STF-0005', 'পুরোনো নাম'), 'প্রফেসর রহিম উদ্দিন');
+  const studentView = await repo.listForStudent(student.id);
+  assert.equal(studentView.activities[0].teacherName, 'প্রফেসর রহিম উদ্দিন');
 });

@@ -5,6 +5,7 @@ import { LEGACY_CLOUD_ENABLED } from '../sync/cloud-access.js';
    changes, so the phone number does not have to be shared to log in. */
 import { $, $$, normalizeMobile, normalizeAnswer, setAuthMessage, showFeedback } from './ui.js';
 import { enabledClasses } from './config.js';
+import { registrationPasswordError } from './password-policy.js';
 import { contactNumber, isContactNumber, normalizeUsername, usernameError, suggestUsername } from './account-policy.js';
 import {
   saveAccount, saveStudent, generateStudentId, generateClassRoll, usernameTaken, reserveUsername, releaseUsername, loadAccount
@@ -121,8 +122,8 @@ async function handleRegistration(event, state, onRegistered) {
   if ((await checkUsernameOnline(username))?.taken) {
     return setAuthMessage('এই ইউজারনেমটি অন্য একটি ডিভাইসে আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।');
   }
-  if (!/^\d{4,6}$/.test(pin)) return setAuthMessage('পাসওয়ার্ড অবশ্যই ৪ থেকে ৬ সংখ্যার হতে হবে।');
-  if (pin !== pinConfirm) return setAuthMessage('দুটি পাসওয়ার্ড এক নয়। আবার মিলিয়ে দিন।');
+  const pinProblem = registrationPasswordError(pin, pinConfirm);
+  if (pinProblem) return setAuthMessage(pinProblem);
   if (state.account) return setAuthMessage('এই ডিভাইসে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন অথবা এডমিনের সাহায্য নিন।');
 
   const className = String(form.get('className') || '');

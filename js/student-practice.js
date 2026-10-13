@@ -249,7 +249,7 @@ export function initStudentPractice({ getStudent, getAccount }) {
     const minutes = Math.max(1, Math.round(session.durationMs / 60000));
     content.innerHTML = `
       <div class="exam-actions">${button('keep', '← তালিকা (চলন্ত উত্তর সংরক্ষিত থাকবে)')}</div>
-      <div class="exam-timer"><span>ইনস্ট্যান্ট অনুশীলন • ${num(minutes)} মিনিট</span><strong data-practice-clock aria-live="off"></strong><em class="exam-timer-hint" data-low-hint hidden></em><small data-practice-status></small></div>
+      <div class="exam-timer exam-timer--pinned"><span>ইনস্ট্যান্ট অনুশীলন • ${num(minutes)} মিনিট</span><strong data-practice-clock aria-live="off"></strong><em class="exam-timer-hint" data-low-hint hidden></em><small data-practice-status></small></div>
       <h2>${esc(session.title)}</h2>
       <p class="exam-note">সব প্রশ্ন একসঙ্গে দেখানো হয়েছে — খুঁজতে স্ক্রল করো। চাইলে যেকোনো উত্তর বদলাও; সময়ের আগে জমা দিতে চাইলে “উত্তরপত্র জমা দাও” চাপো। সময় শেষ হলে উত্তরপত্র <strong>স্বয়ংক্রিয়ভাবে জমা</strong> হবে এবং পরীক্ষা শেষে ফলাফল দেখাবে।</p>
       <div class="exam-question-list">${session.order.map((item, i) => {

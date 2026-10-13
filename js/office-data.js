@@ -5,6 +5,7 @@ import { loadAccount, saveAccount, saveStudent, readJSON, writeJSON } from './st
 import { KEYS, listDocuments, listDocumentsStrict, replaceDocumentsStrict } from './database.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { LOCAL_WRITE_KEY, markLocalSource } from './local-write-mark.js';
+import { withClassKey } from './class-key.js';
 
 export const ROSTER_KEY = KEYS.students;
 export const NOTICES_KEY = KEYS.notices;
@@ -67,7 +68,7 @@ function mergeAccount(list) {
 }
 
 export function loadRoster() {
-  return mergeAccount(listDocuments('students'));
+  return mergeAccount(listDocuments('students')).map(row => withClassKey(row));
 }
 
 export function saveRoster(students) {
@@ -222,7 +223,7 @@ export async function syncStudentProfileFromRoster(studentId) {
 }
 
 export function loadNotices() {
-  return listDocuments('notices');
+  return listDocuments('notices').map(row => withClassKey(row));
 }
 
 /* A notice written here is not pushed back to the person who typed it. The
@@ -238,7 +239,8 @@ function stampWrittenHere(notices) {
 }
 
 export function saveNotices(notices) {
-  const saved = writeJSON(NOTICES_KEY, notices);
+  const stamped = Array.isArray(notices) ? notices.map(item => withClassKey(item)) : notices;
+  const saved = writeJSON(NOTICES_KEY, stamped);
   if (saved) stampWrittenHere(notices);
   return saved;
 }
@@ -251,7 +253,7 @@ export function loadRoutine() {
     const info = stored[day];
     routine[day] = {
       date: typeof info?.date === 'string' ? info.date : '',
-      classes: Array.isArray(info?.classes) ? info.classes.map(cls => ({ ...cls })) : []
+      classes: Array.isArray(info?.classes) ? info.classes.map(cls => withClassKey({ ...cls })) : []
     };
   }
   return routine;

@@ -10,8 +10,8 @@ for (const width of [320, 390]) {
   test(`offline shared roles: cash approval, data scope and reload at ${width}px`, async ({ page }) => {
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.setViewportSize({ width, height: 844 });
-    await page.goto('/offline-roles.html');
-    await page.evaluate(async () => { const { createRoleStore } = await import('/js/offline-role-store.js'); await createRoleStore(localStorage).seedDemo(); });
+    await page.goto('/demo/offline-roles.html');
+    await page.evaluate(async () => { const { createRoleStore } = await import('/demo/js/offline-role-store.js'); await createRoleStore(localStorage).seedDemo(); });
     await page.reload();
     await expect(page.locator('#seed')).toBeDisabled();
     await login(page, 'payment');
@@ -46,7 +46,7 @@ for (const width of [320, 390]) {
 test('full demo: seed from UI, filter sections and inspect teacher/student records', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto('/offline-roles.html'); await page.locator('#seed').click();
+  await page.goto('/demo/offline-roles.html'); await page.locator('#seed').click();
   await expect(page.locator('#seed')).toBeDisabled();
   await login(page, 'manager');
   await expect(page.locator('#records article')).toHaveCount(114);

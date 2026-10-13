@@ -14,7 +14,8 @@ import { iconMarkup } from './icons.js';
    Admin sees system-level monitoring, owns every staff identity (Staff ID) and
    keeps the device's data safe. Username and password are required; the roster,
    notices and routine start empty and stay on this device. */
-import { enabledClasses, DEFAULT_APP_SETTINGS, ADMIN_ID, DEFAULT_PIN, maintenanceState } from './config.js';
+import { enabledClasses, DEFAULT_APP_SETTINGS, ADMIN_ID, maintenanceState } from './config.js';
+import { resolveResetPassword } from './password-policy.js';
 import { toBanglaNumber } from './ui.js';
 import { classCodes } from './admin-data.js';
 import { loadAppConfig, saveAppConfig, loadAccount, saveAccount } from './storage.js';
@@ -459,23 +460,50 @@ function openPinReset(student) {
   const isLocal = account?.student?.id === student.id || account?.studentId === student.id;
   openModal(
     'অ্যাকাউন্ট নিরাপত্তা',
-    `${student.name} — ডিফল্ট পাসওয়ার্ড`,
-    `<p class="modal-copy">${isLocal ? 'নিশ্চিত করলে এই ব্রাউজারের অ্যাকাউন্টের পাসওয়ার্ড নিচের ডিফল্ট পাসওয়ার্ড হবে। নিবন্ধনের মোবাইল অপরিবর্তিত থাকবে।' : 'ডিফল্ট পাসওয়ার্ড নিচে দেওয়া আছে। এই শিক্ষার্থীর অ্যাকাউন্ট এই ব্রাউজারে নেই; এটি শুধু ডেমো, আসল পাসওয়ার্ড পরিবর্তন হবে না।'}</p>
-      <div class="pin-box" aria-label="নতুন পাসওয়ার্ড">${bn(DEFAULT_PIN)}</div>
-      <p id="pinResetError" class="finance-error" role="alert" hidden></p>
-      <div class="modal-actions"><button class="admin-btn primary" type="button" data-modal-action="done">${isLocal ? 'রিসেট নিশ্চিত করুন' : 'বুঝেছি'}</button></div>`
+    `${student.name} — পাসওয়ার্ড রিসেট`,
+    `<p class=\"modal-copy\">${isLocal ? 'নতুন পাসওয়ার্ড দিন, অথবা ফাঁকা রেখে নিশ্চিত করুন — তখন একটি র‍্যান্ডম ৬ সংখ্যার পাসওয়ার্ড তৈরি হবে এবং একবারই দেখানো হবে। নিবন্ধনের মোবাইল অপরিবর্তিত থাকবে।' : 'এই শিক্ষার্থীর অ্যাকাউন্ট এই ব্রাউজারে নেই; রিসেট শুধু ডেমো — আসল পাসওয়ার্ড পরিবর্তন হবে না।'}</p>
+      <label class=\"finance-field\"><span>নতুন পাসওয়ার্ড (৪–৬ সংখ্যা, ফাঁকা রাখলে র‍্যান্ডম হবে)</span><input id=\"pinResetInput\" type=\"password\" inputmode=\"numeric\" autocomplete=\"new-password\" maxlength=\"6\"></label>
+      <div class=\"pin-box\" id=\"pinResetBox\" hidden></div>
+      <p id=\"pinResetNote\" class=\"modal-copy\" hidden>এই পাসওয়ার্ড একবারই দেখানো হচ্ছে — এখনই লিখে রাখুন। পরে আর দেখা যাবে না।</p>
+      <p id=\"pinResetError\" class=\"finance-error\" role=\"alert\" hidden></p>
+      <div class=\"modal-actions\"><button class=\"admin-btn primary\" type=\"button\" data-modal-action=\"done\">${isLocal ? 'রিসেট নিশ্চিত করুন' : 'বুঝেছি'}</button></div>`
   );
-  $('#adminModalBody [data-modal-action="done"]').addEventListener('click', async () => {
-    if (isLocal) {
-      const latest = loadAccount();
-      if ((latest?.student?.id !== student.id && latest?.studentId !== student.id) || !(await saveAccount({ ...latest, pin: DEFAULT_PIN }))) {
-        $('#pinResetError').textContent = 'পাসওয়ার্ড সংরক্ষণ হয়নি। আবার চেষ্টা করুন।';
-        $('#pinResetError').hidden = false;
-        return;
-      }
+  $('#adminModalBody [data-modal-action=\"done\"]').addEventListener('click', async event => {
+    // event.currentTarget is null after the await below (see manager-forms.test.mjs).
+    const action = event.currentTarget;
+    const fail = message => {
+      $('#pinResetError').textContent = message;
+      $('#pinResetError').hidden = false;
+    };
+    if (!isLocal) {
+      closeModal();
+      toast('ডেমো রিসেট দেখানো হয়েছে');
+      return;
+    }
+    if (action.dataset.revealed === '1') {
+      closeModal();
+      toast(`${student.name} এর পাসওয়ার্ড রিসেট হয়েছে`);
+      return;
+    }
+    const resolved = resolveResetPassword($('#pinResetInput').value);
+    if (resolved.error) return fail(resolved.error);
+    const latest = loadAccount();
+    if ((latest?.student?.id !== student.id && latest?.studentId !== student.id) || !(await saveAccount({ ...latest, pin: resolved.password }))) {
+      return fail('পাসওয়ার্ড সংরক্ষণ হয়নি। আবার চেষ্টা করুন।');
+    }
+    if (resolved.generated) {
+      // One-time display: the plaintext exists only in this dialog.
+      $('#pinResetInput').closest('.finance-field').hidden = true;
+      $('#pinResetBox').hidden = false;
+      $('#pinResetBox').textContent = resolved.password;
+      $('#pinResetNote').hidden = false;
+      action.textContent = 'বুঝেছি';
+      action.dataset.revealed = '1';
+      $('#pinResetError').hidden = true;
+      return;
     }
     closeModal();
-    toast(isLocal ? `${student.name} এর পাসওয়ার্ড রিসেট হয়েছে` : 'ডেমো ডিফল্ট পাসওয়ার্ড দেখানো হয়েছে');
+    toast(`${student.name} এর পাসওয়ার্ড রিসেট হয়েছে`);
   });
 }
 
@@ -979,7 +1007,7 @@ async function renderSecurity() {
     ['Owner Username', escapeHtml(owner?.username || '—')],
     ['Owner Staff ID', ownerStaff ? `<span class="staff-id-badge">${escapeHtml(ownerStaff.staffId)}</span>` : '—'],
     ['স্ট্যাটাস', '<span class="badge badge-approved">Protected • মুছে বা নিষ্ক্রিয় করা যায় না</span>'],
-    ['Session নীতি', `${bn(STAFF_SESSION_RULES.rememberDays)} দিন (এই ডিভাইসে বাঁধা টোকেন) • ট্যাব-সেশন ট্যাব বন্ধ হলে শেষ`],
+    ['Session নীতি', `${bn(STAFF_SESSION_RULES.rememberDays.admin)} দিন (এই ডিভাইসে বাঁধা টোকেন) • ট্যাব-সেশন ট্যাব বন্ধ হলে শেষ`],
     ['Password নীতি', `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর • PBKDF2 হ্যাশ • কখনো প্লেইন-টেক্সট নয়`],
     ['স্টাফ ম্যানেজমেন্ট', 'শুধু Admin • বাটন লুকানোই নয়, প্রতিটি পরিবর্তনে Admin সেশন যাচাই হয়'],
     ['Student ID বনাম Staff ID', escapeHtml(STAFF_DIRECTORY_RULES.studentIdNote)]

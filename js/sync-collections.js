@@ -34,6 +34,10 @@ export function collectionPayload(collection, value) {
   if (collection === 'teaching') {
     return Object.fromEntries(safeRows(value.activities).map(item => [item.id, item]));
   }
+  if (collection === 'courses') {
+    if (value?.version !== 1 || !Array.isArray(value.courses)) return null;
+    return Object.fromEntries(safeRows(value.courses).map(item => [item.id, item]));
+  }
   if (collection === 'courseContent') {
     if (value?.version !== 1 || !Array.isArray(value.records)) return null;
     const records = safeRows(value.records);
@@ -108,6 +112,10 @@ export function remoteToLocal(collection, value) {
   if (collection === 'teaching') return {
     version: 1,
     activities: items.map(item => ({ ...item, progress: item.progress || {} }))
+  };
+  if (collection === 'courses') return {
+    version: 1,
+    courses: items.map(item => ({ ...item, chapters: Array.isArray(item.chapters) ? item.chapters : [] }))
   };
   if (collection === 'courseContent') {
     const meta = items.find(item => item._syncKind === 'metadata') || {};

@@ -8,6 +8,7 @@ import {
   examDateOf, examDurationMinutes, totalMarks
 } from './exam-data.js';
 import { toBanglaNumber as bn } from './ui.js';
+import { currentTeacherId, isOwnTeacherRecord } from './teaching-data.js';
 
 /** Every filter the Exam History / Question Archive bar can carry. */
 export const EXAM_FILTERS = Object.freeze({
@@ -150,7 +151,8 @@ export function examPermissions(actor, exam, { attempts = 0, openAttempts = 0, n
   const role = actor?.role;
   const manager = role === 'manager';
   const teacher = role === 'teacher';
-  const own = teacher ? exam?.teacherId === actor?.id : true;
+  const expectedId = actor?.id && actor.id !== 'TCH-001' ? actor.id : currentTeacherId();
+  const own = teacher ? isOwnTeacherRecord(exam?.teacherId, expectedId) : true;
   const editable = isEditableExam(exam) && attempts === 0 && (manager || own);
   const live = isLiveExam(exam);
   return {

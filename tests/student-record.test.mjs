@@ -74,7 +74,8 @@ test('admin detail opens, closes and edits without changing data; layout variant
   ctx.click(ctx.$('#studentList [data-action="view"]'));
   ctx.click(ctx.$('[data-modal-action="reset-pin"]'));
   assert.equal(ctx.$('.student-record-modal'), null);
-  assert.match(ctx.$('#adminModalTitle').textContent, /ডিফল্ট পাসওয়ার্ড/);
+  assert.match(ctx.$('#adminModalTitle').textContent, /পাসওয়ার্ড রিসেট/);
+  assert.ok(ctx.$('#pinResetInput'), 'the reset dialog offers a password field');
   assert.equal(ctx.window.localStorage.getItem(ROSTER_KEY), stored);
 });
 

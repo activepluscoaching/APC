@@ -1,5 +1,5 @@
-import { iconElement } from './icons.js';
-import { registerServiceWorker } from './service-worker.js';
+import { iconElement } from '../js/icons.js';
+import { registerServiceWorker } from '../js/service-worker.js';
 registerServiceWorker();
 import { createRoleStore, ROLE_NAMES } from './offline-role-store.js';
 const db = createRoleStore(localStorage);

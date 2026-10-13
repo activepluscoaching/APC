@@ -7,14 +7,13 @@
 
 import { protectAccountIdentity, normalizeUsername } from './account-policy.js';
 import { normalizeAnswer } from './ui.js';
-import { STORAGE_KEYS, defaultStudent, DEFAULT_APP_SETTINGS, DEFAULT_PIN } from './config.js';
+import { STORAGE_KEYS, defaultStudent, DEFAULT_APP_SETTINGS } from './config.js';
 import { rememberAccount, KEYS, nextSequence, recordNonce } from './database.js';
 import { hashPassword, verifyPassword, isPasswordRecord } from './password-hash.js';
 import { encryptValue, decryptValue, isEncryptedEnvelope } from './secure-store.js';
-import { buildSessionRecord, isSessionRecordValid } from './session.js';
+import { buildSessionRecord, isSessionRecordValid, SESSION_TTL_DAYS } from './session.js';
 import { LOCAL_WRITE_KEY, markLocalSource } from './local-write-mark.js';
 
-const SESSION_DAYS_REMEMBER = 90;
 const TAB_SESSION_MARKER = '1';
 
 function getStorage(type = 'local') {
@@ -50,10 +49,12 @@ export function loadAccount() {
   try { return protectAccountIdentity(account, account); } catch { return account; }
 }
 
-/** Plaintext secrets provided by the caller become hashes; they are never stored. */
+/** Plaintext secrets provided by the caller become hashes; they are never
+   stored. An empty password never falls back to a built-in default: no hash
+   is written and no default password can open the account. */
 async function hashSecrets(value, source) {
   const stored = { ...value };
-  const pin = typeof source?.pin === 'string' && source.pin ? source.pin : (stored.pinHash ? null : DEFAULT_PIN);
+  const pin = typeof source?.pin === 'string' && source.pin ? source.pin : null;
   if (pin) stored.pinHash = await hashPassword(pin);
   if (typeof source?.securityAnswer === 'string' && source.securityAnswer) {
     stored.securityAnswerHash = await hashPassword(normalizeAnswer(source.securityAnswer));
@@ -211,7 +212,7 @@ export async function persistSession(remember = true) {
       tab?.setItem(SESSION_KEY, TAB_SESSION_MARKER);
       return true;
     }
-    const record = buildSessionRecord({ owner: 'student', ttlDays: SESSION_DAYS_REMEMBER });
+    const record = buildSessionRecord({ owner: 'student', ttlDays: SESSION_TTL_DAYS.student });
     const envelope = await encryptValue(JSON.stringify(record));
     return envelope ? writeJSON(SESSION_KEY, envelope) : writeJSON(SESSION_KEY, record);
   } catch { /* private browsing can disable storage */ }

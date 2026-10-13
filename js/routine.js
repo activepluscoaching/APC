@@ -3,6 +3,8 @@ import { $, $$, toBanglaNumber } from './ui.js';
 import { setView } from './shell.js';
 import { subjectInitials } from './config.js';
 import { loadRoutine, WEEK_DAYS, ROUTINE_KEY } from './office-data.js';
+import { matchesClassSection } from './class-key.js';
+import { resolveTeacherName } from './teaching-data.js';
 
 const DAY_LABELS = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 
@@ -30,8 +32,8 @@ export function renderRoutine(day = 'sat', student = null) {
     if (info && strong) strong.textContent = toBanglaNumber(info.dayNumber);
   });
   const allDayData = routine[day] || { classes: [] };
-  const dayData = student?.className
-    ? { ...allDayData, classes: (allDayData.classes || []).filter(item => !item.className || item.className === student.className) }
+  const dayData = student
+    ? { ...allDayData, classes: (allDayData.classes || []).filter(item => matchesClassSection(item, student)) }
     : allDayData;
   const list = $('#routineList');
   if (!list) return;
@@ -47,7 +49,7 @@ export function renderRoutine(day = 'sat', student = null) {
       <div class="routine-time"><strong>${item.time}</strong><small>${item.period}</small></div>
       <div class="routine-body">
         <span class="subject-block ${item.tone || 'green'}">${subjectInitials[item.subject] || 'ক'}</span>
-        <span><strong>${item.subject}</strong><small>${item.teacher} · ${item.room}</small></span>
+        <span><strong>${item.subject}</strong><small>${resolveTeacherName(item.teacherId, item.teacherName || item.teacher)} · ${item.room}</small></span>
         <span class="routine-tag${item.tag === 'টেস্ট' ? ' test' : ''}">${item.tag || 'ক্লাস'}</span>
       </div>
     </article>

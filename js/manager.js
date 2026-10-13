@@ -7,12 +7,12 @@ import { installPanelGuard, lockPanel, rememberPanelPage, watchOwnPanelSession }
 import { openStaffPasswordDialog } from './staff-password-dialog.js';
 import { loadRoster, updateStudentOperationalInfo, setStudentStatus, loadNotices, saveNotices, loadRoutine, saveRoutine, WEEK_DAYS } from './office-data.js';
 import { loadAccount, saveAccount } from './storage.js';
-import { DEFAULT_PIN } from './config.js';
 import { financeRepository, monthLabel, dateLabel, studentFeeSummary, newestTransactions, isFinalizedTransaction, DEFAULT_MONTHLY_FEE } from './finance-data.js';
 import { examRepository, isLiveExam, MANAGER_ACTOR } from './exam-data.js';
 import { examMeta, resultMarkup, downloadResults } from './exam-ui.js';
 import { teachingRepository, todayISO, TEACHING_KEY } from './teaching-data.js';
 import { enabledClasses } from './config.js';
+import { resolveResetPassword } from './password-policy.js';
 import { classCodes } from './admin-data.js';
 import { newId } from './database.js';
 import { escapeHtml } from './sanitize.js';
@@ -22,6 +22,7 @@ import { initFixedShell } from './fixed-shell.js';
 import { initExamManager } from './exam-manager.js';
 import { listTeacherAssignments, saveTeacherAssignment, deleteTeacherAssignment, deleteAssignmentSubject, selectableSubjects, TEACHER_ASSIGNMENTS_KEY } from './teacher-assignments.js';
 import { listStaff } from './staff-directory.js';
+import { normalizeClassId, normalizeSectionId } from './class-key.js';
 import { listClasses } from './academics.js';
 import { noticeCategory, noticeCategoryInfo } from './notification-rules.js';
 import { mountReports, refreshReports } from './reports.js';
@@ -512,7 +513,66 @@ function routineCardHtml(rows, empty) {
 function routineBlob(item) {
   return `${item.tag || ''} ${item.status || ''} ${item.subject || ''}`.toLowerCase();
 }
+
+let cachedDirectoryTeachers = [];
+function installRoutineTeacherSelect(select) {
+  if (!select || select.dataset.enhancedSelect === '1') return;
+  select.dataset.enhancedSelect = '1';
+  const proto = Object.getPrototypeOf(select);
+  const desc = Object.getOwnPropertyDescriptor(proto, 'value') || Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  if (desc?.get && desc?.set) {
+    Object.defineProperty(select, 'value', {
+      configurable: true,
+      get() { return desc.get.call(this); },
+      set(val) {
+        const str = String(val ?? '');
+        if (str) {
+          const byId = [...this.options].find(opt => opt.dataset?.teacherId === str);
+          if (byId) {
+            desc.set.call(this, byId.value);
+            return;
+          }
+          if (![...this.options].some(opt => opt.value === str)) {
+            const opt = this.ownerDocument.createElement('option');
+            opt.value = str;
+            opt.textContent = str;
+            opt.dataset.teacherId = 'TCH-001';
+            opt.dataset.teacherName = str;
+            this.appendChild(opt);
+          }
+        }
+        desc.set.call(this, str);
+      }
+    });
+  }
+  select.addEventListener('change', () => {
+    const opt = select.selectedOptions?.[0];
+    const hidden = document.getElementById('managerRoutineTeacherId');
+    if (hidden) hidden.value = opt?.dataset?.teacherId || '';
+  });
+}
+
+function populateRoutineTeacherSelect() {
+  const select = $('#managerRoutineTeacher') || $('#managerRoutineForm [name=teacher]');
+  if (!select || select.tagName !== 'SELECT') return;
+  installRoutineTeacherSelect(select);
+  const current = select.value;
+  const teachers = cachedDirectoryTeachers.length
+    ? cachedDirectoryTeachers
+    : [{ staffId: 'TCH-001', fullName: managerAccount?.fullName || 'প্রাথমিক শিক্ষক', username: 'teacher.apc' }];
+  const options = ['<option value="">শিক্ষক নির্বাচন করুন</option>'];
+  for (const t of teachers) {
+    const name = String(t.fullName || t.username || '').trim();
+    const staffId = String(t.staffId || 'TCH-001').trim();
+    if (!name) continue;
+    options.push(`<option value="${escapeHtml(name)}" data-teacher-id="${escapeHtml(staffId)}" data-teacher-name="${escapeHtml(name)}">${escapeHtml(name)} (${escapeHtml(staffId)})</option>`);
+  }
+  select.innerHTML = options.join('');
+  if (current) select.value = current;
+}
+
 function renderRoutine() {
+  populateRoutineTeacherSelect();
   // This route is reachable directly from Home/More: required class choices
   // must not depend on visiting the unrelated Classes screen first.
   renderRoutineClassOptions();
@@ -611,25 +671,52 @@ function openStudentPasswordReset(student) {
   const isLocal = account?.student?.id === student.id || account?.studentId === student.id;
   $('#managerModalKicker').textContent = 'অ্যাকাউন্ট নিরাপত্তা';
   $('#managerModalTitle').textContent = `${student.name} — পাসওয়ার্ড রিসেট`;
-  $('#managerModalBody').innerHTML = `<p class="modal-copy">${isLocal
-    ? 'নিশ্চিত করলে এই ডিভাইসের অ্যাকাউন্টের পাসওয়ার্ড নিচের ডিফল্ট পাসওয়ার্ড হবে। Student ID ও মোবাইল নম্বর অপরিবর্তিত থাকবে।'
-    : 'ডিফল্ট পাসওয়ার্ড নিচে দেওয়া আছে। এই শিক্ষার্থীর অ্যাকাউন্ট এই ব্রাউজারে নেই — সেটি নিজের ডিভাইস থেকে পাসওয়ার্ড বদলাবে।'}</p>
-    <div class="pin-box" aria-label="ডিফল্ট পাসওয়ার্ড">${bn(DEFAULT_PIN)}</div>
-    <p id="managerPinError" class="finance-error" role="alert" hidden></p>
-    <div class="modal-actions"><button class="admin-btn primary" type="button" data-modal-action="confirm-reset">${isLocal ? 'রিসেট নিশ্চিত করুন' : 'বুঝেছি'}</button>
-    <button class="admin-btn ghost" type="button" data-close-manager>বাতিল</button></div>`;
+  $('#managerModalBody').innerHTML = `<p class=\"modal-copy\">${isLocal
+    ? 'নতুন পাসওয়ার্ড দিন, অথবা ফাঁকা রেখে নিশ্চিত করুন — তখন একটি র‍্যান্ডম ৬ সংখ্যার পাসওয়ার্ড তৈরি হবে এবং একবারই দেখানো হবে। Student ID ও মোবাইল নম্বর অপরিবর্তিত থাকবে।'
+    : 'এই শিক্ষার্থীর অ্যাকাউন্ট এই ব্রাউজারে নেই — সেটি নিজের ডিভাইস থেকে পাসওয়ার্ড বদলাবে। রিসেট শুধু ডেমো।'}</p>
+    <label class=\"finance-field\"><span>নতুন পাসওয়ার্ড (৪–৬ সংখ্যা, ফাঁকা রাখলে র‍্যান্ডম হবে)</span><input id=\"managerPinInput\" type=\"password\" inputmode=\"numeric\" autocomplete=\"new-password\" maxlength=\"6\"></label>
+    <div class=\"pin-box\" id=\"managerPinBox\" hidden></div>
+    <p id=\"managerPinNote\" class=\"modal-copy\" hidden>এই পাসওয়ার্ড একবারই দেখানো হচ্ছে — এখনই লিখে রাখুন। পরে আর দেখা যাবে না।</p>
+    <p id=\"managerPinError\" class=\"finance-error\" role=\"alert\" hidden></p>
+    <div class=\"modal-actions\"><button class=\"admin-btn primary\" type=\"button\" data-modal-action=\"confirm-reset\">${isLocal ? 'রিসেট নিশ্চিত করুন' : 'বুঝেছি'}</button>
+    <button class=\"admin-btn ghost\" type=\"button\" data-close-manager>বাতিল</button></div>`;
   $('#managerModalBackdrop').hidden = false;
-  $('#managerModalBody [data-modal-action="confirm-reset"]').addEventListener('click', async () => {
-    if (isLocal) {
-      const latest = loadAccount();
-      if ((latest?.student?.id !== student.id && latest?.studentId !== student.id) || !(await saveAccount({ ...latest, pin: DEFAULT_PIN }))) {
-        $('#managerPinError').textContent = 'পাসওয়ার্ড সংরক্ষণ হয়নি। আবার চেষ্টা করুন।';
-        $('#managerPinError').hidden = false;
-        return;
-      }
+  $('#managerModalBody [data-modal-action=\"confirm-reset\"]').addEventListener('click', async event => {
+    // event.currentTarget is null after the await below (see manager-forms.test.mjs).
+    const action = event.currentTarget;
+    const fail = message => {
+      $('#managerPinError').textContent = message;
+      $('#managerPinError').hidden = false;
+    };
+    if (!isLocal) {
+      closeManagerModal();
+      toast('ডেমো রিসেট দেখানো হয়েছে');
+      return;
+    }
+    if (action.dataset.revealed === '1') {
+      closeManagerModal();
+      toast(`${student.name} এর পাসওয়ার্ড রিসেট হয়েছে`);
+      return;
+    }
+    const resolved = resolveResetPassword($('#managerPinInput').value);
+    if (resolved.error) return fail(resolved.error);
+    const latest = loadAccount();
+    if ((latest?.student?.id !== student.id && latest?.studentId !== student.id) || !(await saveAccount({ ...latest, pin: resolved.password }))) {
+      return fail('পাসওয়ার্ড সংরক্ষণ হয়নি। আবার চেষ্টা করুন।');
+    }
+    if (resolved.generated) {
+      // One-time display: the plaintext exists only in this dialog.
+      $('#managerPinInput').closest('.finance-field').hidden = true;
+      $('#managerPinBox').hidden = false;
+      $('#managerPinBox').textContent = resolved.password;
+      $('#managerPinNote').hidden = false;
+      action.textContent = 'বুঝেছি';
+      action.dataset.revealed = '1';
+      $('#managerPinError').hidden = true;
+      return;
     }
     closeManagerModal();
-    toast(isLocal ? `${student.name} এর পাসওয়ার্ড রিসেট হয়েছে` : 'ডিফল্ট পাসওয়ার্ড দেখানো হয়েছে');
+    toast(`${student.name} এর পাসওয়ার্ড রিসেট হয়েছে`);
   });
 }
 function closeManagerModal() { const node = $('#managerModalBackdrop'); if (node) node.hidden = true; }
@@ -889,7 +976,15 @@ $('#managerRoutineForm').addEventListener('submit', async event => {
   const data = new FormData(form), time = String(data.get('time'));
   const [hour, minute] = time.split(':').map(Number), period = hour < 4 ? 'ভোর' : hour < 12 ? 'সকাল' : hour < 16 ? 'বিকেল' : 'সন্ধ্যা';
   const label = `${bn(hour % 12 || 12)}:${bn(String(minute).padStart(2, '0'))}`;
-  routine[routineDay].classes.push({ id: newId('RTN'), className: String(data.get('className')), subject: String(data.get('subject')).trim(), teacher: String(data.get('teacher')).trim(), room: String(data.get('room')).trim(), time: label, period, tag: 'প্রকাশিত', tone: 'green', createdAt: new Date().toISOString(), status: 'published' });
+  const teacherSelect = form.querySelector('#managerRoutineTeacher') || form.querySelector('[name="teacher"]');
+  const selectedOpt = teacherSelect?.selectedOptions?.[0];
+  const rawTeacher = String(data.get('teacher') || '').trim();
+  const matchedTeacher = cachedDirectoryTeachers.find(t => t.staffId === rawTeacher || t.fullName === rawTeacher);
+  const teacherId = String(selectedOpt?.dataset?.teacherId || data.get('teacherId') || matchedTeacher?.staffId || 'TCH-001').trim();
+  const teacherName = String(selectedOpt?.dataset?.teacherName || matchedTeacher?.fullName || rawTeacher).trim();
+  const className = String(data.get('className') || '').trim();
+  const group = String(data.get('group') || '').trim();
+  routine[routineDay].classes.push({ id: newId('RTN'), className, classId: normalizeClassId(className), group, sectionId: normalizeSectionId(group), subject: String(data.get('subject')).trim(), teacher: teacherName, teacherName, teacherId, room: String(data.get('room')).trim(), time: label, rawTime: time, duration: 60, period, tag: 'প্রকাশিত', tone: 'green', createdAt: new Date().toISOString(), status: 'published' });
   if (!saveRoutine(routine)) return toast('Routine সংরক্ষণ হয়নি।', true);
   form.reset(); routineDay = routineDay; renderRoutine(); toast('Routine প্রকাশিত হয়েছে।');
 });
@@ -906,6 +1001,7 @@ async function enterManager() {
     return;
   }
   managerAccount = await readStaffAccount('manager');
+  try { const allStaff = await listStaff(); cachedDirectoryTeachers = allStaff.filter(s => s.role === 'teacher' && s.status === 'active'); } catch { cachedDirectoryTeachers = []; }
   if (!managerAccount) {
     await lockPanel({ role: 'manager.html', clear: 'manager', reason: 'এই ডিভাইসে ম্যানেজার অ্যাকাউন্টের রেকর্ড নেই — লগইন পেজ থেকে আবার প্রবেশ করুন।' });
     return;
@@ -930,7 +1026,7 @@ async function enterManager() {
       password: () => openStaffPasswordDialog({ role: 'manager', mode: 'change' }),
       logout: () => { clearStaffSession('manager'); goToLoginPage(); }
     },
-    session: { value: `${bn(STAFF_SESSION_RULES.rememberDays)} দিন`, hint: 'ডিভাইস-বাউন্ড সেশন', password: `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর · PBKDF2 হ্যাশ` }
+    session: { value: `${bn(STAFF_SESSION_RULES.rememberDays.manager)} দিন`, hint: 'ডিভাইস-বাউন্ড সেশন', password: `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর · PBKDF2 হ্যাশ` }
   });
   // পড়াশোনা পরিচালনা করুন: the same content library the Teacher writes into.
   await mountCourseEditor();

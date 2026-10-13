@@ -124,6 +124,13 @@
             ".validate": "newData.hasChildren()"
           }
         },
+        "courses": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
         "teacherAssignments": {
           ".read": "auth != null",
           ".write": "auth != null",

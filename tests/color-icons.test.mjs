@@ -125,7 +125,7 @@ test('the new icon dependency ships in the bumped offline release', () => {
   assert.ok(sw.includes("'./js/icon-set.js'"));
   assert.ok(existsSync(new URL('../js/icon-set.js', import.meta.url)));
   assert.match(read('js/icons.js'), /from '\.\/icon-set\.js'/);
-  for (const page of ['index','admin','manager','teacher','payment','offline-roles']) {
+  for (const page of ['index','admin','manager','teacher','payment']) {
     /* The stylesheets are linked directly (fifteen parallel <link>s instead of
        one @import chain), so EVERY sheet must carry the release query. */
     const links = [...read(page + '.html').matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(match => match[1]);

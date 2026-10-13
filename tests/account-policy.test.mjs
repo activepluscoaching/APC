@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { protectAccountIdentity, appendAccountMobile, contactNumber, isContactNumber } from '../js/account-policy.js';
 import { saveAccount, loadAccount, saveStudent, writeJSON, verifyAccountPassword } from '../js/storage.js';
-import { STORAGE_KEYS, DEFAULT_PIN } from '../js/config.js';
+import { STORAGE_KEYS } from '../js/config.js';
 import { isPasswordRecord } from '../js/password-hash.js';
 const primary = '01711223344', extra = '01811223344';
 function setup() {
@@ -15,9 +15,9 @@ for (const role of ['student', 'teacher']) {
   test(`${role}: first number immutable, contacts append-only, no plaintext password`, async () => {
     const env = setup();
     const initial = protectAccountIdentity({ role, mobile: primary });
-    // The default password is only a fallback, and it is stored as a hash.
+    // The password is only ever stored as a hash — no built-in default exists.
     assert.equal(initial.pin, undefined);
-    assert.equal(await saveAccount({ ...initial, pin: DEFAULT_PIN }), true);
+    assert.equal(await saveAccount({ ...initial, pin: '246810' }), true);
     assert.equal(isPasswordRecord(rawAccount(env).pinHash), true);
     assert.equal(rawAccount(env).pin, undefined);
     const added = appendAccountMobile(initial, '+8801811223344');
@@ -46,16 +46,23 @@ test('storage enforcement ignores attempted primary replacements and omitted con
   assert.equal(JSON.parse(window.localStorage.getItem(STORAGE_KEYS.student)).studentMobile, primary);
 });
 
-test('a saved password is only ever a PBKDF2 record; the default is applied as a hash', async () => {
+test('a saved password is only ever a PBKDF2 record; no fallback default exists', async () => {
   const env = setup();
   assert.equal(await saveAccount({ mobile: primary, student: { id: 'S-1' } }), true);
   const stored = rawAccount(env);
-  assert.equal(isPasswordRecord(stored.pinHash), true);
+  // Empty password: no hash is invented, and neither the retired default
+  // (123123) nor anything else can open the account.
+  assert.equal(stored.pinHash, undefined);
   assert.equal(stored.pin, undefined);
   assert.equal(stored.password, undefined);
-  // No pin supplied: the fallback PIN is hashed, and the plaintext is gone.
-  assert.equal(await verifyAccountPassword(loadAccount(), DEFAULT_PIN), true);
-  assert.equal(await verifyAccountPassword(loadAccount(), '000000'), false);
+  assert.equal(await verifyAccountPassword(loadAccount(), '123123'), false);
+  assert.equal(await verifyAccountPassword(loadAccount(), ''), false);
+  // A real password is stored only as a PBKDF2 hash.
+  assert.equal(await saveAccount({ ...loadAccount(), pin: '246810' }), true);
+  assert.equal(isPasswordRecord(rawAccount(env).pinHash), true);
+  assert.equal(rawAccount(env).pin, undefined);
+  assert.equal(await verifyAccountPassword(loadAccount(), '246810'), true);
+  assert.equal(await verifyAccountPassword(loadAccount(), '123123'), false);
 });
 
 test('legacy plaintext account is upgraded to a hash and keeps its custom PIN', async () => {
@@ -72,7 +79,7 @@ test('legacy plaintext account is upgraded to a hash and keeps its custom PIN', 
   assert.equal(stored.pin, undefined);
   assert.equal(isPasswordRecord(stored.pinHash), true);
   assert.equal(await verifyAccountPassword(loadAccount(), '789789'), true);
-  assert.equal(await verifyAccountPassword(loadAccount(), DEFAULT_PIN), false);
+  assert.equal(await verifyAccountPassword(loadAccount(), '123123'), false);
   assert.equal(loadAccount().mobile, primary);
 });
 

@@ -17,10 +17,15 @@ import path from 'node:path';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = file => readFileSync(path.join(root, file), 'utf8');
 
-const PAGES = ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html', 'offline-roles.html'];
+const PAGES = ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html', 'demo/offline-roles.html'];
 /* Markup can also live in a referenced preview page (a design snapshot a spec
    points at); scan every page in the repo so those selectors resolve too. */
-const ALL_PAGES = readdirSync(root).filter(file => file.endsWith('.html'));
+const ALL_PAGES = [
+  ...readdirSync(root).filter(file => file.endsWith('.html')),
+  ...readdirSync(path.join(root, 'demo'), { withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.name.endsWith('.html'))
+    .map(entry => `demo/${entry.name}`)
+];
 const previewRoot = path.join(root, 'preview');
 const previews = existsSync(previewRoot)
   ? readdirSync(previewRoot, { withFileTypes: true })
@@ -31,8 +36,11 @@ const previews = existsSync(previewRoot)
   : [];   // preview/ is untracked: design snapshots stay out of the repository
 const pageSource = Object.fromEntries([...ALL_PAGES, ...previews].map(page => [page, read(page)]));
 /* Every module's source, so an id/attribute a page builds at runtime still counts. */
-const jsFiles = readdirSync(path.join(root, 'js')).filter(file => file.endsWith('.js'));
-const jsSource = jsFiles.map(file => read(`js/${file}`)).join('\n');
+const jsFiles = [
+  ...readdirSync(path.join(root, 'js')).filter(file => file.endsWith('.js')).map(file => `js/${file}`),
+  ...readdirSync(path.join(root, 'demo', 'js')).filter(file => file.endsWith('.js')).map(file => `demo/js/${file}`)
+];
+const jsSource = jsFiles.map(file => read(file)).join('\n');
 const cssSource = readdirSync(path.join(root, 'css')).filter(file => file.endsWith('.css'))
   .map(file => read(`css/${file}`)).join('\n');
 
@@ -116,7 +124,7 @@ for (const spec of readdirSync(path.join(root, 'tests')).filter(file => file.end
    so the leftover cannot quietly become a second interface again. */
 const deadRefs = new Map();
 for (const file of jsFiles) {
-  const source = read(`js/${file}`);
+  const source = read(file);
   for (const match of source.matchAll(/[\$(]\s*['"]#([A-Za-z][\w-]*)['"]/g)) {
     const id = match[1];
     if (htmlIds.has(id) || runtimeIds.has(id)) continue;
@@ -143,7 +151,7 @@ for (const [spec, list] of bySpec) {
 }
 if (deadRefs.size) {
   console.log('\nGuarded module references to retired markup (no selector can resolve them):');
-  for (const [file, list] of deadRefs) { const unique = [...new Set(list)]; console.log(`   js/${file}: ${unique.length} — ${unique.slice(0, 6).join(', ')}${unique.length > 6 ? ' …' : ''}`); }
+  for (const [file, list] of deadRefs) { const unique = [...new Set(list)]; console.log(`   ${file}: ${unique.length} — ${unique.slice(0, 6).join(', ')}${unique.length > 6 ? ' …' : ''}`); }
 }
 const dynamicBySpec = new Map();
 for (const item of dynamic) {

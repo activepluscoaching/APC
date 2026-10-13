@@ -65,9 +65,11 @@ export function initExamManager(container, role) {
   }
   function hubMarkup(exams) {
     const upcoming = upcomingExams(exams).length;
+    const pendingCount = exams.filter(e => e.status === 'pending').length;
     return `<section class="exam-hub" aria-label="পরীক্ষা পরিচালনা করুন">
       <div class="exam-actions">
         ${button('view-history', '🧾 পরীক্ষার ইতিহাস')}
+        ${role === 'manager' ? button('view-approval', `✅ পরীক্ষা অনুমোদন (${num(pendingCount)})`) : ''}
         ${button('view-upcoming', `⏳ আসন্ন পরীক্ষা${upcoming ? ` (${num(upcoming)})` : ''}`)}
         ${button('view-archive', '🗂️ পরীক্ষার প্রশ্ন দেখুন')}
         ${button('bank', '📚 প্রশ্ন সংরক্ষণ করুন')}
@@ -76,6 +78,40 @@ export function initExamManager(container, role) {
         ${Object.entries(EXAM_TYPES).map(([type, label]) => button('new-' + type, `পরীক্ষা তৈরি করুন — ${label}`, '', 'primary')).join('')}
       </div>
       ${countersMarkup(exams)}
+    </section>`;
+  }
+  function approvalQueueMarkup(exams) {
+    if (role !== 'manager') return '';
+    const queue = exams.filter(e => ['pending', 'approved'].includes(e.status));
+    if (!queue.length) {
+      return `<section class="exam-card" data-exam-approval-queue><h3>পরীক্ষা অনুমোদন তালিকা</h3><p class="exam-note">অনুমোদনের অপেক্ষায় কোনো পরীক্ষা নেই।</p></section>`;
+    }
+    return `<section class="exam-card" data-exam-approval-queue>
+      <h3>পরীক্ষা অনুমোদন তালিকা (${num(queue.length)}টি)</h3>
+      <div class="exam-approval-list">${queue.map(exam => {
+        const perm = permissionFor(exam);
+        return `<article class="exam-card" data-approval-exam="${esc(exam.id)}">
+          ${examRecord(exam)}
+          <details class="exam-approval-questions" open>
+            <summary>প্রশ্ন, সঠিক উত্তর ও নম্বর দেখুন (${num((exam.questions || []).length)}টি প্রশ্ন • মোট ${num(totalMarks(exam))} নম্বর)</summary>
+            ${questionPreview(exam, true)}
+          </details>
+          ${reviewFormMarkup(exam, perm)}
+        </article>`;
+      }).join('')}</div>
+    </section>`;
+  }
+  function teacherRejectedBanner(exams) {
+    if (role !== 'teacher') return '';
+    const rejected = exams.filter(e => e.status === 'rejected' && e.reviewNote);
+    if (!rejected.length) return '';
+    return `<section class="exam-card exam-error-banner" data-teacher-rejected-exams role="region" aria-label="ফেরত আসা পরীক্ষা">
+      <h3>সংশোধনের জন্য ফেরত আসা পরীক্ষা (${num(rejected.length)}টি)</h3>
+      ${rejected.map(exam => `<div class="exam-rejected-item" data-rejected-exam="${esc(exam.id)}">
+        <strong>${esc(exam.title)} (${esc(exam.className)}${exam.group ? ` • ${esc(exam.group)}` : ''})</strong>
+        <p class="exam-error" data-rejection-reason>ফেরত পাঠানোর কারণ: ${esc(exam.reviewNote)}</p>
+        <div class="exam-actions">${button('edit', 'সম্পাদনা করুন', exam.id, 'primary')}</div>
+      </div>`).join('')}
     </section>`;
   }
   /** Date + class + subject + name + status, in one filter bar. */
@@ -131,7 +167,7 @@ export function initExamManager(container, role) {
       ].filter(Boolean).join('');
       return `<tr data-managed-exam="${esc(exam.id)}">
         <td data-label="তারিখ">${esc(examDateShort(examDateOf(exam)))}</td>
-        <td data-label="পরীক্ষা"><strong>${esc(exam.title)}</strong><small class="exam-row-meta">${codeTag(exam)}${typeTag(exam)} • ${esc(shortExamId(exam.id))}</small>${exam.chapterName ? `<small class="exam-row-meta">অধ্যায়: ${esc(exam.chapterName)}</small>` : ''}${exam.reviewNote ? `<small class="exam-review-note">${esc(exam.reviewNote)}</small>` : ''}</td>
+        <td data-label="পরীক্ষা"><strong>${esc(exam.title)}</strong><small class="exam-row-meta">${codeTag(exam)}${typeTag(exam)} • ${esc(shortExamId(exam.id))}</small>${exam.chapterName ? `<small class="exam-row-meta">অধ্যায়: ${esc(exam.chapterName)}</small>` : ''}${exam.reviewNote ? `<small class="exam-review-note" data-rejection-reason>ফেরত পাঠানোর কারণ: ${esc(exam.reviewNote)}</small>` : ''}</td>
         <td data-label="শ্রেণি">${esc(exam.className || 'সব শ্রেণি')}${exam.group ? ` • ${esc(exam.group)}` : ''}</td>
         <td data-label="বিষয়">${esc(exam.subject)}</td>
         <td data-label="প্রশ্ন">${count((exam.questions || []).length)}</td>
@@ -274,9 +310,13 @@ export function initExamManager(container, role) {
     const visible = db.exams;
     const list = filterExams(visible, filters);
     content.innerHTML = `${role === 'admin' ? '<p class="exam-note">Admin দেখতে পারেন; অনুমোদন ও প্রকাশ Manager-এর কাজ।</p>' : ''}
-      ${hubMarkup(visible)}${filterMarkup(visible)}
+      ${hubMarkup(visible)}${teacherRejectedBanner(visible)}${approvalQueueMarkup(visible)}${filterMarkup(visible)}
       <h2 class="exam-section-title">পরীক্ষার ইতিহাস — তারিখ অনুযায়ী</h2>
       ${groupsMarkup(list)}`;
+  }
+  function approvalView() {
+    view = 'approval'; selected = null; openQuestion = null;
+    content.innerHTML = `${back()}${approvalQueueMarkup(db.exams)}`;
   }
   function upcoming() {
     view = 'upcoming'; selected = null; openQuestion = null;
@@ -353,7 +393,7 @@ export function initExamManager(container, role) {
     const reviewable = perm.review || perm.approve || perm.publish;
     content.innerHTML = `${back()}<article class="exam-card">${examRecord(exam)}
       <ol class="exam-timeline">${steps.map(step => `<li class="is-${step.state}">${esc(step.label)}</li>`).join('')}</ol>
-      ${exam.reviewNote ? `<p class="exam-error">সংশোধনের মন্তব্য: ${esc(exam.reviewNote)}</p>` : ''}
+      ${exam.reviewNote ? `<p class="exam-error" data-rejection-reason>ফেরত পাঠানোর কারণ: ${esc(exam.reviewNote)}</p>` : ''}
       <p>${esc(exam.instructions || 'কোনো অতিরিক্ত নির্দেশনা নেই।')}</p>
       <p class="exam-note">প্রতি ভুলে কাটা: ${num(exam.negative)} • পাস ${num(exam.passPercent)}% • দেরিতে প্রবেশের সীমা ${num(exam.lateMinutes)} মিনিট • অংশগ্রহণকারী ${num((exam.participants || []).length)} জন</p>
       <div class="exam-actions">${button('questions', 'প্রশ্ন দেখুন', exam.id)}${button('paper', 'প্রশ্নপত্র PDF ডাউনলোড', exam.id)}${perm.edit ? button('edit', 'সম্পাদনা', exam.id) : ''}</div>
@@ -365,7 +405,7 @@ export function initExamManager(container, role) {
       ${questionPreview(exam, true)}`;
   }
   function reviewFormMarkup(exam, perm) {
-    return `<form class="exam-form" data-review-form>
+    return `<form class="exam-form" data-review-form data-review-exam-id="${esc(exam.id)}">
       <h3>প্রশ্ন যাচাই ও সিদ্ধান্ত</h3>
       <p class="exam-note">Status workflow: খসড়া → অনুমোদনের অপেক্ষায় → অনুমোদিত → প্রকাশিত → সম্পন্ন → আর্কাইভ।</p>
       <label>প্রতি ভুল উত্তরে কাটা নম্বর<input name="negative" type="number" min="0" max="1000" step="0.01" value="${num(exam.negative)}" ${exam.type !== 'mcq' ? 'readonly' : ''}></label>
@@ -497,8 +537,8 @@ export function initExamManager(container, role) {
   async function grade(e) {
     view = 'grade'; selected = e.id;
     const students = await repo.listStudents();
-    content.innerHTML = `${back()}${examRecord(e)}<p class="exam-note">ক্লাসে খাতা দেখে প্রশ্নভিত্তিক নম্বর দিন। উপস্থিত না থাকলে অনুপস্থিত হিসেবে রাখুন।</p><form class="exam-form" data-grade-form><label>শিক্ষার্থী<select name="studentId" required><option value="">শিক্ষার্থী নির্বাচন করুন</option>${students.map(s => `<option value="${esc(s.id)}">${esc(s.name)} • ${esc(s.className)} • ${esc(s.id)}</option>`).join('')}</select></label>${e.questions.map(q => `<label>${esc(q.text)} (পূর্ণমান ${num(q.marks)})<input name="${q.id}" type="number" min="0" max="${q.marks}" step="0.01" placeholder="নম্বর দিন"></label>`).join('')}<div class="exam-actions"><button type="submit" name="decision" value="marks" class="primary">নম্বর প্রকাশ করুন</button><button type="submit" name="decision" value="absent">অনুপস্থিত রাখুন</button></div></form>`;
-    $('[name=studentId]').addEventListener('change', event => { const saved = db.attempts.find(a => a.examId === e.id && a.studentId === event.target.value); e.questions.forEach(q => { $(`[name=${q.id}]`).value = saved?.questionScores?.[q.id] ?? ''; }); });
+    content.innerHTML = `${back()}${examRecord(e)}<p class="exam-note">ক্লাসে খাতা দেখে প্রশ্নভিত্তিক নম্বর দিন। উপস্থিত না থাকলে অনুপস্থিত হিসেবে রাখুন।</p><form class="exam-form" data-grade-form><label>শিক্ষার্থী<select name="studentId" required><option value="">শিক্ষার্থী নির্বাচন করুন</option>${students.map(s => `<option value="${esc(s.id)}">${esc(s.name)} • ${esc(s.className)} • ${esc(s.id)}</option>`).join('')}</select></label>${e.questions.map(q => `<label>${esc(q.text)} (পূর্ণমান ${num(q.marks)})<input name="${q.id}" type="number" min="0" max="${q.marks}" step="0.01" placeholder="নম্বর দিন"></label>`).join('')}<label>মন্তব্য (সর্বোচ্চ ২০০ অক্ষর, ঐচ্ছিক)<input name="comment" type="text" maxlength="200" placeholder="শিক্ষার্থীর জন্য সংক্ষিপ্ত মন্তব্য"></label><div class="exam-actions"><button type="submit" name="decision" value="marks" class="primary">নম্বর প্রকাশ করুন</button><button type="submit" name="decision" value="absent">অনুপস্থিত রাখুন</button></div></form>`;
+    $('[name=studentId]').addEventListener('change', event => { const saved = db.attempts.find(a => a.examId === e.id && a.studentId === event.target.value); e.questions.forEach(q => { $(`[name=${q.id}]`).value = saved?.questionScores?.[q.id] ?? ''; }); if ($('[name=comment]')) $('[name=comment]').value = saved?.comment ?? ''; });
     $('[data-grade-form]').addEventListener('submit', event => { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget)); const student = students.find(s => s.id === values.studentId); run(() => event.submitter.value === 'absent' ? repo.markWrittenAbsent(e.id, student, actor) : repo.saveWrittenScore(e.id, student, values, actor), 'নম্বর/উপস্থিতি সংরক্ষিত হয়েছে।', () => grade(db.exams.find(item => item.id === e.id))); });
     scrollTop();
   }
@@ -508,6 +548,7 @@ export function initExamManager(container, role) {
   /** Paint the view the user is looking at from the in-memory snapshot. */
   function paint() {
     if (view === 'home') home();
+    else if (view === 'approval') approvalView();
     else if (view === 'upcoming') upcoming();
     else if (view === 'archive') archive();
     else if (view === 'bank') bankView();
@@ -590,6 +631,20 @@ export function initExamManager(container, role) {
     if (restored) { restored.focus(); if (caret !== null) restored.setSelectionRange(caret, caret); }
   });
   root.addEventListener('submit', async event => {
+    const reviewForm = event.target.closest('[data-review-form]');
+    if (reviewForm) {
+      event.preventDefault();
+      const examId = reviewForm.dataset.reviewExamId || selected;
+      const values = Object.fromEntries(new FormData(reviewForm));
+      const decision = event.submitter?.value || values.decision || 'publish';
+      const msg = decision === 'reject'
+        ? 'পরীক্ষাটি কারণসহ শিক্ষককে ফেরত পাঠানো হয়েছে।'
+        : decision === 'approve'
+          ? 'পরীক্ষা অনুমোদিত হয়েছে।'
+          : 'পরীক্ষা অনুমোদন ও প্রকাশ করা হয়েছে।';
+      run(() => repo.review(examId, decision, { negative: values.negative, note: values.note }, actor), msg);
+      return;
+    }
     const filterForm = event.target.closest('[data-exam-filters]');
     if (filterForm) { event.preventDefault(); readFilterForm(); applyFilters(); return; }
     const bankFilterForm = event.target.closest('[data-bank-filters]');
@@ -641,7 +696,7 @@ export function initExamManager(container, role) {
   });
   /* Screen-only actions (opening the shelf, turning a page, opening an editor)
      never touch storage, so they stay usable even while a save is finishing. */
-  const VIEW_ONLY_ACTIONS = new Set(['list', 'view-history', 'view-upcoming', 'view-archive', 'bank', 'bank-reset', 'bank-page', 'bank-new', 'bank-edit', 'bank-cancel']);
+  const VIEW_ONLY_ACTIONS = new Set(['list', 'view-history', 'view-approval', 'view-upcoming', 'view-archive', 'bank', 'bank-reset', 'bank-page', 'bank-new', 'bank-edit', 'bank-cancel']);
   root.addEventListener('click', async event => {
     const target = event.target.closest('[data-exam-action]'); if (!target) return;
     const action = target.dataset.examAction;
@@ -651,6 +706,7 @@ export function initExamManager(container, role) {
     if (action === 'list') { home(); scrollTop(); }
     else if (!ready) error('ডেটা লোড হয়নি। পেজ রিফ্রেশ করুন।');
     else if (action === 'view-history') home();
+    else if (action === 'view-approval') approvalView();
     else if (action === 'view-upcoming') upcoming();
     else if (action === 'view-archive') archive();
     else if (action === 'bank') { bankPage = 0; bankEditing = ''; bankView(); }

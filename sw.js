@@ -78,11 +78,21 @@
 // v181: precache the Admin-only Staff Management stylesheet.
 // v182: precache the authenticated Question Bank V2 sync modules.
 // v183: precache the Admin V2 staged-cutover migration console.
+// v271: one-time password dialogs survive their async save (captured button);
+//       profile edits accept an empty group; teacher exams hub opens the
+//       workspace home; footer labels fit 320px phones.
+// v270: docs pass — README rebuilt to the real file tree; payment-auth header
+//       comment now matches the shared-login truth.
+// v269: PWA manifest — white canvas + green primary theme color, unlocked
+//       orientation; theme-color meta follows the manifest on every page.
+// v268: security review — password reset policy module + off-main-thread PBKDF2 core
+//       (demo/ offline-role workspace moved out of the production shell).
+// v267: pin the practice timer bar like the official MCQ exam — the clock stays fixed at the top in every timed sheet.
 // v255: extend the Teacher home's blue hero to match the other portal homes.
 // v254: refresh the Teacher hero's complete greeting and note colour.
 // v253: keep the Teacher home greeting on its hero band when account names wrap.
 // v252: refresh the official MCQ exam screen's pinned timer-bar styles.
-const CACHE_VERSION = 266;
+const CACHE_VERSION = 272;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './css/notifications.css',
@@ -146,10 +156,6 @@ const APP_SHELL = [
   './js/notification-rules.js',
   './js/notifications.js',
   './js/push-notifications.js',
-  './offline-roles.html',
-  './js/offline-role-store.js',
-  './js/offline-role-demo.js',
-  './js/offline-role-ui.js',
   './',
   './index.html',
   './admin.html',
@@ -178,9 +184,12 @@ const APP_SHELL = [
   './js/counter-reports.js',
   './js/theme-entry.js',
   './assets/fonts/NotoSansBengali-Variable.woff2',
+  './js/class-key.js',
   './js/config.js',
   './js/student-access.js',
   './js/password-hash.js',
+  './js/password-hash-worker.js',
+  './js/password-policy.js',
   './js/secure-store.js',
   './js/session.js',
   './js/sanitize.js',
@@ -198,6 +207,7 @@ const APP_SHELL = [
   './js/exam-core.js',
   './js/question-bank.js',
   './js/course-content.js',
+  './js/course-data.js',
   './js/course-hub.js',
   './js/student-study-sections.js',
   './js/student-more.js',

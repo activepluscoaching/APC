@@ -10,8 +10,10 @@
      inside an AES-GCM envelope when the platform allows it (secure-store.js).
      Plaintext passwords are never written to storage.
    • Sessions are random tokens bound to this device id with an expiry
-     (session.js); "remember me" keeps the token in localStorage for 90 days,
-     otherwise it lives in sessionStorage and dies with the tab. */
+     (session.js); "remember me" keeps the token in localStorage for the
+     role's window (SESSION_TTL_DAYS: admin & payment ৭ days, manager ৭,
+     teacher ৩০, student ৯০), otherwise it lives in sessionStorage and dies
+     with the tab. */
 
 import { STAFF_KEYS, KEYS, readJSON, writeJSON } from './database.js';
 import {
@@ -20,10 +22,9 @@ import {
 } from './admin-initialization.js';
 import { hashPassword, verifyPassword, isPasswordRecord } from './password-hash.js';
 import { encryptValue, decryptValue, isEncryptedEnvelope } from './secure-store.js';
-import { buildSessionRecord, isSessionRecordValid, DAY_MS } from './session.js';
+import { buildSessionRecord, isSessionRecordValid, DAY_MS, SESSION_TTL_DAYS, sessionTtlDays } from './session.js';
 import { generateLoginId } from './user-id.js';
 
-const REMEMBER_DAYS = 90;
 const TAB_SESSION_MARKER = '1';
 
 /* Migration note: a record written by the retired plaintext scheme (a username
@@ -579,17 +580,21 @@ export async function saveStaffSession(role, remember = true, identity = null) {
   /* The session now names the person, not only the panel: a Staff Directory
      teacher ("rahim.teacher.apc") must not be read later as the built-in
      device account ("teacher.apc"). */
+  const account = await readStaffAccount(role);
+  const resolvedUsername = normalizeStaffUsername(identity?.username || account?.username || spec.username);
+  const resolvedStaffId = String(identity?.staffId || account?.staffId || (role === 'teacher' && resolvedUsername === 'teacher.apc' ? 'TCH-001' : ''));
+  const resolvedFullName = String(identity?.fullName || account?.fullName || '');
   writeActiveStaffIdentity({
-    username: normalizeStaffUsername(identity?.username || spec.username),
-    staffId: String(identity?.staffId || ''),
-    fullName: String(identity?.fullName || ''),
+    username: resolvedUsername,
+    staffId: resolvedStaffId,
+    fullName: resolvedFullName,
     role
   });
   try {
     local.removeItem(spec.sessionKey);
     tab.removeItem(spec.sessionKey);
     if (remember) {
-      const record = buildSessionRecord({ owner: identity?.username || spec.username, ttlDays: REMEMBER_DAYS });
+      const record = buildSessionRecord({ owner: resolvedUsername, staffId: resolvedStaffId, ttlDays: sessionTtlDays(role) });
       const envelope = await encryptValue(JSON.stringify(record));
       return envelope
         ? writeJSON(spec.sessionKey, envelope)
@@ -651,4 +656,4 @@ export function clearStaffSession(role) {
   if (identity?.role === role) clearActiveStaffIdentity();
 }
 
-export const STAFF_SESSION_RULES = Object.freeze({ rememberDays: REMEMBER_DAYS, dayMs: DAY_MS });
+export const STAFF_SESSION_RULES = Object.freeze({ rememberDays: SESSION_TTL_DAYS, dayMs: DAY_MS });

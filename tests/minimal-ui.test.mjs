@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import { checkAll as checkCssOrder } from '../tools/css-order-check.mjs';
 const await_import_guard = () => ({ checkAll: checkCssOrder });
 const read=p=>readFileSync(p,'utf8');
-const pages=['index','admin','manager','teacher','payment','offline-roles'];
+const pages=['index','admin','manager','teacher','payment'];
 test('every page links the canonical stylesheet set and no legacy icon dependencies',()=>{
  /* One @import chain became fifteen parallel <link>s; the canonical order is
     css/design-system.css's, guarded by tools/css-order-check.mjs. */

@@ -13,11 +13,12 @@ import { enabledClasses } from './config.js';
 import { readStaffAccount, hasStaffSession } from './staff-auth.js';
 import { newId } from './database.js';
 import { subjectsForClass, isSubjectEnabled, loadAcademics, classById } from './academics.js';
+import { normalizeClassId, normalizeSectionId } from './class-key.js';
 
 export const TEACHER_ASSIGNMENTS_KEY = 'activePlus.manager.teacherAssignments.v1';
 
 function fail(message) { throw new Error(message); }
-export const groupKey = value => String(value || '').normalize('NFC').trim().replace(/\s*বিভাগ$/, '').trim();
+export const groupKey = value => normalizeSectionId(value);
 const subjectKey = value => String(value || '').normalize('NFC').trim().toLowerCase();
 
 /** One stored record, normalised: `subjects` is always the full list. */
@@ -99,17 +100,19 @@ export function subjectsForTeacherClass(username, className) {
     .flatMap(item => item.subjects))];
 }
 export function isTeacherAssigned(username, className, group = '') {
+  const cId = normalizeClassId(className);
   const groupValue = groupKey(group);
-  return listTeacherAssignments(username).some(item => item.className === className && (!groupValue ? !item.group : !item.group || groupKey(item.group) === groupValue));
+  return listTeacherAssignments(username).some(item => normalizeClassId(item) === cId && (!groupValue ? !groupKey(item.group) : !groupKey(item.group) || groupKey(item.group) === groupValue));
 }
 /** The teacher takes this exact subject in this class (the exam/routine gate). */
 export function isTeacherAssignedSubject(username, className, subject, group = '') {
   const wanted = subjectKey(subject);
   if (!wanted) return true; // older callers that only know the class
+  const cId = normalizeClassId(className);
   const groupValue = groupKey(group);
   return listTeacherAssignments(username).some(item =>
-    item.className === className
-    && (!groupValue ? !item.group : !item.group || groupKey(item.group) === groupValue)
+    normalizeClassId(item) === cId
+    && (!groupValue ? !groupKey(item.group) : !groupKey(item.group) || groupKey(item.group) === groupValue)
     && item.subjects.some(name => subjectKey(name) === wanted));
 }
 

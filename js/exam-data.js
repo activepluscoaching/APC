@@ -1,3 +1,5 @@
+import { gradeEditPolicy, appendGradeAudit } from './grade-audit.js';
+import { nowEpoch } from './time.js';
 /* Local exam workflow adapter, NOT secure online authentication/proctoring.
    A production API must own authorization, time, answer keys and accepted submissions. */
 import { teachingRepository, DEMO_TEACHER, teachingScopeUsername, currentTeacherProfile, currentTeacherId, isOwnTeacherRecord, isTeacherAllowedSubject, resolveTeacherName } from './teaching-data.js';
@@ -36,7 +38,7 @@ export const EXAM_STAGES = Object.freeze({
   completed: 'সম্পন্ন',
   archived: 'সংরক্ষিত'
 });
-export function examStageKey(exam, now = Date.now()) {
+export function examStageKey(exam, now = nowEpoch()) {
   const status = String(exam?.status || '');
   if (status === 'rejected') return 'scheduled';
   if (status === 'archived') return 'archived';
@@ -388,7 +390,7 @@ export function parseQuestions(text, type) {
 const examDateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' });
 
 /** The Asia/Dhaka calendar date a timestamp belongs to, as 'YYYY-MM-DD'. */
-export function dhakaDateKey(value = Date.now()) {
+export function dhakaDateKey(value = nowEpoch()) {
   const parts = examDateFormatter.formatToParts(new Date(Number(value)));
   const get = type => parts.find(part => part.type === type)?.value || '';
   return `${get('year')}-${get('month')}-${get('day')}`;
@@ -560,7 +562,7 @@ function studentExamSnapshot(db, student) {
     .filter(exam => isStudentVisibleExam(exam) && examMatchesStudent(exam, student))
     .map(exam => {
       const questions = (exam.questions || []).map(question => {
-        if (exam.type !== 'mcq' || Date.now() >= Number(exam.endAt)) return { ...question };
+        if (exam.type !== 'mcq' || nowEpoch() >= Number(exam.endAt)) return { ...question };
         const { answer, answerText, ...safeQuestion } = question;
         return safeQuestion;
       });
@@ -726,7 +728,8 @@ function teacherExamSnapshot(db, actor = TEACHER_ACTOR) {
     && isTeacherAllowedSubject(teachingScopeUsername(), exam.className, exam.subject, exam.group || '')
   );
   const ids = new Set(exams.map(exam => exam.id));
-  return { ...db, exams, attempts: db.attempts.filter(attempt => ids.has(attempt.examId)) };
+  const { auditLog, ...safe } = db;
+  return { ...safe, exams, attempts: db.attempts.filter(attempt => ids.has(attempt.examId)) };
 }
 function attemptById(db, id, studentId) {
   const a = db.attempts.find(a => a.id === id && a.studentId === studentId);
@@ -770,7 +773,7 @@ export function stampExamCodes(db) {
     exam.code = allocated.code;
     exam.classCode = exam.classCode || allocated.classCode;
     exam.subjectCode = exam.subjectCode || allocated.subjectCode;
-    exam.codeLockedAt = Number(exam.codeLockedAt) || Date.now();
+    exam.codeLockedAt = Number(exam.codeLockedAt) || nowEpoch();
     changed = true;
   }
   for (const exam of db?.exams || []) {
@@ -799,12 +802,10 @@ export function firstAttemptMean(db, examId) {
   const first = db.attempts.filter(a => a.examId === examId && a.number === 1 && a.status === 'submitted');
   return first.length ? first.reduce((sum, a) => sum + a.score, 0) / first.length : null;
 }
-export function retryEligibility(db, exam, studentId, now = Date.now()) {
-  const attempts = db.attempts.filter(a => a.examId === exam.id && a.studentId === studentId);
-  const first = attempts.find(a => a.number === 1 && a.status === 'submitted');
-  const mean = firstAttemptMean(db, exam.id);
-  return exam.type === 'mcq' && isLiveExam(exam) && now < exam.endAt && attempts.length === 1 && !!first && mean !== null && first.score < mean;
-}
+/* One sitting per student/exam. Legacy second attempts remain readable, but
+   are never issued again; the first active attempt resumes after refresh. */
+export function retryEligibility() { return false; }
+
 export function gradeFor(score, total, passPercent = 33) {
   const percent = total ? score / total * 100 : 0;
   if (percent < passPercent) return 'F';
@@ -830,7 +831,7 @@ export function examResults(db, exam) {
 /** True when this MCQ paper's marks are complete and its window is closed.
     A sheet still `active` or `queued` (a device that has not come online yet)
     holds publication back: a board with someone missing is not a result. */
-export function mcqResultsReady(exam, db, now = Date.now()) {
+export function mcqResultsReady(exam, db, now = nowEpoch()) {
   if (!exam || exam.type !== 'mcq' || exam.resultsPublished === true) return false;
   if (!isLiveExam(exam) || !(Number(exam.endAt) > 0) || now < Number(exam.endAt)) return false;
   const attempts = (db.attempts || []).filter(attempt => attempt.examId === exam.id);
@@ -840,7 +841,7 @@ export function mcqResultsReady(exam, db, now = Date.now()) {
 }
 
 /** Publish every ready paper. Mutates `db`; returns how many changed. */
-export function autoPublishMcqResults(db, now = Date.now()) {
+export function autoPublishMcqResults(db, now = nowEpoch()) {
   let changed = 0;
   for (const exam of db.exams || []) {
     if (!mcqResultsReady(exam, db, now)) continue;
@@ -860,7 +861,7 @@ export function autoPublishMcqResults(db, now = Date.now()) {
  * entry window is granted first; a sheet is only closed once that grace is over
  * too. A `queued` sheet is never touched: it is a real submission waiting for a
  * connection, and the marks it carries have to arrive. */
-export function staleMcqAttempts(exam, db, now = Date.now()) {
+export function staleMcqAttempts(exam, db, now = nowEpoch()) {
   if (!exam || exam.type !== 'mcq' || !isLiveExam(exam)) return [];
   const endAt = Number(exam.endAt);
   const grace = endAt + Math.max(0, Number(exam.lateMinutes) || 0) * 60000;
@@ -869,7 +870,7 @@ export function staleMcqAttempts(exam, db, now = Date.now()) {
 }
 
 /** Close those sheets with the answers on file. Mutates `db`; returns how many. */
-export function closeStaleMcqAttempts(db, now = Date.now()) {
+export function closeStaleMcqAttempts(db, now = nowEpoch()) {
   let changed = 0;
   for (const exam of db.exams || []) {
     for (const attempt of staleMcqAttempts(exam, db, now)) {
@@ -995,7 +996,11 @@ export const examRepository = {
     await examRepository.sweepResults().catch(() => null);
     return studentExamSnapshot(read(), student);
   },
-  async listStudents() { return teachingRepository.listStudents(); },
+  async listStudents(actor = TEACHER_ACTOR) {
+    if (actor.role === 'manager') return teachingRepository.listApprovedStudents();
+    if (actor.role === 'admin') { await requireRoleSession('admin'); return approvedRosterRows(); }
+    return teachingRepository.listStudents();
+  },
   /* Idempotent: gives every stored paper its permanent Exam Code. Called when
      the examination screens open, so an old local file is ready to print. */
   async ensureCodes() {
@@ -1028,7 +1033,7 @@ export const examRepository = {
     const db = await mutate(db => {
       const old = input.id ? examById(db, input.id) : null;
       if (old) assertCanEditPaper(old, db, actor);
-      const now = Date.now();
+      const now = nowEpoch();
       const exam = {
         ...(old || {}),
         ...fields,
@@ -1065,9 +1070,9 @@ export const examRepository = {
       if (actor.role === 'teacher') teacherOwns(exam, actor);
       if (!SUBMITTABLE_STATUSES.includes(exam.status)) fail('এই পরীক্ষা ইতিমধ্যে পাঠানো/প্রকাশ করা হয়েছে।');
       validateExam(exam);
-      if (exam.startAt <= Date.now()) fail('পরীক্ষার শুরুর সময় ভবিষ্যতে দিন।');
-      exam.status = 'pending'; exam.reviewNote = ''; exam.submittedAt = Date.now();
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      if (exam.startAt <= nowEpoch()) fail('পরীক্ষার শুরুর সময় ভবিষ্যতে দিন।');
+      exam.status = 'pending'; exam.reviewNote = ''; exam.submittedAt = nowEpoch();
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
     return examSnapshot(db, actor);
   },
@@ -1082,15 +1087,15 @@ export const examRepository = {
       if (decision === 'approve') {
         if (!['draft', 'pending', 'rejected'].includes(exam.status)) fail('শুধু খসড়া বা পর্যালোচনার অপেক্ষায় থাকা পরীক্ষা অনুমোদন করা যাবে।');
         validateExam(exam);
-        if (exam.startAt <= Date.now()) fail('শুরুর সময় পেরিয়ে গেছে। সময় বদলে সংশোধনের জন্য ফেরত দিন।');
-        exam.status = 'approved'; exam.approvedAt = Date.now(); exam.approvedBy = name; exam.reviewNote = '';
+        if (exam.startAt <= nowEpoch()) fail('শুরুর সময় পেরিয়ে গেছে। সময় বদলে সংশোধনের জন্য ফেরত দিন।');
+        exam.status = 'approved'; exam.approvedAt = nowEpoch(); exam.approvedBy = name; exam.reviewNote = '';
       } else if (decision === 'publish') {
         if (!PUBLISHABLE_STATUSES.includes(exam.status)) fail('এই পরীক্ষা এখন প্রকাশ করা যাবে না।');
-        if (exam.startAt <= Date.now()) fail('শুরুর সময় পেরিয়েছে। সংশোধনের জন্য শিক্ষককে ফেরত দিন।');
+        if (exam.startAt <= nowEpoch()) fail('শুরুর সময় পেরিয়েছে। সংশোধনের জন্য শিক্ষককে ফেরত দিন।');
         const validated = validateExam({ ...exam, negative: options.negative ?? exam.negative });
         exam.negative = validated.negative;
-        exam.status = 'published'; exam.publishedAt = Date.now(); exam.publishedBy = name;
-        if (!exam.approvedAt) { exam.approvedAt = Date.now(); exam.approvedBy = name; }
+        exam.status = 'published'; exam.publishedAt = nowEpoch(); exam.publishedBy = name;
+        if (!exam.approvedAt) { exam.approvedAt = nowEpoch(); exam.approvedBy = name; }
         if (exam.resultsPublished === undefined) exam.resultsPublished = false;
         const matched = students.filter(student => examMatchesStudent(exam, student)).map(s => ({ id: s.id, name: s.name, className: s.className, group: s.group || '' }));
         /* Existing participants and their answers are never dropped. */
@@ -1099,9 +1104,9 @@ export const examRepository = {
         if (!['draft', 'pending', 'approved'].includes(exam.status)) fail('শুধু পর্যালোচনার অপেক্ষায় থাকা পরীক্ষা ফেরত দেওয়া যাবে।');
         const note = String(options.note || '').trim();
         if (!note || note.length > 500) fail('সংশোধনের কারণ লিখুন (সর্বোচ্চ ৫০০ অক্ষর)।');
-        exam.status = 'rejected'; exam.reviewNote = note; exam.reviewedAt = Date.now(); exam.reviewedBy = name;
+        exam.status = 'rejected'; exam.reviewNote = note; exam.reviewedAt = nowEpoch(); exam.reviewedBy = name;
       } else fail('সঠিক সিদ্ধান্ত নির্বাচন করুন।');
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
     /* A published MCQ paper joins the question bank the moment it goes live,
        so every taken paper is on the shelf a student can practise later.
@@ -1124,8 +1129,8 @@ export const examRepository = {
       const exam = examById(db, id);
       if (exam.status !== 'published') fail('শুধু প্রকাশিত পরীক্ষা Unpublish করা যাবে।');
       if (examHasOpenAttempts(db, id)) fail('চলমান বা জমা অপেক্ষমাণ উত্তর থাকা অবস্থায় Unpublish করা যাবে না।');
-      exam.status = 'approved'; exam.unpublishedAt = Date.now(); exam.unpublishedBy = name;
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.status = 'approved'; exam.unpublishedAt = nowEpoch(); exam.unpublishedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
   },
   async complete(id, actor = MANAGER_ACTOR) {
@@ -1133,10 +1138,10 @@ export const examRepository = {
     return mutate(db => {
       const exam = examById(db, id);
       if (!isLiveExam(exam)) fail('শুধু প্রকাশিত পরীক্ষা সম্পন্ন হিসেবে চিহ্নিত করা যাবে।');
-      if (Number(exam.endAt) > Date.now()) fail('পরীক্ষার নির্ধারিত সময় শেষ হলে সম্পন্ন করা যাবে।');
+      if (Number(exam.endAt) > nowEpoch()) fail('পরীক্ষার নির্ধারিত সময় শেষ হলে সম্পন্ন করা যাবে।');
       if (examHasOpenAttempts(db, id)) fail('অপেক্ষমাণ উত্তর জমা হওয়ার পর সম্পন্ন করুন।');
-      exam.status = 'completed'; exam.completedAt = Date.now(); exam.completedBy = name;
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.status = 'completed'; exam.completedAt = nowEpoch(); exam.completedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
   },
   /* Archiving is the safe way to retire a paper: nothing is deleted and the
@@ -1148,8 +1153,8 @@ export const examRepository = {
       if (exam.status === 'archived') fail('পরীক্ষাটি আগেই আর্কাইভ করা হয়েছে।');
       if (examHasOpenAttempts(db, id)) fail('চলমান উত্তর থাকা অবস্থায় আর্কাইভ করা যাবে না।');
       exam.archivedFrom = exam.archivedFrom || exam.status;
-      exam.status = 'archived'; exam.archivedAt = Date.now(); exam.archivedBy = name;
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.status = 'archived'; exam.archivedAt = nowEpoch(); exam.archivedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
   },
   async restore(id, actor = MANAGER_ACTOR) {
@@ -1159,8 +1164,8 @@ export const examRepository = {
       if (exam.status !== 'archived') fail('শুধু আর্কাইভ করা পরীক্ষা ফিরিয়ে আনা যাবে।');
       const previous = EXAM_STATUSES[exam.archivedFrom] && exam.archivedFrom !== 'archived' ? exam.archivedFrom : 'draft';
       exam.status = previous === 'published' ? 'approved' : previous;
-      exam.restoredAt = Date.now(); exam.restoredBy = name;
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.restoredAt = nowEpoch(); exam.restoredBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
   },
   /* Changing the date re-files the record under the new day; the questions,
@@ -1179,7 +1184,7 @@ export const examRepository = {
       Object.assign(exam, {
         startAt: validated.startAt, endAt: validated.endAt,
         examDate: validated.examDate, durationMinutes: validated.durationMinutes,
-        updatedAt: Date.now(), updatedBy: name
+        updatedAt: nowEpoch(), updatedBy: name
       });
       restampExamQuestions(exam, exam.questions);
     });
@@ -1196,7 +1201,7 @@ export const examRepository = {
         if (source.teacherId && !isOwnTeacherRecord(source.teacherId, effectiveTeacherId(actor))) fail('অন্য শিক্ষকের পরীক্ষা Duplicate করা যাবে না।');
         if (!isTeacherAssigned(username, String(options.className ?? source.className ?? ''), String(options.group ?? source.group ?? ''))) fail('এই class/batch-এর জন্য Manager assignment নেই।');
       }
-      const now = Date.now();
+      const now = nowEpoch();
       const requestedStart = Number(options.startAt);
       const sourceStart = Number(source.startAt), sourceEnd = Number(source.endAt);
       const startAt = Number.isFinite(requestedStart) && requestedStart > now
@@ -1264,7 +1269,7 @@ export const examRepository = {
         answer: patch.answer ?? current.answer
       }, exam.type, `প্রশ্ন ${index + 1}`);
       exam.template = serializeQuestions(exam.questions, exam.type);
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
       restampExamQuestions(exam, exam.questions);
     });
   },
@@ -1279,7 +1284,7 @@ export const examRepository = {
       if (totalMarks({ questions }) > 10000) fail('মোট নম্বর সর্বোচ্চ ১০,০০০ হতে পারে।');
       exam.questions = questions;
       exam.template = serializeQuestions(questions, exam.type);
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
       restampExamQuestions(exam, exam.questions);
     });
   },
@@ -1293,7 +1298,7 @@ export const examRepository = {
       if (remaining.length === exam.questions.length) fail('প্রশ্নটি পাওয়া যায়নি।');
       exam.questions = remaining;
       exam.template = serializeQuestions(remaining, exam.type);
-      exam.updatedAt = Date.now(); exam.updatedBy = name;
+      exam.updatedAt = nowEpoch(); exam.updatedBy = name;
       restampExamQuestions(exam, exam.questions);
     });
   },
@@ -1302,7 +1307,7 @@ export const examRepository = {
     await requireRoleSession('manager');
     return mutate(db => {
       const exam = examById(db, id);
-      if (!isLiveExam(exam) || Date.now() < exam.endAt) fail('পরীক্ষা শেষ হওয়ার আগে ফলাফল প্রকাশ করা যাবে না।');
+      if (!isLiveExam(exam) || nowEpoch() < exam.endAt) fail('পরীক্ষা শেষ হওয়ার আগে ফলাফল প্রকাশ করা যাবে না।');
       if (exam.resultsPublished) fail('ফলাফল ইতিমধ্যে প্রকাশিত হয়েছে।');
       if (db.attempts.some(attempt => attempt.examId === id && ['active', 'queued'].includes(attempt.status))) fail('অপেক্ষমাণ/অফলাইন উত্তর জমা শেষ না হওয়া পর্যন্ত ফলাফল প্রকাশ করা যাবে না।');
       if (exam.type !== 'mcq') {
@@ -1310,7 +1315,7 @@ export const examRepository = {
         const absent = new Set(exam.absentIds || []);
         if (exam.participants.some(person => !recorded.has(person.id) && !absent.has(person.id))) fail('সব অংশগ্রহণকারীর নম্বর বা অনুপস্থিতির রেকর্ড সম্পন্ন হয়নি।');
       }
-      exam.resultsPublished = true; exam.resultsPublishedAt = Date.now();
+      exam.resultsPublished = true; exam.resultsPublishedAt = nowEpoch();
     });
   },
   async deleteDraft(id, actor = TEACHER_ACTOR) {
@@ -1320,7 +1325,7 @@ export const examRepository = {
   async startAttempt(examId, student) {
     const actual = await authenticatedStudent(student?.id);
     const db = await mutate(db => {
-      const e = examById(db, examId), now = Date.now();
+      const e = examById(db, examId), now = nowEpoch();
       if (e.type !== 'mcq' || !isLiveExam(e) || now < e.startAt || now >= e.endAt) fail('এখন পরীক্ষা শুরু করা যাবে না।');
       const person = { id: actual.id, name: actual.name || actual.nameBn || '', className: actual.className || '', group: actual.group || '' };
       if (!examMatchesStudent(e, person)) fail('এই পরীক্ষা তোমার শ্রেণি/ব্যাচের জন্য নয়।');
@@ -1331,7 +1336,7 @@ export const examRepository = {
       const own = db.attempts.filter(a => a.examId === e.id && a.studentId === person.id);
       if (own.some(a => a.status === 'active')) return;
       if (!own.length && now > e.startAt + e.lateMinutes * 60000) fail('দেরিতে প্রবেশের সময়সীমা শেষ।');
-      if (own.length && !retryEligibility(db, e, person.id, now)) fail('দ্বিতীয় সুযোগের যোগ্যতা নেই বা সময় শেষ।');
+      if (own.length) fail('এই পরীক্ষার একবারের চেষ্টা ইতিমধ্যে শুরু/জমা হয়েছে।');
       /* The same student resuming the same attempt always sees the same paper:
          the order is seeded, not random. */
       const attemptId = newId('A');
@@ -1342,7 +1347,7 @@ export const examRepository = {
   },
   async saveAnswer(attemptId, studentId, questionId, optionId) {
     const actual = await authenticatedStudent(studentId);
-    const receivedAt = Date.now();
+    const receivedAt = nowEpoch();
     const db = await mutate(db => {
       const attempt = attemptById(db, attemptId, actual.id), exam = examById(db, attempt.examId);
       if (attempt.status !== 'active' || receivedAt >= exam.endAt) fail('সময় শেষ বা উত্তরপত্র জমা হয়েছে।');
@@ -1357,7 +1362,7 @@ export const examRepository = {
     const db = await mutate(db => {
       const attempt = attemptById(db, attemptId, actual.id), exam = examById(db, attempt.examId);
       if (attempt.status !== 'active') return;
-      attempt.finishedAt = Math.min(Date.now(), exam.endAt); attempt.status = navigator.onLine === false ? 'queued' : 'submitted';
+      attempt.finishedAt = Math.min(nowEpoch(), exam.endAt); attempt.status = navigator.onLine === false ? 'queued' : 'submitted';
       if (attempt.status === 'submitted') Object.assign(attempt, scoreAttempt(exam, attempt));
       /* The sheet that closes a paper publishes it: no separate step, no wait. */
       autoPublishMcqResults(db);
@@ -1369,46 +1374,55 @@ export const examRepository = {
     const db = await mutate(db => {
       for (const attempt of db.attempts.filter(item => item.studentId === actual.id && item.status !== 'submitted')) {
         const exam = examById(db, attempt.examId);
-        if (attempt.status === 'active' && Date.now() >= exam.endAt) { attempt.finishedAt = exam.endAt; attempt.status = 'queued'; }
+        if (attempt.status === 'active' && nowEpoch() >= exam.endAt) { attempt.finishedAt = exam.endAt; attempt.status = 'queued'; }
         if (attempt.status === 'queued' && navigator.onLine !== false) { attempt.status = 'submitted'; Object.assign(attempt, scoreAttempt(exam, attempt)); }
       }
       autoPublishMcqResults(db);
     });
     return studentExamSnapshot(db, actual);
   },
-  async markWrittenAbsent(examId, student, actor = TEACHER_ACTOR) {
-    await requireRoleSession('teacher');
+  async markWrittenAbsent(examId, student, actor = TEACHER_ACTOR, reason = '') {
+    await requireRoleSession(actor.role);
     const db = await mutate(db => {
-      const e = examById(db, examId); teacherOwns(e, actor); const person = eligibleParticipant(e, student);
+      const e = examById(db, examId); if (actor.role === 'teacher') teacherOwns(e, actor); const person = eligibleParticipant(e, student);
       if (!examMatchesStudent(e, person) || !e.participants.some(item => item.id === person.id)) fail('শিক্ষার্থী এই পরীক্ষার assigned class/batch roster-এ নেই।');
-      if (e.resultsPublished) fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
-      if (!isLiveExam(e) || e.type === 'mcq' || Date.now() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে উপস্থিতি দেওয়া যাবে।');
-      if (db.attempts.some(a => a.examId === e.id && a.studentId === person.id)) fail('এই শিক্ষার্থীর নম্বর আছে; অনুপস্থিত করা যাবে না।');
+      if (e.resultsPublished && actor.role === 'teacher') fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
+      if (!isLiveExam(e) || e.type === 'mcq' || nowEpoch() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে উপস্থিতি দেওয়া যাবে।');
+      const prior = db.attempts.find(a => a.examId === e.id && a.studentId === person.id);
+      if (prior) fail('নম্বর আছে; আগে Manager-এর সাথে নম্বর সংশোধন করুন।');
+      const before = (e.absentIds || []).includes(person.id) ? { absent: true, at: (db.auditLog || []).find(row => row.examId === e.id && row.studentId === person.id)?.at || e.updatedAt || e.startAt } : null;
+      const note = gradeEditPolicy({ actor, previous: before, reason, now: nowEpoch() });
+      if (before) return; // unchanged entries are not edits
       e.absentIds = [...new Set([...(e.absentIds || []), person.id])];
+      appendGradeAudit(db, { examId, studentId: person.id, actor, before, after: { absent: true }, reason: note, at: nowEpoch() });
       if (!e.participants.some(s => s.id === person.id)) e.participants.push(person);
     });
-    return teacherExamSnapshot(db, actor);
+    return actor.role === 'teacher' ? teacherExamSnapshot(db, actor) : db;
   },
   async saveWrittenScore(examId, student, questionScores, actor = TEACHER_ACTOR) {
-    await requireRoleSession('teacher');
+    await requireRoleSession(actor.role);
     const db = await mutate(db => {
-      const e = examById(db, examId); teacherOwns(e, actor); const person = eligibleParticipant(e, student);
+      const e = examById(db, examId); if (actor.role === 'teacher') teacherOwns(e, actor); const person = eligibleParticipant(e, student);
       if (!examMatchesStudent(e, person) || !e.participants.some(item => item.id === person.id)) fail('শিক্ষার্থী এই পরীক্ষার assigned class/batch roster-এ নেই।');
-      if (e.resultsPublished) fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
-      if (!isLiveExam(e) || e.type === 'mcq' || Date.now() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে নম্বর দেওয়া যাবে।');
+      if (e.resultsPublished && actor.role === 'teacher') fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
+      if (!isLiveExam(e) || e.type === 'mcq' || nowEpoch() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে নম্বর দেওয়া যাবে।');
       if (e.questions.some(q => !Object.hasOwn(questionScores, q.id) || !['string', 'number'].includes(typeof questionScores[q.id]) || !String(questionScores[q.id]).trim() || !Number.isFinite(Number(questionScores[q.id])) || round(Number(questionScores[q.id])) !== Number(questionScores[q.id]) || Number(questionScores[q.id]) < 0 || Number(questionScores[q.id]) > q.marks)) fail('প্রতিটি প্রশ্নের নম্বর শূন্য থেকে পূর্ণমানের মধ্যে দিন।');
       const score = round(e.questions.reduce((sum, q) => sum + Number(questionScores[q.id]), 0));
+      const old = db.attempts.find(a => a.examId === e.id && a.studentId === person.id);
+      const before = old ? { score: old.score, questionScores: old.questionScores, comment: old.comment || '', at: (db.auditLog || []).find(row => row.examId === e.id && row.studentId === person.id)?.at || old.finishedAt } : (e.absentIds || []).includes(person.id) ? { absent: true, at: (db.auditLog || []).find(row => row.examId === e.id && row.studentId === person.id)?.at || e.updatedAt || e.startAt } : null;
+      const note = gradeEditPolicy({ actor, previous: before, reason: questionScores?.reason, now: nowEpoch() });
       let a = db.attempts.find(a => a.examId === e.id && a.studentId === person.id);
-      if (!a) { a = { id: newId('A'), examId, studentId: person.id, name: person.name, className: person.className, group: person.group || '', number: 1, startedAt: Date.now(), order: [], answers: {} }; db.attempts.push(a); }
+      if (!a) { a = { id: newId('A'), examId, studentId: person.id, name: person.name, className: person.className, group: person.group || '', number: 1, startedAt: nowEpoch(), order: [], answers: {} }; db.attempts.push(a); }
       const comment = String(questionScores?.comment || '').trim();
       if (comment.length > 200) fail('মন্তব্য সর্বোচ্চ ২০০ অক্ষরের হতে পারে।');
       const cleanScores = Object.fromEntries(e.questions.map(q => [q.id, Number(questionScores[q.id])]));
-      Object.assign(a, { score, questionScores: cleanScores, ...(comment ? { comment } : {}), status: 'submitted', finishedAt: Date.now() });
+      Object.assign(a, { score, questionScores: cleanScores, ...(comment ? { comment } : {}), status: 'submitted', finishedAt: nowEpoch() });
       if (!comment) delete a.comment;
       e.absentIds = (e.absentIds || []).filter(id => id !== person.id);
       if (!e.participants.some(s => s.id === person.id)) e.participants.push(person);
+      appendGradeAudit(db, { examId, studentId: person.id, actor, before, after: { score, questionScores: cleanScores, comment }, reason: note, at: nowEpoch() });
     });
-    return teacherExamSnapshot(db, actor);
+    return actor.role === 'teacher' ? teacherExamSnapshot(db, actor) : db;
   }
 };
 export function watchExams(callback) {

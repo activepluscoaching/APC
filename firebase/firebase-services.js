@@ -1,10 +1,9 @@
-// Active Plus — the only Firebase SDK service import surface.
-// Sync modules import services from here; UI modules never import Firebase SDKs.
-export { getAuth, signInAnonymously, signInWithEmailAndPassword, updatePassword, setPersistence, browserLocalPersistence }
-  from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-export { getDatabase, ref, get, set, runTransaction, onValue }
-  from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js';
-export { getFirestore, doc, getDoc }
-  from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
-export { getFunctions, httpsCallable }
-  from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js';
+// Single local SDK import surface. Do not import Firebase directly from UI modules.
+export {
+  getAuth, signInAnonymously, signInWithEmailAndPassword, updatePassword,
+  setPersistence, browserLocalPersistence,
+  getDatabase, ref, get, set, remove, runTransaction, onValue,
+  getFirestore, doc, getDoc,
+  getFunctions, httpsCallable,
+  getMessaging, getToken, deleteToken, onMessage
+} from '../vendor/firebase/sdk.js';

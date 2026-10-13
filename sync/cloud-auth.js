@@ -1,51 +1,63 @@
-/* Active Plus — authenticated Firebase identity bridge.
- * Usernames map to the private Auth email namespace created by trusted Functions.
- * Passwords are handled only by Firebase Auth and are never stored here.
- */
-import { firebaseApp, appCheckReady } from '../firebase/firebase-init.js';
+/* Staged Firebase Auth boundary (not the localStorage login or anonymous RTDB
+ * bridge). New login takes a REAL email. Never derive an Auth email from an
+ * unverified username or copy local password hashes into Firebase. */
+import { firebaseApp, appCheckReady, FUNCTIONS_REGION } from '../firebase/firebase-init.js';
 import {
   getAuth, signInWithEmailAndPassword, updatePassword, setPersistence, browserLocalPersistence,
   getFirestore, doc, getDoc, getFunctions, httpsCallable
 } from '../firebase/firebase-services.js';
+import { backendMode } from './backend-selection.js';
+import { LEGACY_CLOUD_ENABLED } from './cloud-access.js';
+import { normalizeAuthEmail, checkCloudIdentity } from './cloud-identity-policy.js';
 
-const DOMAIN = 'accounts.activeplus.app';
-
-export function authEmailForUsername(username) {
-  const value = String(username || '').trim().toLowerCase();
-  return value ? `user.${value}@${DOMAIN}` : '';
-}
-
-export async function signInCloudUsername(username, password) {
-  const email = authEmailForUsername(username);
-  if (!email || !String(password || '')) return { ok: false, reason: 'invalid-credentials' };
-  await appCheckReady;
+export async function signInCloudEmail(email, password, { expectedRole = '' } = {}) {
+  if (backendMode() !== 'firebase') return { ok: false, reason: 'local-backend' };
+  // A URL changed without a page reload cannot detach an already-running RTDB
+  // bridge. Never put email Auth into its shared anonymous-compatible tree.
+  if (LEGACY_CLOUD_ENABLED) return { ok: false, reason: 'reload-required' };
+  const address = normalizeAuthEmail(email);
+  if (!address || !String(password || '')) return { ok: false, reason: 'invalid-credentials' };
   const auth = getAuth(firebaseApp);
-  await setPersistence(auth, browserLocalPersistence);
   try {
-    const credential = await signInWithEmailAndPassword(auth, email, String(password));
-    const token = await credential.user.getIdTokenResult(true);
-    const claims = token.claims || {};
-    if (claims.status && !['active', 'approved'].includes(claims.status)) {
-      return { ok: false, reason: 'account-inactive', claims, user: credential.user };
-    }
-    if (claims.mustChangePassword === true) {
-      return { ok: false, reason: 'must-change-password', claims, user: credential.user };
+    await appCheckReady;
+    await setPersistence(auth, browserLocalPersistence);
+    const credential = await signInWithEmailAndPassword(auth, address, String(password));
+    const user = credential.user;
+    const token = await user.getIdTokenResult(true);
+    // No Firestore profile is read for an inactive account or an invalid role.
+    const early = checkCloudIdentity({ user, token, expectedRole });
+    if (!early.ok && early.reason !== 'profile-mismatch' && early.reason !== 'student-profile-mismatch') {
+      if (early.reason === 'must-change-password') {
+        return { ok: false, reason: early.reason, user }; // password change callable needs this Auth session
+      }
+      await auth.signOut();
+      return early;
     }
     const firestore = getFirestore(firebaseApp);
-    const userSnapshot = await getDoc(doc(firestore, 'users', credential.user.uid));
-    const userProfile = userSnapshot.exists() ? userSnapshot.data() : null;
+    const snapshot = await getDoc(doc(firestore, 'users', user.uid));
+    const userProfile = snapshot.exists() ? snapshot.data() : null;
     let studentProfile = null;
-    if (claims.role === 'student') {
-      const studentSnapshot = await getDoc(doc(firestore, 'students', credential.user.uid));
+    if (token.claims?.role === 'student') {
+      const studentSnapshot = await getDoc(doc(firestore, 'students', user.uid));
       studentProfile = studentSnapshot.exists() ? studentSnapshot.data() : null;
     }
-    return { ok: true, user: credential.user, claims, userProfile, studentProfile };
+    const decision = checkCloudIdentity({ user, token, profile: userProfile, studentProfile, expectedRole });
+    if (!decision.ok) {
+      await auth.signOut();
+      return decision;
+    }
+    return { ...decision, user, claims: token.claims, userProfile, studentProfile };
   } catch (error) {
-    return { ok: false, reason: error?.code || 'auth-failed', error };
+    try { await auth.signOut(); } catch { /* fail closed on network errors too */ }
+    return { ok: false, reason: error?.code || 'auth-failed' };
   }
 }
 
+// Compatibility name, but a username must not become a made-up email address.
+export const signInCloudUsername = signInCloudEmail;
+
 export async function currentCloudUser() {
+  if (backendMode() !== 'firebase' || LEGACY_CLOUD_ENABLED) return null;
   await appCheckReady;
   const auth = getAuth(firebaseApp);
   await auth.authStateReady();
@@ -56,23 +68,22 @@ export async function signOutCloud() {
   return getAuth(firebaseApp).signOut();
 }
 
-
 export async function callCloudFunction(name, data = {}) {
+  if (name === 'createFirstAdmin') throw new Error('First Admin requires trusted Admin SDK bootstrap');
   await appCheckReady;
-  const callable = httpsCallable(getFunctions(firebaseApp), name);
+  const callable = httpsCallable(getFunctions(firebaseApp, FUNCTIONS_REGION), name);
   const result = await callable(data);
   return result.data;
 }
 
-export async function createFirstAdminCloud(profile) {
-  return callCloudFunction('createFirstAdmin', profile);
+export async function createFirstAdminCloud() {
+  throw new Error('First Admin requires trusted Admin SDK bootstrap');
 }
-
 
 export async function changeCloudPassword(nextPassword) {
   const auth = getAuth(firebaseApp);
   const user = auth.currentUser;
-  if (!user) throw new Error('Firebase login required');
+  if (!user || user.isAnonymous) throw new Error('Firebase email login required');
   await updatePassword(user, String(nextPassword));
   const result = await callCloudFunction('completeTemporaryPasswordChange', {});
   await user.getIdToken(true);

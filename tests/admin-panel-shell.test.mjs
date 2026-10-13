@@ -213,7 +213,7 @@ test('nothing outside the Admin role survives in the DOM', () => {
 
 test('no exam publish/approval control lives in the Admin panel', () => {
   // Exam records are read in Reports; publishing stays with the Manager portal.
-  assert.equal(ctx.$('#adminExamWorkspace'), null, 'the exam workspace left the Admin panel');
+  assert.ok(ctx.$('#adminExamWorkspace'), 'Admin has an exam grading workspace on the audit page');
   const labels = ctx.$$('.admin-shell button').map(button => button.textContent);
   for (const label of labels) {
     assert.doesNotMatch(label, /প্রকাশ করুন|অনুমোদন দিয়ে|ফি গ্রহণ/, 'Admin must not publish, approve or collect');

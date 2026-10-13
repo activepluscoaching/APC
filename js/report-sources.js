@@ -1,3 +1,4 @@
+import { taka, addTaka } from './money.js';
 /* Reports System — data source layer.
 
    Every number a report prints is computed here, straight from the app's own
@@ -192,7 +193,7 @@ export function activityTime(activity) {
 
 export function monthlyFeeOf(student) {
   const configured = Number(student?.monthlyFee);
-  return Number.isFinite(configured) && configured >= 0 ? configured : DEFAULT_MONTHLY_FEE;
+  return Number.isFinite(configured) && configured >= 0 ? taka(configured) : DEFAULT_MONTHLY_FEE;
 }
 
 /**
@@ -203,9 +204,9 @@ export function monthlyFeeOf(student) {
 export function dueSummary(student, transactions, month) {
   const own = transactions.filter(tx => tx.studentId === student.id);
   const monthlyTx = own.filter(tx => tx.month === month && tx.feeType === 'মাসিক বেতন');
-  const tuitionPaid = monthlyTx.reduce((sum, tx) => sum + number(tx.amount), 0);
+  const tuitionPaid = monthlyTx.reduce((sum, tx) => addTaka(sum, tx.amount), 0);
   const monthlyFee = monthlyFeeOf(student);
-  const anyPaid = own.filter(tx => tx.month === month).reduce((sum, tx) => sum + number(tx.amount), 0);
+  const anyPaid = own.filter(tx => tx.month === month).reduce((sum, tx) => addTaka(sum, tx.amount), 0);
   return {
     month,
     monthlyFee,

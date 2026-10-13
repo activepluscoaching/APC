@@ -1,3 +1,7 @@
+const { setGlobalOptions } = require('firebase-functions/v2');
+// Existing RTDB triggers/scheduler keep their explicit Singapore region below.
+// All callables (and future Firestore triggers) use the requested South Asia region.
+setGlobalOptions({ region: 'asia-south1' });
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onValueWritten } = require('firebase-functions/v2/database');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
@@ -31,14 +35,20 @@ const {
   v2StudentRecord
 } = require('./v2-roster-migration.js');
 const { scoreAttempt, keyAnswers } = require('./exam-scoring.js');
+const { ExamSubmissionError, safeForManagerReview, submitStagedExam } = require('./staged-exam-core.cjs');
+const { AttemptError, resultId, validStagedAttempt, submitStagedAttempt } = require('./staged-attempt-core.cjs');
+const { ReleaseError, closeStagedExamForRelease } = require('./staged-release-core.cjs');
+const { EnrollmentError, registerStagedStudent, reviewStagedStudent } = require('./staged-student-core.cjs');
+const { PaymentError, configureStagedFee, submitStagedPayment, inspectStagedPayment, reviewStagedPayment } = require('./staged-payment-core.cjs');
+const { requestStagedReversal, decideStagedReversal } = require('./staged-reversal-core.cjs');
+const { readStagedPaymentPosition } = require('./staged-payment-position-core.cjs');
 
 initializeApp();
 const auth = getAuth();
 const db = getFirestore();
-const AUTH_EMAIL_DOMAIN = 'accounts.activeplus.app';
 const HANDLE = /^[a-z][a-z0-9._]{3,19}$/;
 const PHONE = /^01[3-9]\d{8}$/;
-const STAFF_ROLES = new Set(['manager', 'teacher', 'payment', 'student']);
+const STAFF_ROLES = new Set(['manager', 'teacher', 'payment']);
 
 function normalizeUsername(value) {
   return String(value || '').trim().toLowerCase();
@@ -58,7 +68,7 @@ function validateProfile(data, { requirePhone = true } = {}) {
   const password = String(data.password || '');
   if (fullName.length < 2 || fullName.length > 100) throw new HttpsError('invalid-argument', 'পূর্ণ নাম ২–১০০ অক্ষরের হতে হবে।');
   if (requirePhone && !PHONE.test(mobile)) throw new HttpsError('invalid-argument', 'সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন।');
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpsError('invalid-argument', 'ইমেইল ঠিকানা সঠিক নয়।');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith('@accounts.activeplus.app')) throw new HttpsError('invalid-argument', 'বাস্তব ইমেইল ঠিকানা প্রয়োজন।');
   if (!HANDLE.test(username) || ['admin', 'administrator', 'root', 'null', 'undefined'].includes(username)) throw new HttpsError('invalid-argument', 'ইউজারনেম গ্রহণযোগ্য নয়।');
   if (password.length < 8 || password.length > 128) throw new HttpsError('invalid-argument', 'পাসওয়ার্ড ৮–১২৮ অক্ষরের হতে হবে।');
   return { fullName, mobile, email, username, password };
@@ -69,82 +79,17 @@ function requireCaller(request, role) {
   }
 }
 function usernameDoc(username) { return db.doc(`usernameIndex/${username}`); }
-function authEmail(username) { return `user.${username}@${AUTH_EMAIL_DOMAIN}`; }
 
-/** One-time global bootstrap. The Firestore lock is claimed before creating Auth,
- * so concurrent first-admin requests cannot create two owners. */
-exports.createFirstAdmin = onCall(async request => {
-  const profile = validateProfile(request.data || {});
-  const claimId = crypto.randomUUID();
-  const bootstrapRef = db.doc('system/bootstrap');
-  await db.runTransaction(async tx => {
-    const lock = await tx.get(bootstrapRef);
-    if (lock.exists) throw new HttpsError('already-exists', 'Initial Admin ইতিমধ্যে তৈরি হয়েছে।');
-    tx.create(bootstrapRef, { state: 'provisioning', claimId, requestedAt: FieldValue.serverTimestamp() });
-  });
-
-  let user;
-  const createdUsers = [];
-  try {
-    user = await auth.createUser({ email: authEmail(profile.username), password: profile.password, displayName: profile.fullName, disabled: false });
-    createdUsers.push(user);
-    await auth.setCustomUserClaims(user.uid, { role: 'admin', status: 'active', mustChangePassword: false });
-
-    // One bootstrap identity for each operational staff role. The generated
-    // passwords are returned once to the first Admin and are never written to Firestore.
-    const bootstrapAccounts = [];
-    for (const role of ['manager', 'teacher', 'payment']) {
-      const username = `${role}.${crypto.randomBytes(4).toString('hex')}`;
-      const password = crypto.randomBytes(18).toString('base64url');
-      const staff = await auth.createUser({ email: authEmail(username), password, displayName: `প্রাথমিক ${role} অ্যাকাউন্ট`, disabled: false });
-      createdUsers.push(staff);
-      await auth.setCustomUserClaims(staff.uid, { role, status: 'active', mustChangePassword: true });
-      bootstrapAccounts.push({ uid: staff.uid, role, username, password });
-    }
-
-    await db.runTransaction(async tx => {
-      const lock = await tx.get(bootstrapRef);
-      const handles = [profile.username, ...bootstrapAccounts.map(account => account.username)];
-      const handleRefs = handles.map(usernameDoc);
-      const handleDocs = await Promise.all(handleRefs.map(ref => tx.get(ref)));
-      if (!lock.exists || lock.data().claimId !== claimId || handleDocs.some(doc => doc.exists)) {
-        throw new HttpsError('already-exists', 'Admin bootstrap অথবা username claim আর উপলভ্য নেই।');
-      }
-      const now = FieldValue.serverTimestamp();
-      tx.create(handleRefs[0], { uid: user.uid, role: 'admin', createdAt: now });
-      tx.create(db.doc(`users/${user.uid}`), {
-        uid: user.uid, role: 'admin', status: 'active', accountOwner: 'first-admin',
-        fullName: profile.fullName, mobile: profile.mobile, email: profile.email,
-        username: profile.username, createdAt: now, updatedAt: now
-      });
-      bootstrapAccounts.forEach((account, index) => {
-        tx.create(handleRefs[index + 1], { uid: account.uid, role: account.role, createdAt: now });
-        tx.create(db.doc(`users/${account.uid}`), {
-          uid: account.uid, role: account.role, status: 'active', accountOwner: user.uid,
-          fullName: `প্রাথমিক ${account.role} অ্যাকাউন্ট`, mobile: '', email: '',
-          username: account.username, mustChangePassword: true, createdAt: now, updatedAt: now,
-          bootstrapAccount: true
-        });
-      });
-      tx.update(bootstrapRef, { state: 'active', uid: user.uid, username: profile.username, createdAt: now, claimId: FieldValue.delete() });
-    });
-    return {
-      ok: true, uid: user.uid, username: profile.username, role: 'admin', status: 'active',
-      bootstrapAccounts: bootstrapAccounts.map(({ role, username, password }) => ({ role, username, password }))
-    };
-  } catch (error) {
-    await Promise.all(createdUsers.map(created => auth.deleteUser(created.uid).catch(() => {})));
-    await db.runTransaction(async tx => {
-      const lock = await tx.get(bootstrapRef);
-      if (lock.exists && lock.data().claimId === claimId) tx.delete(bootstrapRef);
-    }).catch(() => {});
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError('internal', 'Initial Admin তৈরি হয়নি; আবার চেষ্টা করুন।');
-  }
+/** Keep the old DEFAULT region (us-central1) while disabling this endpoint:
+ * changing its region would leave the original unauthenticated URL alive.
+ * Deploy this deny-all stub to every formerly deployed region before running
+ * bootstrap-first-admin.cjs. Verify live inventory before any prod cutover. */
+exports.createFirstAdmin = onCall({ region: 'us-central1' }, () => {
+  throw new HttpsError('permission-denied', 'First Admin requires operator-only Admin SDK bootstrap.');
 });
 
-/** Admin provisions Manager/Teacher/Payment/Student identities. Student accounts
- * start pending; only Manager can approve/reject them. */
+/** Admin provisions staff identities using real email/password Auth accounts.
+ * Students use the separately staged verified-email enrollment workflow. */
 exports.adminCreateAccount = onCall(async request => {
   requireCaller(request, 'admin');
   const profile = validateProfile(request.data || {});
@@ -159,9 +104,9 @@ exports.adminCreateAccount = onCall(async request => {
   });
   let user;
   try {
-    user = await auth.createUser({ email: authEmail(profile.username), password: profile.password, displayName: profile.fullName, disabled: false });
-    const status = role === 'student' ? 'pending' : 'active';
-    await auth.setCustomUserClaims(user.uid, { role, status, mustChangePassword: role !== 'student', ...v2IdentityClaims(role, user.uid) });
+    user = await auth.createUser({ email: profile.email, password: profile.password, displayName: profile.fullName, disabled: false });
+    const status = 'active';
+    await auth.setCustomUserClaims(user.uid, { role, status, mustChangePassword: true, ...v2IdentityClaims(role, user.uid) });
     await db.runTransaction(async tx => {
       const current = await tx.get(ref);
       if (!current.exists || current.data().reservation !== lockId) throw new HttpsError('aborted', 'Username reservation বদলে গেছে।');
@@ -170,17 +115,17 @@ exports.adminCreateAccount = onCall(async request => {
       tx.create(db.doc(`users/${user.uid}`), {
         uid: user.uid, role, status, fullName: profile.fullName, mobile: profile.mobile,
         email: profile.email, username: profile.username, accountOwner: request.auth.uid,
-        mustChangePassword: role !== 'student', createdAt: now, updatedAt: now
-      });
-      if (role === 'student') tx.create(db.doc(`students/${user.uid}`), {
-        uid: user.uid, fullName: profile.fullName, mobile: profile.mobile, email: profile.email,
-        username: profile.username, status: 'pending', createdAt: now
+        mustChangePassword: true, createdAt: now, updatedAt: now
       });
     });
     return { ok: true, uid: user.uid, role, status, username: profile.username };
   } catch (error) {
-    if (user) await auth.deleteUser(user.uid).catch(() => {});
-    await db.runTransaction(async tx => {
+    let removed = !user;
+    if (user) {
+      try { await auth.deleteUser(user.uid); removed = true; } catch { /* keep reservation for manual recovery */ }
+    }
+    // A failed Auth rollback must never free this handle for a second UID.
+    if (removed) await db.runTransaction(async tx => {
       const current = await tx.get(ref);
       if (current.exists && current.data().reservation === lockId) tx.delete(ref);
     }).catch(() => {});
@@ -210,45 +155,180 @@ exports.completeTemporaryPasswordChange = onCall(async request => {
   return { ok: true, refreshIdToken: true };
 });
 
-/** Only Manager may decide a pending student approval. Admin is intentionally
- * not accepted by this callable; Firestore rules enforce the same boundary. */
-exports.managerReviewStudent = onCall(async request => {
-  requireCaller(request, 'manager');
-  const uid = String(request.data.uid || '');
-  const decision = String(request.data.decision || '');
-  const note = String(request.data.note || '').trim().slice(0, 500);
-  if (!uid || !['approved', 'rejected'].includes(decision)) throw new HttpsError('invalid-argument', 'শিক্ষার্থী ও সিদ্ধান্ত নির্বাচন করুন।');
-  const studentRef = db.doc(`students/${uid}`);
-  const userRef = db.doc(`users/${uid}`);
-  await db.runTransaction(async tx => {
-    const student = await tx.get(studentRef);
-    const user = await tx.get(userRef);
-    if (!student.exists || !user.exists || student.data().status !== 'pending' || user.data().role !== 'student') {
-      throw new HttpsError('failed-precondition', 'এই শিক্ষার্থী আর অপেক্ষমাণ নেই।');
+/** Separate from the live local form: create Email/Password Auth in a dev
+ * project, verify the email, then call this App Check-gated endpoint. No
+ * client may create role claims or Firestore student/username documents. */
+exports.studentRegisterForReview = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await registerStagedStudent({ db, auth, serverTimestamp: () => FieldValue.serverTimestamp(),
+      caller: request.auth, data: request.data });
+  } catch (error) {
+    if (error instanceof EnrollmentError) {
+      const code = error.code === 'identity-reserved' ? 'already-exists'
+        : error.code === 'verified-email-required' ? 'permission-denied' : 'invalid-argument';
+      throw new HttpsError(code, 'যাচাইকৃত Student পরিচয় বা নিবন্ধনের তথ্য গ্রহণযোগ্য নয়।');
     }
-    const status = decision;
-    tx.update(studentRef, { status, reviewedBy: request.auth.uid, reviewedAt: FieldValue.serverTimestamp(), reviewNote: note });
-    tx.update(userRef, { status, reviewedBy: request.auth.uid, reviewedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-  });
-  const user = await auth.getUser(uid);
-  // Force the V2 link on approval so accounts created before the staged
-  // migration (no studentId claim) still reach their own projection node.
-  await auth.setCustomUserClaims(uid, { ...user.customClaims, role: 'student', status: decision, ...v2IdentityClaims('student', uid) });
-  return { ok: true, uid, status: decision };
+    throw new HttpsError('internal', 'নিবন্ধন যাচাই সম্পন্ন হয়নি; অবস্থা যাচাই করে পুনরায় চেষ্টা করুন।');
+  }
+});
+
+/** Only Manager may decide a verified, pending staged Student enrollment.
+ * Profile/username link and Auth identity must agree before issuing claims. */
+exports.managerReviewStudent = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await reviewStagedStudent({ db, auth, serverTimestamp: () => FieldValue.serverTimestamp(),
+      caller: request.auth, data: request.data });
+  } catch (error) {
+    if (error instanceof EnrollmentError) {
+      const code = ['manager-required', 'profile-mismatch', 'unverified-student'].includes(error.code) ? 'permission-denied'
+        : error.code === 'already-reviewed' ? 'failed-precondition' : 'invalid-argument';
+      throw new HttpsError(code, 'Student পরিচয় বা Manager সিদ্ধান্ত যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'পর্যালোচনার অবস্থা যাচাই করুন; একই সিদ্ধান্তে পুনরায় চেষ্টা করুন।');
+  }
+});
+
+/** Admin configures one verified fee projection, never by browser/profile form. */
+exports.adminConfigureStudentFee = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await configureStagedFee({ db, auth, caller: request.auth, data: request.data,
+      serverTimestamp: () => FieldValue.serverTimestamp() });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(error.code === 'summary-reserved' ? 'already-exists'
+        : ['student-denied', 'role-denied'].includes(error.code) ? 'permission-denied' : 'invalid-argument',
+      'Student ফি বা অনুমতি যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'ফি projection যাচাই করুন; প্রয়োজনে একই অনুরোধ পুনরায় পাঠান।');
+  }
+});
+
+/** Cash Counter records a server-numbered pending receipt, not a settled bill. */
+exports.counterSubmitPayment = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await submitStagedPayment({ db, caller: request.auth, data: request.data,
+      serverTimestamp: () => FieldValue.serverTimestamp(), clock: Date.now });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(['request-reserved', 'reference-reserved'].includes(error.code) ? 'already-exists'
+        : ['student-denied', 'role-denied'].includes(error.code) ? 'permission-denied' : 'invalid-argument',
+      'অর্থ গ্রহণের পরিচয় বা রসিদের তথ্য যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'রসিদ লেখা হয়েছে কি না যাচাই করে একই requestId দিয়ে আবার চেষ্টা করুন।');
+  }
+});
+
+/** Manager may inspect only a known receipt's review fields, not the ledger. */
+exports.managerInspectPayment = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await inspectStagedPayment({ db, caller: request.auth, id: request.data?.id });
+  } catch (error) {
+    if (error instanceof PaymentError) throw new HttpsError('permission-denied', 'রসিদ যাচাই করা যায়নি।');
+    throw new HttpsError('internal', 'রসিদের অবস্থা যাচাই করুন।');
+  }
+});
+
+/** A distinct Manager decision is required before a pending receipt counts. */
+exports.managerReviewPayment = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await reviewStagedPayment({ db, caller: request.auth, data: request.data,
+      serverTimestamp: () => FieldValue.serverTimestamp() });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(error.code === 'already-reviewed' ? 'failed-precondition'
+        : ['role-denied', 'unverified-receipt'].includes(error.code) ? 'permission-denied' : 'invalid-argument',
+      'রসিদের সিদ্ধান্ত বা পরিচয় যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'সিদ্ধান্ত লেখা হয়েছে কি না যাচাই করে একই সিদ্ধান্তে আবার চেষ্টা করুন।');
+  }
+});
+
+/** Manager requests a one-time accounting correction for an approved receipt.
+ * This does not issue a refund or change the original transaction. */
+exports.managerRequestPaymentReversal = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await requestStagedReversal({ db, caller: request.auth, data: request.data,
+      serverTimestamp: () => FieldValue.serverTimestamp() });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(error.code === 'reversal-reserved' ? 'already-exists'
+        : ['role-denied', 'unverified-receipt'].includes(error.code) ? 'permission-denied' : 'invalid-argument',
+      'মূল রসিদ বা সংশোধনের আবেদন যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'সংশোধনের আবেদন হয়েছে কি না যাচাই করে একই তথ্য দিয়ে আবার চেষ্টা করুন।');
+  }
+});
+
+/** A distinct Admin makes the final, one-time accounting decision. */
+exports.adminDecidePaymentReversal = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await decideStagedReversal({ db, caller: request.auth, data: request.data,
+      serverTimestamp: () => FieldValue.serverTimestamp() });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(error.code === 'reversal-reserved' ? 'failed-precondition'
+        : ['role-denied', 'unverified-receipt', 'unverified-reversal'].includes(error.code) ? 'permission-denied' : 'invalid-argument',
+      'সংশোধনের সিদ্ধান্ত বা পরিচয় যাচাই করা যায়নি।');
+    }
+    throw new HttpsError('internal', 'সিদ্ধান্ত হয়েছে কি না যাচাই করে একই তথ্য দিয়ে আবার চেষ্টা করুন।');
+  }
+});
+
+/** Read-only, capped, verified Student payment position for Admin only.
+ * No browser ledger write, local due change or public settlement claim. */
+exports.adminReadStudentPaymentPosition = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await readStagedPaymentPosition({ db, caller: request.auth, data: request.data });
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      throw new HttpsError(['role-denied', 'student-denied'].includes(error.code) ? 'permission-denied'
+        : ['ledger-too-large', 'unverified-ledger', 'unverified-receipt', 'unverified-reversal'].includes(error.code)
+          ? 'failed-precondition' : 'invalid-argument',
+      'যাচাইকৃত হিসাব-সারাংশ তৈরি করা যায়নি; তথ্য/সীমা পর্যালোচনা করুন।');
+    }
+    throw new HttpsError('internal', 'হিসাবের অবস্থা যাচাই করুন; অসম্পূর্ণ ফল ব্যবহার করবেন না।');
+  }
+});
+
+/** Staged MCQ submission: trusted transaction creates the public pending paper
+ * and its private answer key together. App Check + Teacher email Auth required.
+ * No UI calls this yet; do not deploy without emulator rules/role verification. */
+exports.teacherSubmitExamForReview = onCall({ enforceAppCheck: true }, async request => {
+  requireCaller(request, 'teacher');
+  try {
+    return await submitStagedExam({
+      db, serverTimestamp: () => FieldValue.serverTimestamp(), caller: request.auth,
+      data: request.data, now: Date.now()
+    });
+  } catch (error) {
+    if (error instanceof ExamSubmissionError) {
+      const code = error.code === 'exam-id-reserved' ? 'already-exists'
+        : ['teacher-auth-required', 'profile-mismatch', 'class-denied'].includes(error.code) ? 'permission-denied'
+        : error.code === 'invalid-window' ? 'failed-precondition' : 'invalid-argument';
+      throw new HttpsError(code, 'পরীক্ষার তথ্য বা অনুমতি গ্রহণযোগ্য নয়।');
+    }
+    throw new HttpsError('internal', 'পরীক্ষা জমা হয়নি; অবস্থা যাচাই করে পুনরায় চেষ্টা করুন।');
+  }
 });
 
 /** Manager is the only role allowed to publish/reject pending exam records. */
 exports.managerReviewExam = onCall(async request => {
   requireCaller(request, 'manager');
-  const examId = String(request.data.examId || '');
-  const decision = String(request.data.decision || '');
-  const note = String(request.data.note || '').trim().slice(0, 500);
-  if (!examId || !['publish', 'reject'].includes(decision)) throw new HttpsError('invalid-argument', 'পরীক্ষা ও সিদ্ধান্ত নির্বাচন করুন।');
+  const examId = String(request.data?.examId || '');
+  const decision = String(request.data?.decision || '');
+  const note = String(request.data?.note || '').trim().slice(0, 500);
+  if (!safeQuestionKey(examId) || !['publish', 'reject'].includes(decision)) throw new HttpsError('invalid-argument', 'পরীক্ষা ও সিদ্ধান্ত নির্বাচন করুন।');
   if (decision === 'reject' && !note) throw new HttpsError('invalid-argument', 'সংশোধনের কারণ লিখুন।');
   const ref = db.doc(`exams/${examId}`);
   await db.runTransaction(async tx => {
     const exam = await tx.get(ref);
     if (!exam.exists || exam.data().status !== 'pending') throw new HttpsError('failed-precondition', 'শুধু অপেক্ষমাণ পরীক্ষা পর্যালোচনা করা যাবে।');
+    if (decision === 'publish') {
+      const key = await tx.get(ref.collection('private').doc('key'));
+      if (!key.exists || !safeForManagerReview(exam.data(), key.data(), Date.now())) {
+        throw new HttpsError('failed-precondition', 'নিরাপদ প্রশ্ন ও উত্তরমালা ছাড়া প্রকাশ করা যাবে না।');
+      }
+    }
     tx.update(ref, {
       status: decision === 'publish' ? 'published' : 'rejected',
       reviewedBy: request.auth.uid,
@@ -258,6 +338,24 @@ exports.managerReviewExam = onCall(async request => {
     });
   });
   return { ok: true, examId, status: decision === 'publish' ? 'published' : 'rejected' };
+});
+
+/** Staged single-use MCQ attempt; no browser Firestore writes and no answer key
+ * read. The exam is re-read in the transaction, including its release lock. */
+exports.studentSubmitExamAttempt = onCall({ enforceAppCheck: true }, async request => {
+  try {
+    return await submitStagedAttempt({
+      db, serverTimestamp: () => FieldValue.serverTimestamp(),
+      caller: request.auth, data: request.data, clock: Date.now
+    });
+  } catch (error) {
+    if (error instanceof AttemptError) {
+      const code = ['student-auth-required', 'profile-mismatch', 'exam-denied'].includes(error.code) ? 'permission-denied'
+        : ['window-closed', 'attempt-exists'].includes(error.code) ? 'failed-precondition' : 'invalid-argument';
+      throw new HttpsError(code, 'পরীক্ষায় অংশগ্রহণের অনুমতি বা সময়সীমা গ্রহণযোগ্য নয়।');
+    }
+    throw new HttpsError('internal', 'উত্তরপত্র জমা হয়নি; অবস্থা যাচাই করে পুনরায় চেষ্টা করুন।');
+  }
 });
 
 /** Admin can suspend/re-activate staff accounts, never approve a student. */
@@ -295,49 +393,56 @@ exports.adminSetAccountStatus = onCall(async request => {
  *   • the exam window must have ended (`endAt` in the past);
  *   • the key is read from `exams/{examId}/private/key` (student-inaccessible);
  *   • every `attempts` row of the exam is scored and written to `results` as
- *     `{examId}_{studentId}` (Admin SDK — the rules make results immutable to
- *     clients; re-running the release stays idempotent);
- *   • the answers are copied to `exams/{examId}/releasedKey` with a
+ *     `res_<sha256(examId,studentId)>` (Admin SDK; deterministic, no ambiguous
+ *     separator collisions; re-running the release stays idempotent);
+ *   • the answers are copied to `exams/{examId}/releasedKey/answers` with a
  *     `releasedAt` stamp — the only answer document students may read, and
  *     only after release.
  *
  * Callers: Admin/Manager always; the owning teacher for their own paper. */
 exports.releaseExamResults = onCall(async request => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'লগইন প্রয়োজন।');
+  if (!request.auth || request.auth.token.status !== 'active' || request.auth.token.mustChangePassword === true) {
+    throw new HttpsError('permission-denied', 'সক্রিয় অ্যাকাউন্ট প্রয়োজন।');
+  }
   const examId = String(request.data?.examId || '');
   if (!safeQuestionKey(examId)) throw new HttpsError('invalid-argument', 'examId সঠিক নয়।');
   const callerUid = request.auth.uid;
-  const callerRole = String(request.auth.token?.role || '');
+  let closed;
+  try {
+    closed = await closeStagedExamForRelease({
+      db, serverTimestamp: () => FieldValue.serverTimestamp(), caller: request.auth,
+      examId, clock: Date.now
+    });
+  } catch (error) {
+    if (error instanceof ReleaseError) {
+      throw new HttpsError('failed-precondition', 'পরীক্ষাটি যাচাইকৃত বা শেষ হয়নি।');
+    }
+    throw new HttpsError('internal', 'ফলাফল প্রকাশের অবস্থা যাচাই করুন।');
+  }
+  if (closed.alreadyReleased) return { ok: true, examId, alreadyReleased: true };
+  const { exam, key } = closed;
   const examRef = db.doc(`exams/${examId}`);
-  const examSnapshot = await examRef.get();
-  if (!examSnapshot.exists) throw new HttpsError('not-found', 'পরীক্ষাটি পাওয়া যায়নি।');
-  const exam = examSnapshot.data();
-  const ownsPaper = callerRole === 'teacher' && exam.teacherUid === callerUid;
-  const adminLike = callerRole === 'admin' || callerRole === 'staff-admin';
-  if (!adminLike && callerRole !== 'manager' && !ownsPaper) {
-    throw new HttpsError('permission-denied', 'এই পরীক্ষার ফলাফল প্রকাশের অনুমতি নেই।');
-  }
-  const endAt = Number(exam.endAt);
-  if (!Number.isFinite(endAt) || endAt <= 0 || Date.now() < endAt) {
-    throw new HttpsError('failed-precondition', 'পরীক্ষা শেষ হওয়ার আগে ফলাফল প্রকাশ করা যাবে না।');
-  }
-  const keySnapshot = await examRef.collection('private').doc('key').get();
-  if (!keySnapshot.exists) {
-    throw new HttpsError('failed-precondition', 'উত্তরমালা (exams/{id}/private/key) পাওয়া যায়নি।');
-  }
-  const key = keySnapshot.data();
   const attemptsSnapshot = await db.collection('attempts').where('examId', '==', examId).get();
+  // Validate the entire set BEFORE scoring any row. A bad legacy/forged
+  // attempt holds the release lock for operator review, never a partial leak.
+  const pending = [];
+  attemptsSnapshot.forEach(attemptDoc => {
+    const attempt = attemptDoc.data();
+    if (!validStagedAttempt(attempt, exam, attemptDoc.id)) {
+      throw new HttpsError('failed-precondition', 'অযাচাইকৃত উত্তরপত্র আছে; প্রকাশ বন্ধ রাখা হয়েছে।');
+    }
+    pending.push(attempt);
+  });
   const releasedAt = FieldValue.serverTimestamp();
   let attemptsScored = 0;
   const writes = [];
-  attemptsSnapshot.forEach(attemptDoc => {
-    const attempt = attemptDoc.data();
-    const studentId = String(attempt.studentId || '');
-    if (!studentId) return;
+  for (const attempt of pending) {
+    const studentId = attempt.studentId;
     attemptsScored += 1;
     const scored = scoreAttempt(key, attempt);
-    writes.push(db.collection('results').doc(`${examId}_${studentId}`).set({
-      id: `${examId}_${studentId}`,
+    const id = resultId(examId, studentId);
+    writes.push(db.collection('results').doc(id).set({
+      id,
       examId,
       studentId,
       className: attempt.className != null ? attempt.className : (exam.className != null ? exam.className : ''),
@@ -349,9 +454,9 @@ exports.releaseExamResults = onCall(async request => {
       scoredBy: 'releaseExamResults',
       gradedAt: releasedAt
     }, { merge: true }));
-  });
+  }
   await Promise.all(writes);
-  await examRef.collection('releasedKey').set({
+  await examRef.collection('releasedKey').doc('answers').set({
     examId,
     answers: keyAnswers(key),
     questions: Array.isArray(key.questions)
@@ -363,7 +468,7 @@ exports.releaseExamResults = onCall(async request => {
     releasedAt,
     releasedBy: callerUid
   }, { merge: true });
-  await examRef.set({ resultsReleased: true, resultsReleasedAt: releasedAt }, { merge: true });
+  await examRef.set({ resultsReleaseState: 'released', resultsReleased: true, resultsReleasedAt: releasedAt }, { merge: true });
   return { ok: true, examId, attemptsScored };
 });
 

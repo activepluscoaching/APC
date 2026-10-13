@@ -1,3 +1,4 @@
+import { nowEpoch } from './time.js';
 import { examRepository as repo, examMatchesStudent, retryEligibility, firstAttemptMean, examResults, totalMarks, watchExams, isStudentVisibleExam, gradeFor } from './exam-data.js';
 import { examMeta, resultMarkup, classResultBoard, attemptStage, stageTag, codeTag, esc, num } from './exam-ui.js';
 import { downloadExamPDF } from './exam-pdf.js';
@@ -37,7 +38,7 @@ export function initStudentExams({ getStudent, getAccount }) {
   function visibleExams() {
     return db.exams.filter(e => isStudentVisibleExam(e) && examMatchesStudent(e, getStudent()));
   }
-  function tabOf(exam, now = Date.now()) {
+  function tabOf(exam, now = nowEpoch()) {
     const attempts = own(exam);
     if (attempts.some(a => a.status === 'active') && now < exam.endAt) return 'live';
     if (now < exam.startAt) return 'upcoming';
@@ -67,7 +68,7 @@ export function initStudentExams({ getStudent, getAccount }) {
   }
   function paintTabs() {
     const bar = document.querySelector('#examTabs');
-    const now = Date.now();
+    const now = nowEpoch();
     const exams = activeAccount() ? visibleExams() : [];
     const counts = { upcoming: 0, live: 0, done: 0, results: 0 };
     exams.forEach(exam => { counts[tabOf(exam, now)] += 1; });
@@ -121,12 +122,12 @@ export function initStudentExams({ getStudent, getAccount }) {
     if (!activeAccount()) { content.innerHTML = '<p class="exam-card">অনুমোদিত অ্যাকাউন্ট দিয়ে লগইন করতে হবে।</p>'; paintTabs(); return; }
     /* Draft / review / approved / archived papers are staff-only: a student
     never sees a question before its exam is published. */
-    const visible = visibleExams(), now = Date.now();
+    const visible = visibleExams(), now = nowEpoch();
     const exams = visible.filter(e => tabOf(e, now) === tab).sort((a, b) => b.startAt - a.startAt);
     content.innerHTML = `<div class="exam-actions">${button('refresh', 'তালিকা / জমার অবস্থা হালনাগাদ')}</div><div class="exam-list">${exams.map(e => {
       const attempts = own(e), active = attempts.find(a => a.status === 'active'), queued = attempts.some(a => a.status === 'queued');
       const canFirst = !attempts.length && now >= e.startAt && now < e.endAt && now <= e.startAt + e.lateMinutes * 60000;
-      const retry = retryEligibility(db, e, getStudent().id);
+      const retry = false;
       return `<article class="exam-card" data-student-exam="${esc(e.id)}">${examMeta(e)}<p class="exam-note">${stageTag(e)}${codeTag(e)}</p><p class="exam-note">${esc(e.instructions)}</p>${e.type === 'mcq' ? `<p class="exam-note">সব প্রশ্ন একসঙ্গে থাকবে। প্রতি ভুলে ${num(e.negative)} নম্বর কাটা হবে; সর্বনিম্ন মোট ০। প্রথম প্রবেশের সীমা ${num(e.lateMinutes)} মিনিট।</p>${queued ? `<p class="exam-message">${esc(attemptStage(attempts.find(a => a.status === 'queued'), e))}</p>` : ''}` : ''}
         <div class="exam-actions">${e.type === 'mcq' ? active && now < e.endAt ? button('resume', 'পরীক্ষায় ফিরে যাও', e.id, 'primary') : canFirst ? button('start', 'পরীক্ষা শুরু করো', e.id, 'primary') : retry ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : `<small>${now < e.startAt ? 'নির্ধারিত সময়ে পরীক্ষা শুরু হবে।' : now >= e.endAt ? 'পরীক্ষার সময় শেষ।' : attempts.length ? 'চলমান গড়ের নিচে হলে দ্বিতীয় সুযোগ এখানে আসবে।' : 'প্রথম প্রবেশের সময়সীমা শেষ।'}</small>` : now >= e.startAt ? button('paper', 'প্রশ্নপত্র PDF ডাউনলোড', e.id, 'primary') : '<small>শুরুর সময় হলে PDF পাওয়া যাবে।</small>'}
         ${e.resultsPublished ? button('results', 'প্রকাশিত ফলাফল ও ক্লাসের মেধাক্রম', e.id): e.type === 'mcq' ? `<small>সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।</small>` : '<small>ফলাফল Manager-এর প্রকাশের অপেক্ষায়।</small>'}${e.type === 'mcq' && now >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF', e.id) : ''}</div></article>`;
@@ -158,7 +159,7 @@ export function initStudentExams({ getStudent, getAccount }) {
         return `<div class="exam-summary"><h3>তোমার প্রচেষ্টা ${num(a.number)} • ${esc(attemptStage(a, e))}${auto ? ' (সময় শেষে স্বয়ংক্রিয় জমা)' : ''}</h3><strong>${num(a.score)} / ${num(totalMarks(e))}</strong>${e.type === 'mcq' ? `<p>সঠিক ${num(a.correct)} • ভুল ${num(a.wrong)} • অনুত্তরিত ${num(a.unanswered)}</p>` : ''}${a.comment ? `<p class="exam-teacher-comment" data-exam-comment><strong>শিক্ষকের মন্তব্য:</strong> ${esc(a.comment)}</p>` : ''}${auto ? '<p>নির্ধারিত সময় শেষ হওয়ায় উত্তরপত্র নিজে থেকেই জমা হয়েছে — জমা হওয়ার আগে যেসব উত্তর বাছা ছিল সেগুলোই গণনা হয়েছে।</p>' : ''}</div>`;
       }).join('')}
       <p class="exam-note">${e.type === 'mcq' ? `দ্বিতীয় সুযোগ: জমা হওয়া প্রথম প্রচেষ্টার চলমান গড় ${mean === null ? 'এখনও নেই' : num(mean.toFixed(2))}। তার নিচে থাকলে সর্বোচ্চ দুইবার; শেষ সময় একই। শুরু করা দ্বিতীয় সুযোগ পরে গড় বদলালেও বাতিল হবে না।` : 'ক্লাসে পরীক্ষার পরে শিক্ষক নম্বর প্রকাশ করবেন।'}</p>
-      <div class="exam-actions">${retryEligibility(db, e, getStudent().id) ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : ''}${e.type === 'mcq' && Date.now() >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF ডাউনলোড', e.id, 'primary') : e.type === 'mcq' ? '<small>সঠিক উত্তরসহ PDF সবার পরীক্ষা শেষ হলে পাওয়া যাবে।</small>' : ''}</div>${e.classResults ? classResultBoard(e, e.classResults, { meId: getStudent().id }) : resultMarkup(db, e)}`;
+      <div class="exam-actions">${false ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : ''}${e.type === 'mcq' && nowEpoch() >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF ডাউনলোড', e.id, 'primary') : e.type === 'mcq' ? '<small>সঠিক উত্তরসহ PDF সবার পরীক্ষা শেষ হলে পাওয়া যাবে।</small>' : ''}</div>${e.classResults ? classResultBoard(e, e.classResults, { meId: getStudent().id }) : resultMarkup(db, e)}`;
     if (reset) scrollTop();
   }
   function repaint() {
@@ -180,7 +181,7 @@ export function initStudentExams({ getStudent, getAccount }) {
          offline attempt left behind — otherwise the student keeps seeing
          "অ্যাকাউন্ট যাচাই করা যায়নি" over a working list. */
       error('');
-      if (!tabChosen) { tab = defaultTab(visibleExams(), Date.now()); tabChosen = true; }
+      if (!tabChosen) { tab = defaultTab(visibleExams(), nowEpoch()); tabChosen = true; }
       repaint();
     }
     catch (e) { ready = false; content.innerHTML = ''; error(e.message || 'পরীক্ষার ডেটা লোড হয়নি।'); }
@@ -198,9 +199,9 @@ export function initStudentExams({ getStudent, getAccount }) {
   function clock() {
     const e = db.exams.find(e => e.id === examId);
     if ($('[data-exam-clock]') && e) {
-      const seconds = Math.max(0, Math.ceil((e.endAt - Date.now()) / 1000));
+      const seconds = Math.max(0, Math.ceil((e.endAt - nowEpoch()) / 1000));
       const readable = bnDigits(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
-      const left = e.endAt - Date.now(), node = $('[data-exam-clock]');
+      const left = e.endAt - nowEpoch(), node = $('[data-exam-clock]');
       const low = left > 0 && left <= LOW_TIME_MS, hint = $('[data-low-hint]');
       node.textContent = left <= 0 ? 'সময় শেষ' : `সময় বাকি ${readable}`;
       node.dataset.lowTime = low ? 'true' : 'false';
@@ -212,7 +213,7 @@ export function initStudentExams({ getStudent, getAccount }) {
   }
   async function sync() {
     if (busy || !ready || !activeAccount()) return;
-    const pending = db.attempts.some(a => a.studentId === getStudent().id && (a.status === 'queued' && navigator.onLine !== false || a.status === 'active' && Date.now() >= db.exams.find(e => e.id === a.examId).endAt));
+    const pending = db.attempts.some(a => a.studentId === getStudent().id && (a.status === 'queued' && navigator.onLine !== false || a.status === 'active' && nowEpoch() >= db.exams.find(e => e.id === a.examId).endAt));
     if (pending) await run(() => repo.syncStudent(getStudent().id));
   }
   root.addEventListener('change', event => {
@@ -235,7 +236,7 @@ export function initStudentExams({ getStudent, getAccount }) {
     else if (action === 'solutions') run(async () => {
       const refreshed = await repo.listForStudent(getStudent()?.id);
       const current = refreshed.exams.find(item => item.id === target.dataset.id);
-      if (!current || Date.now() < current.endAt) throw new Error('পরীক্ষা শেষ হলে সঠিক উত্তরসহ PDF পাওয়া যাবে।');
+      if (!current || nowEpoch() < current.endAt) throw new Error('পরীক্ষা শেষ হলে সঠিক উত্তরসহ PDF পাওয়া যাবে।');
       await downloadExamPDF(current, { solutions: true, attempt: examResults(refreshed, current).find(item => item.studentId === getStudent().id) || own(current).at(-1) });
       return refreshed;
     }, () => message('PDF ডাউনলোড শুরু হয়েছে।'));
@@ -284,10 +285,10 @@ export function initStudentExams({ getStudent, getAccount }) {
   let lastMinute = -1;
   setInterval(() => {
     clock(); sync();
-    const minute = Math.floor(Date.now() / 1000);
+    const minute = Math.floor(nowEpoch() / 1000);
     if (ready && !busy && minute !== lastMinute && view !== 'active') {
       // Refresh time-based buttons without moving focus away from the current control.
-      const transition = db.exams.some(e => [e.startAt, e.endAt, e.startAt + e.lateMinutes * 60000 + 1000].some(t => t > lastMinute * 1000 && t <= Date.now()));
+      const transition = db.exams.some(e => [e.startAt, e.endAt, e.startAt + e.lateMinutes * 60000 + 1000].some(t => t > lastMinute * 1000 && t <= nowEpoch()));
       if (transition) repaint();
     }
     lastMinute = minute;

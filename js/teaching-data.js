@@ -1,3 +1,5 @@
+import { nowEpoch, dhakaKey } from './time.js';
+import { gradeEditPolicy, appendGradeAudit } from './grade-audit.js';
 /* Local academic repository. Keep the existing Student and Transaction schemas intact.
    These async methods can be replaced with authenticated API calls later. */
 import { enabledClasses, STORAGE_KEYS } from './config.js';
@@ -131,10 +133,10 @@ export const ACTIVITY_TYPES = Object.freeze({
 });
 export const PROGRESS_LABELS = Object.freeze({ pending: 'বাকি', done: 'সম্পন্ন জানিয়েছে', reviewed: 'দেখা হয়েছে', present: 'উপস্থিত', absent: 'অনুপস্থিত', late: 'দেরিতে উপস্থিত' });
 export { escapeHtml as escapeText } from './sanitize.js';
-export function todayISO(now = new Date()) { return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
+export function todayISO(now = new Date(nowEpoch())) { return dhakaKey(now); }
 export function displayDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return '—';
-  return new Date(`${value}T12:00:00`).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(`${value}T12:00:00+06:00`).toLocaleDateString('bn-BD', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'long', year: 'numeric' });
 }
 export function safeResourceURL(value) {
   if (!value) return '';
@@ -259,7 +261,7 @@ export function isTeacherAllowedSubject(username, className, subject = '', group
 }
 function teacherSnapshot(db) {
   return {
-    ...db,
+    version: db.version,
     activities: db.activities.filter(activity =>
       isOwnTeacherRecord(activity.teacherId)
       && isTeacherAssigned(teachingScopeUsername(), activity.className, activity.group)
@@ -354,6 +356,7 @@ export const teachingRepository = {
     const db = await mutate(db => {
       const old = input.id ? ownedActivity(db, input.id) : null;
       if (old && old.type !== fields.type) fail('কাজের ধরন বদলানো যাবে না।');
+      if (old?.type === 'routine' && Object.values(old.progress || {}).some(row => nowEpoch() - Date.parse(row.updatedAt) > 7 * 86400000)) fail('৭ দিন পেরিয়েছে; এই উপস্থিতি ক্লাস শুধু Manager সংশোধন করতে পারবেন।');
       if (old && Object.keys(old.progress).length && (old.className !== fields.className || groupKey(old.group) !== groupKey(fields.group))) fail('নম্বর/অগ্রগতি আছে। এই কাজের শ্রেণি বা বিভাগ বদলানো যাবে না।');
       if (fields.type === 'exam' && old && Object.values(old.progress).some(p => Number(p.value) > fields.totalMarks)) fail('পূর্ণমান সংরক্ষিত নম্বরের চেয়ে কম হতে পারে না।');
       if (fields.status === 'published' && ['exam', 'routine'].includes(fields.type)) {
@@ -380,19 +383,23 @@ export const teachingRepository = {
   },
   async deleteActivity(id) {
     await requireRoleSession('teacher');
-    const db = await mutate(data => { const activity = ownedActivity(data, id); if (activity.type === 'exam') fail('পরীক্ষার রেকর্ড এখানে মুছতে বা পরিবর্তন করতে পারবেন না।'); data.activities = data.activities.filter(a => a.id !== id); });
+    const db = await mutate(data => { const activity = ownedActivity(data, id); if (activity.type === 'exam') fail('পরীক্ষার রেকর্ড এখানে মুছতে বা পরিবর্তন করতে পারবেন না।'); if (activity.type === 'routine' && Object.keys(activity.progress || {}).length) fail('উপস্থিতি থাকা ক্লাস মুছবেন না; Manager-এর সাহায্য নিন।'); data.activities = data.activities.filter(a => a.id !== id); });
     return teacherSnapshot(db);
   },
-  async saveProgress(id, entries) {
-    await requireRoleSession('teacher');
+  async saveProgress(id, entries, actor = { role: 'teacher' }, reason = '') {
+    await requireRoleSession(actor.role);
     const db = await mutate(db => {
-      const activity = ownedActivity(db, id);
+      const activity = actor.role === 'teacher' ? ownedActivity(db, id) : db.activities.find(row => row.id === id);
+      if (!activity) fail('উপস্থিতি ক্লাস পাওয়া যায়নি।');
+      if (actor.role !== 'teacher' && activity.type !== 'routine') fail('এই কাজ সংশোধনের অনুমতি নেই।');
       if (activity.type === 'exam') fail('নম্বর ও ফলাফল কেবল Manager-approved Examination workflow-এ পরিবর্তন করা যাবে।');
       if (activity.status !== 'published' || activity.type === 'suggestion') fail('আগে কাজটি প্রকাশ করুন।');
-      const allowed = roster().filter(s => matchesStudent(activity, s));
+      const allowed = (actor.role === 'teacher' ? roster() : approvedRoster()).filter(s => matchesStudent(activity, s));
       for (const [studentId, entry] of Object.entries(entries)) {
         if (!allowed.some(s => s.id === studentId)) fail('শিক্ষার্থী এই শ্রেণি/বিভাগের অন্তর্ভুক্ত নয়।');
         const prev = activity.progress[studentId] || {};
+        const before = Object.hasOwn(activity.progress, studentId) ? { value: prev.value, at: (db.auditLog || []).find(row => row.examId === id && row.studentId === studentId)?.at || Date.parse(prev.updatedAt) } : null;
+        const note = activity.type === 'routine' ? gradeEditPolicy({ actor, previous: before, reason, now: nowEpoch() }) : '';
         const isObj = entry && typeof entry === 'object' && !Array.isArray(entry);
         const raw = isObj ? (entry.value !== undefined ? entry.value : prev.value) : entry;
         const comment = isObj && entry.comment !== undefined ? String(entry.comment || '').trim() : String(prev.comment || '').trim();
@@ -409,6 +416,7 @@ export const teachingRepository = {
           } else {
             delete activity.progress[studentId];
           }
+          if (activity.type === 'routine' && before) appendGradeAudit(db, { examId: id, studentId, actor, before, after: null, reason: note, at: nowEpoch() });
           continue;
         }
         const value = activity.type === 'exam' ? Number(raw) : raw;
@@ -423,9 +431,10 @@ export const teachingRepository = {
           updatedAt: new Date().toISOString()
         };
         if (!comment) delete activity.progress[studentId].comment;
+        if (activity.type === 'routine' && (!before || before.value !== value)) appendGradeAudit(db, { examId: id, studentId, actor: { ...actor, id: actor.id || (actor.role === 'teacher' ? currentTeacherId() : 'manager') }, before, after: { value }, reason: note, at: nowEpoch() });
       }
     });
-    return teacherSnapshot(db);
+    return actor.role === 'teacher' ? teacherSnapshot(db) : db;
   },
   async markHomeworkDone(id, student, submission = {}) {
     const actual = await authenticatedStudent(student?.id);

@@ -1,26 +1,6 @@
-/* Static contract tests for firestore.rules + functions/index.js.
-   The emulator suite (functions/test/firestore-rules.test.js) exercises the
-   rules live; these pin every structural guarantee of the security review in
-   the root `npm test` run, which has no emulator:
-
-     1. exam answer keys split off the exam doc, student-inaccessible;
-        scoring + release live in a Cloud Function after the exam ends;
-     2. published exams frozen for teacher/admin edits (Manager review is
-        the only publishing path);
-     3. teaching: students read published + own class/section only; teacher
-        writes require teacherUid == request.auth.uid (Admin excepted);
-     4. students: teacher reads approved + own classes only; payment reads the
-        limited summary surface of approved students; Manager reads
-        pending+approved; Admin edits limited fields (never status/uid);
-     5. transactions: amount>0, studentId+receiptNo required, createdBy ==
-        request.auth.uid, allowed-field mask; payment reads own rows only;
-        update/delete closed for everyone (reversal rows correct mistakes);
-     6. notices written by Manager+Admin; routine written by Manager+Admin+
-        owning Teacher;
-     7. studentApprovals: Manager cannot delete;
-     8. attempts/results/attendance/homeworkSubmissions: student own-only,
-        teacher class-scoped reads, writes immutable;
-     9. staff deactivate / role change revokes refresh tokens. */
+/* Static staged guardrails only: these checks do NOT evaluate Firebase rules.
+   The emulator suite in functions/test/firestore-rules.test.js must pass before
+   any deploy. Firestore panel cutover and production submission remain pending. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -56,49 +36,49 @@ function functionBody(exportName) {
   return next === -1 ? functionsSrc.slice(start) : functionsSrc.slice(start, next);
 }
 
-test('exam answer key is split into exams/{id}/private/key and releasedKey', () => {
+test('exam keys, draft writes and published answers are server-only', () => {
   const exams = matchBlock('exams/{examId}', 'function ownsExam');
-  const privateBlock = exams.slice(
-    exams.indexOf('match /private/{document}'),
-    exams.indexOf('match /releasedKey')
-  );
-  assert.ok(privateBlock.includes('match /private/{document}'), 'private key subcollection missing');
-  assert.ok(!privateBlock.includes('isStudent'), 'students must never reach exams/{id}/private/*');
-  assert.ok(exams.includes('match /releasedKey'), 'releasedKey (post-exam answers) missing');
-  // The main exam document carries stems/options/marks only — never answers.
-  assert.ok(exams.includes('carriesNoAnswers(request.resource.data)'));
-  for (const branch of ['allow create', 'allow update']) {
-    const at = exams.indexOf(branch);
-    assert.ok(at >= 0, `exams block: missing ${branch}`);
-    assert.ok(exams.slice(at, at + 500).includes('carriesNoAnswers'), `${branch} must reject answer material`);
-  }
-  assert.match(rules, /!\('answerKey' in data\)/);
-  assert.match(rules, /questions\.all\(q, !\('answer' in q\)/);
+  const privateBlock = exams.slice(exams.indexOf('match /private/{document}'), exams.indexOf('match /releasedKey/'));
+  assert.match(exams, /allow create, update, delete: if false/);
+  assert.match(privateBlock, /allow write: if false/);
+  assert.doesNotMatch(privateBlock, /isStudent/);
+  assert.match(exams, /match \/releasedKey\/\{document\}/);
+  assert.match(exams, /document == 'answers'/);
+  assert.match(exams, /releasedAt is timestamp && examForStudent\(examId\)/);
+  assert.match(exams, /function examForStudentOwned\(examId\)/);
+  assert.doesNotMatch(exams, /questions\.all\(/, 'unsupported list lambda cannot protect keys');
 });
 
 test('scoring and answer release live in Cloud Functions after the exam ends', () => {
   const release = functionBody('releaseExamResults');
-  assert.ok(release.includes("collection('private').doc('key')"), 'reads the private key');
-  assert.match(release, /Date\.now\(\) < endAt/, 'must refuse before the exam window ends');
+  const closing = readFileSync(resolve(root, 'functions/staged-release-core.cjs'), 'utf8');
+  const examCore = readFileSync(resolve(root, 'functions/staged-exam-core.cjs'), 'utf8');
+  assert.match(closing, /exams\/\$\{examId\}\/private\/key/, 'reads private key in the close transaction');
+  assert.match(examCore, /now < exam\.endAt/, 'must refuse before exam window ends');
+  assert.match(release, /closeStagedExamForRelease\(\{/);
+  assert.match(release, /validStagedAttempt\(attempt, exam, attemptDoc\.id\)/);
   assert.ok(release.includes('scoreAttempt'), 'scores attempts server-side');
   assert.ok(release.includes("collection('results')"), 'writes results server-side');
-  assert.ok(release.includes("collection('releasedKey')"), 'publishes answers after the exam');
+  assert.ok(release.includes("collection('releasedKey').doc('answers').set"), 'publishes a valid document path');
+  assert.match(release, /token.status !== 'active'/);
   assert.ok(functionsSrc.includes("require('./exam-scoring.js')"));
 });
 
-test('a published exam is frozen for teacher/admin; Manager review keeps working', () => {
-  const exams = matchBlock('exams/{examId}', 'function ownsExam');
-  assert.match(exams, /resource\.data\.status in \['draft', 'pending', 'rejected'\]/,
-    'teacher/admin may edit only while the review line is open');
-  assert.match(exams, /request\.resource\.data\.status in \['draft', 'pending'\]/,
-    'teacher/admin cannot set the published state themselves');
-  assert.match(exams, /resource\.data\.status == 'pending'\s*\n\s*&& request\.resource\.data\.status in \['published', 'rejected'\]/,
-    'managerReviewExam transition pending → published/rejected must survive');
+test('client exam transitions are closed; Manager publishes via server transaction', () => {
+  assert.match(matchBlock('exams/{examId}'), /allow create, update, delete: if false/);
+  const review = functionBody('managerReviewExam');
+  assert.match(review, /requireCaller\(request, 'manager'\)/);
+  assert.match(review, /exam.data\(\).status !== 'pending'/);
+  assert.match(review, /FieldValue.serverTimestamp\(\)/);
 });
 
 test('students read only published exams of their own class', () => {
   const exams = matchBlock('exams/{examId}', 'function ownsExam');
   assert.match(exams, /isStudent\(\) && resource\.data\.status == 'published' && resource\.data\.className == studentClass\(\)/);
+  assert.match(exams, /resource\.data\.get\('group', ''\) == studentGroup\(\)/);
+  assert.match(exams, /paper\.status == 'published' && paper\.resultsReleased == true/);
+  assert.match(exams, /paper\.className == studentClass\(\)/);
+  assert.match(exams, /paper\.get\('group', ''\) == studentGroup\(\)/);
 });
 
 test('teaching: student read is published + own class/section; teacher writes own rows only', () => {
@@ -113,23 +93,31 @@ test('teaching: student read is published + own class/section; teacher writes ow
   assert.match(teaching, /allow create: if isStaffManager\(\) \|\| isStaffAdmin\(\)/);
 });
 
-test('students: teacher reads approved of own classes only', () => {
+test('teachers and payment cannot read full legacy student documents', () => {
   const students = matchBlock('students/{studentId}');
-  assert.match(students, /isTeacher\(\) && resource\.data\.status == 'approved' && resource\.data\.className in assignedClasses\(\)/);
-  assert.ok(!students.includes('isPayment'), 'the payment counter never reads the full student record');
+  const readGate = students.split('allow read:')[1].split('allow create:')[0];
+  assert.doesNotMatch(readGate, /isTeacher\(\)|isPayment\(\)/);
+  const summary = matchBlock('studentSummaries/{studentId}');
+  assert.match(summary, /isTeacher\(\) && resource\.data\.status == 'approved' && resource\.data\.className in assignedClasses\(\)/);
 });
 
-test('students: Manager reads pending+approved and may only run the review transition', () => {
+test('student review is server-only and updates profile plus claims', () => {
   const students = matchBlock('students/{studentId}');
-  assert.match(students, /isStaffManager\(\) && resource\.data\.status in \['pending', 'approved'\]/);
-  assert.match(students, /isStaffManager\(\) && resource\.data\.status == 'pending'/);
-  assert.match(students, /request\.resource\.data\.status in \['approved', 'rejected'\]/);
-  assert.match(students, /affectedKeys\(\)\.hasOnly\(\['status', 'reviewedBy', 'reviewedAt', 'reviewNote'\]\)/);
+  assert.match(students, /isStaffManager\(\) && resource.data.status in \['pending', 'approved'\]/);
+  assert.doesNotMatch(students.split('allow update:')[1].split('allow delete:')[0], /isStaffManager\(\)/);
+  const review = functionBody('managerReviewStudent');
+  const core = readFileSync(resolve(root, 'functions/staged-student-core.cjs'), 'utf8');
+  assert.match(review, /enforceAppCheck: true/);
+  assert.match(review, /reviewStagedStudent\(\{/);
+  assert.match(core, /caller.token\?\.role !== 'manager'/);
+  assert.match(core, /tx.update\(studentRef/);
+  assert.match(core, /tx.update\(userRef/);
+  assert.match(core, /auth.setCustomUserClaims\(uid/);
 });
 
 test('students: Admin edits limited fields only — never status/uid', () => {
   const students = matchBlock('students/{studentId}');
-  assert.match(students, /isStaffAdmin\(\)\s*\n\s*&& request\.resource\.data\.diff\(resource\.data\)\.affectedKeys\(\)\.hasOnly\(\['name', 'fullName', 'mobile', 'classId', 'className', 'group', 'monthlyFee'\]\)/);
+  assert.match(students, /isAdmin\(\)\s*\n\s*&& request\.resource\.data\.diff\(resource\.data\)\.affectedKeys\(\)\.hasOnly\(\['name', 'fullName', 'mobile', 'classId', 'className', 'group', 'monthlyFee'\]\)/);
   assert.match(students, /allow create: if false/);
 });
 
@@ -139,30 +127,37 @@ test('payment counter reads only the limited summary surface of approved student
   for (const field of ['name', 'Student ID', 'class', 'mobile', 'monthly fee']) {
     assert.ok(summaries.toLowerCase().includes(field.toLowerCase()), `summary surface documents ${field}`);
   }
-  assert.match(summaries, /allow create, update: if isStaffAdmin\(\)/);
+  assert.match(summaries, /allow create, update, delete: if false/);
 });
 
-test('transactions: create validates amount, studentId, receiptNo, createdBy and field mask', () => {
-  const transactions = matchBlock('transactions/{transactionId}', 'function validTransaction');
-  assert.match(transactions, /amount is number/);
-  assert.match(transactions, /amount > 0/);
-  assert.match(transactions, /studentId is string && request\.resource\.data\.studentId != ''/);
-  assert.match(transactions, /receiptNo is string && request\.resource\.data\.receiptNo != ''/);
-  assert.match(transactions, /createdBy == request\.auth\.uid/);
-  assert.match(transactions, /keys\(\)\.hasOnly\(/);
-  assert.match(transactions, /'kind', 'reverses', 'reversedBy'/, 'reversal rows are the correction path');
+test('staged receipts and accounting corrections remain server-only, never client-derived finance authority', () => {
+  const transactions = matchBlock('transactions/{transactionId}');
+  assert.match(transactions, /allow create, update, delete: if false/);
+  assert.doesNotMatch(transactions, /validTransaction\(\)/);
+  const reversals = matchBlock('paymentReversals/{receiptId}');
+  assert.match(reversals, /allow read: if isAdmin\(\)/);
+  assert.match(reversals, /allow create, update, delete: if false/);
+  assert.match(functionBody('managerRequestPaymentReversal'), /enforceAppCheck: true/);
+  assert.match(functionBody('adminDecidePaymentReversal'), /enforceAppCheck: true/);
 });
 
 test('transactions: payment reads own rows only, admin reads all, update/delete closed', () => {
   const transactions = matchBlock('transactions/{transactionId}');
   assert.match(transactions, /isAdmin\(\) \|\| \(isPayment\(\) && resource\.data\.createdBy == request\.auth\.uid\)/);
-  assert.match(transactions, /allow update: if false/);
-  assert.match(transactions, /allow delete: if false/);
+  assert.match(transactions, /allow create, update, delete: if false/);
 });
 
 test('notices: written by Manager+Admin only', () => {
   const notices = matchBlock('notices/{noticeId}');
   assert.match(notices, /allow create, update, delete: if isStaffManager\(\) \|\| isStaffAdmin\(\)/);
+});
+
+test('unreviewed public question, notice and routine projections are not exposed to students', () => {
+  for (const name of ['questions/{questionId}', 'questionBank/{questionId}', 'notices/{noticeId}', 'routine/{routineId}']) {
+    const block = matchBlock(name);
+    const readGate = block.split('allow read:')[1].split(';')[0];
+    assert.doesNotMatch(readGate, /isStudent\(\)|isSignedIn\(\)|active\(\)/, `${name}: no broad student read`);
+  }
 });
 
 test('routine: Manager+Admin write any row, Teacher writes only own teacherUid rows', () => {
@@ -171,15 +166,13 @@ test('routine: Manager+Admin write any row, Teacher writes only own teacherUid r
   assert.match(routine, /isTeacher\(\) && resource\.data\.teacherUid == request\.auth\.uid\s*\n\s*&& request\.resource\.data\.teacherUid == request\.auth\.uid/);
 });
 
-test('studentApprovals: Manager create/update stay, Manager delete is gone', () => {
+test('studentApprovals is a server-owned audit trail readable by Manager/Admin', () => {
   const approvals = matchBlock('studentApprovals/{approvalId}');
-  assert.match(approvals, /allow read, create, update: if isStaffAdmin\(\) \|\| isStaffManager\(\)/);
-  assert.match(approvals, /allow delete: if isStaffAdmin\(\)/);
-  assert.ok(!approvals.includes('allow delete: if isStaffAdmin() || isStaffManager()'),
-    'Manager must no longer delete approval records');
+  assert.match(approvals, /allow read: if isStaffAdmin\(\) \|\| isStaffManager\(\)/);
+  assert.match(approvals, /allow create, update, delete: if false/);
 });
 
-test('attempts/results/attendance/homeworkSubmissions: own-only writes, immutable', () => {
+test('attempts/results/attendance/homeworkSubmissions: own-only reads, server-only writes', () => {
   for (const name of ['attempts/{attemptId}', 'results/{resultId}', 'attendance/{attendanceId}', 'homeworkSubmissions/{submissionId}']) {
     const block = matchBlock(name);
     assert.match(block, /ownRow\(resource\.data\)/, `${name}: student reads own rows`);
@@ -187,11 +180,11 @@ test('attempts/results/attendance/homeworkSubmissions: own-only writes, immutabl
     assert.match(block, /allow update: if false/, `${name}: immutable`);
     assert.match(block, /allow delete: if false/, `${name}: immutable`);
   }
-  assert.match(matchBlock('attempts/{attemptId}'), /allow create: if isStudent\(\) && ownRow\(request\.resource\.data\)/);
-  assert.match(matchBlock('homeworkSubmissions/{submissionId}'), /allow create: if isStudent\(\) && ownRow\(request\.resource\.data\)/);
-  assert.match(matchBlock('attendance/{attendanceId}'), /allow create: if isStudent\(\) && ownRow\(request\.resource\.data\)/);
-  // Scores are minted server-side: a student can never write their own result.
-  assert.match(matchBlock('results/{resultId}'), /allow create: if isStaffAdmin\(\) \|\| \(isTeacher\(\) && classRow\(request\.resource\.data\)\)/);
+  for (const name of ['attempts/{attemptId}', 'homeworkSubmissions/{submissionId}', 'attendance/{attendanceId}', 'results/{resultId}']) {
+    assert.match(matchBlock(name), /allow create: if false/, `${name}: no client forgeries`);
+  }
+  assert.match(matchBlock('results/{resultId}', 'function resultReleased'), /resultsReleased == true/);
+  assert.match(matchBlock('results/{resultId}'), /ownRow\(resource\.data\) && resultReleased\(resource\.data\)/);
 });
 
 test('staff deactivate and role change revoke refresh tokens', () => {
@@ -202,6 +195,6 @@ test('staff deactivate and role change revoke refresh tokens', () => {
 });
 
 test('teacher class scoping rides on the classes claim, deny-by-default', () => {
-  assert.match(rules, /request\.auth\.token\.classes is list \? request\.auth\.token\.classes : \[\]/);
+  assert.match(rules, /request\.auth\.token\.get\('classes', \[\]\) is list \? request\.auth\.token\.get\('classes', \[\]\) : \[\]/);
   assert.match(rules, /className in assignedClasses\(\)/);
 });

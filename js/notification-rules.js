@@ -1,3 +1,4 @@
+import { dhakaParts, dhakaKey, nowEpoch, parseDhakaDateTime } from './time.js';
 export const NOTIFY_PREFIX = 'activePlus.notifications.';
 export { LOCAL_WRITE_KEY, markLocalSource } from './local-write-mark.js';
 import { normalizeClassId, normalizeSectionId, matchesClassSection } from './class-key.js';
@@ -121,7 +122,7 @@ export function bnWhen(ms) {
   const when = new Date(Number(ms));
   if (!Number.isFinite(when.getTime())) return '';
   try {
-    return when.toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' });
+    return when.toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka', dateStyle: 'medium', timeStyle: 'short' });
   } catch {
     return when.toLocaleString();
   }
@@ -131,13 +132,13 @@ const participantIds = exam => (Array.isArray(exam?.participants) ? exam.partici
   .map(person => text(person?.id))
   .filter(Boolean);
 
-export function stillOpenExam(exam, now = Date.now()) {
+export function stillOpenExam(exam, now = nowEpoch()) {
   if (exam?.resultsPublished === true) return false;
   const endsAt = Number(exam?.endAt) || Number(exam?.startAt) || 0;
   return endsAt === 0 || endsAt > Number(now);
 }
 
-export function examItems(examDb, viewer, now = Date.now()) {
+export function examItems(examDb, viewer, now = nowEpoch()) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return [];
   const studentId = text(viewer.studentId);
   if (!studentId) return [];
@@ -199,7 +200,7 @@ const activityGroupKey = value => String(value || '').normalize('NFC').trim().re
 const localDayKey = value => {
   const date = value instanceof Date ? value : new Date(Number(value));
   if (!Number.isFinite(date.getTime())) return '';
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return dhakaKey(date);
 };
 function homeworkActivities(teachingDb, viewer) {
   if (viewer?.kind !== 'student' || !text(viewer.studentId)) return [];
@@ -213,19 +214,17 @@ function homeworkActivities(teachingDb, viewer) {
   });
 }
 
-export function homeworkItems(teachingDb, viewer, now = Date.now()) {
+export function homeworkItems(teachingDb, viewer, now = nowEpoch()) {
   const timestamp = Number(now);
-  const current = new Date(Number.isFinite(timestamp) ? timestamp : Date.now());
+  const current = new Date(Number.isFinite(timestamp) ? timestamp : nowEpoch());
   const today = localDayKey(current);
-  const tomorrowDate = new Date(current);
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  const tomorrow = localDayKey(tomorrowDate);
+  const tomorrow = dhakaKey(current.getTime() + 86400000);
   if (!today || !tomorrow) return [];
   const items = [];
   for (const activity of homeworkActivities(teachingDb, viewer)) {
     const due = text(activity.date);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(due) || (due !== today && due !== tomorrow)) continue;
-    const parsed = new Date(`${due}T12:00:00`);
+    const parsed = new Date(`${due}T12:00:00+06:00`);
     if (localDayKey(parsed) !== due) continue;
     const revision = text(activity.updatedAt) || text(activity.createdAt) || due;
     const deadline = due === today ? 'আজ জমা দিতে হবে' : 'আগামীকাল জমা দিতে হবে';
@@ -240,7 +239,7 @@ export function homeworkItems(teachingDb, viewer, now = Date.now()) {
       actionLabel: 'বাড়ির কাজ খুলুন',
       title: text(activity.title) || 'বাড়ির কাজ',
       body: `${text(activity.subject) ? `${text(activity.subject)} · ` : ''}${deadline}${time ? ` · জমা ${time}` : ''}`,
-      at: Number(now) || Date.now(),
+      at: Number(now) || nowEpoch(),
       audience: 'নিজের শ্রেণি'
     });
   }
@@ -255,20 +254,21 @@ export function birthMonthDay(birthDate) {
   return match ? `${match[2]}-${match[3]}` : '';
 }
 
-export function isStudentBirthday(birthDate, now = Date.now()) {
+export function isStudentBirthday(birthDate, now = nowEpoch()) {
   const stamp = birthMonthDay(birthDate);
   if (!stamp) return false;
   const date = new Date(Number(now));
   if (!Number.isFinite(date.getTime())) return false;
-  const today = `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  const part = dhakaParts(date);
+  const today = `${pad2(part.month)}-${pad2(part.day)}`;
   if (stamp === today) return true;
-  return stamp === '02-29' && !isLeapYear(date.getFullYear()) && today === '03-01';
+  return stamp === '02-29' && !isLeapYear(part.year) && today === '03-01';
 }
 
-export function birthdayItems(viewer, now = Date.now()) {
+export function birthdayItems(viewer, now = nowEpoch()) {
   if (viewer?.kind !== 'student' || !text(viewer.studentId) || !isStudentBirthday(viewer.birthDate, now)) return [];
-  const date = new Date(Number(now) || Date.now());
-  const year = date.getFullYear();
+  const date = new Date(Number(now) || nowEpoch());
+  const year = dhakaParts(date).year;
   const first = text(viewer.name).split(/\s+/)[0] || 'শিক্ষার্থী';
   return [{
     key: `birthday:${text(viewer.studentId)}:${year}`,
@@ -278,26 +278,26 @@ export function birthdayItems(viewer, now = Date.now()) {
     target: 'home',
     title: `শুভ জন্মদিন, ${first}!`,
     body: 'Active Plus Coaching পরিবার থেকে ভালোবাসা আর শুভেচ্ছা। আজকের দিনটা আপনার — শিখতে থাকো, এগিয়ে যাও।',
-    at: Number(now) || Date.now(),
+    at: Number(now) || nowEpoch(),
     audience: 'নিজের জন্মদিন'
   }];
 }
 
-export function nextBirthdayBoundary(now = Date.now()) {
+export function nextBirthdayBoundary(now = nowEpoch()) {
   const date = new Date(Number(now));
   if (!Number.isFinite(date.getTime())) return 0;
-  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-  return next.getTime();
+  const next = dhakaKey(date.getTime() + 86400000);
+  return parseDhakaDateTime(`${next}T00:00`);
 }
 
 const BIRTHDAY_STAFF = Object.freeze(['admin', 'manager', 'teacher']);
 
-export function birthdayAdvanceItems(students, viewer, now = Date.now()) {
+export function birthdayAdvanceItems(students, viewer, now = nowEpoch()) {
   if (viewer?.kind !== 'staff' || !BIRTHDAY_STAFF.includes(text(viewer.role))) return [];
-  const current = new Date(Number(now) || Date.now());
+  const current = new Date(Number(now) || nowEpoch());
   if (!Number.isFinite(current.getTime())) return [];
-  const tomorrow = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1);
-  const year = tomorrow.getFullYear();
+  const tomorrow = new Date(current.getTime() + 86400000);
+  const year = dhakaParts(tomorrow).year;
   const assigned = Array.isArray(viewer.assignedClasses)
     ? new Set(viewer.assignedClasses.map(scopeKey).filter(Boolean))
     : null;
@@ -319,26 +319,26 @@ export function birthdayAdvanceItems(students, viewer, now = Date.now()) {
       target: 'students',
       title: 'আগামীকাল জন্মদিন',
       body: `${place ? `${place} — ` : ''}${name}`,
-      at: Number(now) || Date.now(),
+      at: Number(now) || nowEpoch(),
       audience: 'এডমিন, ম্যানেজার ও শিক্ষক'
     });
   }
   return items;
 }
 
-export function nextHomeworkBoundary(teachingDb, viewer, now = Date.now()) {
+export function nextHomeworkBoundary(teachingDb, viewer, now = nowEpoch()) {
   const timestamp = Number(now);
   if (viewer?.kind !== 'student' || !Number.isFinite(timestamp)) return 0;
   let next = 0;
   for (const activity of homeworkActivities(teachingDb, viewer)) {
     const due = text(activity.date);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) continue;
-    const date = new Date(`${due}T00:00:00`);
+    const date = new Date(`${due}T00:00:00+06:00`);
     if (localDayKey(date) !== due) continue;
     const transitions = [
-      new Date(date).setDate(date.getDate() - 1),
+      date.getTime() - 86400000,
       date.getTime(),
-      new Date(date).setDate(date.getDate() + 1)
+      date.getTime() + 86400000
     ];
     for (const boundary of transitions) {
       if (boundary > timestamp && (!next || boundary < next)) next = boundary;
@@ -407,7 +407,7 @@ export function studentDecisionItems(students, viewer) {
   }];
 }
 
-export function examTimingItems(examDb, viewer, now = Date.now(), reminderMs = EXAM_REMINDER_MS) {
+export function examTimingItems(examDb, viewer, now = nowEpoch(), reminderMs = EXAM_REMINDER_MS) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return [];
   const studentId = text(viewer.studentId);
   if (!studentId) return [];
@@ -446,7 +446,7 @@ export function examTimingItems(examDb, viewer, now = Date.now(), reminderMs = E
   return items;
 }
 
-export function nextExamBoundary(examDb, viewer, now = Date.now(), reminderMs = EXAM_REMINDER_MS) {
+export function nextExamBoundary(examDb, viewer, now = nowEpoch(), reminderMs = EXAM_REMINDER_MS) {
   if (viewer?.kind !== 'student' || !isObject(examDb)) return 0;
   const studentId = text(viewer.studentId);
   let next = 0;
@@ -546,7 +546,7 @@ export function sortNewestFirst(items) {
   return [...items].sort((left, right) => (right.at || 0) - (left.at || 0));
 }
 
-export function notificationFeed({ notices = [], config = null, examDb = null, teachingDb = null, viewer = null, now = Date.now(), localWrites = null, students = null, transactions = null, cleared = null } = {}) {
+export function notificationFeed({ notices = [], config = null, examDb = null, teachingDb = null, viewer = null, now = nowEpoch(), localWrites = null, students = null, transactions = null, cleared = null } = {}) {
   const items = [];
   const broadcast = broadcastItem(config);
   if (broadcast) items.push(broadcast);
@@ -573,7 +573,7 @@ export function notificationFeed({ notices = [], config = null, examDb = null, t
   return [...unique.values()].map(item => ({ ...item, selfAuthored: isSelfAuthored(item, localWrites, now) }));
 }
 
-export function isSelfAuthored(item, localWrites, now = Date.now(), windowMs = SELF_AUTHOR_WINDOW_MS) {
+export function isSelfAuthored(item, localWrites, now = nowEpoch(), windowMs = SELF_AUTHOR_WINDOW_MS) {
   if (!item || !isObject(localWrites)) return false;
   const map = localWrites[item.source];
   if (!isObject(map)) return false;
@@ -600,22 +600,22 @@ export function planDeliveries({ feed = [], seen = [], firstRun = false, maxBurs
 export const CLEARED_KEY_PREFIX = `${NOTIFY_PREFIX}cleared.v1:`;
 export const MAX_CLEARED = 500;
 
-export function clearedRecord(keys, liveKeys = null, at = Date.now()) {
+export function clearedRecord(keys, liveKeys = null, at = nowEpoch()) {
   let list = [...new Set((Array.isArray(keys) ? keys : []).filter(key => typeof key === 'string' && key))];
   if (Array.isArray(liveKeys)) { const live = new Set(liveKeys); list = list.filter(key => live.has(key)); }
-  return { version: 1, at: Number(at) || Date.now(), keys: list.slice(-MAX_CLEARED) };
+  return { version: 1, at: Number(at) || nowEpoch(), keys: list.slice(-MAX_CLEARED) };
 }
 
-export function seenRecord(keys, at = Date.now()) {
-  return { version: 1, at: Number(at) || Date.now(), keys: Array.isArray(keys) ? keys : [] };
+export function seenRecord(keys, at = nowEpoch()) {
+  return { version: 1, at: Number(at) || nowEpoch(), keys: Array.isArray(keys) ? keys : [] };
 }
 
-export function claimDelivery(shown, id, at = Date.now(), windowMs = SHOWN_WINDOW_MS) {
+export function claimDelivery(shown, id, at = nowEpoch(), windowMs = SHOWN_WINDOW_MS) {
   const record = isObject(shown) ? { ...shown } : {};
   const stamp = Number(record[text(id)]);
   if (Number.isFinite(stamp) && Number(at) - stamp < windowMs) return { claim: false, record };
   for (const [key, value] of Object.entries(record)) if (Number(at) - Number(value) >= windowMs) delete record[key];
-  record[text(id)] = Number(at) || Date.now();
+  record[text(id)] = Number(at) || nowEpoch();
   return { claim: true, record };
 }
 
@@ -655,7 +655,7 @@ export function pushPayload(item) {
   };
 }
 
-export function pushTokenRecord({ token, viewer, deviceId, at = Date.now(), platform = '', locale = '' } = {}) {
+export function pushTokenRecord({ token, viewer, deviceId, at = nowEpoch(), platform = '', locale = '' } = {}) {
   const value = text(token);
   if (value.length < 20) return null;
   return {
@@ -667,7 +667,7 @@ export function pushTokenRecord({ token, viewer, deviceId, at = Date.now(), plat
     platform: text(platform).slice(0, 120),
     locale: text(locale).slice(0, 20),
     notifications: true,
-    updatedAt: Number(at) || Date.now()
+    updatedAt: Number(at) || nowEpoch()
   };
 }
 

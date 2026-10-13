@@ -6,9 +6,8 @@
    and can flip the link on and off on demand.
 
    Exports the stub as source text; the spec serves it in place of
-   https://www.gstatic.com/firebasejs/12.2.1/firebase-*.js.
-   One shared state object (`window.__cloud`) across every module instance:
-   each SDK URL is its own ES module, and traffic must be counted in one place.
+   vendor/firebase/sdk.js (the same-origin bundled SDK).
+   One shared state object (`window.__cloud`) counts transport operations.
    Control it from the page with window.__cloudOnline() / window.__cloudOffline().
 */
 module.exports.STUB_SOURCE = String.raw`
@@ -28,6 +27,10 @@ const state = window.__cloud ||= {
   signedIn: false
 };
 
+// The fixture models an institution whose first Admin already exists; login
+// must not be redirected to the one-time Admin creation screen.
+state.data.activePlusSync ||= { v1: { system: { adminInitialized: true } } };
+
 const apps = window.__stubApps ||= [];
 export function initializeApp(options, name = '[DEFAULT]') { const app = { name, options }; apps.push(app); return app; }
 export function getApps() { return apps; }
@@ -37,7 +40,8 @@ export const browserLocalPersistence = 'local';
 export function getAuth(app) { return (app.auth ||= { currentUser: null, authStateReady: async () => {} }); }
 export async function signInAnonymously(auth) {
   if (state.failAuth) throw Object.assign(new Error('auth unreachable'), { code: 'auth/network-request-failed' });
-  auth.currentUser = { uid: 'stub-anon', isAnonymous: true };
+  auth.currentUser = { uid: 'stub-anon', isAnonymous: true,
+    getIdTokenResult: async () => ({ claims: { firebase: { sign_in_provider: 'anonymous' } } }) };
   state.signedIn = true;
   return { user: auth.currentUser };
 }
@@ -97,6 +101,7 @@ export async function set(node, value) {
   writePath(node.path, value);
   return undefined;
 }
+export const remove = node => set(node, null);
 export async function runTransaction(node, update) {
   state.transactions.push(node.path);
   if (state.failWrites) throw Object.assign(new Error('network'), { code: 'NETWORK_ERROR' });
@@ -122,7 +127,16 @@ export function httpsCallable() { return async () => { throw new Error('function
 export function getMessaging() { return {}; }
 export function onMessage() {}
 export async function getToken() { throw new Error('messaging is not part of this check'); }
+export async function deleteToken() {}
 export function isSupported() { return Promise.resolve(false); }
+// The production init facade imports these names even when App Check and the
+// emulator flag are off. Keep the network boundary stub complete.
+export function initializeAppCheck() {}
+export class ReCaptchaV3Provider { constructor() {} }
+export function connectAuthEmulator() {}
+export function connectDatabaseEmulator() {}
+export function connectFirestoreEmulator() {}
+export function connectFunctionsEmulator() {}
 
 // The app signs in anonymously on boot; a connected socket follows.
 queueMicrotask(() => setConnected(true));

@@ -1,4 +1,4 @@
-import { LEGACY_CLOUD_ENABLED, CLOUD_PAUSED_MESSAGE, cloudPausedResult } from '../sync/cloud-access.js';
+import { LEGACY_CLOUD_ENABLED, CLOUD_PAUSED_MESSAGE, cloudPausedResult, backendMode } from '../sync/cloud-access.js';
 import { defaultStudent } from './config.js';
 import { $, $$, setAuthMessage, scrollToTop, toBanglaNumber } from './ui.js';
 import { contactNumber, normalizeUsername } from './account-policy.js';
@@ -207,6 +207,10 @@ let loginAttemptId = 0;
 
 async function handleLogin(event, state, onAuthenticated) {
   event.preventDefault();
+  if (backendMode() === 'firebase') {
+    setAuthMessage('Firebase প্যানেল বন্ধ। লোকাল মোড: ?backend=local');
+    return;
+  }
 
   // IMPORTANT: take an immutable credential snapshot before ANY async work.
   // From this point onward authentication never reads the login inputs again.

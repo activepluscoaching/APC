@@ -34,6 +34,7 @@ function fillRegistration() {
   question.value = [...question.options].map(option => option.value).find(value => value);
   ctx.$('#studentMobile').value = values.regMobile;
   ctx.$('#terms').checked = true;
+  ctx.$('#guardianConsent').checked = true;
 }
 
 const roster = () => JSON.parse(ctx.window.localStorage.getItem(KEYS.students) || '[]');

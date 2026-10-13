@@ -1,4 +1,4 @@
-import { LEGACY_CLOUD_ENABLED } from '../sync/cloud-access.js';
+import { LEGACY_CLOUD_ENABLED, backendMode } from '../sync/cloud-access.js';
 /* Registration feature: step-by-step student self-registration with auto Student ID.
    Registration saves the account; entry still requires a submitted login.
    The student also picks a permanent username here — a login ID that never
@@ -8,7 +8,7 @@ import { enabledClasses } from './config.js';
 import { registrationPasswordError } from './password-policy.js';
 import { contactNumber, isContactNumber, normalizeUsername, usernameError, suggestUsername } from './account-policy.js';
 import {
-  saveAccount, saveStudent, generateStudentId, generateClassRoll, usernameTaken, reserveUsername, releaseUsername, loadAccount
+  saveAccount, saveStudent, generateClassRoll, usernameTaken, reserveUsername, releaseUsername, loadAccount
 } from './storage.js';
 import { upsertStudentRosterRow } from './office-data.js';
 import { listDocuments } from './database.js';
@@ -105,12 +105,17 @@ async function checkUsernameOnline(username) {
 
 async function handleRegistration(event, state, onRegistered) {
   event.preventDefault();
+  if (backendMode() === 'firebase') {
+    setAuthMessage('Firebase নিবন্ধন বন্ধ। লোকাল মোড: ?backend=local');
+    return;
+  }
   const formElement = event.currentTarget;
   if (!formElement.checkValidity()) {
     formElement.reportValidity();
     return;
   }
   const form = new FormData(formElement);
+  if (!form.get('guardianConsent')) return setAuthMessage('রেজিস্ট্রেশনে অভিভাবকের সম্মতি প্রয়োজন।');
   const mobile = contactNumber(form.get('mobile'));
   const pin = String(form.get('pin') || '');
   const pinConfirm = String(form.get('pinConfirm') || '');
@@ -133,8 +138,9 @@ async function handleRegistration(event, state, onRegistered) {
   // this is the belt to its braces.)
   const issuedIds = new Set(listDocuments('students').map(student => student?.id).filter(Boolean));
   if (loadAccount()?.student?.id) issuedIds.add(loadAccount().student.id);
-  let studentId = generateStudentId();
-  for (let guard = 0; guard < 5 && issuedIds.has(studentId); guard += 1) studentId = generateStudentId();
+  const { idGenerator } = await import('./idGenerator.js');
+  let studentId = await idGenerator.nextStudentId([...issuedIds].map(id => ({ id })));
+  for (let guard = 0; guard < 5 && issuedIds.has(studentId); guard += 1) studentId = await idGenerator.nextStudentId([...issuedIds].map(id => ({ id })));
   const studentData = {
     name: String(form.get('nameBn') || '').trim(),
     nameBn: String(form.get('nameBn') || '').trim(),
@@ -168,6 +174,7 @@ async function handleRegistration(event, state, onRegistered) {
     student: studentData,
     studentId,
     status: 'pending',
+    guardianConsentAt: new Date().toISOString(),
     createdAt: new Date().toISOString()
   };
   // Claim the name first, so a failed save never leaves a dangling claim.

@@ -119,11 +119,11 @@ test('a double click produces one durable pending entry and one exact-format rec
  await waitFor(()=>!$('#payReceiptBackdrop').hidden);
  const rows=JSON.parse(window.localStorage.getItem(KEYS.transactions));
  const added=rows.filter(row=>row.amount===800 && row.studentId===person.id);
- assert.equal(added.length,1);assert.match(added[0].receiptNo,/^R\d{9}$/);
+ assert.equal(added.length,1);assert.match(added[0].receiptNo,/^C[0-9A-F]{8}-\d{6}$/);
  assert.equal(added[0].status,'pending');assert.equal(added[0].method,'বিকাশ (bKash)');
  assert.equal(added[0].trxRef,'SAMPLE-REF');assert.equal(added[0].className,person.className);
  assert.equal(added[0].mobile,undefined);
- assert.match($('#payReceiptSub').textContent,/^রসিদ নং: R\d{9}$/);
+ assert.match($('#payReceiptSub').textContent,/^রসিদ নং: C[0-9A-F]{8}-\d{6}$/);
  assert.match($('#payReceiptBody').textContent,/৳৮০০/);
  assert.doesNotMatch($('#payReceiptBody').textContent,/দশম|অভিভাবক|PRIVATE|017000|018000/);
  assert.equal($('#payProfileCard').hidden,true);assert.equal($('#payCollectionForm').hidden,true);
@@ -137,7 +137,7 @@ test('today rows can reopen only their stored, sanitised receipt',async()=>{
  assert.equal(ctx.$('.admin-bottom [aria-current="page"]').dataset.paySection,'home');
  ctx.click(ctx.$('#payTodayList .pay-activity-row'));
  await ctx.waitFor(()=>!ctx.$('#payReceiptBackdrop').hidden);
- assert.match(ctx.$('#payReceiptSub').textContent,/R\d{9}/);
+ assert.match(ctx.$('#payReceiptSub').textContent,/C[0-9A-F]{8}-\d{6}/);
  ctx.click(ctx.$('#payReceiptClose'));
 });
 test('storage failure keeps the draft and never opens a receipt',async()=>{

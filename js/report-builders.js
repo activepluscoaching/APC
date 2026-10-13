@@ -1,3 +1,4 @@
+import { taka, addTaka } from './money.js';
 /* Report builders — data → blocks, one function per report.
 
    Every builder receives:
@@ -257,7 +258,7 @@ function questionRows(exam, attempt) {
 
 /** Only finalized (approved) money counts toward a collection total. */
 const isFinalized = tx => tx.status == null || tx.status === 'approved';
-const sumAmount = rows => rows.reduce((sum, tx) => sum + (isFinalized(tx) ? toNumber(tx.amount) : 0), 0);
+const sumAmount = rows => rows.reduce((sum, tx) => sum + (isFinalized(tx) ? taka(tx.amount) : 0), 0);
 
 export {
   dash, num, money, percent, ratio, table, kv, tiles, heading, para, note, questions,
@@ -356,7 +357,7 @@ const studentProfile = {
           ['ভর্তির তারিখ', student.enrolledAt || '—']
         ], 3),
         tiles([
-          { label: 'মোট পরিশোধ', value: money(own.filter(isFinalized).reduce((sum, tx) => sum + toNumber(tx.amount), 0)) },
+          { label: 'মোট পরিশোধ', value: money(own.filter(isFinalized).reduce((sum, tx) => sum + taka(tx.amount), 0)) },
           { label: 'চলতি মাসের বকেয়া', value: money(summary.due) },
           { label: 'উপস্থিতি', value: sessions ? ratio(present + late, sessions) : '—' },
           { label: 'গড় ফলাফল', value: results.length ? ratio(results.reduce((sum, r) => sum + Number(r.percentLabel.replace(/[^\d.]/g, '')) || 0, 0) / results.length, 100) : '—' }
@@ -499,7 +500,7 @@ const collectionReport = ({ id, title, subtitle, period, roles }) => ({
     const pending = rows.filter(tx => tx.status === 'pending');
     const rejected = rows.filter(tx => tx.status === 'rejected');
     const byMethod = new Map();
-    for (const tx of approved) byMethod.set(tx.method || '—', (byMethod.get(tx.method || '—') || 0) + toNumber(tx.amount));
+    for (const tx of approved) byMethod.set(tx.method || '—', (byMethod.get(tx.method || '—') || 0) + taka(tx.amount));
     return {
       period: ctx.range.label,
       scopeLines: scopeLine(ctx),
@@ -571,7 +572,7 @@ const feeByGroup = ({ id, title, groupBy, roles }) => ({
       if (!groups.has(key)) groups.set(key, { key, count: 0, amount: 0, students: new Set() });
       const entry = groups.get(key);
       entry.students.add(String(tx.studentId));
-      if (isFinalized(tx)) { entry.count += 1; entry.amount += toNumber(tx.amount); }
+      if (isFinalized(tx)) { entry.count += 1; entry.amount += taka(tx.amount); }
     }
     const list = [...groups.values()].sort((a, b) => b.amount - a.amount);
     return {
@@ -660,7 +661,7 @@ const feeDueCollection = {
       const before = dueSummary(student, (ctx.snapshot.transactions || []).filter(tx => String(tx.studentId) === String(student.id)), month);
       if (before.due <= 0 && before.paid <= 0) continue;
       const paid = payments.filter(tx => String(tx.studentId) === String(student.id))
-        .reduce((sum, tx) => sum + (isFinalized(tx) ? toNumber(tx.amount) : 0), 0);
+        .reduce((sum, tx) => sum + (isFinalized(tx) ? taka(tx.amount) : 0), 0);
       collected += paid;
       rows.push([
         dash(student.id), dash(student.name), dash(student.className), dash(student.group || 'সাধারণ'),
@@ -888,7 +889,7 @@ const cashByStatus = ({ id, title, subtitle, status }) => ({
       blocks: [
         tiles([
           { label: 'লেনদেন', value: num(rows.length) },
-          { label: 'পরিমাণ', value: money(rows.reduce((sum, tx) => sum + toNumber(tx.amount), 0)) }
+          { label: 'পরিমাণ', value: money(rows.reduce((sum, tx) => sum + taka(tx.amount), 0)) }
         ], 4),
         table(CASH_COLUMNS(), rows.map(cashRow), title)
       ]
@@ -911,7 +912,7 @@ const cashClosing = {
     for (const tx of rows.filter(isFinalized)) {
       const key = tx.method || '—';
       const entry = byMethod.get(key) || { method: key, count: 0, amount: 0 };
-      entry.count += 1; entry.amount += toNumber(tx.amount);
+      entry.count += 1; entry.amount += taka(tx.amount);
       byMethod.set(key, entry);
     }
     const list = [...byMethod.values()].sort((a, b) => b.amount - a.amount);

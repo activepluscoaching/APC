@@ -1,9 +1,9 @@
 rules_version = '2';
 
 /* Active Plus Coaching — Firestore security rules.
-   Scope: the future authenticated backend (js/staff-auth.js + functions/).
-   The live client still syncs over the RTDB bridge (database.rules.json);
-   these rules are the role boundary the Firestore move happens behind.
+   Phase 10 staging only: NO deploy until emulator role tests, identity mapping,
+   index inventory and adapter cutover are complete. The live client still
+   uses localStorage + the legacy RTDB bridge (database.rules.json).
 
    Layers enforced here:
      • roles come ONLY from Auth custom claims (`role`, `status`,
@@ -11,16 +11,14 @@ rules_version = '2';
      • exam answer keys live under `exams/{examId}/private/key` and students
        can never read them; scoring + answer release happen in the Cloud
        Function `releaseExamResults`, and only after the exam window ends;
-     • a published exam is frozen for teacher/admin edits — the Manager
-       review transition (managerReviewExam) is the only write that touches
-       it again;
+     • staged Teacher submission, Manager publishing, Student attempts and
+       release scoring are server-only; the live local workflow is unchanged;
      • the payment counter reads approved students only through the limited
        `studentSummaries` projection (name, Student ID, class, mobile, monthly
-       fee) and only its own ledger rows; ledger rows are append-only
-       (corrections are reversal rows, never edits);
-     • attempts / results / attendance / homework submissions are per-student
-       append-only records: the student owns their rows, a teacher reads their
-       assigned classes, and no row is ever updated or deleted. */
+       fee) and only its own ledger rows; reviewed receipts are immutable and
+       corrections live in separate one-per-receipt decision records;
+     • attempts / results / attendance / homework submissions are readable
+       only by the owner or authorized staff; all writes are server-only. */
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -29,45 +27,49 @@ service cloud.firestore {
     /* Active = the same condition the client's session gate uses: the account
        claims an operational role and does not sit on a temporary password. */
     function active() {
-      return isSignedIn() && request.auth.token.status in ['active', 'approved'] && request.auth.token.mustChangePassword != true;
+      return isSignedIn() && request.auth.token.get('status', '') in ['active', 'approved']
+        && request.auth.token.get('mustChangePassword', false) != true;
     }
 
     function isAdmin() { return active() && request.auth.token.role == 'admin'; }
-    function isStaffAdmin() { return active() && request.auth.token.role in ['admin', 'staff-admin']; }
+    function isStaffAdmin() { return isAdmin(); }
     function isStaffManager() { return active() && request.auth.token.role == 'manager'; }
     function isPayment() { return active() && request.auth.token.role == 'payment'; }
     function isTeacher() { return active() && request.auth.token.role == 'teacher'; }
     function isStudent() { return active() && request.auth.token.role == 'student'; }
     function isStaff() { return isStaffAdmin() || isStaffManager() || isTeacher() || isPayment(); }
-    function isAnySignedIn() { return isSignedIn() && request.auth.token.status in ['active', 'approved']; }
 
     /* A teacher's assigned classes ride in the `classes` claim the
        provisioning callables stamp on the account (js/staff-directory.js
        `record.assignment.classes` shape). Missing claim = no class = no
        class-scoped access (deny by default). */
     function assignedClasses() {
-      return request.auth.token.classes is list ? request.auth.token.classes : [];
+      return request.auth.token.get('classes', []) is list ? request.auth.token.get('classes', []) : [];
     }
     function studentRecord(studentId) {
       return get(/databases/$(database)/documents/students/$(studentId)).data;
     }
     function studentClass() { return studentRecord(request.auth.uid).className; }
-    function studentGroup() { return studentRecord(request.auth.uid).group; }
+    function studentGroup() { return studentRecord(request.auth.uid).get('group', ''); }
     function classOfStudent(studentId) { return studentRecord(studentId).className; }
 
     // ---------------------------------------------------------------------
-    // users / admin bootstrap — unchanged
+    // Auth/profile identity: server-only mutations, never client-created roles.
     // ---------------------------------------------------------------------
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isStaff();
-      allow update: if isAdmin() || request.auth.uid == userId;
-      allow delete: if false;
+      allow read: if isAdmin() || (active() && request.auth.uid == userId);
+      allow create, update, delete: if false;
     }
 
     match /admins/{userId} {
       allow read: if isAdmin();
       allow write: if false;
+    }
+
+    // Enrollment handle reservations are never browser-readable or writable;
+    // do not expose a directory of usernames or allow client claim-squatting.
+    match /usernameIndex/{username} {
+      allow read, write: if false;
     }
 
     // ---------------------------------------------------------------------
@@ -77,126 +79,99 @@ service cloud.firestore {
     // (guardian mobile, address, NID, notes, photo …) belong under
     // `students/{studentId}/private/*` — the payment counter and teachers
     // can never read those. The payment counter doesn't read the main
-    // document at all: it reads the limited `studentSummaries` projection
-    // below (name / Student ID / class / mobile / monthly fee).
+    // document at all; neither does Teacher until legacy fields are audited.
+    // Both use the limited `studentSummaries` projection below.
     //
-    // Writes are masked: Manager review touches only status + review meta,
-    // Admin edits only the limited profile fields (never `status`, `uid` or
-    // identity keys).
+    // Manager review uses managerReviewStudent (Admin SDK), which atomically
+    // updates users/{uid} and students/{uid} then refreshes Auth claims.
+    // No browser may change student status or delete an identity document.
     // ---------------------------------------------------------------------
     match /students/{studentId} {
       allow read: if isAdmin()
         || (isStaffManager() && resource.data.status in ['pending', 'approved'])
-        || (isTeacher() && resource.data.status == 'approved' && resource.data.className in assignedClasses())
         || (isStudent() && request.auth.uid == studentId);
-      // Accounts are provisioned by the adminCreateAccount callable; there is
-      // no client-side student create.
       allow create: if false;
-      allow update: if
-        // Manager approval: pending → approved/rejected only.
-        (isStaffManager() && resource.data.status == 'pending'
-          && request.resource.data.status in ['approved', 'rejected']
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt', 'reviewNote']))
-        // Admin: limited profile fields only (status/uid untouched).
-        || (isStaffAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'fullName', 'mobile', 'classId', 'className', 'group', 'monthlyFee']));
-      allow delete: if isAdmin();
+      // Even Admin cannot client-set status/UID: only non-authority profile edits.
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'fullName', 'mobile', 'classId', 'className', 'group', 'monthlyFee']);
+      allow delete: if false;
 
       /* Sensitive profile: self, Manager and Admin only. */
       match /private/{document} {
-        allow read, write: if isStaffAdmin() || isStaffManager()
+        allow read: if isStaffAdmin() || isStaffManager()
           || (isStudent() && request.auth.uid == studentId);
+        allow write: if false; // server-managed private data until schema review
       }
     }
 
     /* Limited student surface for the payment counter: exactly the fields the
        desk may see (name, Student ID, class, mobile, monthly fee) + status.
-       Maintained by the account/review functions and Admin — never by the
-       counter itself. */
+       Server-maintained projection only; never by any browser role. */
     match /studentSummaries/{studentId} {
       allow read: if isAdmin()
         || (isStaffManager() && resource.data.status in ['pending', 'approved'])
         || (isTeacher() && resource.data.status == 'approved' && resource.data.className in assignedClasses())
         || (isPayment() && resource.data.status == 'approved');
-      allow create, update: if isStaffAdmin();
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     // ---------------------------------------------------------------------
     // exams
     //
-    // The main exam document NEVER carries answer material: `questions` items
-    // may hold stems/options/marks only, and there is no `answerKey`/`answers`
-    // field. The key lives in `exams/{examId}/private/key` (teacher owner,
-    // Manager, Admin); the released copy students may read after the exam is
-    // written by the releaseExamResults Cloud Function into `releasedKey`.
+    // The main exam must not carry answers. Firestore rules cannot validate
+    // arbitrary nested question arrays: only trusted server code may create
+    // drafts, keys or transition them. The released document lives under
+    // exams/{examId}/releasedKey/answers.
     // ---------------------------------------------------------------------
     function ownsExam() { return resource.data.teacherUid == request.auth.uid; }
-    function examForStudentOwned() {
+    function examForStudentOwned(examId) {
       return get(/databases/$(database)/documents/exams/$(examId)).data.teacherUid == request.auth.uid;
     }
-    function examNotFrozen() {
-      return resource.data.status in ['draft', 'pending', 'rejected']
-        && request.resource.data.status in ['draft', 'pending'];
-    }
-    function carriesNoAnswers(data) {
-      return !('answerKey' in data) && !('answers' in data) && !('answer' in data)
-        && (data.questions == null
-          || data.questions.all(q, !('answer' in q) && !('answerKey' in q) && !('correct' in q) && !('correctAnswer' in q)));
-    }
     function examForStudent(examId) {
-      return get(/databases/$(database)/documents/exams/$(examId)).data.className == studentClass();
+      let paper = get(/databases/$(database)/documents/exams/$(examId)).data;
+      return paper.status == 'published' && paper.resultsReleased == true
+        && paper.className == studentClass()
+        && (paper.get('group', '') == '' || paper.get('group', '') == studentGroup());
     }
 
     match /exams/{examId} {
       allow read: if isStaffAdmin() || isStaffManager()
         || (isTeacher() && (ownsExam() || resource.data.status == 'published'))
-        || (isStudent() && resource.data.status == 'published' && resource.data.className == studentClass());
-      allow create: if ((isTeacher() && request.resource.data.teacherUid == request.auth.uid)
-        || isStaffManager() || isStaffAdmin())
-        && carriesNoAnswers(request.resource.data);
-      allow update: if
-        // Manager review is the only path that publishes: pending →
-        // published/rejected (managerReviewExam keeps working).
-        (isStaffManager() && resource.data.status == 'pending'
-          && request.resource.data.status in ['published', 'rejected']
-          && carriesNoAnswers(request.resource.data))
-        // Teacher (own paper) / Admin may edit only while the review line is
-        // open — a published exam is frozen, and no edit smuggles answers in.
-        || (((isTeacher() && ownsExam()) || isStaffAdmin())
-          && examNotFrozen() && carriesNoAnswers(request.resource.data));
-      allow delete: if isStaffAdmin() || isStaffManager() || (isTeacher() && ownsExam());
+        || (isStudent() && resource.data.status == 'published' && resource.data.className == studentClass()
+          && (resource.data.get('group', '') == '' || resource.data.get('group', '') == studentGroup()));
+      // No client may smuggle answers into a nested question or publish/erase
+      // an exam. managerReviewExam uses the Admin SDK after server validation.
+      allow create, update, delete: if false;
 
       /* Answer key + private exam material: never readable by students. */
       match /private/{document} {
-        allow read, write: if isStaffAdmin() || isStaffManager()
-          || (isTeacher() && examForStudentOwned());
+        allow read: if isStaffAdmin() || isStaffManager()
+          || (isTeacher() && examForStudentOwned(examId));
+        allow write: if false; // no browser may replace a scoring key
       }
 
-      /* Answers released by the Cloud Function after the exam window ends.
-         Students of that paper may read them; nobody writes this document
-         through the client. */
-      match /releasedKey {
-        allow read: if isStaffAdmin() || isStaffManager()
-          || (isTeacher() && examForStudentOwned())
-          || (isStudent() && resource.data.releasedAt is timestamp && examForStudent(examId));
+      /* Valid document: exams/{examId}/releasedKey/answers. Only the server
+         publishes after the exam ends; no browser may write its answers. */
+      match /releasedKey/{document} {
+        allow read: if document == 'answers' && (isStaffAdmin() || isStaffManager()
+          || (isTeacher() && examForStudentOwned(examId))
+          || (isStudent() && resource.data.releasedAt is timestamp && examForStudent(examId)));
         allow write: if false;
       }
     }
 
     // ---------------------------------------------------------------------
-    // questions / question bank / drafts — unchanged
+    // Questions and bank: no student reads until a reviewed public projection
+    // and key-hiding schema exist. Server-only writes prevent answer leaks.
     // ---------------------------------------------------------------------
     match /questions/{questionId} {
-      allow read: if isAnySignedIn();
-      allow create: if isTeacher() || isStaffManager() || isStaffAdmin();
-      allow update: if isStaffManager() || isStaffAdmin();
-      allow delete: if isStaffAdmin();
+      allow read: if isStaffAdmin() || isStaffManager() || isTeacher();
+      allow create, update, delete: if false;
     }
 
     match /questionBank/{questionId} {
-      allow read: if isAnySignedIn();
-      allow create, update, delete: if isStaffManager() || isStaffAdmin();
+      allow read: if isStaffAdmin() || isStaffManager() || isTeacher();
+      allow create, update, delete: if false;
     }
 
     match /questionBankDrafts/{draftId} {
@@ -209,32 +184,33 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     // transactions — the money ledger
     //
-    // Append-only. The counter creates rows for itself (`createdBy`), reads
-    // only its own rows; Admin reads all. Update and delete are closed for
-    // EVERYONE (Manager included): a correction is a new reversal row
-    // (`kind: 'reversal'`, `reverses: <transactionId>`), so the ledger never
-    // rewrites history.
+    // Counter reads only own rows; Admin reads all. Phase 8 trusted callables
+    // create server-numbered pending rows and Manager decides via a scoped
+    // inspection callable. Reversal/settlement is NOT implemented: client-side
+    // receipt fields cannot prove money received.
     // ---------------------------------------------------------------------
-    function validTransaction() {
-      return request.resource.data.amount is number
-        && request.resource.data.amount > 0
-        && request.resource.data.studentId is string && request.resource.data.studentId != ''
-        && request.resource.data.receiptNo is string && request.resource.data.receiptNo != ''
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-          'id', 'studentId', 'studentName', 'uniqueRoll', 'className',
-          'feeType', 'month', 'amount', 'method', 'trxRef', 'note', 'status',
-          'date', 'recordedAt', 'createdAt', 'createdBy', 'counterId',
-          'counterUsername', 'collectedBy', 'receiptNo', 'transactionNo',
-          'reviewHistory', 'kind', 'reverses', 'reversedBy'
-        ]);
-    }
-
     match /transactions/{transactionId} {
       allow read: if isAdmin() || (isPayment() && resource.data.createdBy == request.auth.uid);
-      allow create: if (isPayment() || isStaffAdmin()) && validTransaction();
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
+    }
+
+    // Reservation and counter sequence documents are Admin SDK-only; even
+    // Admin cannot bypass receipt numbering from a browser.
+    match /receiptSequences/{counterId} {
+      allow read, write: if false;
+    }
+    match /receiptNumbers/{receiptNo} {
+      allow read, write: if false;
+    }
+    match /paymentReferences/{referenceId} {
+      allow read, write: if false;
+    }
+
+    // Separate one-per-receipt accounting decision. Never browser-write
+    // or expose the Manager's free-text reason via a broad ledger query.
+    match /paymentReversals/{receiptId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ---------------------------------------------------------------------
@@ -246,8 +222,8 @@ service cloud.firestore {
     }
 
     match /academicReports/{reportId} {
-      allow read: if isStaff();
-      allow write: if isStaff();
+      allow read: if isAdmin() || isStaffManager() || isTeacher();
+      allow write: if false; // server-managed reports until per-class schema
     }
 
     match /settings/{settingId} {
@@ -259,7 +235,7 @@ service cloud.firestore {
     // notices — write: Manager + Admin only
     // ---------------------------------------------------------------------
     match /notices/{noticeId} {
-      allow read: if isSignedIn() || request.auth.token.role == 'student';
+      allow read: if isStaff(); // student targeting requires a reviewed scope schema
       allow create, update, delete: if isStaffManager() || isStaffAdmin();
     }
 
@@ -268,7 +244,7 @@ service cloud.firestore {
     // `teacherUid` rows
     // ---------------------------------------------------------------------
     match /routine/{routineId} {
-      allow read: if isSignedIn() || request.auth.token.role == 'student';
+      allow read: if isStaff(); // student targeting requires a reviewed scope schema
       allow create: if isStaffManager() || isStaffAdmin()
         || (isTeacher() && request.resource.data.teacherUid == request.auth.uid);
       allow update: if isStaffManager() || isStaffAdmin()
@@ -294,7 +270,8 @@ service cloud.firestore {
     // only published courses of their own class/section.
     // ---------------------------------------------------------------------
     function teacherIdClaim() {
-      return request.auth.token.teacherId is string ? request.auth.token.teacherId : request.auth.uid;
+      return request.auth.token.get('teacherId', request.auth.uid) is string
+        ? request.auth.token.get('teacherId', request.auth.uid) : request.auth.uid;
     }
     function ownsCourse(data) {
       return data.teacherUid == request.auth.uid || data.teacherId == teacherIdClaim();
@@ -331,23 +308,19 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
-    // studentApprovals — Manager may raise/update a review, but never delete
-    // one (records stay auditable)
+    // studentApprovals — server-managed audit trail; Manager may read it.
     // ---------------------------------------------------------------------
     match /studentApprovals/{approvalId} {
-      allow read, create, update: if isStaffAdmin() || isStaffManager();
-      allow delete: if isStaffAdmin();
+      allow read: if isStaffAdmin() || isStaffManager();
+      allow create, update, delete: if false;
     }
 
     // ---------------------------------------------------------------------
     // attempts / results / attendance / homeworkSubmissions
     //
-    // Per-student append-only records. A student creates and reads ONLY their
-    // own rows (studentId == request.auth.uid); a teacher reads their assigned
-    // classes; Manager/Admin read all. Nothing is ever updated or deleted.
-    // `results` rows are scored and written by the releaseExamResults Cloud
-    // Function (Admin SDK) — a student can never write their own score, and
-    // teachers may only file results for their own classes.
+    // A student reads only their own rows; teachers read assigned classes,
+    // Manager/Admin read all. Direct creates are closed pending server checks
+    // for exam windows, attendance, submissions and scoring.
     // ---------------------------------------------------------------------
     function ownRow(row) {
       return row.studentId is string && row.studentId == request.auth.uid;
@@ -361,28 +334,33 @@ service cloud.firestore {
 
     match /attempts/{attemptId} {
       allow read: if staffRowRead(resource.data) || (isStudent() && ownRow(resource.data));
-      allow create: if isStudent() && ownRow(request.resource.data);
+      allow create: if false; // server validates exam window / attendance ownership
       allow update: if false;
       allow delete: if false;
     }
 
+    function resultReleased(row) {
+      return row.examId is string
+        && get(/databases/$(database)/documents/exams/$(row.examId)).data.resultsReleased == true;
+    }
+
     match /results/{resultId} {
-      allow read: if staffRowRead(resource.data) || (isStudent() && ownRow(resource.data));
-      allow create: if isStaffAdmin() || (isTeacher() && classRow(request.resource.data));
+      allow read: if staffRowRead(resource.data) || (isStudent() && ownRow(resource.data) && resultReleased(resource.data));
+      allow create: if false; // only releaseExamResults may mint scores
       allow update: if false;
       allow delete: if false;
     }
 
     match /attendance/{attendanceId} {
       allow read: if staffRowRead(resource.data) || (isStudent() && ownRow(resource.data));
-      allow create: if isStudent() && ownRow(request.resource.data);
+      allow create: if false; // server validates exam window / attendance ownership
       allow update: if false;
       allow delete: if false;
     }
 
     match /homeworkSubmissions/{submissionId} {
       allow read: if staffRowRead(resource.data) || (isStudent() && ownRow(resource.data));
-      allow create: if isStudent() && ownRow(request.resource.data);
+      allow create: if false; // server validates exam window / attendance ownership
       allow update: if false;
       allow delete: if false;
     }

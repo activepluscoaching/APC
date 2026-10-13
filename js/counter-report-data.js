@@ -1,3 +1,4 @@
+import { taka, addTaka } from './money.js';
 /* Counter financial reports only. The full generic student/academic/report
    catalog is NOT mounted here. Roster/ledger remain private to this adapter;
    returned tables are explicit financial/identity allowlists, contacts masked. */
@@ -36,7 +37,7 @@ const num = value => String(value).replace(/\d/g,d=>'০১২৩৪৫৬৭৮
 const money = value => `৳${num(Number(value || 0).toLocaleString('en-US'))}`;
 const status = tx => tx.status==='pending'?'অনুমোদন বাকি':tx.status==='rejected'?'বাতিল':'অনুমোদিত';
 const rollOf = row => String(row?.uniqueRoll ?? row?.uniqueRollNo ?? row?.rollNo ?? row?.rollNumber ?? row?.roll ?? '');
-const total = rows => rows.reduce((sum,row)=>sum+Number(row.amount || 0),0);
+const total = rows => rows.reduce((sum,row)=>addTaka(sum,row.amount),0);
 const own = (tx,username) => tx.counterUsername ? tx.counterUsername===username : tx.collectedBy==='পেমেন্ট কাউন্টার';
 const table = (title,columns,rows) => ({title,columns:columns.map(label=>({label,width:label.includes('মাস্ক')?1.9:label==='Transaction ID'?1.3:label==='শিক্ষার্থী'?1.4:label==='ফি / মাস'?1.4:1})),rows});
 function validDay(value) {
@@ -71,7 +72,7 @@ function groupedTable(rows,key,title) {
  for(const tx of rows) {
   const name=String(key(tx) || 'নির্ধারিত নয়');
   const entry=groups.get(name) || {count:0,paid:0,pending:0,rejected:0};entry.count++;
-  if(isFinalizedTransaction(tx))entry.paid+=Number(tx.amount || 0);else if(tx.status==='pending')entry.pending++;else entry.rejected++;
+  if(isFinalizedTransaction(tx))entry.paid=addTaka(entry.paid,tx.amount);else if(tx.status==='pending')entry.pending++;else entry.rejected++;
   groups.set(name,entry);
  }
  return table(title,[title,'লেনদেন','অনুমোদিত আদায়','অনুমোদন বাকি','বাতিল'],[...groups].map(([name,row])=>[name,num(row.count),money(row.paid),num(row.pending),num(row.rejected)]));
@@ -102,11 +103,11 @@ export async function buildCounterPaymentReport(reportId,input={}) {
    const fee=student.monthlyFee;
    if(fee===null || fee===undefined || fee==='' || !Number.isFinite(Number(fee)) || Number(fee)<0) {unknown++;continue;}
    const tuition=records.filter(tx=>tx.studentId===student.id && tx.feeType==='মাসিক বেতন' && tx.month===filters.billingMonth && isFinalizedTransaction(tx));
-   const paid=total(tuition),due=Math.max(0,Number(fee)-paid);
+   const paid=total(tuition),due=Math.max(0,taka(fee)-paid);
    if(definition.mode==='due' && due<=0)continue;
    const during=tuition.filter(tx=>inRange(txTime(tx),filters.range)),before=tuition.filter(tx=>(txTime(tx)||0)<filters.range.from);
-   const opening=Math.max(0,Number(fee)-total(before)),collected=Math.min(opening,total(during));
-   balances.push({student,fee:Number(fee),paid,due,opening,collected,closing:Math.max(0,opening-total(during))});
+   const opening=Math.max(0,taka(fee)-total(before)),collected=Math.min(opening,total(during));
+   balances.push({student,fee:taka(fee),paid,due,opening,collected,closing:Math.max(0,opening-total(during))});
   }
   const collection=definition.mode==='due-collection';
   result.period=filters.billingMonth;

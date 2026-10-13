@@ -92,9 +92,32 @@
 // v254: refresh the Teacher hero's complete greeting and note colour.
 // v253: keep the Teacher home greeting on its hero band when account names wrap.
 // v252: refresh the official MCQ exam screen's pinned timer-bar styles.
-const CACHE_VERSION = 272;
+// v296: staged Firestore role/financial rules; local shell remains unchanged.
+// v307: Dhaka-midnight notification regression coverage; no runtime sync cutover.
+// v306: dev-only preview RTDB guard; never fall back to production on preview.
+// v305: read-only multi-backup ledger comparison; no browser cutover.
+// v304: offline ledger migration preflight only; no browser cutover.
+// v303: bounded Admin-only reconciliation read staging; no browser cutover.
+// v302: two-role accounting correction staging; no browser cutover.
+// v301: server-owned fee projection and pending Counter receipts; no browser cutover.
+// v300: verified Student enrollment + Manager review staging; no browser cutover.
+// v299: staged Student exam attempt + release lock; no browser cutover.
+// v298: server-only MCQ submission staging; browser cache keeps local mode intact.
+// v297: opt-in, emulator-only Firestore read gateway (no local data cutover).
+// v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
+// v294: Firebase backend selector and pure Auth role-claim policy offline.
+// v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
+const CACHE_VERSION = 307;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
+  './js/money.js',
+  './js/time.js',
+  './js/storage-safety.js',
+  './js/idGenerator.js',
+  './js/guardian-message.js',
+  './js/grade-audit.js',
+  './js/admin-boot-guard.js',
+  './privacy.html',
   './css/notifications.css',
   './css/academics.css',
   './css/course-hub.css',
@@ -104,6 +127,10 @@ const APP_SHELL = [
   './css/ui-wallet.css',
   './js/student-record.js',
   './sync/cloud-access.js',
+  './sync/backend-selection.js',
+  './sync/cloud-identity-policy.js',
+  './sync/cloud-read-gateway.js',
+  './sync/cloud-read.js',
   './js/app-entry.js',
   './js/student-features.js',
   './js/student-hubs.js',
@@ -127,8 +154,12 @@ const APP_SHELL = [
 
   './js/panel-lockdown.js',
   './firebase/firebase-config.js',
+  './firebase/firebase-config.dev.js',
   './firebase/firebase-init.js',
   './firebase/firebase-services.js',
+  './vendor/firebase/sdk.js',
+  './vendor/firebase/messaging-compat.js',
+  './firebase-messaging-sw.js',
   './sync/sync-core.js',
   './sync/sync-config.js',
   './sync/sync-auth.js',
@@ -383,8 +414,9 @@ self.addEventListener('activate', event => {
 //     build, not per URL: CACHE_VERSION (and therefore CACHE_NAME) bumps with
 //     every change set and activate() deletes every other cache, so a new
 //     build always starts from an empty cache and fetches its own files.
-//   • cross-origin CORS GETs (the immutable Firebase SDK on gstatic) — also
-//     cache-first, so repeat visits skip that download entirely.
+//   • cross-origin public GETs may still cache, but Firebase service endpoints
+//     are ALWAYS left to the SDK/network (Auth, Firestore, RTDB, App Check,
+//     Functions). The Firebase SDK itself is now a same-origin static bundle.
 const NAV_TIMEOUT_MS = 2500;
 
 function timedFetch(request) {
@@ -409,8 +441,15 @@ function remember(request, response) {
   caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
 }
 
+function isFirebaseServiceRequest(request) {
+  const url = new URL(request.url);
+  // Firebase Auth uses reserved same-origin Hosting endpoints too.
+  if (url.origin === self.location.origin) return /^\/__\/(auth|firebase|messaging)(\/|$)/.test(url.pathname);
+  return /(^|\.)(googleapis\.com|firebaseio\.com|firebasedatabase\.app|cloudfunctions\.net|firebaseapp\.com)$/.test(url.hostname);
+}
+
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  if (event.request.method !== 'GET' || isFirebaseServiceRequest(event.request)) return;
 
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {

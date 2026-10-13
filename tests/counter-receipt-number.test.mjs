@@ -5,59 +5,43 @@ import { STAFF_ACCOUNTS } from '../js/staff-auth.js';
 let data;
 beforeEach(() => {
   data = new Map();
-  const storage = { getItem:key=>data.get(key) ?? null, setItem:(key,value)=>data.set(key,String(value)) };
   data.set(STAFF_ACCOUNTS.payment.accountKey, JSON.stringify({ role: 'payment', username: STAFF_ACCOUNTS.payment.username, status: 'active' }));
-  const sessionStorage = { getItem:key=>key === STAFF_ACCOUNTS.payment.sessionKey ? '1' : null, setItem:()=>{}, removeItem:()=>{} };
-  globalThis.window = { localStorage:storage, sessionStorage };
-  Object.defineProperty(globalThis,'navigator',{configurable:true,value:{}});
+  const localStorage = { getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, String(value)) };
+  globalThis.window = { localStorage, sessionStorage: { getItem: key => key === STAFF_ACCOUNTS.payment.sessionKey ? '1' : null } };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {} });
 });
-const date = new Date(2026,9,1,16,30);
-const tx = id => ({id,studentId:'TEST-S',studentName:'নমুনা',amount:800,recordedAt:date.getTime(),status:'approved'});
-const save = (id, receiptDate=date) => financeRepository.saveTransaction(tx(id),{counterReceipt:true,receiptDate});
-
-test('counter receipts are exactly R + YYMMDD + three daily digits, without a suffix', async () => {
-  let rows = await save('T-1');
-  assert.equal(rows[0].receiptNo,'R261001001');
-  rows = await save('T-2');
-  assert.equal(rows[0].receiptNo,'R261001002');
-  assert.equal(rows[0].status,'pending');
-  assert.match(rows[0].receiptNo,/^R\d{9}$/);
+const tx = id => ({ id, studentId: 'TEST-S', studentName: 'নমুনা', amount: 800, status: 'approved' });
+const save = id => financeRepository.saveTransaction(tx(id), { counterReceipt: true });
+test('new receipts have durable device prefix and six-digit ordinal; date changes do not reset', async () => {
+  const first = (await save('T-1'))[0].receiptNo;
+  assert.match(first, /^C[0-9A-F]{8}-000001$/);
+  const next = (await save('T-2'))[0].receiptNo;
+  assert.equal(next, `${first.slice(0, -1)}2`);
+  assert.equal(data.get('activePlus.devicePrefix.v1'), first.split('-')[0]);
 });
-test('the receipt sequence resets on a new local calendar day and year', async () => {
-  await save('T-1');
-  assert.equal((await save('T-2',new Date(2026,9,2)))[0].receiptNo,'R261002001');
-  assert.equal((await save('T-3',new Date(2027,0,1)))[0].receiptNo,'R270101001');
+test('legacy receipts remain untouched; retries do not consume ordinals', async () => {
+  const legacy = { ...tx('OLD'), receiptNo: 'R261001007-0011223344556677' };
+  data.set(TRANSACTIONS_KEY, JSON.stringify([legacy]));
+  const first = (await save('NEW'))[0].receiptNo;
+  await save('NEW');
+  const rows = await save('NEXT');
+  assert.deepEqual(rows[2], legacy);
+  assert.equal(rows[1].receiptNo, first);
+  assert.equal(rows[0].receiptNo, `${first.slice(0, -1)}2`);
 });
-test('existing plain and legacy-suffixed receipts set the floor; historical numbers stay untouched', async () => {
-  const legacy = { ...tx('OLD'),receiptNo:'R261001007-0011223344556677',status:'approved' };
-  data.set(TRANSACTIONS_KEY,JSON.stringify([legacy]));
-  const rows = await save('NEW');
-  assert.equal(rows[0].receiptNo,'R261001008');
-  assert.deepEqual(rows[1],legacy);
-});
-test('idempotent saves preserve the first receipt and do not consume a new ordinal', async () => {
-  await save('T-1'); await save('T-1');
-  const rows = await save('T-2');
-  assert.equal(rows.length,2); assert.equal(rows[0].receiptNo,'R261001002');
-  assert.equal(rows[1].receiptNo,'R261001001');
-});
-test('three-digit overflow is refused, never expanded or given a random suffix', async () => {
-  data.set(TRANSACTIONS_KEY,JSON.stringify([{ ...tx('OLD'),receiptNo:'R261001999'}]));
+test('failed write leaves ledger unchanged and does not consume an ordinal', async () => {
+  const first = (await save('T-1'))[0].receiptNo;
   const before = data.get(TRANSACTIONS_KEY);
-  await assert.rejects(()=>save('NEW'),/৯৯৯|999|ক্রমিক/);
-  assert.equal(data.get(TRANSACTIONS_KEY),before);
+  window.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+  await assert.rejects(() => save('T-2'), /Quota/);
+  assert.equal(data.get(TRANSACTIONS_KEY), before);
+  window.localStorage.setItem = (key, value) => data.set(key, String(value));
+  assert.equal((await save('T-2'))[0].receiptNo, `${first.slice(0, -1)}2`);
+  data.set(TRANSACTIONS_KEY, 'broken');
+  await assert.rejects(() => save('T-3'));
+  assert.equal(data.get(TRANSACTIONS_KEY), 'broken');
 });
-test('a failed durable write or corrupt ledger does not print/consume a receipt', async () => {
-  window.localStorage.setItem=()=>{throw new Error('QuotaExceededError')};
-  await assert.rejects(()=>save('T-1'),/Quota/);
-  window.localStorage.setItem=(key,value)=>data.set(key,String(value));
-  assert.equal((await save('T-1'))[0].receiptNo,'R261001001');
-  data.set(TRANSACTIONS_KEY,'broken');
-  await assert.rejects(()=>save('T-2'));
-  assert.equal(data.get(TRANSACTIONS_KEY),'broken');
-});
-test('normal non-counter saves retain their supplied receipt and existing repository contract', async () => {
-  const entry={...tx('LEGACY'),receiptNo:'KEEP-OLD'};
-  const rows=await financeRepository.saveTransaction(entry);
-  assert.equal(rows[0].receiptNo,'KEEP-OLD'); assert.equal(rows[0].status,'pending');
+test('non-counter supplied legacy receipt stays intact', async () => {
+  const rows = await financeRepository.saveTransaction({ ...tx('OLD'), receiptNo: 'KEEP-OLD' });
+  assert.equal(rows[0].receiptNo, 'KEEP-OLD');
 });

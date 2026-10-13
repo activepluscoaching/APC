@@ -2,11 +2,11 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src 'self' https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https: wss:; manifest-src 'self'; worker-src 'self'; base-uri 'self'; object-src 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <script src="js/sanitize-url.js"></script>
-  <script src="js/app-entry.js?v=272" data-entry="student"></script>
-  <script type="module" src="js/main.js?v=272"></script>
+  <script src="js/app-entry.js?v=307" data-entry="student"></script>
+  <script type="module" src="js/main.js?v=307"></script>
   <script src="js/topbar-connectivity.js?v=25161005-syncborder" defer></script>
   <script type="module" src="js/realtime-sync-entry.js"></script>
   <script src="js/appearance-boot.js"></script>
@@ -33,21 +33,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=272">
-  <link rel="stylesheet" href="css/ui-layout.css?v=272">
-  <link rel="stylesheet" href="css/ui-components.css?v=272">
-  <link rel="stylesheet" href="css/ui-forms.css?v=272">
-  <link rel="stylesheet" href="css/ui-features.css?v=272">
-  <link rel="stylesheet" href="css/notice-board.css?v=272">
-  <link rel="stylesheet" href="css/ui-status.css?v=272">
-  <link rel="stylesheet" href="css/ui-auth.css?v=272">
-  <link rel="stylesheet" href="css/app-polish.css?v=272">
-  <link rel="stylesheet" href="css/student-record.css?v=272">
-  <link rel="stylesheet" href="css/exam-archive.css?v=272">
-  <link rel="stylesheet" href="css/academics.css?v=272">
-  <link rel="stylesheet" href="css/notifications.css?v=272">
-  <link rel="stylesheet" href="css/course-hub.css?v=272">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=272">
+  <link rel="stylesheet" href="css/foundation.css?v=307">
+  <link rel="stylesheet" href="css/ui-layout.css?v=307">
+  <link rel="stylesheet" href="css/ui-components.css?v=307">
+  <link rel="stylesheet" href="css/ui-forms.css?v=307">
+  <link rel="stylesheet" href="css/ui-features.css?v=307">
+  <link rel="stylesheet" href="css/notice-board.css?v=307">
+  <link rel="stylesheet" href="css/ui-status.css?v=307">
+  <link rel="stylesheet" href="css/ui-auth.css?v=307">
+  <link rel="stylesheet" href="css/app-polish.css?v=307">
+  <link rel="stylesheet" href="css/student-record.css?v=307">
+  <link rel="stylesheet" href="css/exam-archive.css?v=307">
+  <link rel="stylesheet" href="css/academics.css?v=307">
+  <link rel="stylesheet" href="css/notifications.css?v=307">
+  <link rel="stylesheet" href="css/course-hub.css?v=307">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=307">
   <script type="module" src="js/ui-accessibility.js"></script>
   <script src="js/launch-screen.js" defer></script>
 </head>
@@ -203,6 +203,8 @@
               <div class="field full"><label for="securityQuestion">নিরাপত্তা প্রশ্ন <i>*</i></label><select id="securityQuestion" name="securityQuestion" required><option value="">একটি প্রশ্ন বেছে নিন</option><option>তোমার শৈশবের ডাকনাম কী?</option><option>তোমার প্রিয় শিক্ষকের নাম কী?</option><option>তোমার জন্মস্থানের নাম কী?</option><option>তোমার প্রিয় বইয়ের নাম কী?</option></select></div>
               <div class="field full"><label for="securityAnswer">নিরাপত্তা প্রশ্নের উত্তর <i>*</i></label><input id="securityAnswer" name="securityAnswer" type="text" placeholder="উত্তরটি লিখুন" required></div>
             </div>
+            <p class="privacy-note">আপনার তথ্য ভর্তি, ফি, উপস্থিতি ও ফলাফলের জন্য ব্যবহার করা হবে। বিস্তারিত <a href="privacy.html" target="_blank" rel="noopener">গোপনীয়তা নীতিতে</a>।</p>
+            <label class="terms-label"><input type="checkbox" id="guardianConsent" name="guardianConsent" required><span>অভিভাবক হিসেবে এই তথ্য ব্যবহারে সম্মতি দিচ্ছি। <i>*</i></span></label>
             <label class="terms-label"><input type="checkbox" id="terms" name="terms" required><span class="fake-check"></span><span>আমি Active Plus Coaching-এর নিয়ম ও শর্তে সম্মত আছি। <i>*</i></span></label>
             <div class="step-actions"><button type="button" class="step-back" data-previous-step>← আগের অংশ</button><button class="auth-submit step-submit" type="submit">রেজিস্ট্রেশন সম্পন্ন করুন <svg class="apc-glyph-icon" data-icon="arrow-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button></div>
           </section>
@@ -677,7 +679,7 @@
 
       <!-- FEE (read-only): Cash Counter writes, the student only reads. -->
       <section class="view" id="studentFeeView" data-view-panel="student-fee" aria-labelledby="studentFeeTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-view="profile" aria-label="আরও মেনুতে ফিরুন"><svg class="apc-glyph-icon" data-icon="arrow-left" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button><div class="page-intro-copy"><h1 id="studentFeeTitle">ফি</h1></div></div>
+        <div class="page-intro"><button class="pay-back" type="button" data-view="profile" aria-label="আরও মেনুতে ফিরুন"><svg class="apc-glyph-icon" data-icon="arrow-left" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button><div class="page-intro-copy"><h1 id="studentFeeTitle">আমার ফি</h1></div></div>
         <div id="studentFeeMount" class="student-fee-mount" aria-live="polite"></div>
       </section>
 

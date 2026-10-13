@@ -18,7 +18,6 @@ import { initRecovery } from './recovery.js';
 import { requestLogout, initLogout } from './logout.js';
 import { initNavigation } from './navigation.js';
 import { initInstallPrompt, installApp } from './install.js';
-import { registerServiceWorker } from './service-worker.js';
 import { initDynamicTheme } from './theme.js';
 import { initFixedShell } from './fixed-shell.js';
 import { loadStudentFeatures } from './student-features.js';
@@ -427,7 +426,7 @@ initDynamicTheme();
 initAppearance();
 initCopyChips();
 initInstallPrompt();
-registerServiceWorker();
+void import('./service-worker.js').then(({ registerServiceWorker }) => registerServiceWorker()).catch(() => {});
 initLogin({
   state,
   onAuthenticated: enterApp

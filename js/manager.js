@@ -1,3 +1,5 @@
+import { guardianDraft } from './guardian-message.js';
+import { taka, addTaka } from './money.js';
 import { hasStaffSession, clearStaffSession, readStaffAccount, goToLoginPage, STAFF_SESSION_RULES } from './staff-auth.js';
 import { STAFF_DIRECTORY_RULES } from './staff-directory.js';
 import { mountSettingsHub } from './settings-hub.js';
@@ -169,7 +171,7 @@ function renderDashboard() {
   const today = dateLabel(new Date());
   const approved = students.filter(student => student.status === 'approved');
   const todayPayments = transactions.filter(tx => isFinalizedTransaction(tx) && tx.date === today);
-  const totalToday = todayPayments.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  const totalToday = todayPayments.reduce((sum, tx) => addTaka(sum, tx.amount), 0);
   const todayKey = routineDayForToday();
   const todaysClasses = Object.hasOwn(routine, todayKey) ? (routine[todayKey]?.classes?.length || 0) : null;
   safeSetText('#managerToday', today);
@@ -211,7 +213,7 @@ function renderStudents() {
       : student.status === 'inactive'
         ? `<button class="mini-btn approve" type="button" data-manager-action="activate-student" data-id="${escapeHtml(student.id)}">Activate</button>`
         : '';
-    return `<article class="manager-record" data-manager-student="${escapeHtml(student.id)}"><div class="manager-record-head"><div><h2>${escapeHtml(student.name || 'নাম নেই')}</h2><p class="manager-meta">${escapeHtml(student.id)} • ${escapeHtml(student.className || 'ক্লাস নেই')} ${student.group ? `• ${escapeHtml(student.group)}` : ''}</p></div><span class="badge ${tone}">${escapeHtml(statusLabel[student.status] || student.status || 'অজানা')}</span></div><p>মোবাইল ${escapeHtml(student.mobile || '—')} • বকেয়া ${money(fee.due)} • উপস্থিতি ${student.attendance == null ? '—' : `${escapeHtml(student.attendance)}%`} • গড় ফল ${student.average == null ? '—' : escapeHtml(student.average)}</p><div class="manager-actions"><button class="mini-btn" type="button" data-manager-action="view-student" data-id="${escapeHtml(student.id)}">প্রোফাইল</button><button class="mini-btn" type="button" data-manager-action="edit-student" data-id="${escapeHtml(student.id)}">তথ্য সম্পাদনা</button>${lifecycle}<button class="mini-btn" type="button" data-manager-action="reset-password" data-id="${escapeHtml(student.id)}">পাসওয়ার্ড রিসেট</button></div><div class="manager-student-extra" hidden></div></article>`;
+    return `<article class="manager-record" data-manager-student="${escapeHtml(student.id)}"><div class="manager-record-head"><div><h2>${escapeHtml(student.name || 'নাম নেই')}</h2><p class="manager-meta">${escapeHtml(student.id)} • ${escapeHtml(student.className || 'ক্লাস নেই')} ${student.group ? `• ${escapeHtml(student.group)}` : ''}</p></div><span class="badge ${tone}">${escapeHtml(statusLabel[student.status] || student.status || 'অজানা')}</span></div><p>মোবাইল ${escapeHtml(student.mobile || '—')} • বকেয়া ${money(fee.due)} • উপস্থিতি ${student.attendance == null ? '—' : `${escapeHtml(student.attendance)}%`} • গড় ফল ${student.average == null ? '—' : escapeHtml(student.average)}</p><div class="manager-actions"><button class="mini-btn" type="button" data-manager-action="view-student" data-id="${escapeHtml(student.id)}">প্রোফাইল</button><button class="mini-btn" type="button" data-manager-action="guardian-draft" data-id="${escapeHtml(student.id)}">অভিভাবককে জানান</button><button class="mini-btn" type="button" data-manager-action="edit-student" data-id="${escapeHtml(student.id)}">তথ্য সম্পাদনা</button>${lifecycle}<button class="mini-btn" type="button" data-manager-action="reset-password" data-id="${escapeHtml(student.id)}">পাসওয়ার্ড রিসেট</button></div><div class="manager-student-extra" hidden></div></article>`;
   }).join('') : '<p class="admin-empty">কোনো শিক্ষার্থী মেলেনি।</p>';
 }
 function renderRoutineClassOptions() {
@@ -388,6 +390,7 @@ function renderAcademicRecords() {
     <p class="manager-meta">${escapeHtml(label[activity.type] || activity.type || '')} • ${escapeHtml(activity.className || '')}${activity.group ? ` • ${escapeHtml(activity.group)}` : ''} • ${escapeHtml(activity.subject || '')}</p></div>
     <span class="badge ${activity.status === 'published' ? 'badge-approved' : 'badge-pending'}">${activity.status === 'published' ? 'প্রকাশিত' : 'খসড়া'}</span></div>
     <p>${escapeHtml(activity.details || 'অতিরিক্ত বিবরণ নেই।')}</p>
+    ${activity.type === 'routine' ? `<div class="manager-actions">${Object.entries(activity.progress || {}).map(([studentId, item]) => `<button type="button" class="mini-btn" data-manager-attendance="${escapeHtml(activity.id)}" data-student="${escapeHtml(studentId)}">${escapeHtml(studentId)} • ${escapeHtml(item.value)} — সংশোধন</button>`).join('')}</div>` : ''}
     <p class="manager-meta">${escapeHtml(activity.teacherName || 'শিক্ষক')} • ${escapeHtml(activity.date || '')} ${escapeHtml(activity.time || '')}${activity.progress ? ` • ${bn(Object.keys(activity.progress).length)} শিক্ষার্থীর অবস্থা` : ''}</p></article>`).join('')
     : '<p class="admin-empty">এই ফিল্টারে কোনো কাজ পাওয়া যায়নি। কোনো শিক্ষক কিছু প্রকাশ করলে এখানে দেখা যাবে।</p>';
 }
@@ -396,9 +399,9 @@ function renderFinance() {
   const approved = transactions.filter(isFinalizedTransaction);
   const month = monthLabel();
   const today = dateLabel(new Date());
-  const monthTotal = approved.filter(tx => tx.month === month).reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-  const total = approved.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-  const due = students.filter(s => s.status === 'approved').reduce((sum, s) => sum + studentFeeSummary(s, transactions).due, 0);
+  const monthTotal = approved.filter(tx => tx.month === month).reduce((sum, tx) => addTaka(sum, tx.amount), 0);
+  const total = approved.reduce((sum, tx) => addTaka(sum, tx.amount), 0);
+  const due = students.filter(s => s.status === 'approved').reduce((sum, s) => addTaka(sum, studentFeeSummary(s, transactions).due), 0);
   const pending = transactions.filter(tx => tx.status === 'pending');
   safeSetText('#mgrFinanceTotal', money(total)); safeSetText('#mgrFinanceMonth', money(monthTotal));
   safeSetText('#mgrFinanceDue', money(due)); safeSetText('#mgrFinancePending', bn(pending.length));
@@ -417,9 +420,9 @@ function renderFinance() {
   if (financeSegment === 'collection') {
     const todayRows = approved.filter(tx => tx.date === today);
     const monthRows = approved.filter(tx => tx.month === month);
-    safeSetText('#mgrFinanceToday', money(todayRows.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)));
+    safeSetText('#mgrFinanceToday', money(todayRows.reduce((sum, tx) => addTaka(sum, tx.amount), 0)));
     safeSetText('#mgrFinanceTodayCount', bn(todayRows.length));
-    safeSetText('#mgrFinanceCounterMonth', money(monthRows.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)));
+    safeSetText('#mgrFinanceCounterMonth', money(monthRows.reduce((sum, tx) => addTaka(sum, tx.amount), 0)));
     safeSetText('#mgrFinanceMonthCount', bn(monthRows.length));
     safeSetText('#mgrFinanceCollectionNote', pending.length
       ? `${bn(pending.length)}টি কাউন্টার এন্ট্রি অনুমোদনের অপেক্ষায় — “পেমেন্ট অনুমোদন” বিভাগে যান।`
@@ -809,12 +812,27 @@ function handleStudentAction(button) {
   const card = button.closest('.manager-record');
   const extra = card?.querySelector('.manager-student-extra');
   const action = button.dataset.managerAction;
+  if (action === 'guardian-draft') {
+    const kind = window.prompt('বার্তার ধরন: absence / result / due', 'due');
+    if (kind) { try { const fee = studentFeeSummary(student, transactions); window.open(guardianDraft(student, kind, fee.due), '_blank', 'noopener,noreferrer'); } catch (error) { window.alert(error.message); } }
+  }
   if (action === 'view-student' && extra) { extra.hidden = !extra.hidden; extra.innerHTML = extra.hidden ? '' : studentProfile(student); }
   if (action === 'edit-student' && card) showStudentEditor(card, student);
   if (action === 'deactivate-student') void toggleStudentStatus(student.id, 'inactive');
   if (action === 'activate-student') void toggleStudentStatus(student.id, 'approved');
   if (action === 'reset-password') openStudentPasswordReset(student);
 }
+$('#managerAcademicList')?.addEventListener('click', async event => {
+  const button = event.target.closest('[data-manager-attendance]'); if (!button) return;
+  const value = window.prompt('উপস্থিতি: present / absent / late (বাতিল করতে Cancel)', 'present');
+  if (value === null) return;
+  const reason = window.prompt('পরিবর্তনের কারণ লিখুন (৭ দিন পরে বাধ্যতামূলক)', '');
+  if (reason === null) return;
+  try {
+    const db = await teachingRepository.saveProgress(button.dataset.managerAttendance, { [button.dataset.student]: value }, { role: 'manager', id: 'manager' }, reason);
+    teaching = db; renderAcademicRecords();
+  } catch (error) { window.alert(error.message); }
+});
 $('#managerStudentList').addEventListener('click', event => {
   const button = event.target.closest('[data-manager-action]'); if (!button) return;
   handleStudentAction(button);

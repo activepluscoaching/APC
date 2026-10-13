@@ -69,6 +69,7 @@ test('a saved account and legacy skip flag cannot create a login session; a wron
   question.value = [...question.options].map(option => option.value).find(Boolean);
   ctx.$('#studentMobile').value = values.regMobile;
   ctx.$('#terms').checked = true;
+  ctx.$('#guardianConsent').checked = true;
   ctx.submit(ctx.$('#registrationForm'));
   await ctx.flush();
   await ctx.waitFor(() => registered === 1, 5000);

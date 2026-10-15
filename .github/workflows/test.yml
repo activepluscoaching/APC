@@ -4,10 +4,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          # Firebase JS SDK 13 and rules-unit-testing 6 require Node >=24.12.
+          node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run build:firebase && git diff --exit-code -- vendor/firebase/
       - run: npm test

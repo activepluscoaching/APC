@@ -61,7 +61,7 @@ const TEACHER_RECORD = Object.freeze({
 
 test('E2E: Manager sets routine -> Teacher takes attendance, gives homework & exam, updates course/chapters, posts notice -> Own student receives all & Home stats match -> Wrong-class/section student sees nothing', async () => {
   const todayStr = new Date().toISOString().slice(0, 10);
-  const ctx = await loadPage('index.html', {
+  const ctx = await loadPage('student.html', {
     seed: {
       'activePlus.demo.autofill.v1': 'off',
       [ROSTER_KEY]: JSON.stringify([STUDENT_OWN, STUDENT_WRONG_CLASS, STUDENT_WRONG_GROUP]),

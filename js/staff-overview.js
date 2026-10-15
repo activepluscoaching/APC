@@ -1,5 +1,6 @@
 /* Staff Management Overview — the compact directory surface that lives on the
-   Admin Profile and the Dashboard.
+   Admin Profile. (It also sat on the Dashboard home until 2026-10-14, when
+   the owner asked for it to live only here and in the full section.)
 
    This is a VIEW onto the one Staff Management system, never a second one:
    every row is a js/staff-directory.js record and every quick action opens the
@@ -37,8 +38,11 @@ function rowHtml(record, { canManage }) {
     assignment.counter
   ].filter(Boolean);
   const dutyText = [...new Set(duty)].slice(0, 4).join(' • ');
+  const initials = String(record.fullName || '').trim().split(/\s+/).filter(Boolean).slice(0, 2)
+    .map(word => [...word][0]).join('').toUpperCase() || '?';
   return `
     <article class="staff-overview-row" data-overview-staff="${escapeHtml(record.staffId)}">
+      <span class="staff-overview-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
       <div class="staff-overview-identity">
         <strong>${escapeHtml(record.fullName)}</strong>
         <p class="staff-overview-meta">
@@ -52,9 +56,9 @@ function rowHtml(record, { canManage }) {
         <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
         ${canManage ? `
         <div class="staff-overview-actions">
-          <button class="mini-btn" type="button" data-overview-action="view" data-staff-id="${escapeHtml(record.staffId)}">View</button>
-          <button class="mini-btn" type="button" data-overview-action="edit" data-staff-id="${escapeHtml(record.staffId)}">Edit</button>
-          <button class="mini-btn" type="button" data-overview-action="status" data-staff-id="${escapeHtml(record.staffId)}" data-next-status="${record.status === 'active' ? 'inactive' : 'active'}">${record.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+          <button class="mini-btn" type="button" data-overview-action="view" data-staff-id="${escapeHtml(record.staffId)}">দেখুন</button>
+          <button class="mini-btn" type="button" data-overview-action="edit" data-staff-id="${escapeHtml(record.staffId)}">সম্পাদনা</button>
+          <button class="mini-btn" type="button" data-overview-action="status" data-staff-id="${escapeHtml(record.staffId)}" data-next-status="${record.status === 'active' ? 'inactive' : 'active'}">${record.status === 'active' ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}</button>
         </div>` : ''}
       </div>
     </article>`;

@@ -17,7 +17,7 @@ import { THEME_COLOR, themeColorFor } from '../js/appearance.js';
 const read = path => readFileSync(path, 'utf8');
 // The five shipped pages. demo/offline-roles.html is the developers' role
 // workspace (out of the production deploy) and is deliberately not in this list.
-const PAGES = ['index', 'admin', 'manager', 'teacher', 'payment'];
+const PAGES = ['student', 'admin', 'manager', 'teacher', 'payment'];
 
 function hex(value) {
   const clean = value.trim().replace(/^#/, '');

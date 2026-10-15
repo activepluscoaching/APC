@@ -55,7 +55,7 @@ test('the pure plan: new items once; a first run shows only tasks and running ex
 });
 
 before(async () => {
-  ctx = await loadPage('index.html');
+  ctx = await loadPage('student.html');
   assert.equal('Notification' in ctx.window, false, 'no phone notification permission exists here');
   const store = ctx.window.localStorage;
   store.setItem(KEYS.account, JSON.stringify({ username: 'nadia', status: 'active', student: { id: STUDENT_ID, name: 'নাদিয়া' } }));

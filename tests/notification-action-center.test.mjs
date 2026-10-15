@@ -130,7 +130,7 @@ test('a due homework task already on-device stays read when rule version 3 is in
   const today = dayKey(now);
   const viewerKey = `student:${student.studentId}`;
   const activity = homework('HW-OLD', today);
-  const ctx = await loadPage('index.html', { seed: {
+  const ctx = await loadPage('student.html', { seed: {
     [KEYS.account]: JSON.stringify({ username: 'rahim', status: 'active', student: {
       id: student.studentId, name: 'রহিম', className: student.className, group: student.group
     } }),
@@ -168,7 +168,7 @@ test('an Action Center homework CTA opens and expands the matching student work'
     }
   };
   const viewerKey = `student:${student.studentId}`;
-  const ctx = await loadPage('index.html', { seed: {
+  const ctx = await loadPage('student.html', { seed: {
     [KEYS.account]: JSON.stringify(studentAccount),
     [KEYS.teaching]: JSON.stringify({ version: 1, activities: [activity] }),
     [TEACHER_ASSIGNMENTS_KEY]: JSON.stringify([{

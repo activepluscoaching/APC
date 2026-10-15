@@ -67,14 +67,14 @@ after(async () => {
   await new Promise(resolve => cloud?.server?.close(resolve));
 });
 
-test('an empty cloud explains the source-device sync step instead of requesting duplicate registration', async () => {
+test('a missing account gets one short not-found message, nothing more', async () => {
   const result = await deviceB.run('form-login', { username: 'missing.account.apc', pin: '4321' });
   assert.equal(result.studentSession, false);
-  // An empty cloud must be named as such: the account was never uploaded from
-  // the other device, and that is where the fix has to happen.
-  assert.match(result.message, /ক্লাউডে এখনো কোনো শিক্ষার্থী অ্যাকাউন্ট ওঠেনি/);
-  assert.match(result.message, /যে ডিভাইসে অ্যাকাউন্টটি আছে সেখানে অ্যাপ অনলাইনে খুলে সিঙ্ক চালু করুন/);
-  assert.doesNotMatch(result.message, /আগে রেজিস্ট্রেশন করুন/);
+  // Owner decision: the login never reports a cloud census, similar-name
+  // guesses or cross-device sync steps — only that the account was not found.
+  // One short not-found message — the auth box appends its ✕ close mark,
+  // so compare the message itself without that decoration.
+  assert.match(result.message, /^অ্যাকাউন্ট পাওয়া যায়নি।✕?$/);
 });
 
 test('login IDs and data created on device A work on device B', async () => {
@@ -491,14 +491,17 @@ test('a student can log in with the permanent Student ID shown on the profile', 
   } finally { await fresh.stop(); }
 });
 
-test('a misspelled username is answered with what the cloud actually holds', async () => {
+test('a misspelled username gets one short not-found message', async () => {
   const fresh = new Device('typo-login', cloud.url);
   fresh.start();
   try {
     const attempt = await fresh.run('form-login', { username: 'dolon.akter', pin: '4321' });
     assert.equal(attempt.studentSession, false, 'not signed in');
-    assert.match(String(attempt.message || ''), /ক্লাউডে/, 'the cloud content is reported');
-    assert.match(String(attempt.message || ''), /dolon/, 'and the close ID is suggested for the typo');
+    // Owner decision 2026-10-14: a missing account is answered with one
+    // short message — no cloud census, no spelling suggestions, no sync
+    // instructions, even when a similar ID does exist in the cloud.
+    assert.ok(String(attempt.message || '').startsWith('অ্যাকাউন্ট পাওয়া যায়নি।'), attempt.message);
+    assert.doesNotMatch(String(attempt.message || ''), /ক্লাউডে|dolon|বানান|একই Wi-Fi|ইন্টারনেটে/);
   } finally { await fresh.stop(); }
 });
 

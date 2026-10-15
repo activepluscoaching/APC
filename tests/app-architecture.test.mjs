@@ -41,12 +41,12 @@ function ctxPanel(source, name) {
   }
   return source.slice(open);
 }
-const html = read('index.html');
+const html = read('student.html');
 /* Bangla text mixes precomposed and combining forms; compare in NFC. */
 const nfc = value => String(value ?? '').normalize('NFC');
 
 test('the student bottom bar is exactly হোম / পড়াশোনা / রুটিন / পরীক্ষা / আরও', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   const links = ctx.$$('.bottom-nav .bottom-link');
   assert.deepEqual(links.map(link => link.dataset.view), ['home', 'courses', 'routine', 'exams', 'profile']);
   assert.deepEqual(links.map(link => nfc(link.textContent.trim())), ['হোম', 'পড়াশোনা', 'রুটিন', 'পরীক্ষা', 'আরও'].map(nfc));
@@ -55,7 +55,7 @@ test('the student bottom bar is exactly হোম / পড়াশোনা / �
 });
 
 test('ফলাফল is a tab of পরীক্ষা, and #results stays only as an inbound alias', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   const { setView, viewRouteFromHash } = await import('../js/shell.js');
   assert.equal(ctx.$('#resultsView'), null, 'the separate results view is gone');
   assert.equal(ctx.$$('[data-view="results"]').length, 0, 'no control may route to a results view of its own');
@@ -73,7 +73,7 @@ test('ফলাফল is a tab of পরীক্ষা, and #results stays only
 });
 
 test('পড়াশোনা has five sections and one movable teaching board', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   assert.deepEqual(ctx.$$('#studySections [data-study-section]').map(tab => tab.dataset.studySection),
     ['courses', 'homework', 'suggestion', 'bank', 'materials', 'model-test', 'practice', 'results', 'other']);
   assert.deepEqual(ctx.$$('[data-study-panel]').map(panel => panel.dataset.studyPanel),
@@ -89,7 +89,7 @@ test('পড়াশোনা has five sections and one movable teaching board'
 });
 
 test('আরও holds only প্রোফাইল / রিপোর্ট / নোটিফিকেশন / ফি / সেটিংস / সহায়তা', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   const more = ctx.$('#profileView');
   assert.deepEqual(ctx.$$('#profileView .pay-grid button').map(button => button.dataset.view).filter(Boolean),
     ['my-profile', 'reports', 'notification-settings', 'student-fee', 'settings']);
@@ -106,7 +106,7 @@ test('আরও holds only প্রোফাইল / রিপোর্ট / �
 });
 
 test('the ফি screen is read-only and reads the one finance store', async () => {
-  const ctx = await loadPage('index.html', {
+  const ctx = await loadPage('student.html', {
     seed: {
       'activePlus.demo.autofill.v1': 'off',
       'activePlus.admin.transactions.v1': JSON.stringify([
@@ -133,7 +133,7 @@ test('the ফি screen is read-only and reads the one finance store', async () 
 });
 
 test('Home keeps the five quick academic cards and the Notice Board tile', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
     ['বাড়ির কাজ', 'সাজেশন', 'প্রশ্নব্যাংক', 'পরীক্ষা', 'ফলাফল', 'Notice Board']);
   assert.deepEqual(ctx.$$('#studentServices [data-action]').map(node => node.dataset.action),

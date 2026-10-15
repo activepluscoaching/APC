@@ -6,7 +6,7 @@ import { loadPage } from './jsdom-harness.mjs';
 
 const mod = spec => import(`./.two-device-run/js/${spec}`);
 
-const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+let ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
 
 /* realtime-sync patches Storage.prototype.setItem — expose jsdom's Storage. */
 if (!globalThis.Storage) {
@@ -15,10 +15,42 @@ if (!globalThis.Storage) {
 
 const events = [];
 const remoteStorageKeys = [];
-ctx.window.addEventListener('storage', event => { if (event.apcRemote) remoteStorageKeys.push(event.key); });
-ctx.window.addEventListener('apc-sync-updated', event => {
-  events.push({ collection: event.detail?.collection, role: event.detail?.role, at: Date.now() });
-});
+function bindPageEvents() {
+  ctx.window.addEventListener('storage', event => { if (event.apcRemote) remoteStorageKeys.push(event.key); });
+  ctx.window.addEventListener('apc-sync-updated', event => {
+    events.push({ collection: event.detail?.collection, role: event.detail?.role, at: Date.now() });
+  });
+}
+bindPageEvents();
+
+/* The student panel is its own page now (student.html, like every portal), so
+   a phone crosses between the login door and the panel exactly like a real
+   browser: same storage, fresh page, fresh entry-module instance. */
+async function openPage(file, entryQuery) {
+  const seed = {};
+  for (let i = 0; i < ctx.window.localStorage.length; i++) {
+    const key = ctx.window.localStorage.key(i);
+    seed[key] = ctx.window.localStorage.getItem(key);
+  }
+  const previous = ctx;
+  ctx = await loadPage(file, { seed });
+  bindPageEvents();
+  /* Each jsdom window has its own Storage class, and the sync bridge patches
+     the class of the realm it started in. A real navigation is a fresh realm
+     whose own entry starts the bridge again — emulate that, or writes on the
+     new page silently stop reaching the cloud. */
+  Object.defineProperty(globalThis, 'Storage', { value: ctx.window.Storage, configurable: true, writable: true });
+  previous.window.close();
+  syncModule.stopRealtimeSync();
+  if (entryQuery) {
+    await mod(`main.js?${entryQuery}=${Date.now()}-${Math.random()}`);
+    loginBound = true;
+    registerBound = true;
+  }
+  if (globalThis.__apcTwoDeviceSignedIn) await syncModule.startRealtimeSync();
+}
+const openAuthPage = () => openPage('index.html', 'auth');
+const openPanelPage = () => openPage('student.html', 'panel');
 
 const syncModule = await mod('realtime-sync.js');
 const secureStore = await mod('secure-store.js');
@@ -75,6 +107,7 @@ const hasSession = key => ctx.window.localStorage.getItem(key) !== null;
 /** Drive the real login form and wait for a terminal outcome. Each attempt
     starts from a signed-out device, like switching accounts on a phone. */
 async function formLogin({ username, pin }) {
+  if (!ctx.$('#loginForm')) await openAuthPage();
   await bindLogin();
   for (const account of Object.values(staffAuth.STAFF_ACCOUNTS)) {
     ctx.window.localStorage.removeItem(account.sessionKey);
@@ -144,6 +177,7 @@ const commands = {
     return { ok: true };
   },
   async 'wait-routine-ui'({ text, count }) {
+    if (!ctx.$('#routineList')) await openPanelPage();
     const { loadRoutine } = await mod('office-data.js');
     await waitUntil(() => loadRoutine().sat.classes.length === count &&
       (count === 0 || ctx.$('#routineList').textContent.includes(text)));
@@ -199,6 +233,7 @@ const commands = {
 
   /* Fill every required field of the real registration form and submit it. */
   async 'register-student'({ username, pin, mobile = '01711223344', nameBn = 'নতুন শিক্ষার্থী', nameEn = 'Test Student' }) {
+    if (!ctx.$('#registrationForm')) await openAuthPage();
     if (!registerBound) {
       const register = await mod('register.js');
       register.initRegister({
@@ -565,7 +600,8 @@ const commands = {
 
   /* Run the real student app entry (js/main.js) exactly like index.html does,
      so page-level paths (the pending lock, the storage handler that flips the
-     account after an approval) are live. Used by the approval-login test. */
+     account after an approval) are live. Used by the approval-login test.
+     The entry boots the login door; submit-login crosses to student.html. */
   async 'start-app'() {
     globalThis.__apcTwoDeviceSignedIn = true;
     await mod('main.js');
@@ -589,18 +625,23 @@ const commands = {
       message: authMessage()
     };
   },
-  /* Drive the login form through the REAL handler bound by main.js. */
+  /* Drive the login form through the REAL handler bound by main.js, then
+     follow the browser onto the panel page (student.html) so app-state and
+     wait-app-open read the screen the student actually sees. */
   async 'submit-login'({ username, pin }) {
+    if (!ctx.$('#loginForm')) await openAuthPage();
     if (ctx.$('#authMessage')) ctx.$('#authMessage').textContent = '';
     ctx.type(ctx.$('#loginMobile'), username);
     ctx.type(ctx.$('#loginPin'), pin);
     ctx.submit(ctx.$('#loginForm'));
     await waitUntil(() => hasSession(storageKeys.session) || Boolean(authMessage()), { timeout: 30000 });
-    return {
+    const result = {
       studentSession: hasSession(storageKeys.session),
       message: authMessage(),
       accountStatus: readLocal(db.KEYS.account)?.status || null
     };
+    if (result.studentSession) await openPanelPage();
+    return result;
   },
   async 'wait-app-open'() {
     await waitUntil(() => ctx.$('#appShell')?.hidden === false, { timeout: 30000 });

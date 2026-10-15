@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const portals = ['index', 'admin', 'manager', 'teacher', 'payment'];
+const portals = ['student', 'admin', 'manager', 'teacher', 'payment'];
 const doc = name => new JSDOM(read(name + '.html')).window.document;
 const css = read('css/ui-wallet.css');
 
@@ -17,7 +17,8 @@ test('the active wallet skin parses, is screen-only and resolves its palette tok
   assert.ok(sheet.cssRules[0].cssRules.length > 100, 'the parser dropped the actual skin');
   const defined = new Set([...read('css/foundation.css').matchAll(/(--[a-z0-9-]+)\s*:/g)].map(match => match[1]));
   // Per-component variables are deliberately not global palette entries.
-  ['--tone', '--tone-soft', '--progress'].forEach(name => defined.add(name));
+  // --tile-index is set inline per quick-access tile by the admin shell.
+  ['--tone', '--tone-soft', '--progress', '--tile-index'].forEach(name => defined.add(name));
   for (const [, token] of css.matchAll(/var\((--[a-z0-9-]+)/g)) {
     assert.ok(defined.has(token), 'undefined token ' + token);
   }
@@ -48,7 +49,7 @@ test('student, manager and teacher have real, named service shortcuts', () => {
     ['homework', 'বাড়ির কাজ'], ['suggestion', 'সাজেশন'], ['question-bank', 'প্রশ্নব্যাংক'],
     ['exams', 'পরীক্ষা'], ['exam-results', 'ফলাফল'], ['notice-board', 'Notice Board']
   ];
-  const studentTiles = [...doc('index').querySelectorAll('#studentServices .pay-tile')];
+  const studentTiles = [...doc('student').querySelectorAll('#studentServices .pay-tile')];
   assert.equal(studentTiles.length, studentCards.length);
   studentTiles.forEach((tile, index) => {
     const [route, label] = studentCards[index];
@@ -76,7 +77,7 @@ test('student, manager and teacher have real, named service shortcuts', () => {
 
 test('secondary screens have accessible home/back controls and staff hub rows have round icons', () => {
   const MORE_SUBPAGES = '#reportsView, #notificationSettingsView, #myProfileView, #settingsView, #studentFeeView';
-  const indexBacks = [...doc('index').querySelectorAll('.pay-back')];
+  const indexBacks = [...doc('student').querySelectorAll('.pay-back')];
   assert.ok(indexBacks.length >= 10, 'student pages keep back controls');
   for (const button of indexBacks) {
     const parent = button.closest(MORE_SUBPAGES) ? 'profile' : button.getAttribute('data-view');
@@ -123,7 +124,7 @@ test('hero band covers the whole hero and the summary card straddles its edge', 
 });
 
 test('the home exams banner spans both columns on the wide dashboard', () => {
-  const home = doc('index');
+  const home = doc('student');
   assert.ok(home.querySelector('#homeView #dashboardExamCard'), 'the exam banner is on Home');
   assert.match(css, /@media \(min-width: 1000px\)[\s\S]*?\.student-home-view #dashboardExamCard \{ grid-column: 1 \/ -1; \}/,
     'the two-column desktop grid must not leave the exam banner half-width');
@@ -140,7 +141,7 @@ test('exam workspace rows keep one even gap with no dead space', () => {
 });
 
 test('notification settings live inside a hidden view, never floating outside the panels', () => {
-  for (const name of ['index', 'admin', 'manager', 'teacher']) {
+  for (const name of ['student', 'admin', 'manager', 'teacher']) {
     const document = doc(name);
     const mount = document.getElementById('notificationSettings');
     assert.ok(mount, name + ' is missing its notification settings mount');

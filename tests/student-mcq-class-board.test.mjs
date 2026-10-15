@@ -70,7 +70,7 @@ const openResults = async id => {
 };
 
 before(async () => {
-  ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   Date.now = clockNow;
   ctx.window.Date.now = clockNow;
   ctx.window.sessionStorage.setItem(STORAGE_KEYS.session, '1');

@@ -11,7 +11,7 @@ const INAPP_KEY = `activePlus.notifications.inapp.v1:${USER_ID}`;
 const alertIsVisible = ctx => Boolean(ctx.$('#apcInAppAlert') && !ctx.$('#apcInAppAlert').hidden);
 
 test('mark-all-read stays authoritative after login when an in-app popup receipt is stale', async t => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   t.after(() => ctx.window.close());
   const store = ctx.window.localStorage;
   const at = Date.now();

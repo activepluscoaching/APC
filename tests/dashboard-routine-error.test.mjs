@@ -23,7 +23,7 @@ after(() => contexts.forEach(ctx => ctx.window.close()));
 /* A damaged exam file is what makes the dashboard's parallel load fail — the
    exact situation the error row exists for, and nothing is deleted to reach it. */
 async function brokenRender() {
-  const ctx = await loadPage('index.html', {
+  const ctx = await loadPage('student.html', {
     seed: {
       'activePlus.demo.autofill.v1': 'off',
       [KEYS.exams]: '{broken',

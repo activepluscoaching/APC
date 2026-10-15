@@ -69,6 +69,9 @@ function icon(key, className = 'staff-icon') {
   return iconMarkup(key, `${className} apc-icon-svg`);
 }
 
+const initialsOf = name => String(name || '?').trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  .map(word => [...word][0]).join('').toUpperCase() || '?';
+
 function fieldRow(spec, value) {
   const { name, label, type = 'text', placeholder = '', hint = '', required = false, options = [], multiple = false, max = 120 } = spec;
   const text = String(value ?? '');
@@ -253,7 +256,7 @@ function staffCard(record) {
   const meta = STAFF_ROLE_META[record.role] || STAFF_ROLE_META.other;
   const status = STAFF_STATUS[record.status] || STAFF_STATUS.inactive;
   const moreOpen = state.openMore === record.staffId;
-  const initials = escapeHtml(String(record.fullName || '?').trim().slice(0, 1).toUpperCase());
+  const initials = escapeHtml(initialsOf(record.fullName));
   const assignment = [
     ...(record.assignment?.classes || []),
     ...(record.assignment?.subjects || []),
@@ -281,18 +284,18 @@ function staffCard(record) {
       ${record.protected ? '<p class="staff-protected-note">' + icon('shield', 'staff-inline-icon') + ' Current Admin → Protected • এই পরিচয় মুছে বা নিষ্ক্রিয় করা যায় না</p>' : ''}
       ${record.mustChangePassword ? '<p class="staff-password-note">' + icon('lock', 'staff-inline-icon') + ' প্রথম লগইনে পাসওয়ার্ড বদল করতে হবে</p>' : ''}
       <div class="staff-card-actions">
-        <button class="mini-btn" type="button" data-staff-action="view" data-staff-id="${escapeHtml(record.staffId)}">${icon('eye', 'staff-inline-icon')}<span>View</span></button>
-        <button class="mini-btn" type="button" data-staff-action="edit" data-staff-id="${escapeHtml(record.staffId)}">${icon('edit', 'staff-inline-icon')}<span>Edit</span></button>
-        <button class="mini-btn more-btn" type="button" data-staff-action="more" data-staff-id="${escapeHtml(record.staffId)}" aria-expanded="${moreOpen}">${icon('more', 'staff-inline-icon')}<span>More</span></button>
+        <button class="mini-btn" type="button" data-staff-action="view" data-staff-id="${escapeHtml(record.staffId)}">${icon('eye', 'staff-inline-icon')}<span>দেখুন</span></button>
+        <button class="mini-btn" type="button" data-staff-action="edit" data-staff-id="${escapeHtml(record.staffId)}">${icon('edit', 'staff-inline-icon')}<span>সম্পাদনা</span></button>
+        <button class="mini-btn more-btn" type="button" data-staff-action="more" data-staff-id="${escapeHtml(record.staffId)}" aria-expanded="${moreOpen}">${icon('more', 'staff-inline-icon')}<span>আরও</span></button>
       </div>
       <div class="staff-more-menu"${moreOpen ? '' : ' hidden'}>
-        <button class="staff-more-item" type="button" data-staff-action="reset" data-staff-id="${escapeHtml(record.staffId)}">${icon('key', 'staff-inline-icon')}<span>Reset Password</span></button>
+        <button class="staff-more-item" type="button" data-staff-action="reset" data-staff-id="${escapeHtml(record.staffId)}">${icon('key', 'staff-inline-icon')}<span>পাসওয়ার্ড রিসেট</span></button>
         <button class="staff-more-item" type="button" data-staff-action="status" data-staff-id="${escapeHtml(record.staffId)}" data-next-status="${record.status === 'active' ? 'inactive' : 'active'}">
           ${icon(record.status === 'active' ? 'pause' : 'checkCircle', 'staff-inline-icon')}
-          <span>${record.status === 'active' ? 'Deactivate' : 'Activate'}</span>
+          <span>${record.status === 'active' ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}</span>
         </button>
-        ${record.status === 'active' && !record.protected ? `<button class="staff-more-item" type="button" data-staff-action="status" data-staff-id="${escapeHtml(record.staffId)}" data-next-status="suspended">${icon('pause', 'staff-inline-icon')}<span>Suspend</span></button>` : ''}
-        <button class="staff-more-item danger" type="button" data-staff-action="delete" data-staff-id="${escapeHtml(record.staffId)}">${icon('trash', 'staff-inline-icon')}<span>Delete</span></button>
+        ${record.status === 'active' && !record.protected ? `<button class="staff-more-item" type="button" data-staff-action="status" data-staff-id="${escapeHtml(record.staffId)}" data-next-status="suspended">${icon('pause', 'staff-inline-icon')}<span>স্থগিত করুন</span></button>` : ''}
+        <button class="staff-more-item danger" type="button" data-staff-action="delete" data-staff-id="${escapeHtml(record.staffId)}">${icon('trash', 'staff-inline-icon')}<span>মুছে ফেলুন</span></button>
       </div>
     </article>`;
 }
@@ -308,7 +311,7 @@ function renderList() {
       : 'কোনো স্টাফ পাওয়া যায়নি';
   }
   if (!state.staff.length) {
-    host.innerHTML = '<p class="admin-empty">এখনো কোনো স্টাফ অ্যাকাউন্ট নেই। নিচের “স্টাফ ক্রিয়েট” বাটনে চেপে প্রথম স্টাফ যোগ করুন।</p>';
+    host.innerHTML = '<p class="admin-empty">এখনো কোনো স্টাফ অ্যাকাউন্ট নেই। নিচের “নতুন স্টাফ তৈরি করুন” বাটনে চেপে প্রথম স্টাফ যোগ করুন।</p>';
     return;
   }
   host.innerHTML = rows.length
@@ -433,8 +436,8 @@ function staffFormHtml(record) {
       { name: 'password', label: 'পাসওয়ার্ড', type: 'password', required: true, hint: '৬–৩২ অক্ষর' },
       { name: 'confirmPassword', label: 'পাসওয়ার্ড নিশ্চিত করুন', type: 'password', required: true }
     ]),
-    { name: 'role', label: 'Role', type: 'select', required: true, options: roleOptions, value: role },
-    { name: 'status', label: 'Status', type: 'select', options: statusOptions, value: record?.status || 'active' },
+    { name: 'role', label: 'রোল', type: 'select', required: true, options: roleOptions, value: role },
+    { name: 'status', label: 'স্ট্যাটাস', type: 'select', options: statusOptions, value: record?.status || 'active' },
     { name: 'mobile', label: 'মোবাইল নম্বর', placeholder: '01XXXXXXXXX', value: record?.mobile },
     { name: 'email', label: 'ইমেইল (ঐচ্ছিক)', type: 'email', value: record?.email },
     { name: 'joiningDate', label: 'যোগদানের তারিখ', type: 'date', value: record?.joiningDate || '' },
@@ -513,7 +516,7 @@ function openCreate() {
     toastSafe('শুধুমাত্র Admin স্টাফ ম্যানেজমেন্ট ব্যবহার করতে পারবেন।');
     return;
   }
-  const body = openModal('Staff Management', 'নতুন স্টাফ অ্যাকাউন্ট', staffFormHtml(null), { wide: true });
+  const body = openModal('স্টাফ ম্যানেজমেন্ট', 'নতুন স্টাফ অ্যাকাউন্ট', staffFormHtml(null), { wide: true });
   const form = body.querySelector('#staffForm');
   wireForm(form, null);
   refreshAutoId(form, null);
@@ -525,7 +528,7 @@ async function openEdit(staffId) {
     toastSafe('স্টাফ অ্যাকাউন্ট পাওয়া যায়নি।');
     return;
   }
-  const body = openModal('Staff Management', `${record.fullName} — সম্পাদনা`, staffFormHtml(record), { wide: true });
+  const body = openModal('স্টাফ ম্যানেজমেন্ট', `${record.fullName} — সম্পাদনা`, staffFormHtml(record), { wide: true });
   const form = body.querySelector('#staffForm');
   refreshAutoId(form, record);
   if (record.protected) {
@@ -646,22 +649,22 @@ async function openProfile(staffId) {
     ['Staff ID', `<span class="staff-id-badge">${escapeHtml(record.staffId)}</span>`],
     ['পূর্ণ নাম', escapeHtml(record.fullName)],
     ['ইউজারনেম', escapeHtml(record.username)],
-    ['Role', `${escapeHtml(staffRoleLabel(record.role))}${record.role !== 'admin' && STAFF_ROLE_META[record.role] ? ` (${escapeHtml(STAFF_ROLE_META[record.role].label)})` : ''}`],
-    ['Status', escapeHtml(staffStatusLabel(record.status))],
+    ['রোল', `${escapeHtml(staffRoleLabel(record.role))}${record.role !== 'admin' && STAFF_ROLE_META[record.role] ? ` (${escapeHtml(STAFF_ROLE_META[record.role].label)})` : ''}`],
+    ['স্ট্যাটাস', escapeHtml(staffStatusLabel(record.status))],
     ['মোবাইল', escapeHtml(record.mobile || '—')],
     ['ইমেইল', escapeHtml(record.email || '—')],
     ['ঠিকানা', escapeHtml(record.address || '—')],
     ['যোগদান', escapeHtml(record.joiningDate || '—')],
     ['পদবি', escapeHtml(assignment.designation || '—')],
-    ['Assigned Class', (assignment.classes || []).length ? escapeHtml(assignment.classes.join(', ')) : '—'],
+    ['নির্ধারিত শ্রেণি', (assignment.classes || []).length ? escapeHtml(assignment.classes.join(', ')) : '—'],
     ['বিষয়', (assignment.subjects || []).length ? escapeHtml(assignment.subjects.join(', ')) : '—'],
     ['ব্যাচ/স্কোপ', escapeHtml(assignment.batches?.join?.(', ') || assignment.counter || '—')],
     ['নোট', escapeHtml(assignment.notes || '—')]
   ];
   const history = Array.isArray(record.history) ? record.history : [];
-  openModal('Staff Profile', record.fullName, `
+  openModal('স্টাফ প্রোফাইল', record.fullName, `
     <div class="staff-profile-head">
-      <span class="staff-avatar large" aria-hidden="true">${escapeHtml(String(record.fullName || '?').trim().slice(0, 1).toUpperCase())}</span>
+      <span class="staff-avatar large" aria-hidden="true">${escapeHtml(initialsOf(record.fullName))}</span>
       <div>
         <strong>${escapeHtml(record.fullName)}</strong>
         <p><span class="staff-id-badge">Staff ID: ${escapeHtml(record.staffId)}</span> <span class="badge ${(STAFF_STATUS[record.status] || STAFF_STATUS.inactive).className}">${escapeHtml(staffStatusLabel(record.status))}</span></p>
@@ -671,7 +674,7 @@ async function openProfile(staffId) {
       ${rows.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}
     </dl>
     <div class="staff-activity">
-      <p class="staff-form-section">Activity Summary</p>
+      <p class="staff-form-section">কার্যক্রমের সারসংক্ষেপ</p>
       <div class="staff-activity-grid">
         <div><small>রুটিন ক্লাস</small><strong>${bn(activity.routine)}</strong></div>
         <div><small>লেনদেন</small><strong>${bn(activity.transactions)}</strong></div>
@@ -700,7 +703,7 @@ async function openProfile(staffId) {
 async function openReset(staffId) {
   const record = state.staff.find(item => item.staffId === staffId) || await findStaff(staffId);
   if (!record) return;
-  openModal('Security', `${record.fullName} — পাসওয়ার্ড রিসেট`, `
+  openModal('নিরাপত্তা', `${record.fullName} — পাসওয়ার্ড রিসেট`, `
     <p class="finance-hint">নতুন পাসওয়ার্ড সরাসরি সংরক্ষিত হবে (হ্যাশ আকারে)। পুরোনো পাসওয়ার্ড কখনো দেখানো হয় না — স্টাফ প্রথম লগইনে এটি বদলাতে বাধ্য থাকবে।</p>
     <form id="staffPasswordForm" class="staff-form" novalidate>
       <div class="staff-form-grid">

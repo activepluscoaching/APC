@@ -28,7 +28,7 @@ let viewRouteFromHash;
 let ctx;
 
 before(async () => {
-  ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   ({ setView, viewRouteFromHash } = await import('../js/shell.js'));
 });
 
@@ -44,7 +44,7 @@ test('manifest colors come from the real palette: white canvas, green primary', 
 });
 
 test('every shipped page\'s theme-color meta matches the manifest', () => {
-  for (const page of ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
+  for (const page of ['index.html', 'student.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
     const meta = read(page).match(/<meta name="theme-color" content="([^"]+)">/);
     assert.ok(meta, `${page} has no theme-color meta`);
     assert.equal(meta[1].toLowerCase(), manifest.theme_color.toLowerCase(), `${page}: meta drifts from the manifest`);
@@ -59,7 +59,7 @@ test('orientation is unlocked and the shortcuts keep their routes', () => {
     assert.ok(Object.values(shortcuts).includes(url), `manifest keeps the ${url} shortcut`);
     const route = url.replace('./#', '');
     assert.equal(viewRouteFromHash(`#${route}`), route, `${url} resolves to a student view`);
-    assert.ok(read('index.html').includes(`id="${route}View"`) || route === 'results',
+    assert.ok(read('student.html').includes(`id="${route}View"`) || route === 'results',
       `${url} has a panel to open`);
   }
 });

@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { loadPage } from './jsdom-harness.mjs';
 
 const PAGES = Object.freeze([
-  { file: 'index.html', name: 'শিক্ষার্থী অ্যাপ', exit: 'studentLogout', login: 'Active Plus Coaching' },
+  { file: 'student.html', name: 'শিক্ষার্থী প্যানেল', exit: 'studentLogout' },
   { file: 'admin.html', name: 'এডমিন প্যানেল', exit: 'adminExitButton' },
   { file: 'manager.html', name: 'ম্যানেজার প্যানেল', exit: 'managerLogout' },
   { file: 'teacher.html', name: 'শিক্ষক প্যানেল', exit: 'teacherExit' },
@@ -46,6 +46,23 @@ function normalised(bar) {
     .replace(/\s(?:id|title|data-action)="[^"]*"/g, '');
 }
 
+test('the login page keeps its brand-only card (no topbar, no bell, no sign-out)', () => {
+  // The login screen has no topbar: its brand is the large logo card, with
+  // no control in it — there is nobody to notify or sign out yet. It stayed
+  // on index.html when the student panel moved to student.html (2026-10-14).
+  const document = markup('index.html');
+  const auth = document.getElementById('authScreen');
+  assert.ok(auth, 'index.html: the login screen is missing');
+  assert.equal(auth.querySelectorAll('.app-topbar').length, 0, 'index.html: a topbar is back on the login screen');
+  const card = auth.querySelector('.auth-card .auth-brand');
+  assert.ok(card, 'index.html: the login brand card is missing');
+  assert.equal(card.querySelectorAll('img[src*="logo"]').length, 1, 'index.html: the login logo is missing');
+  assert.equal(card.querySelector('h1')?.textContent.trim(), 'Active Plus Coaching', 'index.html: the login brand name changed');
+  assert.ok(card.querySelector('p')?.textContent.trim().length > 1, 'index.html: the login slogan is missing');
+  assert.equal(card.querySelectorAll('button, [data-theme-toggle], time').length, 0, 'the login brand carries a control');
+  assert.equal(auth.querySelectorAll('#notificationButton, .app-topbar-exit').length, 0, 'bell or sign-out on the login screen');
+});
+
 test('every panel shares the APC topbar; teacher also shows the teacher identity', () => {
   const shapes = new Map();
   for (const page of PAGES) {
@@ -60,20 +77,6 @@ test('every panel shares the APC topbar; teacher also shows the teacher identity
     assert.equal(brand.querySelectorAll('img.app-brand-logo').length, 1, `${page.file}: the logo is missing`);
     assert.ok(brand.querySelector('[data-fixed-tagline]').textContent.trim().length > 1, `${page.file}: the slogan is missing`);
 
-    if (page.login) {
-      // The login screen has no topbar: its brand is the large logo card, with
-      // no control in it — there is nobody to notify or sign out yet.
-      const auth = document.getElementById('authScreen');
-      assert.ok(auth, `${page.file}: the login screen is missing`);
-      assert.equal(auth.querySelectorAll('.app-topbar').length, 0, `${page.file}: a topbar is back on the login screen`);
-      const card = auth.querySelector('.auth-card .auth-brand');
-      assert.ok(card, `${page.file}: the login brand card is missing`);
-      assert.equal(card.querySelectorAll('img[src*="logo"]').length, 1, `${page.file}: the login logo is missing`);
-      assert.equal(card.querySelector('h1')?.textContent.trim(), page.login, `${page.file}: the login brand name changed`);
-      assert.ok(card.querySelector('p')?.textContent.trim().length > 1, `${page.file}: the login slogan is missing`);
-      assert.equal(card.querySelectorAll('button, [data-theme-toggle], time').length, 0, 'the login brand carries a control');
-      assert.equal(auth.querySelectorAll('#notificationButton, .app-topbar-exit').length, 0, 'bell or sign-out on the login screen');
-    }
     {
       assert.equal(bars.length, 1, `${page.file} paints an unexpected number of topbars`);
       const actions = bar.querySelector('.app-topbar-actions');

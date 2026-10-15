@@ -46,16 +46,12 @@ before(async () => {
   await ctx.flush();
 });
 
-test('the notice appears on both the login card and the app screen', () => {
+test('the notice appears on the login card', () => {
   const auth = ctx.$('#authMaintenanceBanner');
-  const app = ctx.$('#appMainMaintenanceBanner');
   assert.ok(auth, 'login card carries the notice');
-  assert.ok(app, 'signed-in screen carries the notice');
-  // Inserted inside the content column, never over the fixed topbar.
+  // Inserted inside the card, never over the fixed chrome.
   assert.equal(auth.parentElement, ctx.$('.auth-card'));
-  assert.equal(app.parentElement, ctx.$('#appMain'));
   assert.equal(auth.querySelector('.maint-body p').textContent, 'সিস্টেম আপডেট চলছে');
-  assert.equal(app.querySelector('.maint-body p').textContent, 'সিস্টেম আপডেট চলছে');
 });
 
 test('a settings write from the admin clears the notice without a reload', () => {
@@ -82,4 +78,27 @@ test('a settings write from the admin clears the notice without a reload', () =>
   Object.defineProperty(event, 'key', { value: CONFIG_KEY });
   ctx.window.dispatchEvent(event);
   assert.equal(ctx.$('#authMaintenanceBanner .maint-body p').textContent, 'পুনরায় চালু');
+});
+
+test('the notice appears inside the signed-in column on the panel page, and clears live', async () => {
+  const appCtx = await loadPage('student.html', {
+    seed: {
+      'activePlus.demo.autofill.v1': 'off',
+      [CONFIG_KEY]: JSON.stringify({ maintenanceMode: true, maintenanceMessage: 'সিস্টেম আপডেট চলছে' })
+    }
+  });
+  await import('../js/main.js?maintenance-app');
+  await appCtx.flush();
+  const app = appCtx.$('#appMainMaintenanceBanner');
+  assert.ok(app, 'signed-in screen carries the notice');
+  // Inserted inside the content column, never over the fixed topbar.
+  assert.equal(app.parentElement, appCtx.$('#appMain'));
+  assert.equal(app.querySelector('.maint-body p').textContent, 'সিস্টেম আপডেট চলছে');
+
+  appCtx.window.localStorage.setItem(CONFIG_KEY, JSON.stringify({ maintenanceMode: false, maintenanceMessage: 'সিস্টেম আপডেট চলছে' }));
+  appCtx.window.dispatchEvent(new appCtx.window.Event('apc-app-config'));
+  assert.equal(appCtx.$('#appMainMaintenanceBanner'), null, 'panel banner must clear live too');
+  appCtx.window.localStorage.setItem(CONFIG_KEY, JSON.stringify({ maintenanceMode: true, maintenanceMessage: 'রাত ১০টা পর্যন্ত বন্ধ' }));
+  appCtx.window.dispatchEvent(new appCtx.window.Event('apc-app-config'));
+  assert.equal(appCtx.$('#appMainMaintenanceBanner .maint-body p').textContent, 'রাত ১০টা পর্যন্ত বন্ধ');
 });

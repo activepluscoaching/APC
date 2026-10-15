@@ -26,7 +26,7 @@ const contexts = [];
 after(() => contexts.forEach(ctx => ctx.window.close()));
 
 async function hubPage(seed = {}, who = student) {
-  const ctx = await loadPage('index.html', { seed });
+  const ctx = await loadPage('student.html', { seed });
   contexts.push(ctx);
   const paint = initStudentHubs({ getStudent: () => who });
   ctx.window.dispatchEvent(new ctx.window.CustomEvent('apc-view-change', { detail: { view: 'routine-class' } }));
@@ -75,7 +75,7 @@ test('a damaged routine file degrades to empty days instead of an error', async 
    on a missing header element, every hub initialised after it stayed dead —
    the frozen-placeholder bug this file exists for. */
 test('renderRoutine survives missing header elements without throwing', async () => {
-  const ctx = await loadPage('index.html', { seed: { [KEYS.routine]: JSON.stringify(ROUTINE) } });
+  const ctx = await loadPage('student.html', { seed: { [KEYS.routine]: JSON.stringify(ROUTINE) } });
   contexts.push(ctx);
   for (const id of ['routineDate', 'classCount', 'emptyRoutine']) {
     ctx.window.document.getElementById(id)?.remove();

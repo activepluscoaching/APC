@@ -20,13 +20,34 @@ test('a saved account and legacy skip flag cannot create a login session; a wron
     student: { id: 'STU-GATE', name: 'শিক্ষার্থী' }
   });
   assert.equal(await storage.hasSession(), false, 'a stored account and old skip preference are not authentication');
+  /* The trusted-device preference lives on the student panel page now
+     (student.html since 2026-10-14), so check it there, with this device's
+     stored account carried over. Toggling it must still not mint a session. */
+  const panelSeed = {};
+  for (let i = 0; i < ctx.window.localStorage.length; i++) {
+    const key = ctx.window.localStorage.key(i);
+    panelSeed[key] = ctx.window.localStorage.getItem(key);
+  }
+  const panelCtx = await loadPage('student.html', { seed: panelSeed });
   const { initProfile } = await import('../js/profile.js');
   initProfile({ state: { account, student: account.student } });
-  const trusted = ctx.$('#trustedDeviceToggle');
+  const trusted = panelCtx.$('#trustedDeviceToggle');
   trusted.checked = true;
-  trusted.dispatchEvent(new ctx.window.Event('change'));
-  await ctx.waitFor(() => trusted.checked === false);
+  trusted.dispatchEvent(new panelCtx.window.Event('change'));
+  await panelCtx.waitFor(() => trusted.checked === false);
   assert.equal(await storage.hasSession(), false, 'a profile preference cannot manufacture a session');
+  /* Back to the login page realm for the form checks below (the same global
+     set the harness installs per page — a partial restore would leak the
+     panel page's navigator.onLine into the offline login path). */
+  for (const [name, value] of Object.entries({
+    window: ctx.window, document: ctx.document, localStorage: ctx.window.localStorage,
+    sessionStorage: ctx.window.sessionStorage, location: ctx.window.location,
+    history: ctx.window.history, navigator: ctx.window.navigator,
+    Element: ctx.window.Element, HTMLElement: ctx.window.HTMLElement,
+    HTMLInputElement: ctx.window.HTMLInputElement, Node: ctx.window.Node
+  })) {
+    Object.defineProperty(globalThis, name, { configurable: true, writable: true, value });
+  }
   let admitted = 0;
   initLogin({ state: { account, student: account.student }, onAuthenticated: () => { admitted++; } });
   const submit = async (identifier, password) => {
@@ -49,7 +70,7 @@ test('a saved account and legacy skip flag cannot create a login session; a wron
 
   // A brand-new reserved staff ID is not a panel entry point on its own.
   await submit('manager.apc', 'whatever-password');
-  assert.match(ctx.$('#authMessage').textContent, /অ্যাকাউন্ট সংরক্ষিত নেই/);
+  assert.match(ctx.$('#authMessage').textContent, /অ্যাকাউন্ট পাওয়া যায়নি।/);
   assert.equal(await storage.hasSession(), false);
 
   // Registration saves an account but deliberately returns to the login page;

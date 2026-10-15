@@ -191,7 +191,11 @@ async function handleRegistration(event, state, onRegistered) {
   upsertStudentRosterRow();   // the exact personal fields, nothing the branch owns
   formElement.reset();
   toggleMajorField();
-  $('#pendingStudentId').textContent = studentId;
+  /* #pendingStudentId lives on the student panel page now (student.html);
+     shell.js fills it there when the pending screen opens. The registration
+     itself happens on the login page, where the element does not exist. */
+  const pendingId = $('#pendingStudentId');
+  if (pendingId) pendingId.textContent = studentId;
   switchAuthTab('login');
   $('#loginMobile').value = username;
   $('#loginPin').value = '';

@@ -13,7 +13,7 @@ let viewRouteFromHash;
 let initCopyChips;
 
 before(async () => {
-  ctx = await loadPage('index.html', { seed: DEMO_OFF });
+  ctx = await loadPage('student.html', { seed: DEMO_OFF });
   ({ setView, viewRouteFromHash } = await import('../js/shell.js'));
   ({ initCopyChips } = await import('../js/copy.js'));
   initCopyChips();

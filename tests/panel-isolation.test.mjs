@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { readFileSync, readdirSync } from 'node:fs';
 
-const PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
+const PANELS = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html', 'student.html']);
 const PAGES = Object.freeze(['index.html', ...PANELS]);
 const LINK_CLASSES = Object.freeze(['pay-panel-link', 'teacher-panel-link', 'manager-panel-link', 'admin-panel-link', 'portal-link']);
 const CROSS_PANEL_CAPS = Object.freeze(['payment.panel', 'teaching.panel', 'manager.panel']);

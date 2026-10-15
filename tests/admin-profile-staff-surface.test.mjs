@@ -4,10 +4,12 @@
      • Staff Creation lives ONLY in the Staff Management section — the Admin
        Profile carries no create form, no create button and no duplicate
        management path (Issue: "remove staff creation from Admin Profile")
-     • the Profile and the Dashboard carry the Staff Management Overview: a
-       searchable, filterable, paginated directory with quick actions that
-       drive the exact same dialogs/mutations as the full section (Issue:
-       "integrated staff management from Admin Profile/Dashboard")
+     • the Profile carries the Staff Management Overview: a searchable,
+       filterable, paginated directory with quick actions that drive the
+       exact same dialogs/mutations as the full section (Issue: "integrated
+       staff management from Admin Profile/Dashboard"). The Dashboard mount
+       was removed by owner decision on 2026-10-14, and this suite now
+       guards that the home stays free of it.
 */
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,13 +50,16 @@ test('Staff Creation lives only inside the Staff Management section', () => {
   assert.ok(profile.querySelector('#adminPasswordForm'));
 });
 
-test('the Overview mounts on Profile and Dashboard behind the staff.manage capability', () => {
-  for (const id of ['#staffOverviewProfile', '#staffOverviewHome']) {
-    const widget = ctx.$(id);
-    assert.ok(widget, `${id} exists`);
-    assert.equal(widget.dataset.adminCap, 'staff.manage');
-    assert.ok(widget.querySelector('[data-overview-list]'), `${id} has a list surface`);
-  }
+test('the Overview mounts on the Profile behind the staff.manage capability — and not on the Dashboard', () => {
+  const widget = ctx.$('#staffOverviewProfile');
+  assert.ok(widget, '#staffOverviewProfile exists');
+  assert.equal(widget.dataset.adminCap, 'staff.manage');
+  assert.ok(widget.querySelector('[data-overview-list]'), 'the profile overview has a list surface');
+  // Owner decision 2026-10-14: the home keeps only snapshot tiles and quick
+  // access — no staff overview card on the Dashboard.
+  assert.equal(ctx.$('#staffOverviewHome'), null, 'no staff overview mounts on the Dashboard home');
+  assert.equal(ctx.$('.admin-view[data-view-panel="dashboard"] .staff-overview-card'), null,
+    'the dashboard carries no staff overview card');
 });
 
 test('the overview lists staff with identity, role and status — searchable and filterable', async () => {

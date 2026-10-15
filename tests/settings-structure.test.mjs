@@ -21,7 +21,7 @@ const GROUP_KEYS = SETTINGS_GROUPS.map(group => group.key);
 
 /* The hub root and the role it serves, per page. */
 const SURFACES = Object.freeze({
-  'index.html': { role: 'student', mount: '#settingsView' },
+  'student.html': { role: 'student', mount: '#settingsView' },
   'manager.html': { role: 'manager', mount: '[data-settings-hub="manager"]' },
   'teacher.html': { role: 'teacher', mount: '[data-settings-hub="teacher"]' },
   'admin.html': { role: 'admin', mount: '[data-settings-hub="admin"]' },

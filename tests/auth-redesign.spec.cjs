@@ -54,13 +54,14 @@ test('back and cached-page restoration keep an authenticated student in the app'
  await page.goBack();
  await expect(page.locator('#appShell')).toBeVisible();
  await expect(page.locator('#authScreen')).toBeHidden();
+ /* The panel is its own page now (student.html): a persisted restore lands
+    there, and the login screen is not even in the document any more. */
  await page.evaluate(()=>{
   document.querySelector('#appShell').hidden=true;
-  document.querySelector('#authScreen').hidden=false;
   window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
  });
  await expect(page.locator('#appShell')).toBeVisible();
- await expect(page.locator('#authScreen')).toBeHidden();
+ await expect(page.locator('#authScreen')).toHaveCount(0);
 });
 
 test('login password offers letters and digits even before role lookup completes',async({page})=>{

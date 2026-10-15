@@ -22,6 +22,22 @@ import { initDynamicTheme } from './theme.js';
 import { initFixedShell } from './fixed-shell.js';
 import { loadStudentFeatures } from './student-features.js';
 
+/* This composition root serves two pages since the student panel moved out
+   of the login page (owner decision 2026-10-14, like every other portal):
+   index.html carries only #authScreen, student.html only #appShell. The
+   wiring below branches on which surface the page actually has — a verified
+   student session is handed to student.html, and student.html hands
+   everyone else back to the login door. */
+const ON_AUTH_PAGE = Boolean($('#authScreen'));
+const ON_APP_PAGE = Boolean($('#appShell'));
+const STUDENT_PANEL_URL = 'student.html';
+
+function goToStudentPanel() {
+  // js/login.js has already persisted the session at this point; the panel
+  // page restores it and applies any #view shortcut in the URL.
+  window.location.assign(`${STUDENT_PANEL_URL}${window.location.hash || ''}`);
+}
+
 /* Always reveal the login shell before optional startup work. A failure in any
    secondary feature must never leave the entry page completely blank. */
 showAuthScreen();
@@ -373,6 +389,11 @@ function leaveApp() {
   sessionRestoreSequence += 1;
   clearSession();
   window.dispatchEvent(new Event('apc-session-ended'));
+  if (ON_APP_PAGE) {
+    // Logout from the panel returns to the login door, like every portal.
+    window.location.replace('index.html');
+    return;
+  }
   switchAuthTab('login');
   showAuthScreen();
   // Logout always lands on the login page itself — drop a leftover view hash too.
@@ -429,7 +450,7 @@ initInstallPrompt();
 void import('./service-worker.js').then(({ registerServiceWorker }) => registerServiceWorker()).catch(() => {});
 initLogin({
   state,
-  onAuthenticated: enterApp
+  onAuthenticated: ON_AUTH_PAGE ? goToStudentPanel : enterApp
 });
 initRegister({ state });
 initRecovery({ state });
@@ -453,10 +474,18 @@ async function restoreEntrySession() {
   const authenticated = await shouldAutoLogin();
   if (sequence !== sessionRestoreSequence) return;
   if (authenticated) {
+    if (ON_AUTH_PAGE) {
+      // The session is real, so the panel lives on its own page now.
+      window.location.replace(`${STUDENT_PANEL_URL}${window.location.hash || ''}`);
+      return;
+    }
     state.student = { ...state.student, ...(state.account.student || {}) };
     saveStudent(state.student);
     if (sequence !== sessionRestoreSequence) return;
     enterApp();
+  } else if (ON_APP_PAGE) {
+    // No session: the panel page never renders for a signed-out visitor.
+    window.location.replace('index.html');
   } else {
     window.dispatchEvent(new Event('apc-session-ended'));
     showAuthScreen();

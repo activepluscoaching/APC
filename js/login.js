@@ -1,6 +1,6 @@
 import { LEGACY_CLOUD_ENABLED, CLOUD_PAUSED_MESSAGE, cloudPausedResult, backendMode } from '../sync/cloud-access.js';
 import { defaultStudent } from './config.js';
-import { $, $$, setAuthMessage, scrollToTop, toBanglaNumber } from './ui.js';
+import { $, $$, setAuthMessage, scrollToTop } from './ui.js';
 import { contactNumber, normalizeUsername } from './account-policy.js';
 import { matchesLoginIdentifier, studentIdOf } from './sync-merge.js';
 import { loadAccount, saveStudent, persistSession, setTrustedDevice, loadAppConfig, verifyAccountPassword, upgradeAccountSecrets } from './storage.js';
@@ -362,25 +362,18 @@ async function handleLogin(event, state, onAuthenticated) {
   }
 
   // Do not clear or reset the login form on any failure.
+  // A missing account gets one short message by owner decision: no cloud
+  // census, no similar-name guesses and no cross-device sync instructions.
+  // Genuinely different failures (a wrong password, an ambiguous short ID,
+  // a cloud that could not be checked at all) keep their own messages.
   if (onlineIdentities.ambiguous) {
     setAuthMessage('এই সংক্ষিপ্ত Student ID দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ Student ID লিখুন।');
   } else if (onlineIdentities.cloudPasswordMismatch) {
     setAuthMessage('ইউজারনেম, মোবাইল নম্বর বা Student ID অথবা পাসওয়ার্ড সঠিক নয়।');
   } else if (onlineIdentities.attempted && !onlineIdentities.synced) {
     setAuthMessage(!LEGACY_CLOUD_ENABLED ? CLOUD_PAUSED_MESSAGE : 'ক্লাউড থেকে অ্যাকাউন্ট আনা যায়নি। ইন্টারনেট ও Firebase সিঙ্ক পরীক্ষা করে আবার লগইন করুন। আগে অ্যাকাউন্ট তৈরি করে থাকলে নতুন করে রেজিস্ট্রেশন করবেন না।');
-  } else if (!navigator.onLine) {
-    setAuthMessage('এই ডিভাইসে অ্যাকাউন্ট সংরক্ষিত নেই। অন্য ডিভাইসে তৈরি অ্যাকাউন্টে প্রথমবার লগইন করতে ইন্টারনেট চালু করুন।');
   } else {
-    const similar = onlineIdentities.similar.length
-      ? ` ক্লাউডে মিলে যেতে পারে: ${onlineIdentities.similar.join(', ')}।`
-      : '';
-    if (onlineIdentities.attempted && onlineIdentities.cloudAccounts === 0) {
-      setAuthMessage('ক্লাউডে এখনো কোনো শিক্ষার্থী অ্যাকাউন্ট ওঠেনি। যে ডিভাইসে অ্যাকাউন্টটি আছে সেখানে অ্যাপ অনলাইনে খুলে সিঙ্ক চালু করুন, তারপর এখানে আবার চেষ্টা করুন।');
-    } else if (onlineIdentities.attempted && onlineIdentities.cloudAccounts > 0) {
-      setAuthMessage(`ক্লাউডে ${toBanglaNumber(onlineIdentities.cloudAccounts)}টি শিক্ষার্থী অ্যাকাউন্ট আছে, কিন্তু “${typedId}” দিয়ে কিছু পাওয়া যায়নি।${similar} নামের বানান মিলিয়ে দেখুন; না মিললে যে ডিভাইসে অ্যাকাউন্টটি আছে সেখানে অ্যাপ অনলাইনে খুলুন।`);
-    } else {
-      setAuthMessage('অ্যাকাউন্ট পাওয়া যায়নি। আগে অন্য ডিভাইসে তৈরি করে থাকলে সেই ডিভাইসে অ্যাপ অনলাইনে খুলে সিঙ্ক সম্পন্ন করুন, তারপর এখানে আবার চেষ্টা করুন।');
-    }
+    setAuthMessage('অ্যাকাউন্ট পাওয়া যায়নি।');
   }
 }
 

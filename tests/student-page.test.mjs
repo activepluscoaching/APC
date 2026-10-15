@@ -1,8 +1,10 @@
-/* Student page audit — the real index.html boots with a signed-in student and
-   every core flow is exercised end to end: shell restore, all five bottom-nav
-   views, routine day tabs, the opt-in dark theme, the notice centre bell, the
-   profile edit round-trip and the logout hand-off. A regression in any of
-   these fails here loudly instead of reaching a student's phone. */
+/* Student page audit — the real student.html (the panel has its own page
+   since 2026-10-14, like every other portal) boots with a signed-in student
+   and every core flow is exercised end to end: shell restore, all five
+   bottom-nav views, routine day tabs, the opt-in dark theme, the notice
+   centre bell, the profile edit round-trip and the logout hand-off. A
+   regression in any of these fails here loudly instead of reaching a
+   student's phone. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadPage } from './jsdom-harness.mjs';
@@ -11,7 +13,7 @@ const APPEARANCE_KEY = 'active-plus-appearance-v2';
 
 /** A freshly booted student app on the real page (same seed as the UI sweep). */
 async function boot({ extraSeed = {} } = {}) {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...extraSeed } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...extraSeed } });
   const { window } = ctx;
   const { hashPassword } = await import('../js/password-hash.js');
   const pinHash = await hashPassword('246810');
@@ -34,7 +36,7 @@ test('session restore lands in the app and every bottom-nav view opens', async (
   const ctx = await boot();
   const { $, $$, click } = ctx;
   assert.equal($('#appShell').hidden, false, 'the student shell stayed hidden');
-  assert.equal($('#authScreen').hidden, true, 'the login screen must not linger');
+  assert.equal($('#authScreen'), null, 'the login screen lives on index.html now, never inside the panel');
 
   for (const view of ['routine', 'courses', 'exams', 'profile', 'home']) {
     click($(`.bottom-link[data-view="${view}"]`));
@@ -144,7 +146,9 @@ test('logout confirms and hands back to the login screen', async () => {
   await ctx.flush(4);
   assert.equal($('#logoutModal').hidden, false, 'the logout confirm modal never opened');
   click($('#logoutConfirmButton'));
-  await ctx.waitFor(() => $('#authScreen').hidden === false);
-  assert.equal($('#appShell').hidden, true, 'the shell must close on logout');
+  // Logout leaves the panel page for the login door (index.html); jsdom
+  // records the attempted navigation instead of performing it.
+  await ctx.waitFor(() => window.localStorage.getItem('active-plus-session-v1') === null);
+  assert.ok(ctx.jsdomErrors.some(error => /navigation/i.test(error)), 'logout must hand back to index.html');
   assert.equal(window.localStorage.getItem('active-plus-session-v1'), null, 'the session record survived logout');
 });

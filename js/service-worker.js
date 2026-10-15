@@ -1,6 +1,19 @@
 /* Offline registration. The worker activates immediately, so notify on
- * controllerchange as well as updatefound (there may be no waiting worker). */
+ * controllerchange as well as updatefound (there may be no waiting worker).
+ *
+ * Update delivery (owner report 2026-10-15: "আপডেট করার পর ক্যাশে ক্লিয়ার
+ * করলেই নতুন আপডেট দেখতাসি"): a browser may serve the worker script itself
+ * from its HTTP cache during an update check, so a plain './sw.js' can look
+ * "unchanged" for hours and the new build never lands. The registration URL
+ * therefore carries the build number (SW_VERSION, kept equal to sw.js's
+ * CACHE_VERSION and pinned by tests/sw-update-delivery.test.mjs): every
+ * release registers a URL the browser has never cached, the check always
+ * fetches the real script, and activate() swaps the whole cache. On top of
+ * that, long-lived app windows re-check whenever they become visible. */
 import { requestPersistentStorage } from './storage-safety.js';
+
+export const SW_VERSION = 330;
+
 export function registerServiceWorker() {
   void requestPersistentStorage();
   if (!('serviceWorker' in navigator)) return;
@@ -19,13 +32,20 @@ export function registerServiceWorker() {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     showUpdate(); hadController = true;
   });
-  const register = () => navigator.serviceWorker.register('./sw.js').then(registration => {
+  const register = () => navigator.serviceWorker.register(`./sw.js?v=${SW_VERSION}`).then(registration => {
     if (registration.waiting) showUpdate();
     registration.addEventListener('updatefound', () => {
       const worker = registration.installing;
       worker?.addEventListener('statechange', () => {
         if (worker.state === 'installed') showUpdate();
       });
+    });
+    /* Do not wait for the browser's own schedule: check now, and again
+       whenever the app comes back to the front. */
+    const recheck = () => { registration.update().catch(() => {}); };
+    recheck();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') recheck();
     });
   }).catch(() => { /* App remains usable without service worker. */ });
   if (document.readyState === 'complete') register();

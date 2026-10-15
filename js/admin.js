@@ -125,11 +125,12 @@ async function enterPanel() {
   // and calls back so the dashboard, reports and security stay in sync.
   initStaffManagement({ onChanged: onStaffChanged });
   /* Staff Management Overview — the same directory and the same dialogs as the
-     full স্টাফ ম্যানেজমেন্ট section, surfaced on the Profile and the Dashboard.
-     Only rendered when the role holds staff.manage (the mount cards carry the
-     capability marker and enforceCapabilities drops the rest). */
+     full স্টাফ ম্যানেজমেন্ট section, surfaced on the Profile. (Owner decision
+     2026-10-14: the Dashboard home no longer carries a staff overview — the
+     home keeps only the snapshot tiles and quick access.) Only rendered when
+     the role holds staff.manage (the mount card carries the capability marker
+     and enforceCapabilities drops the rest). */
   mountStaffOverview({ mount: '#staffOverviewProfile', onNavigate: navigate, onToast: toast });
-  mountStaffOverview({ mount: '#staffOverviewHome', onNavigate: navigate, onToast: toast, compact: true });
   await refreshStaffSnapshot();
   renderAll();
   // The Reports Module re-reads who is signed in and what they may see.
@@ -148,7 +149,8 @@ async function enterPanel() {
   setView(route && access.allowsView(route) ? route : state.activeView);
   const welcome = $('#adminWelcome');
   if (welcome) {
-    welcome.textContent = 'স্বাগতম, এডমিন';
+    const adminName = String(account?.fullName || '').trim();
+    welcome.textContent = adminName ? `স্বাগতম, ${adminName}` : 'স্বাগতম, এডমিন';
     welcome.hidden = false;
   }
   /* First-run provisioning of the other staff accounts. The one-time credential
@@ -237,6 +239,17 @@ function navigate(view, source) {
 
 /* ---------- Dashboard ---------- */
 
+/* Two-grapheme initials for avatars: Bengali names keep their conjuncts
+   (রাইসা → রা), Latin names their first letters, never a bare combining mark. */
+const graphemeSegmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl
+  ? new Intl.Segmenter('bn', { granularity: 'grapheme' }) : null;
+const firstGrapheme = word => graphemeSegmenter
+  ? ([...graphemeSegmenter.segment(word)][0]?.segment || '')
+  : ([...word][0] || '');
+const initialsOf = name => String(name || '?').trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  .map(firstGrapheme).join('').toUpperCase() || '?';
+
+
 
 let adminExamWorkspace;
 function renderGradeAudit() {
@@ -244,7 +257,7 @@ function renderGradeAudit() {
   const audit = $('#gradeAuditList');
   if (audit && access.has(CAPABILITIES.BACKUP_MANAGE)) {
     const rows = [...(readJSON(KEYS.exams, { auditLog: [] })?.auditLog || []), ...(readJSON(KEYS.teaching, { auditLog: [] })?.auditLog || [])].sort((a,b) => a.at - b.at);
-    audit.innerHTML = rows.length ? rows.slice(-200).reverse().map(row => `<p>${escapeHtml(row.who)} • ${escapeHtml(row.role)} • ${escapeHtml(row.examId)} / ${escapeHtml(row.studentId)} • ${escapeHtml(new Date(row.at).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }))}<br>আগে: ${escapeHtml(JSON.stringify(row.before))} → পরে: ${escapeHtml(JSON.stringify(row.after))} • কারণ: ${escapeHtml(row.reason || '—')}</p>`).join('') : '<p>এখনো কোনো সম্পাদনা নেই।</p>';
+    audit.innerHTML = rows.length ? rows.slice(-200).reverse().map(row => `<p class="audit-entry">${escapeHtml(row.who)} • ${escapeHtml(row.role)} • ${escapeHtml(row.examId)} / ${escapeHtml(row.studentId)} • ${escapeHtml(new Date(row.at).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }))}<br>আগে: ${escapeHtml(JSON.stringify(row.before))} → পরে: ${escapeHtml(JSON.stringify(row.after))} • কারণ: ${escapeHtml(row.reason || '—')}</p>`).join('') : '<p class="admin-empty">এখনো কোনো সম্পাদনা নেই।</p>';
   }
 }
 function renderDashboard() {
@@ -263,7 +276,7 @@ function renderDashboard() {
     const { on } = maintenanceState(loadAppConfig());
     flag.hidden = !on;
     flag.textContent = on
-      ? '⚠️ রক্ষণাবেক্ষণ মোড চালু আছে — শিক্ষার্থী অ্যাপে সতর্কতা ব্যানার দেখা যাচ্ছে। সিস্টেম সেটিংস থেকে বন্ধ করুন।'
+      ? 'রক্ষণাবেক্ষণ মোড চালু আছে — শিক্ষার্থী অ্যাপে সতর্কতা ব্যানার দেখা যাচ্ছে। সিস্টেম সেটিংস থেকে বন্ধ করুন।'
       : '';
   }
   const today = new Date();
@@ -326,7 +339,7 @@ function renderStudents() {
         return `
           <article class="student-row student-row-redesigned">
             <div class="student-row-main">
-              <span class="student-avatar" aria-hidden="true">${iconMarkup("users")}</span>
+              <span class="student-avatar" aria-hidden="true">${escapeHtml(initialsOf(student.name))}</span>
               <div class="student-copy">
                 <div class="student-title-line">
                   <strong>${escapeHtml(student.name || 'নাম নেই')}</strong>
@@ -562,7 +575,7 @@ function renderClasses() {
     return `
       <div class="class-row">
         <div class="class-copy">
-          <div style="display:flex;align-items:center;gap:6px;">
+          <div class="class-copy-head">
             <strong>${className}</strong>
             <span class="audit-id-badge purple">${code}</span>
           </div>
@@ -757,14 +770,14 @@ function renderRoles() {
 /* ---------- Data Management ---------- */
 
 const DATA_COLLECTIONS = Object.freeze([
-  { key: KEYS.students, label: 'শিক্ষার্থী (Roster)', hint: 'নিবন্ধন, শ্রেণি, স্ট্যাটাস' },
-  { key: KEYS.transactions, label: 'লেনদেন (Finance)', hint: 'ফি আদায়ের রেকর্ড ও রসিদ তথ্য' },
-  { key: KEYS.notices, label: 'নোটিশ', hint: 'প্রকাশিত ঘোষণা' },
-  { key: KEYS.routine, label: 'ক্লাস রুটিন', hint: 'সাপ্তাহিক ক্লাস ও শিক্ষক' },
-  { key: KEYS.teaching, label: 'একাডেমিক কার্যক্রম', hint: 'বাড়ির কাজ, উপস্থিতি, সাজেশন' },
-  { key: KEYS.exams, label: 'পরীক্ষা', hint: 'প্রশ্নপত্র, উত্তর ও ফলাফল' },
-  { key: KEYS.settings, label: 'অ্যাপ সেটিংস', hint: 'কনফিগারেশন ও ব্র্যান্ডিং' },
-  { key: STAFF_DIRECTORY_KEY, label: 'স্টাফ ডিরেক্টরি', hint: 'Staff ID, রোল ও অ্যাসাইনমেন্ট' }
+  { key: KEYS.students, label: 'শিক্ষার্থী (Roster)', hint: 'নিবন্ধন, শ্রেণি, স্ট্যাটাস', icon: 'students' },
+  { key: KEYS.transactions, label: 'লেনদেন (Finance)', hint: 'ফি আদায়ের রেকর্ড ও রসিদ তথ্য', icon: 'wallet' },
+  { key: KEYS.notices, label: 'নোটিশ', hint: 'প্রকাশিত ঘোষণা', icon: 'notice' },
+  { key: KEYS.routine, label: 'ক্লাস রুটিন', hint: 'সাপ্তাহিক ক্লাস ও শিক্ষক', icon: 'calendar' },
+  { key: KEYS.teaching, label: 'একাডেমিক কার্যক্রম', hint: 'বাড়ির কাজ, উপস্থিতি, সাজেশন', icon: 'book' },
+  { key: KEYS.exams, label: 'পরীক্ষা', hint: 'প্রশ্নপত্র, উত্তর ও ফলাফল', icon: 'exam' },
+  { key: KEYS.settings, label: 'অ্যাপ সেটিংস', hint: 'কনফিগারেশন ও ব্র্যান্ডিং', icon: 'settings' },
+  { key: STAFF_DIRECTORY_KEY, label: 'স্টাফ ডিরেক্টরি', hint: 'Staff ID, রোল ও অ্যাসাইনমেন্ট', icon: 'staff' }
 ]);
 
 function collectionCount(key) {
@@ -802,14 +815,27 @@ function renderDataManagement() {
   const rows = DATA_COLLECTIONS.map(item => ({ ...item, count: collectionCount(item.key) }));
   if (list) {
     list.innerHTML = rows.map(row => `
-      <div class="data-row">
-        <div>
+      <div class="data-row${row.count ? '' : ' is-empty'}">
+        <span class="data-row-icon" aria-hidden="true">${iconMarkup(row.icon || 'data', 'data-row-icon-svg', { variant: 'glyph' })}</span>
+        <div class="data-row-copy">
           <strong>${escapeHtml(row.label)}</strong>
           <small>${escapeHtml(row.hint)}</small>
         </div>
         <span class="data-count">${bn(row.count)} টি</span>
       </div>`).join('');
   }
+  const summary = $('#dataSummary');
+  if (summary) {
+    const total = rows.reduce((sum, row) => sum + row.count, 0);
+    const populated = rows.filter(row => row.count > 0).length;
+    summary.innerHTML = `
+      <span class="data-summary-chip"><strong>${bn(total)}</strong> মোট রেকর্ড</span>
+      <span class="data-summary-chip"><strong>${bn(populated)}/${bn(rows.length)}</strong> সংগ্রহে ডেটা আছে</span>`;
+  }
+  paintIcon($('#dataRefreshButton .apc-icon'), 'sync', 'apc-icon');
+  paintIcon($('.data-danger-zone-icon'), 'warning', 'apc-icon');
+  document.querySelectorAll('[data-view-panel="data"] .admin-danger-icon')
+    .forEach((el, index) => paintIcon(el, index === 0 ? 'delete' : 'warning', 'apc-icon'));
   const note = $('#dataStorageNote');
   if (note) note.textContent = storageNote();
   if (select && !select.options.length) {
@@ -1127,16 +1153,23 @@ async function renderAdminProfile() {
   if ($('#adminProfileEmail')) $('#adminProfileEmail').value = account?.email || '';
   if ($('#adminProfileUserId')) $('#adminProfileUserId').textContent = account?.username || '—';
 
+  const displayName = account?.fullName || 'Admin';
+  const initials = initialsOf(displayName);
   host.innerHTML = `
-    <header class="admin-card-head">
-      <div><p class="eyebrow">Admin Profile</p><h2>আমার পরিচয়</h2></div>
-      <span class="badge badge-approved">Current Admin → Protected</span>
-    </header>
-    <div class="profile-list">
-      ${rows.map(([label, value]) => `
-        <div class="profile-row"><div><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div></div>`).join('')}
+    <div class="admin-profile-hero">
+      <span class="admin-profile-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
+      <div class="admin-profile-identity">
+        <p class="eyebrow">Admin Profile · System Owner</p>
+        <h2>${escapeHtml(displayName)}</h2>
+        <p class="admin-profile-meta">${escapeHtml(account?.username || '—')} · ${escapeHtml(staffRoleLabel('admin'))}</p>
+      </div>
+      <span class="badge badge-approved admin-profile-status">Protected · সক্রিয়</span>
     </div>
-    <p class="finance-hint">System Owner পরিচয় সুরক্ষিত: এই অ্যাকাউন্ট মুছে ফেলা, নিষ্ক্রিয় করা বা রোল বদল করা যায় না — ফলে কখনো লক-আউট হয় না।</p>`;
+    <dl class="profile-list">
+      ${rows.map(([label, value]) => `
+        <div class="profile-row"><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`).join('')}
+    </dl>
+    <p class="finance-hint admin-profile-note">System Owner পরিচয় সুরক্ষিত: এই অ্যাকাউন্ট মুছে ফেলা, নিষ্ক্রিয় করা বা রোল বদল করা যায় না — ফলে কখনো লক-আউট হয় না।</p>`;
 }
 
 /* ---------- Render everything ---------- */

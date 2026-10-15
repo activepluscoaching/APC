@@ -7,7 +7,7 @@ Active Plus Coaching-এর মোবাইল-ফার্স্ট Progressive
 ### Firebase migration — ধাপ ১ (infrastructure; deploy করা হয়নি)
 
 - `.firebaserc`-এ বিদ্যমান project-এর `prod` alias; প্রকৃত **dev** project ID/সংশ্লিষ্ট public Web config মালিককে দিয়ে পূরণ করতে হবে। Dev Hosting host বা loopback `?firebaseProject=dev`-এ ভুলবশত prod config ব্যবহৃত হয় না; অসম্পূর্ণ dev config fail-closed।
-- `npm ci && npm run build:firebase` SDK ও FCM worker-এর same-origin bundles তৈরি করে (`vendor/firebase/`); UI/layout/data schema অপরিবর্তিত। Firestore index file এখন ফাঁকা; Hosting emulator যোগ হয়েছে; callables-এর region `asia-south1`, পূর্বের RTDB triggers `asia-southeast1`।
+- Node.js 24.12+ এ `npm ci && npm run build:firebase` SDK ও FCM worker-এর same-origin bundles তৈরি করে (`vendor/firebase/`); UI/layout/data schema অপরিবর্তিত। Cloud Functions-এর production runtime nodejs22-ই আছে (শুধু development tooling-এর Node 24 দরকার)। Firestore index file এখন ফাঁকা; Hosting emulator যোগ হয়েছে; callables-এর region `asia-south1`, পূর্বের RTDB triggers `asia-southeast1`।
 - CSP meta ও Hosting header-এ localhost emulator connect origins আছে; `sw.js` v304-এ bundles, Auth-policy ও staged read-only gateway modules precache এবং Firebase API traffic cache bypass। App Check-এর per-project site key এখনও ফাঁকা—Console registration ও নিরাপদ enforcement পরে করতে হবে।
 - **নতুন Firestore sync চালু নয়।** `js/database.js` localStorage adapter-ই ব্যবহার করে; Auth/Firestore UI integration, কঠোর rules, offline persistence ও data migration বাকি। বর্তমান anonymous RTDB bridge-কে নিরাপদ Firestore sync ভাববেন না। ধাপে ধাপে setup ও non-deploy নির্দেশ: [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md)।
 
@@ -967,7 +967,7 @@ load হওয়ার পর service-worker cache দিয়ে offline ব্য�
 প্রয়োগ করতে হবে। পুরোনো Firebase rules এই নতুন policy অনুযায়ী deploy করা হয়নি।
 
 যাচাই:
-- `node --experimental-default-type=module --test tests/offline-role-store.test.mjs`
+- `node --test tests/offline-role-store.test.mjs`
 - `npx playwright test tests/offline-roles.spec.cjs`
 
 Browser tests: Cash Counter entry → Manager approval → Admin report → Student own

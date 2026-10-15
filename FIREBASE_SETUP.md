@@ -454,11 +454,14 @@ project (billing/Blaze, Auth, Firestore, Hosting, Functions) এবং Web app �
    ফিরতে `?firebaseProject=prod&firebaseEmulator=0` লিখুন; অন্য host থেকে
    query দিয়ে project বদলানো যায় না। Dev FCM worker page-এর query পায় না,
    তাই localhost-এ dev FCM registration ইচ্ছাকৃতভাবে বন্ধ।
-3. `npm ci && npm run build:firebase`। `firebase@12.2.1`-এর browser SDK
+3. Node.js **24.12+**-এ `npm ci && npm run build:firebase`। `firebase@13.0.0`-এর browser SDK
    `vendor/firebase/sdk.js` এবং classic FCM worker SDK
    `vendor/firebase/messaging-compat.js`-এ local bundle হয়। এই দুটি generated
    file Hosting-এ দিতে হবে; SDK/config বদলালে bundle আবার বানান, `sw.js` cache
-   version bump করুন। Admin SDK কখনো browser bundle-এ নেই। Public Web API key
+   version bump করুন। Firebase 13 ও rules-unit-testing 6-এর development tools
+   Node 24.12+ চায়; `functions`-এর **production** runtime এখনও nodejs22,
+   তার production dependencies Node 22 সমর্থন করে—runtime/deploy বদলানো হয়নি।
+   Admin SDK কখনো browser bundle-এ নেই। Public Web API key
    গোপন credential নয়; service account/private key **কখনো commit করবেন না**।
 4. local dev-এর জন্য `cd functions && npm install` (এখানে এখনও lockfile নেই), তারপর repo root-এ
    `firebase emulators:start --project dev --only auth,firestore,functions,database,hosting`।

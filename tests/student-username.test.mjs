@@ -1,4 +1,4 @@
-/* End-to-end (jsdom) check of the username feature on the real index.html:
+/* End-to-end (jsdom) check of the username feature on the real pages:
    a student picks a username while registering, it is claimed on the device,
    login then works with that username (or the mobile number), and the name can
    never be changed afterwards. */
@@ -141,8 +141,18 @@ test('login accepts the username, in any case, and still accepts the mobile numb
 });
 
 test('the profile shows the username locked and it survives an edit', async () => {
-  const { $, window } = ctx;
-  const { openProfileEditor } = await import('../js/profile.js');
+  // The profile editor lives on the student panel page (student.html since
+  // 2026-10-14); carry this device's storage over and open it there.
+  const seed = {};
+  for (let i = 0; i < ctx.window.localStorage.length; i++) {
+    const key = ctx.window.localStorage.key(i);
+    seed[key] = ctx.window.localStorage.getItem(key);
+  }
+  const appCtx = await loadPage('student.html', { seed });
+  const { $ } = appCtx;
+  const window = appCtx.window;
+  const { initProfile, openProfileEditor } = await import('../js/profile.js');
+  initProfile({ state });
   openProfileEditor(account().student);
   assert.equal($('#editUsername').value, 'raisa.islam');
   assert.equal($('#editUsername').readOnly, true);

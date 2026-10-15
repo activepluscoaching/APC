@@ -37,6 +37,18 @@ function fillRegistration() {
   ctx.$('#guardianConsent').checked = true;
 }
 
+
+/* Whole-device storage copy: the profile editor lives on student.html now,
+   so its test drives that page with everything registration just wrote. */
+const dumpStorage = w => {
+  const out = {};
+  for (let i = 0; i < w.localStorage.length; i++) {
+    const key = w.localStorage.key(i);
+    out[key] = w.localStorage.getItem(key);
+  }
+  return out;
+};
+
 const roster = () => JSON.parse(ctx.window.localStorage.getItem(KEYS.students) || '[]');
 const account = () => JSON.parse(ctx.window.localStorage.getItem(STORAGE_KEYS.account));
 const profile = () => JSON.parse(ctx.window.localStorage.getItem(STORAGE_KEYS.student) || '{}');
@@ -55,20 +67,28 @@ test('registration writes the student into the shared roster', async () => {
 });
 
 test('a profile edit updates the roster too, so other devices see the new details', async () => {
-  const { openProfileEditor } = await import('../js/profile.js');
+  // The editor is part of the student panel (student.html since 2026-10-14);
+  // open that page with the storage the registration just produced.
+  const appCtx = await loadPage('student.html', { seed: dumpStorage(ctx.window) });
+  const read = (key, fallback) => JSON.parse(appCtx.window.localStorage.getItem(key) || fallback);
+  const appRoster = () => read(KEYS.students, '[]');
+  const appAccount = () => read(STORAGE_KEYS.account, 'null');
+  const appProfile = () => read(STORAGE_KEYS.student, '{}');
+  const { initProfile, openProfileEditor } = await import('../js/profile.js');
+  initProfile({ state, onStudentChange: student => { state.student = student; } });
   openProfileEditor(state.student);
-  ctx.$('#editNameBn').value = 'রাইসা ইসলাম সুমি';
-  ctx.$('#editNameEn').value = 'Raisa Islam Sumi';
-  ctx.$('#editGuardianMobile').value = '01911223344';
-  ctx.$('#editAddress').value = 'রংপুর সদর';
-  ctx.submit(ctx.$('#profileForm'));
-  await ctx.waitFor(() => roster().some(student => student.name === 'রাইসা ইসলাম সুমি'));
+  appCtx.$('#editNameBn').value = 'রাইসা ইসলাম সুমি';
+  appCtx.$('#editNameEn').value = 'Raisa Islam Sumi';
+  appCtx.$('#editGuardianMobile').value = '01911223344';
+  appCtx.$('#editAddress').value = 'রংপুর সদর';
+  appCtx.submit(appCtx.$('#profileForm'));
+  await appCtx.waitFor(() => appRoster().some(student => student.name === 'রাইসা ইসলাম সুমি'));
 
-  const id = account().student.id;
-  const row = roster().find(student => student.id === id);
+  const id = appAccount().student.id;
+  const row = appRoster().find(student => student.id === id);
   assert.equal(row.nameEn, 'Raisa Islam Sumi', 'roster row carries the English name');
   assert.equal(row.guardianMobile, '01911223344', 'and the new guardian number');
-  assert.equal(account().student.name, 'রাইসা ইসলাম সুমি', 'the login record changed as well');
-  assert.equal(profile().name, 'রাইসা ইসলাম সুমি', 'and the device profile');
-  assert.equal(roster().filter(student => student.id === id).length, 1, 'the row is updated, never duplicated');
+  assert.equal(appAccount().student.name, 'রাইসা ইসলাম সুমি', 'the login record changed as well');
+  assert.equal(appProfile().name, 'রাইসা ইসলাম সুমি', 'and the device profile');
+  assert.equal(appRoster().filter(student => student.id === id).length, 1, 'the row is updated, never duplicated');
 });

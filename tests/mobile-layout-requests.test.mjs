@@ -71,16 +71,18 @@ test('the class and status filters are folded away until the filter button is us
   assert.equal(admin.$$('#studentList .student-row').length, adminStudents.length, 'reset brings everyone back');
 });
 
-/* ---------- Staff management: search + a create button at the bottom ------- */
+/* ---------- Staff management: search + a create button at the top ----------
+   (Was "at the bottom" until the owner asked on 2026-10-14 for creation to
+   be the first action on the page.) */
 
-test('staff management keeps one search box and the create button at the bottom', () => {
+test('staff management keeps one search box and the create button at the top', () => {
   const html = read('admin.html');
   assert.match(html, /id="staffSearch"/, 'the universal search box stays');
   assert.equal((html.match(/id="staffCreateButton"/g) || []).length, 1, 'exactly one create button');
   const createIndex = html.indexOf('id="staffCreateButton"');
-  const listIndex = html.indexOf('id="staffList"');
-  assert.ok(createIndex > listIndex, 'the create button sits after the list');
-  assert.ok(html.indexOf('staff-create-bar') > listIndex);
+  assert.ok(createIndex < html.indexOf('staff-toolbar'), 'the create button opens the page, ahead of search and filters');
+  assert.ok(createIndex < html.indexOf('id="staffList"'), 'the create button sits before the list');
+  assert.ok(html.indexOf('staff-create-bar') < html.indexOf('id="staffList"'));
 });
 
 /* ---------- Button rows: fill the screen in even shares (item 9) ---------- */

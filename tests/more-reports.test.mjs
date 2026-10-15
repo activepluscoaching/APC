@@ -9,7 +9,7 @@ import { TRANSACTIONS_KEY } from '../js/finance-data.js';
 import { provisionStaff, seedStaffSession } from './staff-harness.mjs';
 
 async function studentPage() {
-  return loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off', [TRANSACTIONS_KEY]: '[]' } });
+  return loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off', [TRANSACTIONS_KEY]: '[]' } });
 }
 
 async function counterPage() {

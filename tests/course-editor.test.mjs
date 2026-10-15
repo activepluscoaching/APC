@@ -37,7 +37,7 @@ function change(select, value) {
 }
 
 before(async () => {
-  ctx = await loadPage('index.html', {
+  ctx = await loadPage('student.html', {
     seed: {
       'activePlus.demo.autofill.v1': 'off',
       [TEACHER_ASSIGNMENTS_KEY]: JSON.stringify([{

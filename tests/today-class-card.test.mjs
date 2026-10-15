@@ -25,7 +25,7 @@ async function render({ routine = blankRoutine(), teaching = { version: 1, activ
     [TEACHING_KEY]: typeof teaching === 'string' ? teaching : JSON.stringify(teaching), [TRANSACTIONS_KEY]: '[]',
     [STORAGE_KEYS.account]: JSON.stringify({ status: 'active', student })
   };
-  const ctx = await loadPage('index.html', { seed });
+  const ctx = await loadPage('student.html', { seed });
   ctx.window.sessionStorage.setItem(STORAGE_KEYS.session, '1');
   const refresh = initStudentDashboard({ getStudent: () => student, getAccount: () => ({ student }) });
   await refresh();

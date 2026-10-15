@@ -14,7 +14,7 @@ import { JSDOM } from 'jsdom';
 import { loadPage } from './jsdom-harness.mjs';
 import { BRAND_NAME, BRAND_TAGLINE, BRAND_LOGO, brandLogoSrc } from '../js/brand.js';
 
-const PAGES = ['index.html', 'manager.html', 'teacher.html', 'admin.html', 'payment.html'];
+const PAGES = ['student.html', 'manager.html', 'teacher.html', 'admin.html', 'payment.html'];
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const contexts = [];
 after(() => contexts.forEach(ctx => ctx.window.close()));
@@ -46,7 +46,7 @@ test('no panel name in any topbar — logo + slogan only', () => {
 });
 
 test('the institute name and slogan survive the app rewriting the tagline', async () => {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(ctx);
   const taglines = ctx.$$('[data-fixed-tagline]');
   assert.ok(taglines.length >= 1, 'the page has a tagline slot');

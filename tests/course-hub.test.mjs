@@ -18,7 +18,7 @@ let ctx, hub;
 const courseActions = [];
 
 before(async () => {
-  ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   ctx.window.localStorage.setItem(STORAGE_KEYS.account, JSON.stringify({ status: 'active', student: STUDENT }));
   ctx.window.sessionStorage.setItem(STORAGE_KEYS.session, '1');
   /* Class and subject ids come from Academic Setup — never hard-coded here. */

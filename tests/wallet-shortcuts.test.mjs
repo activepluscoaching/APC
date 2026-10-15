@@ -6,7 +6,7 @@ import { loadPage } from './jsdom-harness.mjs';
 import { KEYS } from '../js/database.js';
 
 async function boot(extraSeed = {}) {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...extraSeed } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...extraSeed } });
   const { buildSessionRecord } = await import('../js/session.js');
   const { hashPassword } = await import('../js/password-hash.js');
   ctx.window.localStorage.setItem('active-plus-account-v1', JSON.stringify({

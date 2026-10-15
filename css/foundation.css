@@ -18,6 +18,18 @@
  --font-xs:12px;--font-sm:14px;--font-md:16px;--font-lg:20px;--font-xl:28px;--font-2xl:36px;
  --shadow-sm:0 3px 14px #20365306;--shadow-dialog:0 12px 36px #202b3c18;
  --modal-backdrop:#17243866;
+ /* Glass design tokens (§30 student interior): derived from the palette
+    above, so dark/AMOLED inherit the same language through --color-surface. */
+ --glass-bg:color-mix(in srgb, var(--color-surface) 58%, transparent);
+ --glass-bg-strong:color-mix(in srgb, var(--color-surface) 82%, transparent);
+ --glass-bg-soft:color-mix(in srgb, var(--color-surface) 42%, transparent);
+ --glass-border:color-mix(in srgb, var(--color-border) 55%, var(--color-surface));
+ --glass-shadow:0 10px 30px color-mix(in srgb, var(--color-text) 10%, transparent);
+ --glass-shadow-lift:0 16px 38px color-mix(in srgb, var(--color-text) 14%, transparent);
+ --glass-radius:20px;--glass-accent:var(--color-success);
+ --glass-accent-soft:color-mix(in srgb, var(--color-success) 14%, transparent);
+ --glass-teal-soft:color-mix(in srgb, var(--color-success) 45%, var(--color-primary) 20%);
+ --glass-blur:18px;
  /* Glass material: frosted panels over a soft ambient wash. The flat colour
     above stays the fallback; these only exist while the blur can render. */
  --glass-blur:18px;--glass-saturate:1.4;

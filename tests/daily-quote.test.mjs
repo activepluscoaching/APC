@@ -27,7 +27,7 @@ const contexts = [];
 after(() => contexts.forEach(ctx => ctx.window.close()));
 
 test('the card sits exactly between আজকের ক্লাস and the quick menu', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../student.html', import.meta.url), 'utf8');
   const at = name => html.indexOf(name);
   assert.ok(at('id="dashboardRoutineList"') < at('id="dailyQuoteCard"'), 'the quote is after today’s classes');
   assert.ok(at('id="dailyQuoteCard"') < at('id="studentServices"'), 'the quote is before the quick menu');
@@ -37,7 +37,7 @@ test('the card sits exactly between আজকের ক্লাস and the quic
 });
 
 test('the home page shows the quote card between the two block in the DOM', async () => {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(ctx);
   /* jsdom does not run the page's modules, so the test starts the card the way
      main.js does at boot. */
@@ -61,7 +61,7 @@ test('the home page shows the quote card between the two block in the DOM', asyn
 
 test('a reload on the same day shows the same quote and tomorrow moves on', async () => {
   const offline = async () => { throw new Error('offline'); };
-  const first = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const first = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(first);
   const today = initDailyQuote({ mount: '#dailyQuoteCard', now: () => DAY, autoFetch: false, fetchImpl: offline });
   const shown = first.$('[data-daily-quote-text]').textContent;
@@ -70,7 +70,7 @@ test('a reload on the same day shows the same quote and tomorrow moves on', asyn
   assert.equal(first.$('#dailyQuoteCard').dataset.quoteDate, '2026-10-03');
 
   /* A reload of the same page on the same day reads the stored pick back. */
-  const second = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const second = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(second);
   const again = initDailyQuote({ mount: '#dailyQuoteCard', now: () => DAY, autoFetch: false, fetchImpl: offline });
   assert.equal(second.$('[data-daily-quote-text]').textContent, shown, 'the same day serves the same line');
@@ -98,7 +98,7 @@ test('the rotation is the day number modulo the library — no randomness, no bu
   assert.equal(pickQuote(list, 4).id, 'b');
   assert.equal(pickQuote(list, -1).id, 'c');
   assert.equal(pickQuote([], 4), null);
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../student.html', import.meta.url), 'utf8');
   const card = html.slice(html.indexOf('id="dailyQuoteCard"'), html.indexOf('</section>', html.indexOf('id="dailyQuoteCard"')));
   assert.doesNotMatch(card, /<button/i, 'the quote needs no user action');
   const source = readFileSync(new URL('../js/daily-quote.js', import.meta.url), 'utf8');
@@ -116,7 +116,7 @@ test('an offline start, a broken response and a blocked request all keep the car
     })]
   ];
   for (const [label, fetchImpl] of cases) {
-    const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+    const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
     contexts.push(ctx);
     const quote = initDailyQuote({ mount: '#dailyQuoteCard', fetchImpl, now: () => DAY, feedUrl: 'assets/daily-quotes.json' });
     await ctx.flush(30);
@@ -131,7 +131,7 @@ test('an offline start, a broken response and a blocked request all keep the car
 });
 
 test('a reachable feed is cached and widens the next rotation, without a spinner', async () => {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(ctx);
   const seen = [];
   const feed = JSON.parse(FEED);
@@ -156,7 +156,7 @@ test('a reachable feed is cached and widens the next rotation, without a spinner
 });
 
 test('the card keeps one private key and leaves every other record alone', async () => {
-  const ctx = await loadPage('index.html', {
+  const ctx = await loadPage('student.html', {
     seed: {
       'activePlus.demo.autofill.v1': 'off',
       [KEYS.exams]: JSON.stringify({ version: 1, exams: [], attempts: [] }),
@@ -212,7 +212,7 @@ test('the feed parser only accepts honest quotes', () => {
 });
 
 test('a broken cache record reads as empty instead of throwing', async () => {
-  const ctx = await loadPage('index.html', {
+  const ctx = await loadPage('student.html', {
     seed: { 'activePlus.demo.autofill.v1': 'off', [DAILY_QUOTE_KEY]: '{not json' }
   });
   contexts.push(ctx);

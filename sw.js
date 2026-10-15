@@ -93,6 +93,12 @@
 // v253: keep the Teacher home greeting on its hero band when account names wrap.
 // v252: refresh the official MCQ exam screen's pinned timer-bar styles.
 // v296: staged Firestore role/financial rules; local shell remains unchanged.
+// v313: login missing account says only «account not found» — no cloud narration.
+// v312: Admin panel-wide design — subtitled heroes, chevron hub rows, styled audit/roles surfaces.
+// v311: Admin data design — count pills, quiet storage footer, one marked danger zone.
+// v310: Admin staff design — Bengali card actions, role-toned tags, protected/inactive card states.
+// v309: Admin dashboard design — token backup banner, toned snapshot tiles, wide quick-access row.
+// v308: Admin profile design — identity hero, styled detail grid, aligned account forms.
 // v307: Dhaka-midnight notification regression coverage; no runtime sync cutover.
 // v306: dev-only preview RTDB guard; never fall back to production on preview.
 // v305: read-only multi-backup ledger comparison; no browser cutover.
@@ -107,7 +113,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 307;
+const CACHE_VERSION = 330;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './js/money.js',
@@ -189,6 +195,7 @@ const APP_SHELL = [
   './js/push-notifications.js',
   './',
   './index.html',
+  './student.html',
   './admin.html',
   './manager.html',
   './teacher.html',

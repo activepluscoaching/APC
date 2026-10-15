@@ -104,7 +104,7 @@ test('calculateStudentHomeStats computes real weekly progress, attendance %, ave
   assert.equal(stats.todayStudy.title, 'গতি অধ্যায় কাজ');
 });
 
-test('Home view renders real stats and shows em-dash when empty', async () => {
+test('Home view renders real stats and a friendly এখনো নেই when empty', async () => {
   const seed = {
     'activePlus.demo.autofill.v1': 'off',
     [ROUTINE_KEY]: JSON.stringify(blankRoutine()),
@@ -113,16 +113,18 @@ test('Home view renders real stats and shows em-dash when empty', async () => {
     [KEYS.exams]: JSON.stringify({ version: 1, exams: [], attempts: [] }),
     [STORAGE_KEYS.account]: JSON.stringify({ status: 'active', student })
   };
-  const ctx = await loadPage('index.html', { seed });
+  const ctx = await loadPage('student.html', { seed });
   ctx.window.sessionStorage.setItem(STORAGE_KEYS.session, '1');
   const refresh = initStudentDashboard({ getStudent: () => student, getAccount: () => ({ student }) });
   await refresh();
 
   assert.equal(ctx.$('#studyProgressValue').textContent, '—');
-  assert.equal(ctx.$('#dashboardWeeklyProgress').textContent, '—');
-  assert.equal(ctx.$('#dashboardAttendanceRate').textContent, '—');
-  assert.equal(ctx.$('#dashboardAverageResult').textContent, '—');
-  assert.equal(ctx.$('#dashboardTermProgress').textContent, '—');
+  // No homework, attendance, results or chapters yet: the four stats say so
+  // in words a student understands — never a fabricated ০%.
+  for (const id of ['#dashboardWeeklyProgress', '#dashboardAttendanceRate', '#dashboardAverageResult', '#dashboardTermProgress']) {
+    assert.equal(ctx.$(id).textContent, 'এখনো নেই', `${id} must word its empty state`);
+    assert.equal(ctx.$(id).classList.contains('is-empty-stat'), true, `${id} must wear the muted empty style`);
+  }
 
   ctx.window.close();
 });

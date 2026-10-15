@@ -49,7 +49,7 @@ const choose = async (input, id) => {
 let answeredId, answeredValue;
 
 before(async () => {
-  ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   Date.now = clockNow;
   ctx.window.Date.now = clockNow;
   ctx.window.localStorage.setItem(STORAGE_KEYS.account, JSON.stringify({ status: 'active', student }));

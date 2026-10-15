@@ -177,10 +177,19 @@ function renderProgress(activities, exams, student, examDb, courses) {
   if ($('#dashboardDoneCount')) $('#dashboardDoneCount').textContent = `${bn(stats.doneCount)}টি কাজ`;
   if ($('#dashboardPendingCount')) $('#dashboardPendingCount').textContent = `${bn(stats.pendingCount)}টি কাজ`;
   if ($('#dashboardExamCount')) $('#dashboardExamCount').textContent = `${bn(exams.length)}টি পরীক্ষা`;
-  if ($('#dashboardWeeklyProgress')) $('#dashboardWeeklyProgress').textContent = stats.weeklyProgressLabel;
-  if ($('#dashboardAttendanceRate')) $('#dashboardAttendanceRate').textContent = stats.attendanceLabel;
-  if ($('#dashboardAverageResult')) $('#dashboardAverageResult').textContent = stats.averageResultLabel;
-  if ($('#dashboardTermProgress')) $('#dashboardTermProgress').textContent = stats.termProgressLabel;
+  /* No data yet is not an error and must not read like one: a cold dash
+     says "broken", এখনো নেই says "not yet" (owner report 2026-10-15). The
+     computed numbers are untouched — only the empty label is worded. */
+  const paintStat = (selector, percent, label) => {
+    const el = $(selector);
+    if (!el) return;
+    el.textContent = percent === null ? 'এখনো নেই' : label;
+    el.classList.toggle('is-empty-stat', percent === null);
+  };
+  paintStat('#dashboardWeeklyProgress', stats.weeklyProgressPercent, stats.weeklyProgressLabel);
+  paintStat('#dashboardAttendanceRate', stats.attendancePercent, stats.attendanceLabel);
+  paintStat('#dashboardAverageResult', stats.averageResultPercent, stats.averageResultLabel);
+  paintStat('#dashboardTermProgress', stats.termProgressPercent, stats.termProgressLabel);
   if ($('#studyProgressNote')) $('#studyProgressNote').textContent = stats.termProgressPercent !== null
     ? `মোট ${bn(stats.homework.length)}টি বাড়ির কাজ ও ${bn((courses || []).length)}টি কোর্সের অগ্রগতির ভিত্তিতে।`
     : 'এখনও কোনো বাড়ির কাজ বা কোর্সের অগ্রগতি পাওয়া যায়নি।';
@@ -246,6 +255,9 @@ export function initStudentDashboard({ getStudent, getAccount }) {
       if (current !== request) return;
       $('#homeView')?.classList.remove('is-empty-routine');
       const list = $('#dashboardRoutineList');
+      /* Off the panel page (or before the view exists) there is no list to
+         paint the error into — the next panel render retries anyway. */
+      if (!list) return;
       list.dataset.state = 'error';
       /* Full-width row, readable when it wraps, and the retry lives inside the
          same component — a half-width chip would break the dashboard grid. */

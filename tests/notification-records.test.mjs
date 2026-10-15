@@ -25,7 +25,7 @@ const DAY = Date.parse('2026-10-02T08:00:00.000Z');
 const item = (key, at = DAY) => ({ key, kind: 'notice', title: `শিরোনাম ${key}`, body: `বার্তা ${key}`, at, sourceId: key.split(':')[1] || key });
 
 test('a record carries the agreed fields and an id of the day’s own series', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   const first = nextNotificationId([], new Date(DAY));
   assert.equal(first, 'NOTIF-20261002-0001');
   const second = nextNotificationId([{ id: first }], new Date(DAY));
@@ -52,7 +52,7 @@ test('a record carries the agreed fields and an id of the day’s own series', a
 });
 
 test('syncing twice writes nothing new, and two users never share a record', async () => {
-  await loadPage('index.html');
+  await loadPage('student.html');
   const feed = [item('notice:N1'), item('notice:N2')];
   const first = syncNotifications({ userId: 'student:AP-1', feed, now: DAY });
   assert.equal(first.created, 2);
@@ -69,7 +69,7 @@ test('syncing twice writes nothing new, and two users never share a record', asy
 });
 
 test('only read===false is unread; read, unread and delivered stamps follow the actions', async () => {
-  await loadPage('index.html');
+  await loadPage('student.html');
   const feed = [item('notice:A'), item('notice:B'), item('notice:C', DAY + 1000)];
   syncNotifications({ userId: 'student:AP-1', feed, now: DAY });
   assert.equal(unreadCount('student:AP-1'), 3);
@@ -104,7 +104,7 @@ test('the badge text: 0 hides, 1–9 exact, 10+ shows ১০+', () => {
 });
 
 test('an update stores what the device already knew as read, so old news never buzzes as unread', async () => {
-  await loadPage('index.html');
+  await loadPage('student.html');
   const feed = [item('notice:OLD'), item('notice:NEW')];
   // `legacyRead` is the read receipts + cleared keys from before this refresh.
   const result = syncNotifications({ userId: 'student:AP-1', feed, legacyRead: ['notice:OLD'], now: DAY });
@@ -115,7 +115,7 @@ test('an update stores what the device already knew as read, so old news never b
 });
 
 test('a homework task leaving the due feed is resolved instead of leaving a stale unread badge', async () => {
-  await loadPage('index.html');
+  await loadPage('student.html');
   const task = {
     key: 'homework:ACT-1:rev1', kind: 'homework', title: 'অধ্যায় ৩', body: 'আগামীকাল জমা',
     sourceId: 'ACT-1', target: 'courses', at: DAY
@@ -128,7 +128,7 @@ test('a homework task leaving the due feed is resolved instead of leaving a stal
 });
 
 test('the newest records are kept and unread ones are never pruned', async () => {
-  await loadPage('index.html');
+  await loadPage('student.html');
   const feed = Array.from({ length: 30 }, (_, index) => item(`notice:N${index}`, DAY + index * 1000));
   syncNotifications({ userId: 'student:AP-1', feed, now: DAY });
   markRead('student:AP-1', ['notice:N29']);
@@ -149,7 +149,7 @@ test('the newest records are kept and unread ones are never pruned', async () =>
 });
 
 test('settings are per user, saved, and a fresh user gets the defaults', async () => {
-  const ctx = await loadPage('index.html');
+  const ctx = await loadPage('student.html');
   assert.deepEqual(notificationSettings('student:AP-1'), { ...NOTIFICATION_DEFAULTS });
   const saved = saveNotificationSettings('student:AP-1', { background: false, sound: false });
   assert.deepEqual([saved.background, saved.sound, saved.inApp, saved.enabled], [false, false, true, true]);
@@ -176,7 +176,7 @@ test('a feed item maps to the section names the card shows', () => {
 /* ---- the Settings screen, on the real student page ---------------------------- */
 
 test('the student app ships Settings → Notification Settings with every switch', async () => {
-  const ctx = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
+  const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   const { window } = ctx;
   window.localStorage.setItem(KEYS.account, JSON.stringify({ username: 'raisa.islam', status: 'active', student: { id: 'AP-1024', name: 'রাইসা', className: 'দশম শ্রেণি' } }));
   const { buildSessionRecord } = await import('../js/session.js');

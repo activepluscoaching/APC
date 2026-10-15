@@ -22,7 +22,7 @@ test('the notification action starts and resumes the exact exam it names', async
   const target = makeExam('EX-NOTIFY-TARGET', 'গণিতের নির্দিষ্ট পরীক্ষা', now, -60_000);
   // A later exam is listed first, ensuring the action must resolve by ID.
   const other = makeExam('EX-NOTIFY-OTHER', 'অন্য গণিত পরীক্ষা', now, -30_000);
-  const ctx = await loadPage('index.html', { seed: {
+  const ctx = await loadPage('student.html', { seed: {
     'activePlus.demo.autofill.v1': 'off',
     [STORAGE_KEYS.account]: JSON.stringify({ status: 'active', student })
   } });

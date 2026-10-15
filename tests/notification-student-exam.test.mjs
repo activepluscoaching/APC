@@ -23,7 +23,7 @@ const exam = (id, startAt, extra = {}) => ({
 });
 
 before(async () => {
-  ctx = await loadPage('index.html');
+  ctx = await loadPage('student.html');
   shown = [];
   class FakeNotification {
     constructor(title, options) { shown.push({ title, options: options || {} }); }

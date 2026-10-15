@@ -64,7 +64,7 @@ const uiExams = () => UI_EXAMS;
 
 const windows = [];
 async function loadApp(seed = {}) {
-  const context = await loadPage('index.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...seed } });
+  const context = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off', ...seed } });
   windows.push(context);
   return context;
 }

@@ -21,7 +21,7 @@ test('notice categories normalize known labels and safely default legacy notices
 });
 
 test('the Notice Board filters and opens notices separately from the bell, then saves Read ✓ per student', async t => {
-  const ctx = await loadPage('index.html', { seed: {
+  const ctx = await loadPage('student.html', { seed: {
     [KEYS.account]: JSON.stringify({ username: 'raisa', status: 'active', student }),
     [KEYS.notices]: JSON.stringify([
       notice('NB-U', 'urgent', '2026-10-04T10:00:00.000Z', { title: 'জরুরি ঘোষণা', body: '<img src=x onerror=alert(1)> আজই দেখে নাও।' }),

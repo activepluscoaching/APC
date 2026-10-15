@@ -118,21 +118,28 @@ async function openStudent(storage, { student = STUDENT, username = USERNAME } =
      exactly like a corrupted install. */
   await closePages();
   const ctx = keepOpen(await loadPage('index.html', { seed }));
-  /* jsdom does not run the page's own <script src>, so the app's entry module
-     is imported here — with a per-test cache-buster so no test reuses another
-     test's module state. */
   /* jsdom never runs the page's own <script src>, so the entry module is imported
-     here — one graph per test (a fixed query would reuse the previous test's
-     module state, a second graph would break the encrypted session). */
+     here — one graph per page (a fixed query would reuse the previous test's
+     module state). */
   await import(`../js/main.js?workflow=${Math.random()}`);
   /* The student signs in on the shared card, exactly like a real phone: the
-     device-bound session is written by the app, never by the test. */
+     device-bound session is written by the app, never by the test. A verified
+     student is then handed to the panel page (student.html, its own page
+     since 2026-10-14) — so this phone opens that page with the same storage,
+     exactly like the browser navigation the login just requested. */
   ctx.type(ctx.$('#loginMobile'), username);
   ctx.type(ctx.$('#loginPin'), PASSWORD);
   ctx.submit(ctx.$('#loginForm'));
-  await ctx.waitFor(() => ctx.$('#appShell').hidden === false, 20000);
-  await ctx.flush(8);
-  return ctx;
+  await ctx.waitFor(() => Boolean(ctx.window.localStorage.getItem(STORAGE_KEYS.session)), 20000);
+  /* Both hand-offs exist — a fresh sign-in assign()s to student.html, an
+     already-signed-in device is replace()d there by session restore. Which
+     one fired is timing, so the panel page below is the real assertion: it
+     only ever opens for a verified session. */
+  const panel = keepOpen(await loadPage('student.html', { seed: dump(ctx) }));
+  await import(`../js/main.js?workflow=${Math.random()}`);
+  await panel.waitFor(() => panel.$('#appShell').hidden === false, 20000);
+  await panel.flush(8);
+  return panel;
 }
 
 const select = async (ctx, element, value) => {

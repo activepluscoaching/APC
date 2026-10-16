@@ -19,7 +19,7 @@
    The shared login page (index.html) is the only door between panels: every
    role signs in there, and only the role that signed in gets its own page. */
 
-import { activeStaffRoles, clearStaffSession, hasStaffSession } from './staff-auth.js';
+import { activeStaffRoles, clearStaffSession, hasStaffSession, readActiveStaffIdentity } from './staff-auth.js';
 
 export const LOGIN_PAGE = 'index.html';
 export const PANEL_PAGES = Object.freeze(['admin.html', 'manager.html', 'teacher.html', 'payment.html']);
@@ -118,9 +118,20 @@ function blockMessage(file) {
  *
  * Returns a handle for tests: `blocked` lists the pages it refused.
  */
+/** Super Admin exemption: the signed-in Admin may cross into any staff
+ *  portal (owner decision 2026-10-16). This only lifts the *navigation*
+ *  block — the destination panel still re-validates the real, device-bound
+ *  Admin session token via hasStaffSession() before it shows anything, so a
+ *  stale identity marker alone opens nothing. Every other role keeps the
+ *  one-device-one-panel rule exactly as before. */
+export function isSuperAdminBrowsing() {
+  try { return readActiveStaffIdentity()?.role === 'admin'; } catch { return false; }
+}
+
 export function installPanelGuard({ own = ownPanelPage(), notify } = {}) {
   const blocked = [];
   const refuse = file => {
+    if (isSuperAdminBrowsing()) return;
     blocked.push(file);
     if (typeof notify === 'function') notify(file);
     else lockNotice(blockMessage(file));
@@ -132,14 +143,14 @@ export function installPanelGuard({ own = ownPanelPage(), notify } = {}) {
     const anchor = event.target?.closest?.('a[href], area[href]');
     if (!anchor) return;
     const foreign = panelFileOf(anchor.getAttribute('href'), own);
-    if (!foreign) return;
+    if (!foreign || isSuperAdminBrowsing()) return;
     event.preventDefault();
     event.stopPropagation();
     refuse(foreign);
   };
   const onSubmit = event => {
     const foreign = panelFileOf(event.target?.getAttribute?.('action'), own);
-    if (!foreign) return;
+    if (!foreign || isSuperAdminBrowsing()) return;
     event.preventDefault();
     refuse(foreign);
   };
@@ -150,7 +161,7 @@ export function installPanelGuard({ own = ownPanelPage(), notify } = {}) {
   if (typeof window !== 'undefined' && typeof originalOpen === 'function') {
     window.open = function open(url, ...rest) {
       const foreign = panelFileOf(url, own);
-      if (foreign) { refuse(foreign); return null; }
+      if (foreign && !isSuperAdminBrowsing()) { refuse(foreign); return null; }
       return originalOpen.call(window, url, ...rest);
     };
   }

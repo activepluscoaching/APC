@@ -954,7 +954,7 @@ async function showTeacherShell() {
   /* Access closed by the Admin: the page locks where it stands instead of
      sending the teacher somewhere else. (The session itself is not thrown
      away — the switch can be turned back on.) */
-  if (loadAppConfig().allowTeacherRegistration === false) {
+  if (loadAppConfig().allowTeacherRegistration === false && !(await hasStaffSession('admin'))) {
     await lockPanel({ role: 'teacher.html', reason: 'শিক্ষক প্যানেল প্রবেশ এই মুহূর্তে এডমিন কর্তৃক বন্ধ রাখা হয়েছে।' });
     return false;
   }

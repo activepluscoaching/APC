@@ -103,6 +103,30 @@
              section, rendered only for the capabilities this role holds. -->
         <p class="pay-section-label">দ্রুত অ্যাক্সেস</p>
         <div class="pay-grid is-2 admin-feature-grid" id="adminFeatureGrid" aria-label="হোম শর্টকাট"></div>
+        <!-- Super Admin (owner decision 2026-10-16): the signed-in Admin holds
+             full control, so every staff portal opens from here with the
+             Admin session alone — no second login. Only this page ships
+             these doors; every other panel still refuses cross-panel routes
+             (js/panel-lockdown.js lets the Admin through, and each portal
+             re-validates the device-bound Admin session on entry). Student
+             accounts keep their own login: entering as a student would put
+             exam answers and payments in a student's name, so no student
+             door is shipped here. -->
+        <p class="pay-section-label">সব প্যানেল · সুপার অ্যাডমিন</p>
+        <div class="pay-grid is-3 admin-portal-grid" aria-label="সব প্যানেলে যান">
+          <a class="pay-tile admin-portal-card" href="manager.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">ম্যানেজার প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card" href="teacher.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="teacher" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/teacher.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">শিক্ষক প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card" href="payment.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">পেমেন্ট কাউন্টার</span>
+          </a>
+        </div>
       </section>
 
       <!-- ================= Staff Management =================

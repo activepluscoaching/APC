@@ -264,13 +264,9 @@ function initStudentFeatureSurface(f) {
     state,
     onStudentChange: student => { renderStudent(student); noticeBoard.refresh(); refreshTeaching(); refreshExams(); refreshPractice(); refreshCourses.paint(); refreshDashboard(); refreshRoutine(); refreshStudentSections(); refreshReports($('#studentReports')); }
   }));
-  /* Settings → the one five-group structure every role shares (js/settings-hub.js).
-     The student's own rows (profile, install, theme, device, offline) stay exactly
-     where they are; the hub only adds what was missing — session, storage, sync —
-     and hands the notification group to js/notification-settings.js. */
-  boot('settings-hub', () => f.settingsHub.mountSettingsHub({
-    mount: '#settingsView',
-    role: 'student',
+  // More owns the student's settings; only the missing runtime facts are added.
+  boot('settings-hub', () => f.settingsHub.mountStudentMoreSettings({
+    mount: '#moreDeviceSettings',
     session: { value: 'লগইন সেশন এই ডিভাইসে', hint: 'নিরাপত্তার জন্য সেশন ডিভাইস-বাউন্ড' }
   }));
   // Settings → Notification Settings (the full screen behind এই নোটিফিকেশন সেটিংস).

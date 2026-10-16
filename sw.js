@@ -265,6 +265,8 @@ const APP_SHELL = [
   './js/shell.js',
   './js/routine.js',
   './js/profile.js',
+  './js/student-profile-card.js',
+  './vendor/qrcode/encoder.js',
   './js/login.js',
   './js/staff-auth.js',
   './js/admin-initialization.js',

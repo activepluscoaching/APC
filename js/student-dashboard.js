@@ -175,6 +175,7 @@ function renderProgress(activities, exams, student, examDb, courses) {
   }
   if ($('#studyProgressValue')) $('#studyProgressValue').textContent = stats.termProgressPercent === null ? '—' : `${bn(percent)}%`;
   if ($('#dashboardDoneCount')) $('#dashboardDoneCount').textContent = `${bn(stats.doneCount)}টি কাজ`;
+  if ($('#dashboardPendingSummary')) $('#dashboardPendingSummary').textContent = stats.pendingCount ? `আরও ${bn(stats.pendingCount)}টি কাজ বাকি` : 'কোনো কাজ বাকি নেই';
   if ($('#dashboardPendingCount')) $('#dashboardPendingCount').textContent = `${bn(stats.pendingCount)}টি কাজ`;
   if ($('#dashboardExamCount')) $('#dashboardExamCount').textContent = `${bn(exams.length)}টি পরীক্ষা`;
   /* No data yet is not an error and must not read like one: a cold dash

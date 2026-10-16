@@ -66,12 +66,33 @@ export function initStudentExams({ getStudent, getAccount }) {
     mount.innerHTML = `<div class="exam-summary"><h3>সারসংক্ষেপ</h3><dl><div><dt>প্রকাশিত ফলাফল</dt><dd>${num(rows.length)}</dd></div><div><dt>গড় শতকরা</dt><dd>${num(average.toFixed(1))}%</dd></div><div><dt>সামগ্রিক গ্রেড</dt><dd>${esc(gradeFor(average, 100))}</dd></div></dl></div>
       <div class="exam-results">${rows.map(item => `<article class="exam-card"><span class="exam-tag">${esc(item.exam.subject || 'পরীক্ষা')}</span><h3>${esc(item.exam.title)}</h3><small>Exam ID ${esc(item.exam.id)} • প্রচেষ্টা ${num(item.row.number || 1)}</small><p><strong>${num(item.row.score)} / ${num(item.total)}</strong> • ${num(item.percent.toFixed(1))}% • গ্রেড ${esc(item.grade)}</p>${item.row.rank ? `<small>মেধাক্রম ${num(item.row.rank)}</small>` : ''}</article>`).join('')}</div>`;
   }
+  function paintHubLive(exams, now) {
+    const host = document.querySelector('#examHubLiveList');
+    if (!host) return;
+    const live = exams.filter(exam => now >= exam.startAt && now < exam.endAt)
+      .sort((a, b) => a.endAt - b.endAt);
+    host.hidden = !live.length;
+    host.innerHTML = live.map(exam => {
+      const attempts = own(exam);
+      const resume = attempts.some(attempt => attempt.status === 'active');
+      const canStart = exam.type === 'mcq' && !attempts.length && now <= exam.startAt + exam.lateMinutes * 60000;
+      const action = resume ? 'resume' : canStart ? 'start' : '';
+      const minutes = Math.max(1, Math.ceil((exam.endAt - now) / 60000));
+      return `<article class="exam-hub-live-card" data-live-exam="${esc(exam.id)}">
+        <span class="exam-hub-live-dot" aria-hidden="true"></span>
+        <div class="exam-hub-live-copy"><h2>${esc(exam.title || exam.subject || 'পরীক্ষা')}</h2><p>এখন চলছে · ${num(minutes)} মিনিট বাকি</p></div>
+        <button type="button" class="exam-hub-live-open" data-exam-hub-open="${esc(exam.id)}" data-hub-action="${action}">${resume ? 'ফিরে যান' : canStart ? 'শুরু' : 'দেখুন'}</button>
+      </article>`;
+    }).join('');
+  }
+
   function paintTabs() {
     const bar = document.querySelector('#examTabs');
     const now = nowEpoch();
     const exams = activeAccount() ? visibleExams() : [];
     const counts = { upcoming: 0, live: 0, done: 0, results: 0 };
     exams.forEach(exam => { counts[tabOf(exam, now)] += 1; });
+    paintHubLive(exams, now);
     if (bar) {
       bar.querySelectorAll('[data-exam-tab]').forEach(item => {
         const key = item.dataset.examTab;
@@ -259,6 +280,14 @@ export function initStudentExams({ getStudent, getAccount }) {
     });
   });
   document.addEventListener('click', event => {
+    const liveCard = event.target.closest('[data-exam-hub-open]');
+    if (liveCard) {
+      setTab('live');
+      window.dispatchEvent(new CustomEvent('apc-notification-action', { detail: {
+        kind: 'exam-live', id: liveCard.dataset.examHubOpen, action: liveCard.dataset.hubAction
+      } }));
+      return;
+    }
     const practiceTile = event.target.closest('#examTabs [data-practice-mode]');
     if (practiceTile) {
       if (view === 'active') return;
@@ -285,6 +314,12 @@ export function initStudentExams({ getStudent, getAccount }) {
   let lastMinute = -1;
   setInterval(() => {
     clock(); sync();
+    const now = nowEpoch();
+    document.querySelectorAll('#examHubLiveList [data-live-exam]').forEach(card => {
+      const exam = db.exams.find(item => item.id === card.dataset.liveExam);
+      const line = card.querySelector('p');
+      if (exam && line && now < exam.endAt) line.textContent = `এখন চলছে · ${num(Math.max(1, Math.ceil((exam.endAt - now) / 60000)))} মিনিট বাকি`;
+    });
     const minute = Math.floor(nowEpoch() / 1000);
     if (ready && !busy && minute !== lastMinute && view !== 'active') {
       // Refresh time-based buttons without moving focus away from the current control.

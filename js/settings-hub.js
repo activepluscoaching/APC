@@ -293,3 +293,19 @@ function paintGroupHub(root) {
     if (event.target.closest('[data-settings-hub-back]')) showGroup('');
   });
 }
+
+/** Student More keeps one copy of each control, with live device/storage facts. */
+export function mountStudentMoreSettings({ mount, session = {} } = {}) {
+  const root = typeof mount === 'string' ? document.querySelector(mount) : mount;
+  if (!root) return;
+  for (const item of [
+    { key: 'session', label: 'সেশন', hint: session.hint, value: session.value },
+    { key: 'storage', label: 'সংরক্ষিত আকার', hint: 'অ্যাপের ডেটা — এই ডিভাইসে', value: storedSize() }
+  ]) {
+    if (root.querySelector(`[data-settings-row="${item.key}"]`)) continue;
+    const node = infoRow(item);
+    node.classList.add('more-menu-row');
+    node.prepend(icon(item.key === 'session' ? 'lock' : 'reports', 'mint'));
+    root.append(node);
+  }
+}

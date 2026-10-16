@@ -1,3 +1,4 @@
+import { initStudentProfileCard } from './student-profile-card.js';
 /* Profile feature: editable student information with an immutable Student ID.
    Updated: toggle to disable security check every time. */
 import { $, openModal, closeModal, showFeedback, normalizeMobile } from './ui.js';
@@ -94,16 +95,18 @@ export function shareStudentOnWhatsApp(student) {
 }
 
 function initSecurityToggle() {
-  const trustedToggle = $('#trustedDeviceToggle');
-  if (trustedToggle) {
-    trustedToggle.checked = isTrustedDevice();
+  const toggles = [...document.querySelectorAll('#trustedDeviceToggle, [data-trusted-device-toggle]')];
+  const sync = () => toggles.forEach(toggle => { toggle.checked = isTrustedDevice(); });
+  sync();
+  for (const trustedToggle of toggles) {
     trustedToggle.addEventListener('change', async () => {
       // A preference may extend an authenticated session, never create one.
       if (!(await hasSession())) {
-        trustedToggle.checked = false;
+        toggles.forEach(toggle => { toggle.checked = false; });
         return;
       }
       setTrustedDevice(trustedToggle.checked);
+      sync();
       if (trustedToggle.checked) {
         void persistSession(true);
         showFeedback('এই ডিভাইসটি বিশ্বস্ত হিসেবে সংরক্ষিত');
@@ -112,11 +115,14 @@ function initSecurityToggle() {
       }
     });
   }
+  window.addEventListener('storage', sync);
+
 }
 
 export function initProfile({ state, onStudentChange }) {
   populateProfileClassOptions();
   initSecurityToggle();
+  initStudentProfileCard({ getStudent: () => state.student });
   $('#profileForm')?.addEventListener('submit', async event => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);

@@ -2576,6 +2576,39 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
    clearer order. (The staff overview left the home on 2026-10-14, by owner
    decision — it lives on the Profile now.) */
 .admin-view[data-view-panel="dashboard"] .admin-hero-icon { box-shadow: 0 0 0 6px var(--pay-hero-chip); }
+/* Owner design 2026-10-16 (mobile home mockup): the hero mark is a rounded
+   square plate, the welcome leads the heading (the kicker chip steps
+   aside), a teal wash closes the band's right edge, and the four snapshot
+   tiles are separate white cards — each ruled in its own tone — instead
+   of one divided strip. The lone quick-access tile keeps its own half of
+   the row as a card rather than stretching across it. */
+.admin-view[data-view-panel="dashboard"] .admin-hero-icon { border-radius: 14px; }
+.admin-view[data-view-panel="dashboard"] .pay-portal-kicker { display: none; }
+.admin-view[data-view-panel="dashboard"] .admin-hero { position: relative; padding-bottom: 14px; }
+.admin-view[data-view-panel="dashboard"] .admin-hero::before { bottom: 0; }
+.admin-view[data-view-panel="dashboard"] .admin-hero::after {
+  content: ''; position: absolute; z-index: -1; top: -46px; right: -54px;
+  width: 190px; height: 190px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tone-mint) 32%, transparent);
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats {
+  gap: 10px; padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible;
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .admin-stat-tile {
+  background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+  box-shadow: inset 0 4px 0 var(--tone, transparent), var(--pay-shadow);
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-grid {
+  gap: 12px; padding: 0; background: transparent; border: 0; box-shadow: none;
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-tile {
+  min-height: 112px; justify-content: center;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: var(--pay-shadow);
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-grid .admin-feature-tile.is-wide {
+  grid-column: auto; flex-direction: column;
+}
 .admin-view[data-view-panel="dashboard"] .pay-portal-kicker {
   display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
   background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
@@ -2585,7 +2618,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .admin-view[data-view-panel="dashboard"] .admin-hero-title h1 { font-size: 23px; }
 .admin-view[data-view-panel="dashboard"] .admin-date-pill { font-weight: 600; font-variant-numeric: tabular-nums; }
 .admin-view[data-view-panel="dashboard"] .admin-hero-stats .admin-stat-tile {
-  min-height: 96px; box-shadow: inset 0 3px 0 var(--tone, transparent);
+  min-height: 96px;
 }
 .admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon { width: 34px; height: 34px; }
 .admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon svg { width: 19px; height: 19px; }

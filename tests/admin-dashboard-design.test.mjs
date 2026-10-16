@@ -61,7 +61,7 @@ test('second pass: haloed hero, tone-ruled tiles, staggered quick access, soft s
   assert.ok(css.includes(`${scope} .admin-hero-icon { box-shadow: 0 0 0 6px var(--pay-hero-chip); }`),
     'the hero mark sits in a soft hero halo');
   assert.ok(css.includes(`${scope} .pay-portal-kicker {`), 'the kicker reads as a chip on the hero');
-  assert.ok(css.includes('box-shadow: inset 0 3px 0 var(--tone, transparent);'),
+  assert.ok(css.includes('box-shadow: inset 0 4px 0 var(--tone, transparent), var(--pay-shadow);'),
     'each snapshot tile is ruled in its own tone');
   assert.ok(css.includes(`${scope} .admin-hero-stats .tile-value { font-size: 26px; }`),
     'snapshot numbers carry the card');
@@ -73,6 +73,23 @@ test('second pass: haloed hero, tone-ruled tiles, staggered quick access, soft s
   const section = css.slice(css.indexOf('/* 25 ')).replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(section, /#[\da-f]{3,8}\b|\brgba?\(|\bhsla?\(/i,
     'second-pass dashboard colours belong in foundation.css');
+});
+
+test('owner design 2026-10-16: separate toned stat cards and a half-row quick tile', () => {
+  const css = read('css/ui-wallet.css');
+  const scope = '.admin-view[data-view-panel="dashboard"]';
+  assert.match(css, new RegExp(`${scope.replaceAll('[', '\\[').replaceAll(']', '\\]')} \\.admin-hero-stats \\{\\s*gap: 10px;`),
+    'the snapshot tiles sit apart, not in one divided strip');
+  assert.match(css, /\.admin-hero-stats \.admin-stat-tile \{[^}]*border-radius: 16px;/, 'each tile is its own card');
+  assert.match(css, /\.admin-hero-stats \.admin-stat-tile \{[^}]*inset 0 4px 0 var\(--tone/, 'each card is ruled in its tone');
+  assert.ok(css.includes(`${scope} .admin-hero-icon { border-radius: 14px; }`), 'the hero mark is a rounded square');
+  assert.ok(css.includes(`${scope} .pay-portal-kicker { display: none; }`), 'the welcome leads, the kicker steps aside');
+  assert.match(css, /\.admin-hero::after \{[^}]*var\(--tone-mint\)/, 'a teal wash closes the band');
+  assert.ok(css.includes(`${scope} .admin-feature-grid .admin-feature-tile.is-wide {`),
+    'the lone quick tile is governed on the dashboard');
+  assert.match(css, /\.admin-feature-tile\.is-wide \{\s*grid-column: auto; flex-direction: column;/,
+    'the lone tile keeps its own half of the row');
+  assert.match(css, /\.admin-feature-tile \{[^}]*min-height: 112px;/, 'the quick tile is a standing card');
 });
 
 test('the hero greets the signed-in Admin by name and the maintenance flag has no emoji', () => {

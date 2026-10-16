@@ -306,4 +306,18 @@ test('Admin Settings is the shared five-group hub, with no duplicated control', 
     assert.equal(hub.querySelectorAll(`[data-settings-row="${key}"]`).length, 1, key);
   }
   assert.equal(hub.querySelector('[data-settings-group="notification"]').dataset.settingsOwner, 'notification');
+  /* Owner design 2026-10-16: the five doors are rows — name, what lives
+     inside, and a chevron — and the identity band sits above the hub. */
+  const doors = [...hub.querySelectorAll('.admin-settings-door')];
+  assert.deepEqual(doors.map(door => door.dataset.settingsOpen),
+    ['account', 'notification', 'app', 'security', 'data']);
+  for (const door of doors) {
+    assert.ok(door.querySelector('.admin-settings-door-copy small')?.textContent.trim().length > 1,
+      `${door.dataset.settingsOpen} door names what lives inside`);
+    assert.ok(door.querySelector('.admin-settings-door-chevron svg'), `${door.dataset.settingsOpen} door ends in a chevron`);
+  }
+  const identity = ctx.$('#adminProfileCard');
+  assert.ok(identity, 'the identity band is mounted');
+  assert.ok(identity.compareDocumentPosition(hub) & ctx.window.Node.DOCUMENT_POSITION_FOLLOWING,
+    'the identity band sits above the hub');
 });

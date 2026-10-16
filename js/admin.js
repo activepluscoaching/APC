@@ -142,6 +142,7 @@ async function enterPanel() {
     role: 'admin',
     session: { value: 'নিরাপত্তা নীতি অনুযায়ী সেশন', hint: 'ডিভাইস-বাউন্ড সেশন' }
   });
+  paintAdminSettingsDoors();
   mountReports($('#adminReports'), { panel: 'admin' });
   // A deep link (admin.html#staff) opens only when this role may see it;
   // anything else falls back to the first permitted tab.
@@ -1132,6 +1133,46 @@ async function renderSecurity() {
 
 /* ---------- Admin Profile ---------- */
 
+/** The Account page's group doors (owner design 2026-10-16): each settings
+ *  group reads as one row — disc icon, the group's name, what lives inside
+ *  it, and a chevron — instead of a bare label tile. Presentation only:
+ *  the hub's [data-settings-open] click contract is untouched. */
+const ADMIN_SETTINGS_DOOR_HINTS = Object.freeze({
+  account: 'নাম, মোবাইল, পাসওয়ার্ড',
+  notification: 'বার্তা ও সতর্কতা',
+  app: 'গাঢ় থিম ও চেহারা',
+  security: 'সেশন ও লগআউট',
+  data: 'ব্যাকআপ ও রিপোর্ট'
+});
+
+function paintAdminSettingsDoors() {
+  const nav = document.querySelector('[data-settings-hub="admin"] [data-settings-groups]');
+  if (!nav) return;
+  nav.querySelectorAll('[data-settings-open]').forEach(door => {
+    if (door.dataset.doorPainted === '1') return;
+    door.dataset.doorPainted = '1';
+    door.classList.add('admin-settings-door');
+    const label = door.querySelector('.pay-tile-label');
+    if (label) {
+      const copy = document.createElement('span');
+      copy.className = 'admin-settings-door-copy';
+      label.replaceWith(copy);
+      copy.append(label);
+      const hint = ADMIN_SETTINGS_DOOR_HINTS[door.dataset.settingsOpen];
+      if (hint) {
+        const small = document.createElement('small');
+        small.textContent = hint;
+        copy.append(small);
+      }
+    }
+    const chevron = document.createElement('span');
+    chevron.className = 'admin-settings-door-chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.innerHTML = iconMarkup('chevron-right', 'apc-icon-svg');
+    door.append(chevron);
+  });
+}
+
 async function renderAdminProfile() {
   const host = $('#adminProfileCard');
   if (!host) return;
@@ -1159,11 +1200,10 @@ async function renderAdminProfile() {
     <div class="admin-profile-hero">
       <span class="admin-profile-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
       <div class="admin-profile-identity">
-        <p class="eyebrow">Admin Profile · System Owner</p>
         <h2>${escapeHtml(displayName)}</h2>
-        <p class="admin-profile-meta">${escapeHtml(account?.username || '—')} · ${escapeHtml(staffRoleLabel('admin'))}</p>
+        <p class="admin-profile-meta">Login ID: ${escapeHtml(account?.username || '—')}</p>
       </div>
-      <span class="badge badge-approved admin-profile-status">Protected · সক্রিয়</span>
+      <span class="admin-profile-status">Admin</span>
     </div>
     <dl class="profile-list">
       ${rows.map(([label, value]) => `

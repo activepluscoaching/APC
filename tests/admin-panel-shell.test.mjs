@@ -295,7 +295,11 @@ test('Admin Settings is the shared five-group hub, with no duplicated control', 
     ['account', 'notification', 'app', 'security', 'data']);
   assert.equal(ctx.$$('#darkModeToggle').length, 1, 'one theme switch (the page\'s own)');
   assert.equal(ctx.$$('[data-settings-toggle="theme"]').length, 0, 'the hub must not add a second theme switch');
-  for (const key of ['profile', 'password', 'logout']) {
+  /* The identity card (profile) sits above the hub on the Account page
+     (owner design 2026-10-16), so it is counted on the page, not in the hub;
+     it still exists exactly once. */
+  assert.equal(ctx.$$('.admin-view[data-view-panel="profile"] [data-settings-row="profile"]').length, 1, 'profile');
+  for (const key of ['password', 'logout']) {
     assert.equal(hub.querySelectorAll(`[data-settings-row="${key}"]`).length, 1, key);
   }
   for (const key of ['install', 'device', 'session', 'offline', 'storage']) {

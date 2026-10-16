@@ -448,13 +448,16 @@
       <!-- Admin Profile -->
       <section class="admin-view" data-view-panel="profile" aria-labelledby="adminProfileTitle">
         <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
-          <div><h1 id="adminProfileTitle">আমার প্রোফাইল</h1><p class="profile-page-sub">পরিচয়, লগইন তথ্য ও পাসওয়ার্ড — আপনার অ্যাকাউন্টের সবকিছু এক জায়গায়</p></div>
+          <div><h1 id="adminProfileTitle">আমার প্রোফাইল</h1><p class="profile-page-sub">পরিচয়, লগইন তথ্য ও পাসওয়ার্ড — এক জায়গায়</p></div>
         </div>
-        
+
+        <!-- Identity first (owner design 2026-10-16): the dark identity card
+             sits above the settings doors and stays visible whichever group
+             is open — it is who you are, not one group's content. -->
+        <article class="admin-identity-card" id="adminProfileCard" data-settings-row="profile" aria-live="polite"></article>
         <div class="settings-hub" data-settings-hub="admin">
           <div class="profile-section" data-settings-group="account">
-            
-            <article class="admin-card" id="adminProfileCard" data-settings-row="profile" aria-live="polite"></article>
+
             <article class="admin-card staff-overview-card" id="staffOverviewProfile" data-admin-cap="staff.manage"></article>
             
             <article class="admin-card">

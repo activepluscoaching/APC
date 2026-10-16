@@ -2299,23 +2299,63 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
   display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
 }
 .admin-view[data-view-panel="profile"] .settings-group-grid > .pay-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* The identity card is a dark brand band of its own (owner design
+   2026-10-16): initials disc, name, Login ID and the Admin pill, with a
+   quiet teal wash at the right edge. Tokens only — --pay-hero-* carries
+   the band in light and AMOLED alike. */
+.admin-identity-card { margin: 0 0 16px; }
 .admin-profile-hero {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding-bottom: 16px; margin-bottom: 14px; border-bottom: 1px solid var(--color-border);
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 22px; border-radius: 20px;
+  background: linear-gradient(105deg, var(--pay-hero-a), var(--pay-hero-b));
+  color: var(--pay-on-hero); box-shadow: var(--pay-shadow);
+}
+.admin-profile-hero::after {
+  content: ''; position: absolute; z-index: -1; top: -90px; right: -60px;
+  width: 250px; height: 250px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tone-mint) 34%, transparent);
 }
 .admin-profile-avatar {
   display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--pay-fab-a), var(--pay-fab-b)); color: var(--pay-on-fab);
-  font-size: 24px; font-weight: 700; box-shadow: var(--pay-fab-shadow);
+  background: var(--pay-hero-chip); color: var(--pay-on-hero);
+  border: 1px solid var(--pay-hero-line);
+  font-size: 24px; font-weight: 700;
 }
 .admin-profile-identity { flex: 1 1 160px; min-width: 0; }
-.admin-profile-identity .eyebrow { margin: 0 0 2px; color: var(--color-primary); }
-.admin-profile-identity h2 { margin: 0; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
-.admin-profile-meta { margin: 2px 0 0; font-size: 13px; color: var(--color-text-secondary); overflow-wrap: anywhere; }
-.admin-profile-status { flex: none; }
-.admin-view[data-view-panel="profile"] .profile-list {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0;
+.admin-profile-identity h2 { margin: 0; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; color: var(--pay-on-hero); }
+.admin-profile-meta { margin: 3px 0 0; font-size: 13px; color: var(--pay-on-hero-soft); overflow-wrap: anywhere; }
+.admin-profile-status {
+  flex: none; padding: 4px 14px; border-radius: 999px;
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+  color: var(--pay-on-hero); font-size: 12.5px; font-weight: 700;
 }
+.admin-view[data-view-panel="profile"] .profile-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0;
+}
+/* Group doors: rows, not tiles — disc icon left, name + what lives inside,
+   chevron right. Two abreast on desktop, one column on a phone, and the
+   odd last door keeps its own half instead of stretching the row. */
+.admin-view[data-view-panel="profile"] .settings-group-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none;
+}
+.admin-view[data-view-panel="profile"] .settings-group-grid > .pay-tile:last-child:nth-child(odd) { grid-column: auto; }
+.admin-view[data-view-panel="profile"] .pay-tile.admin-settings-door {
+  flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px;
+  min-height: 78px; padding: 14px 16px; text-align: left;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: var(--pay-shadow);
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy .pay-tile-label { font-size: 15.5px; font-weight: 700; text-align: left; }
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy small {
+  font-size: 12.5px; font-weight: 500; line-height: 1.45; color: var(--color-text-secondary); overflow-wrap: anywhere;
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-chevron {
+  display: grid; place-items: center; flex: none; color: var(--color-text-secondary);
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-chevron svg { width: 20px; height: 20px; }
 .admin-view[data-view-panel="profile"] .profile-row {
   min-width: 0; padding: 11px 14px; border: 1px solid var(--color-border);
   border-radius: 14px; background: var(--color-surface-muted);
@@ -2350,7 +2390,9 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .admin-view[data-view-panel="profile"] #adminPasswordForm > button[type="submit"] { width: 100%; margin-top: 16px; }
 @media (max-width: 700px) {
   .admin-profile-avatar { width: 56px; height: 56px; font-size: 21px; }
-  .admin-profile-status { margin-left: 70px; }
+  .admin-profile-hero { padding: 18px; }
+  .admin-profile-status { margin-left: 72px; }
+  .admin-view[data-view-panel="profile"] .settings-group-grid { grid-template-columns: 1fr; }
   .admin-view[data-view-panel="profile"] .profile-row:nth-child(2),
   .admin-view[data-view-panel="profile"] .profile-row:nth-child(6) { grid-column: 1 / -1; }
   .admin-logout-btn { width: 100%; }

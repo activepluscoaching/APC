@@ -12,6 +12,7 @@
    tests/admin-navigation.spec.cjs and tests/mobile-layout.spec.cjs. */
 import test, { before } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { loadPage } from './jsdom-harness.mjs';
 import { adminStudents } from '../js/admin-data.js';
 import { ROSTER_KEY } from '../js/office-data.js';
@@ -110,7 +111,13 @@ test('the bottom bar renders one icon + label per permitted tab', () => {
     assert.ok(icon, `${button.dataset.adminView} has no generated icon`);
     assert.equal(chip.children.length, 1, `${button.dataset.adminView} paints more than one icon`);
     assert.equal(icon.getAttribute('aria-hidden'), 'true');
-    assert.ok(icon.querySelector('path, circle, ellipse, rect'), `${button.dataset.adminView} icon is empty`);
+    // Icons render from the shared ai-3d artwork set (js/icon-set.js): the
+    // inline <svg> carries an <image> pointing at a local file, so "not
+    // empty" means the artwork is referenced and that file actually ships.
+    const artwork = icon.querySelector('image');
+    assert.ok(artwork?.getAttribute('href'), `${button.dataset.adminView} icon is empty`);
+    assert.ok(existsSync(new URL('../' + artwork.getAttribute('href'), import.meta.url)),
+      `${button.dataset.adminView} icon artwork is missing: ${artwork.getAttribute('href')}`);
     assert.ok(label && label.textContent.trim().length > 1, `${button.dataset.adminView} has no label`);
   }
   // The active tab is marked for both CSS and assistive tech.

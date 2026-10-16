@@ -1311,315 +1311,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .pay-grid .pay-tile[aria-pressed="true"] .pay-tile-icon,.pay-grid .day-tab.active .pay-tile-icon{box-shadow:0 0 0 2px var(--color-primary),var(--pay-shadow);transform:scale(1.05)}
 .pay-grid .pay-tile[aria-pressed="true"] .learning-filter-count{color:var(--color-primary);opacity:1}
 
-/* 19 ── Admin profile (#profile): an identity hero over a tidy detail grid,
-   aligned account forms and a session row with a real logout action. Scoped
-   to the Admin অ্যাকাউন্ট view, so the shared Settings hub of the other
-   panels keeps its own look. Colours stay tokens from foundation.css. */
-.admin-view[data-view-panel="profile"] > .page-intro:first-child p.profile-page-sub {
-  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
-}
-.admin-view[data-view-panel="profile"] .settings-group-grid > .pay-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
-.admin-profile-hero {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding-bottom: 16px; margin-bottom: 14px; border-bottom: 1px solid var(--color-border);
-}
-.admin-profile-avatar {
-  display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--pay-fab-a), var(--pay-fab-b)); color: var(--pay-on-fab);
-  font-size: 24px; font-weight: 700; box-shadow: var(--pay-fab-shadow);
-}
-.admin-profile-identity { flex: 1 1 160px; min-width: 0; }
-.admin-profile-identity .eyebrow { margin: 0 0 2px; color: var(--color-primary); }
-.admin-profile-identity h2 { margin: 0; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
-.admin-profile-meta { margin: 2px 0 0; font-size: 13px; color: var(--color-text-secondary); overflow-wrap: anywhere; }
-.admin-profile-status { flex: none; }
-.admin-view[data-view-panel="profile"] .profile-list {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0;
-}
-.admin-view[data-view-panel="profile"] .profile-row {
-  min-width: 0; padding: 11px 14px; border: 1px solid var(--color-border);
-  border-radius: 14px; background: var(--color-surface-muted);
-}
-.admin-view[data-view-panel="profile"] .profile-row dt {
-  margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
-}
-.admin-view[data-view-panel="profile"] .profile-row dd {
-  margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere;
-}
-.admin-profile-note {
-  margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--color-success);
-  border-radius: 12px; background: var(--pay-success-soft);
-}
-.admin-view[data-view-panel="profile"] .admin-card-hint {
-  margin: 4px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--color-text-secondary);
-}
-.admin-view[data-view-panel="profile"] .auto-id-preview {
-  font-weight: 600; border: 1px dashed var(--color-border);
-}
-.admin-session-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.admin-session-copy { flex: 1 1 180px; min-width: 0; }
-.admin-session-copy h2 { margin: 0; }
-.admin-session-copy p { margin: 3px 0 0; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); }
-.admin-logout-btn {
-  display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 44px; padding: 0 18px;
-  border-radius: 999px; background: var(--tone-rose-soft); color: var(--color-danger); border-color: transparent;
-}
-.admin-logout-btn svg { width: 19px; height: 19px; }
-.admin-logout-btn:hover { background: var(--color-surface-muted); }
-.admin-view[data-view-panel="profile"] #adminProfileForm > button[type="submit"],
-.admin-view[data-view-panel="profile"] #adminPasswordForm > button[type="submit"] { width: 100%; margin-top: 16px; }
-@media (max-width: 700px) {
-  .admin-profile-avatar { width: 56px; height: 56px; font-size: 21px; }
-  .admin-profile-status { margin-left: 70px; }
-  .admin-view[data-view-panel="profile"] .profile-row:nth-child(2),
-  .admin-view[data-view-panel="profile"] .profile-row:nth-child(6) { grid-column: 1 / -1; }
-  .admin-logout-btn { width: 100%; }
-}
-
-/* 20 ── Admin dashboard (#dashboard): a token-built backup banner, toned
-   snapshot tiles, a lone quick-access tile that reads as a full action row,
-   and staff rows with an initials avatar. The banner used to carry hard-coded
-   inline colours (#fff4d6 on #332400) that ignored the palette and glared on
-   AMOLED; it now composes foundation tokens like every other surface. */
-.admin-backup-reminder {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin: 0 0 14px; padding: 13px 16px; border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-warning); border-radius: 18px;
-  background: var(--tone-amber-soft); color: var(--color-text);
-  font-size: 13.5px; line-height: 1.6; box-shadow: var(--pay-shadow);
-}
-.admin-backup-icon {
-  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
-  background: var(--color-surface); color: var(--color-warning);
-}
-.admin-backup-icon svg { width: 21px; height: 21px; }
-.admin-backup-copy { flex: 1 1 200px; min-width: 0; }
-.admin-backup-action {
-  flex: none; padding: 8px 14px; border-radius: 999px; background: var(--color-surface);
-  color: var(--color-warning); font-size: 13px; font-weight: 700; text-decoration: none;
-}
-.admin-backup-action:hover { background: var(--color-surface-muted); }
-.admin-view[data-view-panel="dashboard"] .admin-maintenance-flag {
-  padding: 10px 14px; border-left: 3px solid var(--color-warning); border-radius: 12px;
-  background: var(--tone-amber-soft); color: var(--color-text); font-size: 13px;
-}
-.admin-view[data-view-panel="dashboard"] .admin-stat-tile {
-  background-image: linear-gradient(140deg, var(--tone-soft, transparent), transparent 72%);
-}
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-value { font-size: 24px; }
-.admin-feature-grid .admin-feature-tile.is-wide {
-  grid-column: 1 / -1; flex-direction: row; justify-content: flex-start;
-  gap: 12px; padding: 10px 16px; text-align: left;
-}
-.admin-feature-grid .admin-feature-tile.is-wide .admin-feature-label { flex: 1; min-width: 0; text-align: left; }
-.admin-view[data-view-panel="dashboard"]:has(#adminFeatureGrid[hidden]) > .pay-section-label { display: none; }
-.staff-overview-avatar {
-  display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%;
-  background: var(--pay-disc); color: var(--pay-disc-ink); font-size: 15px; font-weight: 700;
-}
-@media (max-width: 700px) {
-  .admin-backup-action { width: 100%; text-align: center; }
-}
-
-/* 21 ── Admin staff (#staff): role-toned tags, protected/inactive card states
-   and a readable More sheet. The tags keep the body-text colour on a tinted
-   wash, so a role reads by hue without small text ever dropping contrast. */
-.admin-view[data-view-panel="staff"] > .page-intro:first-child p.staff-page-sub {
-  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
-}
-.admin-view[data-view-panel="staff"] .staff-filter-label { font-weight: 700; color: var(--color-text); }
-.staff-tag.role-admin { background: var(--tone-violet-soft); }
-.staff-tag.role-manager { background: var(--tone-blue-soft); }
-.staff-tag.role-teacher { background: var(--tone-mint-soft); }
-.staff-tag.role-cash-counter { background: var(--tone-amber-soft); }
-.staff-card.is-protected { border-left: 3px solid var(--color-success); }
-.staff-card.is-inactive { background: var(--color-surface-muted); }
-.staff-card.is-inactive .staff-avatar { background: var(--color-surface); color: var(--color-text-secondary); }
-.staff-card.is-inactive .staff-card-name { color: var(--color-text-secondary); }
-.staff-more-menu { background: var(--color-surface-muted); border-radius: 16px; }
-.staff-more-item { min-height: 44px; padding: 0 12px; border-radius: 12px; }
-.staff-more-item:hover { background: var(--color-surface); }
-.staff-more-item.danger { color: var(--color-danger); }
-.admin-view[data-view-panel="staff"] .staff-create-btn { min-height: 52px; border-radius: 16px; font-size: 15px; }
-
-/* 22 ── Admin data (#data): record counts as real count pills, the storage
-   line as a quiet footer, and the two destructive cards as one danger zone —
-   a red-marked card, a calm amber warning and a filled danger action, so a
-   delete never looks like an ordinary settings card again. */
-.admin-view[data-view-panel="data"] > .page-intro:first-child p.data-page-sub {
-  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
-}
-.admin-view[data-view-panel="data"] .data-row-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
-.admin-view[data-view-panel="data"] .data-row-copy strong { font-size: 14.5px; }
-.admin-view[data-view-panel="data"] .data-row-copy small { font-size: 12px; color: var(--color-text-secondary); }
-.admin-view[data-view-panel="data"] .data-count {
-  flex: none; padding: 2px 10px; border-radius: 999px; background: var(--pay-disc);
-  color: var(--pay-disc-ink); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums;
-}
-.admin-view[data-view-panel="data"] .data-row.is-empty .data-count { background: var(--color-surface-muted); color: var(--color-text-secondary); }
-.admin-view[data-view-panel="data"] #dataStorageNote {
-  margin: 12px 0 0; padding-top: 12px; border-top: 1px dashed var(--color-border);
-}
-.admin-danger-card { border-left: 3px solid var(--color-danger); }
-.admin-danger-card .admin-card-head h2 { color: var(--color-danger); }
-.admin-danger-note {
-  margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--tone-amber-soft);
-  color: var(--color-text); font-size: 13px; line-height: 1.7;
-}
-.admin-view[data-view-panel="data"] .admin-btn.danger {
-  width: 100%; min-height: 50px; border-radius: 14px; background: var(--color-danger);
-  border-color: var(--color-danger); color: var(--color-surface); font-weight: 700;
-}
-.admin-view[data-view-panel="data"] .admin-btn.danger:hover { background: var(--color-surface-muted); color: var(--color-danger); }
-
-/* 23 ── Admin panel-wide pass: every view opens with the same subtitled
-   hero, hub rows end in a real chevron, and the surfaces that used to render
-   unstyled — audit entries, role capability chips, role icons, the class
-   code line — are painted like the rest of the panel. */
-.admin-view > .page-intro:first-child p.admin-view-sub {
-  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
-}
-.admin-more-item .admin-menu-arrow { display: grid; place-items: center; flex: none; color: var(--color-text-secondary); }
-.admin-more-item .admin-menu-arrow svg { width: 19px; height: 19px; }
-.audit-entry {
-  margin: 0 0 10px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 14px;
-  background: var(--color-surface-muted); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere;
-}
-.audit-entry:last-child { margin-bottom: 0; }
-.role-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.role-head h3 { margin: 0; font-size: 15px; }
-.role-icon {
-  display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
-  background: var(--pay-disc); color: var(--pay-disc-ink);
-}
-.role-icon svg { width: 24px; height: 24px; }
-.role-cap-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
-.role-cap-list li {
-  padding: 3px 10px; border-radius: 999px; background: var(--pay-success-soft);
-  font-size: 12px; font-weight: 600; line-height: 1.5;
-}
-.role-cap-list li.is-denied { background: var(--color-surface-muted); color: var(--color-text-secondary); opacity: .65; }
-.class-copy-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.admin-view[data-view-panel="backup"] #backupRestoreButton { width: 100%; }
-.admin-view[data-view-panel="settings"] .app-setting-group > .admin-btn { width: 100%; }
-.admin-view[data-view-panel="students"] .student-avatar { font-size: 15px; font-weight: 700; }
-
-/* 24 ── Admin data (#data), second pass: each collection row opens with a
-   toned icon disc, the card leads with a two-chip summary of what is stored,
-   and the delete/reset cards sit inside one labelled danger zone. Same
-   counts and same confirmations as before — only the reading order changed. */
-.admin-view[data-view-panel="data"] .data-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 4px; }
-.admin-view[data-view-panel="data"] .data-summary-chip {
-  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 999px;
-  background: var(--color-surface-muted); color: var(--color-text-secondary); font-size: 12.5px;
-}
-.admin-view[data-view-panel="data"] .data-summary-chip strong {
-  font-size: 14px; color: var(--color-text); font-variant-numeric: tabular-nums;
-}
-.admin-view[data-view-panel="data"] .data-row { padding: 10px 2px; }
-.admin-view[data-view-panel="data"] .data-row-icon {
-  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
-  background: var(--pay-disc); color: var(--pay-disc-ink);
-}
-.admin-view[data-view-panel="data"] .data-row-icon svg { width: 21px; height: 21px; }
-.admin-view[data-view-panel="data"] .data-row:nth-child(3n+2) .data-row-icon { background: var(--tone-mint-soft); color: var(--tone-mint); }
-.admin-view[data-view-panel="data"] .data-row:nth-child(3n) .data-row-icon { background: var(--tone-violet-soft); color: var(--tone-violet); }
-.admin-view[data-view-panel="data"] .data-row.is-empty .data-row-icon { background: var(--color-surface-muted); color: var(--color-text-secondary); }
-.admin-view[data-view-panel="data"] .data-row.is-empty .data-row-copy strong { color: var(--color-text-secondary); }
-.admin-view[data-view-panel="data"] #dataRefreshButton { display: inline-flex; align-items: center; gap: 7px; }
-.admin-view[data-view-panel="data"] #dataRefreshButton svg { width: 16px; height: 16px; }
-.admin-view[data-view-panel="data"] .data-danger-zone {
-  background: var(--tone-rose-soft); border: 1px solid var(--color-border); border-radius: 24px;
-  padding: 16px 14px 2px; margin-bottom: 14px;
-}
-.admin-view[data-view-panel="data"] .data-danger-zone-title {
-  display: flex; align-items: center; gap: 8px; margin: 0 2px 12px;
-  font-size: 13px; font-weight: 700; color: var(--color-danger);
-}
-.admin-view[data-view-panel="data"] .data-danger-zone-icon { display: grid; place-items: center; flex: none; }
-.admin-view[data-view-panel="data"] .data-danger-zone-icon svg { width: 19px; height: 19px; }
-.admin-view[data-view-panel="data"] .admin-danger-icon {
-  display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 50%;
-  background: var(--tone-rose-soft); color: var(--tone-rose);
-}
-.admin-view[data-view-panel="data"] .admin-danger-icon svg { width: 20px; height: 20px; }
-
-/* 25 ── Admin dashboard (#dashboard), second pass: a haloed hero mark, a
-   chipped kicker, tone-ruled snapshot tiles, quick-access tiles that arrive
-   in stagger (finally spending the --tile-index the shell has always set).
-   No count, route or capability moves — the home screen just reads in a
-   clearer order. (The staff overview left the home on 2026-10-14, by owner
-   decision — it lives on the Profile now.) */
-.admin-view[data-view-panel="dashboard"] .admin-hero-icon { box-shadow: 0 0 0 6px var(--pay-hero-chip); }
-.admin-view[data-view-panel="dashboard"] .pay-portal-kicker {
-  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
-  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
-  color: var(--pay-on-hero); font-weight: 700; letter-spacing: .02em;
-}
-.admin-view[data-view-panel="dashboard"] .admin-welcome { color: var(--pay-on-hero); font-size: 13.5px; font-weight: 600; }
-.admin-view[data-view-panel="dashboard"] .admin-hero-title h1 { font-size: 23px; }
-.admin-view[data-view-panel="dashboard"] .admin-date-pill { font-weight: 600; font-variant-numeric: tabular-nums; }
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .admin-stat-tile {
-  min-height: 96px; box-shadow: inset 0 3px 0 var(--tone, transparent);
-}
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon { width: 34px; height: 34px; }
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon svg { width: 19px; height: 19px; }
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-value { font-size: 26px; }
-.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-label { font-weight: 600; padding-right: 40px; }
-.admin-view[data-view-panel="dashboard"] > .pay-section-label { display: flex; align-items: center; gap: 12px; }
-.admin-view[data-view-panel="dashboard"] > .pay-section-label::after {
-  content: ''; flex: 1; border-top: 1px solid var(--color-border);
-}
-@keyframes admin-tile-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.admin-feature-grid .admin-feature-tile {
-  animation: admin-tile-in .35s ease backwards; animation-delay: calc(var(--tile-index, 0) * 45ms);
-}
-.admin-feature-grid .admin-feature-tile:hover { transform: translateY(-2px); }
-.admin-feature-grid .admin-feature-tile:active { transform: scale(.96); }
-.admin-feature-grid .admin-feature-tile:hover .admin-feature-icon { transform: scale(1.06); }
-.admin-feature-grid .admin-feature-label { font-size: 13px; }
-.admin-view[data-view-panel="dashboard"] .admin-maintenance-flag {
-  padding: 12px 14px; border-radius: 14px; font-weight: 600;
-}
-.admin-backup-action { border: 1px solid var(--color-border); }
-/* 26 ── Staff create opens the page: the create bar moved from under the
-   list to the top of #staff (owner decision 2026-10-14), so its spacing
-   flips — the gap now sits below it, ahead of the search toolbar. The
-   button, its capability gate and its dialog are exactly as before. */
-.admin-view[data-view-panel="staff"] .staff-create-bar { margin: 0 0 14px; }
-
-/* 27 ── Staff account form buttons: the form footer is a stack (an error
-   line over the action row), not a two-column action row of its own. The
-   shared rule in css/ui-forms.css had folded it into that 2-col grid, so
-   beside the (usually hidden) error line the actions were squeezed into
-   one column and সাবমিট / বাতিল rendered at quarter width. The footer now
-   stacks full-width, pins to the modal's foot while the long three-step
-   form scrolls, and the .modal-actions inside keeps the shared row — the
-   submit handler, the close wiring and the labels never moved. */
-.staff-modal .staff-form-footer {
-  display: block; position: sticky; bottom: 0; z-index: 2;
-  margin: 18px -20px -20px; padding: 12px 20px calc(12px + var(--safe-bottom));
-  background: var(--color-surface); border-top: 1px solid var(--color-border);
-}
-.staff-modal .staff-form-footer .modal-actions { margin-top: 0; }
-.staff-modal .staff-form-footer .finance-error { margin: 0 0 10px; }
-.staff-modal .staff-form-footer .modal-actions .admin-btn {
-  min-height: 50px; border-radius: 14px; font-size: 14.5px; font-weight: 700;
-}
-
-/* 28 ── Staff dialog, from the owner's screenshot of the create form: the
-   action row still sat in the modal's left half, so "স্টাফ অ্যাকাউন্ট তৈরি
-   করুন" wrapped over three lines beside a tall empty right side, and the
-   dialog title scrolled away with the form. Now the staff modal scrolls
-   only its body (title and close stay put), and the footer row spans the
-   full width with সাবমিট and বাতিল sharing it half-and-half (owner's
-   choice, 2026-10-14) — equal height, centred labels, no empty side. */
-.staff-modal { display: flex; flex-direction: column; overflow: hidden; }
-.staff-modal .admin-modal-header { flex: none; }
-.staff-modal .admin-modal-body { overflow-y: auto; min-height: 0; }
-.staff-modal .staff-form-footer { margin: 18px 0 -20px; padding: 12px 0 calc(12px + var(--safe-bottom)); }
-.staff-modal .staff-form-footer .modal-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
 /* 29 ── Login (index.html #authScreen): the living sky photograph, the sun/
    moon arc and the season washes stay exactly as they are — this pass only
    gives the sheet floating over them more presence: a haloed logo plate, a
@@ -2595,3 +2286,395 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
     filter: drop-shadow(0 2px 1.3px color-mix(in srgb, var(--color-text) 24%, transparent));
   }
 }
+
+/* Admin sections 19-28 live at the end of this skin on purpose: the
+   Admin token guards slice from each admin marker to end-of-file, and
+   later portal passes (login/student/teacher) must never leak raw
+   colours or rules into the Admin panel's final word. */
+/* 19 ── Admin profile (#profile): an identity hero over a tidy detail grid,
+   aligned account forms and a session row with a real logout action. Scoped
+   to the Admin অ্যাকাউন্ট view, so the shared Settings hub of the other
+   panels keeps its own look. Colours stay tokens from foundation.css. */
+.admin-view[data-view-panel="profile"] > .page-intro:first-child p.profile-page-sub {
+  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
+}
+.admin-view[data-view-panel="profile"] .settings-group-grid > .pay-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* The identity card is a dark brand band of its own (owner design
+   2026-10-16): initials disc, name, Login ID and the Admin pill, with a
+   quiet teal wash at the right edge. Tokens only — --pay-hero-* carries
+   the band in light and AMOLED alike. */
+.admin-identity-card { margin: 0 0 16px; }
+.admin-profile-hero {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 22px; border-radius: 20px;
+  background: linear-gradient(105deg, var(--pay-hero-a), var(--pay-hero-b));
+  color: var(--pay-on-hero); box-shadow: var(--pay-shadow);
+}
+.admin-profile-hero::after {
+  content: ''; position: absolute; z-index: -1; top: -90px; right: -60px;
+  width: 250px; height: 250px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tone-mint) 34%, transparent);
+}
+.admin-profile-avatar {
+  display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%;
+  background: var(--pay-hero-chip); color: var(--pay-on-hero);
+  border: 1px solid var(--pay-hero-line);
+  font-size: 24px; font-weight: 700;
+}
+.admin-profile-identity { flex: 1 1 160px; min-width: 0; }
+.admin-profile-identity h2 { margin: 0; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; color: var(--pay-on-hero); }
+.admin-profile-meta { margin: 3px 0 0; font-size: 13px; color: var(--pay-on-hero-soft); overflow-wrap: anywhere; }
+.admin-profile-status {
+  flex: none; padding: 4px 14px; border-radius: 999px;
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+  color: var(--pay-on-hero); font-size: 12.5px; font-weight: 700;
+}
+.admin-view[data-view-panel="profile"] .profile-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0;
+}
+/* Group doors: rows, not tiles — disc icon left, name + what lives inside,
+   chevron right. Two abreast on desktop, one column on a phone, and the
+   odd last door keeps its own half instead of stretching the row. */
+.admin-view[data-view-panel="profile"] .settings-group-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none;
+}
+.admin-view[data-view-panel="profile"] .settings-group-grid > .pay-tile:last-child:nth-child(odd) { grid-column: auto; }
+.admin-view[data-view-panel="profile"] .pay-tile.admin-settings-door {
+  flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px;
+  min-height: 78px; padding: 14px 16px; text-align: left;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: var(--pay-shadow);
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy .pay-tile-label { font-size: 15.5px; font-weight: 700; text-align: left; }
+.admin-view[data-view-panel="profile"] .admin-settings-door-copy small {
+  font-size: 12.5px; font-weight: 500; line-height: 1.45; color: var(--color-text-secondary); overflow-wrap: anywhere;
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-chevron {
+  display: grid; place-items: center; flex: none; color: var(--color-text-secondary);
+}
+.admin-view[data-view-panel="profile"] .admin-settings-door-chevron svg { width: 20px; height: 20px; }
+.admin-view[data-view-panel="profile"] .profile-row {
+  min-width: 0; padding: 11px 14px; border: 1px solid var(--color-border);
+  border-radius: 14px; background: var(--color-surface-muted);
+}
+.admin-view[data-view-panel="profile"] .profile-row dt {
+  margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary);
+}
+.admin-view[data-view-panel="profile"] .profile-row dd {
+  margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere;
+}
+.admin-profile-note {
+  margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--color-success);
+  border-radius: 12px; background: var(--pay-success-soft);
+}
+.admin-view[data-view-panel="profile"] .admin-card-hint {
+  margin: 4px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--color-text-secondary);
+}
+.admin-view[data-view-panel="profile"] .auto-id-preview {
+  font-weight: 600; border: 1px dashed var(--color-border);
+}
+.admin-session-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.admin-session-copy { flex: 1 1 180px; min-width: 0; }
+.admin-session-copy h2 { margin: 0; }
+.admin-session-copy p { margin: 3px 0 0; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); }
+.admin-logout-btn {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 44px; padding: 0 18px;
+  border-radius: 999px; background: var(--tone-rose-soft); color: var(--color-danger); border-color: transparent;
+}
+.admin-logout-btn svg { width: 19px; height: 19px; }
+.admin-logout-btn:hover { background: var(--color-surface-muted); }
+.admin-view[data-view-panel="profile"] #adminProfileForm > button[type="submit"],
+.admin-view[data-view-panel="profile"] #adminPasswordForm > button[type="submit"] { width: 100%; margin-top: 16px; }
+@media (max-width: 700px) {
+  .admin-profile-avatar { width: 56px; height: 56px; font-size: 21px; }
+  .admin-profile-hero { padding: 18px; }
+  .admin-profile-status { margin-left: 72px; }
+  .admin-view[data-view-panel="profile"] .settings-group-grid { grid-template-columns: 1fr; }
+  .admin-view[data-view-panel="profile"] .profile-row:nth-child(2),
+  .admin-view[data-view-panel="profile"] .profile-row:nth-child(6) { grid-column: 1 / -1; }
+  .admin-logout-btn { width: 100%; }
+}
+
+/* 20 ── Admin dashboard (#dashboard): a token-built backup banner, toned
+   snapshot tiles, a lone quick-access tile that reads as a full action row,
+   and staff rows with an initials avatar. The banner used to carry hard-coded
+   inline colours (#fff4d6 on #332400) that ignored the palette and glared on
+   AMOLED; it now composes foundation tokens like every other surface. */
+.admin-backup-reminder {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 13px 16px; border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-warning); border-radius: 18px;
+  background: var(--tone-amber-soft); color: var(--color-text);
+  font-size: 13.5px; line-height: 1.6; box-shadow: var(--pay-shadow);
+}
+.admin-backup-icon {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--color-surface); color: var(--color-warning);
+}
+.admin-backup-icon svg { width: 21px; height: 21px; }
+.admin-backup-copy { flex: 1 1 200px; min-width: 0; }
+.admin-backup-action {
+  flex: none; padding: 8px 14px; border-radius: 999px; background: var(--color-surface);
+  color: var(--color-warning); font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.admin-backup-action:hover { background: var(--color-surface-muted); }
+/* Super Admin portal doors: anchors wearing the tile skin, so they must not
+   bring the browser's link underline or visited colour with them. */
+.admin-portal-grid a.pay-tile { text-decoration: none; color: inherit; cursor: pointer; }
+.admin-view[data-view-panel="dashboard"] .admin-maintenance-flag {
+  padding: 10px 14px; border-left: 3px solid var(--color-warning); border-radius: 12px;
+  background: var(--tone-amber-soft); color: var(--color-text); font-size: 13px;
+}
+.admin-view[data-view-panel="dashboard"] .admin-stat-tile {
+  background-image: linear-gradient(140deg, var(--tone-soft, transparent), transparent 72%);
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-value { font-size: 24px; }
+.admin-feature-grid .admin-feature-tile.is-wide {
+  grid-column: 1 / -1; flex-direction: row; justify-content: flex-start;
+  gap: 12px; padding: 10px 16px; text-align: left;
+}
+.admin-feature-grid .admin-feature-tile.is-wide .admin-feature-label { flex: 1; min-width: 0; text-align: left; }
+.admin-view[data-view-panel="dashboard"]:has(#adminFeatureGrid[hidden]) > .pay-section-label { display: none; }
+.staff-overview-avatar {
+  display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink); font-size: 15px; font-weight: 700;
+}
+@media (max-width: 700px) {
+  .admin-backup-action { width: 100%; text-align: center; }
+}
+
+/* 21 ── Admin staff (#staff): role-toned tags, protected/inactive card states
+   and a readable More sheet. The tags keep the body-text colour on a tinted
+   wash, so a role reads by hue without small text ever dropping contrast. */
+.admin-view[data-view-panel="staff"] > .page-intro:first-child p.staff-page-sub {
+  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
+}
+.admin-view[data-view-panel="staff"] .staff-filter-label { font-weight: 700; color: var(--color-text); }
+.staff-tag.role-admin { background: var(--tone-violet-soft); }
+.staff-tag.role-manager { background: var(--tone-blue-soft); }
+.staff-tag.role-teacher { background: var(--tone-mint-soft); }
+.staff-tag.role-cash-counter { background: var(--tone-amber-soft); }
+.staff-card.is-protected { border-left: 3px solid var(--color-success); }
+.staff-card.is-inactive { background: var(--color-surface-muted); }
+.staff-card.is-inactive .staff-avatar { background: var(--color-surface); color: var(--color-text-secondary); }
+.staff-card.is-inactive .staff-card-name { color: var(--color-text-secondary); }
+.staff-more-menu { background: var(--color-surface-muted); border-radius: 16px; }
+.staff-more-item { min-height: 44px; padding: 0 12px; border-radius: 12px; }
+.staff-more-item:hover { background: var(--color-surface); }
+.staff-more-item.danger { color: var(--color-danger); }
+.admin-view[data-view-panel="staff"] .staff-create-btn { min-height: 52px; border-radius: 16px; font-size: 15px; }
+
+/* 22 ── Admin data (#data): record counts as real count pills, the storage
+   line as a quiet footer, and the two destructive cards as one danger zone —
+   a red-marked card, a calm amber warning and a filled danger action, so a
+   delete never looks like an ordinary settings card again. */
+.admin-view[data-view-panel="data"] > .page-intro:first-child p.data-page-sub {
+  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
+}
+.admin-view[data-view-panel="data"] .data-row-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.admin-view[data-view-panel="data"] .data-row-copy strong { font-size: 14.5px; }
+.admin-view[data-view-panel="data"] .data-row-copy small { font-size: 12px; color: var(--color-text-secondary); }
+.admin-view[data-view-panel="data"] .data-count {
+  flex: none; padding: 2px 10px; border-radius: 999px; background: var(--pay-disc);
+  color: var(--pay-disc-ink); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.admin-view[data-view-panel="data"] .data-row.is-empty .data-count { background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.admin-view[data-view-panel="data"] #dataStorageNote {
+  margin: 12px 0 0; padding-top: 12px; border-top: 1px dashed var(--color-border);
+}
+.admin-danger-card { border-left: 3px solid var(--color-danger); }
+.admin-danger-card .admin-card-head h2 { color: var(--color-danger); }
+.admin-danger-note {
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--tone-amber-soft);
+  color: var(--color-text); font-size: 13px; line-height: 1.7;
+}
+.admin-view[data-view-panel="data"] .admin-btn.danger {
+  width: 100%; min-height: 50px; border-radius: 14px; background: var(--color-danger);
+  border-color: var(--color-danger); color: var(--color-surface); font-weight: 700;
+}
+.admin-view[data-view-panel="data"] .admin-btn.danger:hover { background: var(--color-surface-muted); color: var(--color-danger); }
+
+/* 23 ── Admin panel-wide pass: every view opens with the same subtitled
+   hero, hub rows end in a real chevron, and the surfaces that used to render
+   unstyled — audit entries, role capability chips, role icons, the class
+   code line — are painted like the rest of the panel. */
+.admin-view > .page-intro:first-child p.admin-view-sub {
+  display: block; margin: 3px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--pay-on-hero-soft);
+}
+.admin-more-item .admin-menu-arrow { display: grid; place-items: center; flex: none; color: var(--color-text-secondary); }
+.admin-more-item .admin-menu-arrow svg { width: 19px; height: 19px; }
+.audit-entry {
+  margin: 0 0 10px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 14px;
+  background: var(--color-surface-muted); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere;
+}
+.audit-entry:last-child { margin-bottom: 0; }
+.role-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.role-head h3 { margin: 0; font-size: 15px; }
+.role-icon {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink);
+}
+.role-icon svg { width: 24px; height: 24px; }
+.role-cap-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.role-cap-list li {
+  padding: 3px 10px; border-radius: 999px; background: var(--pay-success-soft);
+  font-size: 12px; font-weight: 600; line-height: 1.5;
+}
+.role-cap-list li.is-denied { background: var(--color-surface-muted); color: var(--color-text-secondary); opacity: .65; }
+.class-copy-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-view[data-view-panel="backup"] #backupRestoreButton { width: 100%; }
+.admin-view[data-view-panel="settings"] .app-setting-group > .admin-btn { width: 100%; }
+.admin-view[data-view-panel="students"] .student-avatar { font-size: 15px; font-weight: 700; }
+
+/* 24 ── Admin data (#data), second pass: each collection row opens with a
+   toned icon disc, the card leads with a two-chip summary of what is stored,
+   and the delete/reset cards sit inside one labelled danger zone. Same
+   counts and same confirmations as before — only the reading order changed. */
+.admin-view[data-view-panel="data"] .data-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 4px; }
+.admin-view[data-view-panel="data"] .data-summary-chip {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: var(--color-surface-muted); color: var(--color-text-secondary); font-size: 12.5px;
+}
+.admin-view[data-view-panel="data"] .data-summary-chip strong {
+  font-size: 14px; color: var(--color-text); font-variant-numeric: tabular-nums;
+}
+.admin-view[data-view-panel="data"] .data-row { padding: 10px 2px; }
+.admin-view[data-view-panel="data"] .data-row-icon {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--pay-disc); color: var(--pay-disc-ink);
+}
+.admin-view[data-view-panel="data"] .data-row-icon svg { width: 21px; height: 21px; }
+.admin-view[data-view-panel="data"] .data-row:nth-child(3n+2) .data-row-icon { background: var(--tone-mint-soft); color: var(--tone-mint); }
+.admin-view[data-view-panel="data"] .data-row:nth-child(3n) .data-row-icon { background: var(--tone-violet-soft); color: var(--tone-violet); }
+.admin-view[data-view-panel="data"] .data-row.is-empty .data-row-icon { background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.admin-view[data-view-panel="data"] .data-row.is-empty .data-row-copy strong { color: var(--color-text-secondary); }
+.admin-view[data-view-panel="data"] #dataRefreshButton { display: inline-flex; align-items: center; gap: 7px; }
+.admin-view[data-view-panel="data"] #dataRefreshButton svg { width: 16px; height: 16px; }
+.admin-view[data-view-panel="data"] .data-danger-zone {
+  background: var(--tone-rose-soft); border: 1px solid var(--color-border); border-radius: 24px;
+  padding: 16px 14px 2px; margin-bottom: 14px;
+}
+.admin-view[data-view-panel="data"] .data-danger-zone-title {
+  display: flex; align-items: center; gap: 8px; margin: 0 2px 12px;
+  font-size: 13px; font-weight: 700; color: var(--color-danger);
+}
+.admin-view[data-view-panel="data"] .data-danger-zone-icon { display: grid; place-items: center; flex: none; }
+.admin-view[data-view-panel="data"] .data-danger-zone-icon svg { width: 19px; height: 19px; }
+.admin-view[data-view-panel="data"] .admin-danger-icon {
+  display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 50%;
+  background: var(--tone-rose-soft); color: var(--tone-rose);
+}
+.admin-view[data-view-panel="data"] .admin-danger-icon svg { width: 20px; height: 20px; }
+
+/* 25 ── Admin dashboard (#dashboard), second pass: a haloed hero mark, a
+   chipped kicker, tone-ruled snapshot tiles, quick-access tiles that arrive
+   in stagger (finally spending the --tile-index the shell has always set).
+   No count, route or capability moves — the home screen just reads in a
+   clearer order. (The staff overview left the home on 2026-10-14, by owner
+   decision — it lives on the Profile now.) */
+.admin-view[data-view-panel="dashboard"] .admin-hero-icon { box-shadow: 0 0 0 6px var(--pay-hero-chip); }
+/* Owner design 2026-10-16 (mobile home mockup): the hero mark is a rounded
+   square plate, the welcome leads the heading (the kicker chip steps
+   aside), a teal wash closes the band's right edge, and the four snapshot
+   tiles are separate white cards — each ruled in its own tone — instead
+   of one divided strip. The lone quick-access tile keeps its own half of
+   the row as a card rather than stretching across it. */
+.admin-view[data-view-panel="dashboard"] .admin-hero-icon { border-radius: 14px; }
+.admin-view[data-view-panel="dashboard"] .pay-portal-kicker { display: none; }
+.admin-view[data-view-panel="dashboard"] .admin-hero { position: relative; padding-bottom: 14px; }
+.admin-view[data-view-panel="dashboard"] .admin-hero::before { bottom: 0; }
+.admin-view[data-view-panel="dashboard"] .admin-hero::after {
+  content: ''; position: absolute; z-index: -1; top: -46px; right: -54px;
+  width: 190px; height: 190px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tone-mint) 32%, transparent);
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats {
+  gap: 10px; padding: 0; background: transparent; border: 0; box-shadow: none; overflow: visible;
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .admin-stat-tile {
+  background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;
+  box-shadow: inset 0 4px 0 var(--tone, transparent), var(--pay-shadow);
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-grid {
+  gap: 12px; padding: 0; background: transparent; border: 0; box-shadow: none;
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-tile {
+  min-height: 112px; justify-content: center;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: var(--pay-shadow);
+}
+.admin-view[data-view-panel="dashboard"] .admin-feature-grid .admin-feature-tile.is-wide {
+  grid-column: auto; flex-direction: column;
+}
+.admin-view[data-view-panel="dashboard"] .pay-portal-kicker {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
+  background: var(--pay-hero-chip); border: 1px solid var(--pay-hero-line);
+  color: var(--pay-on-hero); font-weight: 700; letter-spacing: .02em;
+}
+.admin-view[data-view-panel="dashboard"] .admin-welcome { color: var(--pay-on-hero); font-size: 13.5px; font-weight: 600; }
+.admin-view[data-view-panel="dashboard"] .admin-hero-title h1 { font-size: 23px; }
+.admin-view[data-view-panel="dashboard"] .admin-date-pill { font-weight: 600; font-variant-numeric: tabular-nums; }
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .admin-stat-tile {
+  min-height: 96px;
+}
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon { width: 34px; height: 34px; }
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-icon svg { width: 19px; height: 19px; }
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-value { font-size: 26px; }
+.admin-view[data-view-panel="dashboard"] .admin-hero-stats .tile-label { font-weight: 600; padding-right: 40px; }
+.admin-view[data-view-panel="dashboard"] > .pay-section-label { display: flex; align-items: center; gap: 12px; }
+.admin-view[data-view-panel="dashboard"] > .pay-section-label::after {
+  content: ''; flex: 1; border-top: 1px solid var(--color-border);
+}
+@keyframes admin-tile-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.admin-feature-grid .admin-feature-tile {
+  animation: admin-tile-in .35s ease backwards; animation-delay: calc(var(--tile-index, 0) * 45ms);
+}
+.admin-feature-grid .admin-feature-tile:hover { transform: translateY(-2px); }
+.admin-feature-grid .admin-feature-tile:active { transform: scale(.96); }
+.admin-feature-grid .admin-feature-tile:hover .admin-feature-icon { transform: scale(1.06); }
+.admin-feature-grid .admin-feature-label { font-size: 13px; }
+.admin-view[data-view-panel="dashboard"] .admin-maintenance-flag {
+  padding: 12px 14px; border-radius: 14px; font-weight: 600;
+}
+.admin-backup-action { border: 1px solid var(--color-border); }
+/* 26 ── Staff create opens the page: the create bar moved from under the
+   list to the top of #staff (owner decision 2026-10-14), so its spacing
+   flips — the gap now sits below it, ahead of the search toolbar. The
+   button, its capability gate and its dialog are exactly as before. */
+.admin-view[data-view-panel="staff"] .staff-create-bar { margin: 0 0 14px; }
+
+/* 27 ── Staff account form buttons: the form footer is a stack (an error
+   line over the action row), not a two-column action row of its own. The
+   shared rule in css/ui-forms.css had folded it into that 2-col grid, so
+   beside the (usually hidden) error line the actions were squeezed into
+   one column and সাবমিট / বাতিল rendered at quarter width. The footer now
+   stacks full-width, pins to the modal's foot while the long three-step
+   form scrolls, and the .modal-actions inside keeps the shared row — the
+   submit handler, the close wiring and the labels never moved. */
+.staff-modal .staff-form-footer {
+  display: block; position: sticky; bottom: 0; z-index: 2;
+  margin: 18px -20px -20px; padding: 12px 20px calc(12px + var(--safe-bottom));
+  background: var(--color-surface); border-top: 1px solid var(--color-border);
+}
+.staff-modal .staff-form-footer .modal-actions { margin-top: 0; }
+.staff-modal .staff-form-footer .finance-error { margin: 0 0 10px; }
+.staff-modal .staff-form-footer .modal-actions .admin-btn {
+  min-height: 50px; border-radius: 14px; font-size: 14.5px; font-weight: 700;
+}
+
+/* 28 ── Staff dialog, from the owner's screenshot of the create form: the
+   action row still sat in the modal's left half, so "স্টাফ অ্যাকাউন্ট তৈরি
+   করুন" wrapped over three lines beside a tall empty right side, and the
+   dialog title scrolled away with the form. Now the staff modal scrolls
+   only its body (title and close stay put), and the footer row spans the
+   full width with সাবমিট and বাতিল sharing it half-and-half (owner's
+   choice, 2026-10-14) — equal height, centred labels, no empty side. */
+.staff-modal { display: flex; flex-direction: column; overflow: hidden; }
+.staff-modal .admin-modal-header { flex: none; }
+.staff-modal .admin-modal-body { overflow-y: auto; min-height: 0; }
+.staff-modal .staff-form-footer { margin: 18px 0 -20px; padding: 12px 0 calc(12px + var(--safe-bottom)); }
+.staff-modal .staff-form-footer .modal-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+

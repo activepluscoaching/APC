@@ -1,11 +1,11 @@
 /* Panel isolation — no panel ships a shortcut into another portal.
  *
- * Each role owns exactly one door: the Admin panel must not link to the
- * Manager, Teacher, Payment or offline-role portals, and the same is true the
- * other way round. A cross-panel entry would also be a permission hole: the
- * Admin role does not hold `payment.panel` / `teaching.panel`, so the markup is
- * removed at boot — but shipping it at all would paint the shortcut for a
- * moment and leak the other portal's existence, so it must not exist.
+ * Each role owns exactly one door, and the same is true the other way round.
+ * One exception, by owner decision 2026-10-16: the Admin is Super Admin, so
+ * the Admin page ships doors to the Manager, Teacher and Payment portals,
+ * which the Admin session opens without a second login. No other page may
+ * link across, and no page links to student.html — a student account is a
+ * person's own identity, never a staff shortcut.
  *
  * Checked on the shipped markup of every page (not the booted DOM), which is
  * stricter than the runtime check in tests/admin-panel-shell.test.mjs.
@@ -30,7 +30,13 @@ test('no page links to another portal', () => {
       if (!href || /^(https?:|mailto:|tel:|data:|#)/.test(href)) continue;
       const target = href.split('/').pop();
       const other = PANELS.includes(target) && target !== file;
-      assert.equal(other, false, `${file}: the page links to another portal (${href})`);
+      /* Super Admin exception (owner decision 2026-10-16): the Admin page —
+         and only the Admin page — ships doors to the three staff portals.
+         The Admin session alone opens them; each portal re-validates it on
+         entry (js/staff-auth.js hasStaffSession). Student accounts keep
+         their own login, so student.html is never a door here. */
+      const superAdminDoor = file === 'admin.html' && ['manager.html', 'teacher.html', 'payment.html'].includes(target);
+      assert.equal(other && !superAdminDoor, false, `${file}: the page links to another portal (${href})`);
       assert.equal(/(^|\/)index\.html$/.test(href), false, `${file}: a portal may not link back to the login page from its UI`);
     }
     // The demo workspace (demo/) is out of the production deploy — no shipped

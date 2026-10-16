@@ -5,8 +5,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <script src="js/sanitize-url.js"></script>
-  <script src="js/app-entry.js?v=337" data-entry="admin"></script>
-  <script type="module" src="js/admin.js?v=337"></script>
+  <script src="js/app-entry.js?v=340" data-entry="admin"></script>
+  <script type="module" src="js/admin.js?v=340"></script>
   <script src="js/topbar-connectivity.js?v=25161005-syncborder" defer></script>
   <script type="module" src="js/realtime-sync-entry.js"></script>
   <script src="js/appearance-boot.js"></script>
@@ -35,21 +35,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=337">
-  <link rel="stylesheet" href="css/ui-layout.css?v=337">
-  <link rel="stylesheet" href="css/ui-components.css?v=337">
-  <link rel="stylesheet" href="css/ui-forms.css?v=337">
-  <link rel="stylesheet" href="css/ui-features.css?v=337">
-  <link rel="stylesheet" href="css/notice-board.css?v=337">
-  <link rel="stylesheet" href="css/ui-status.css?v=337">
-  <link rel="stylesheet" href="css/ui-auth.css?v=337">
-  <link rel="stylesheet" href="css/app-polish.css?v=337">
-  <link rel="stylesheet" href="css/student-record.css?v=337">
-  <link rel="stylesheet" href="css/exam-archive.css?v=337">
-  <link rel="stylesheet" href="css/academics.css?v=337">
-  <link rel="stylesheet" href="css/notifications.css?v=337">
-  <link rel="stylesheet" href="css/course-hub.css?v=337">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=337">
+  <link rel="stylesheet" href="css/foundation.css?v=340">
+  <link rel="stylesheet" href="css/ui-layout.css?v=340">
+  <link rel="stylesheet" href="css/ui-components.css?v=340">
+  <link rel="stylesheet" href="css/ui-forms.css?v=340">
+  <link rel="stylesheet" href="css/ui-features.css?v=340">
+  <link rel="stylesheet" href="css/notice-board.css?v=340">
+  <link rel="stylesheet" href="css/ui-status.css?v=340">
+  <link rel="stylesheet" href="css/ui-auth.css?v=340">
+  <link rel="stylesheet" href="css/app-polish.css?v=340">
+  <link rel="stylesheet" href="css/student-record.css?v=340">
+  <link rel="stylesheet" href="css/exam-archive.css?v=340">
+  <link rel="stylesheet" href="css/academics.css?v=340">
+  <link rel="stylesheet" href="css/notifications.css?v=340">
+  <link rel="stylesheet" href="css/course-hub.css?v=340">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=340">
   <script type="module" src="js/ui-accessibility.js"></script>
   <script src="js/launch-screen.js" defer></script>
 </head>
@@ -103,6 +103,30 @@
              section, rendered only for the capabilities this role holds. -->
         <p class="pay-section-label">দ্রুত অ্যাক্সেস</p>
         <div class="pay-grid is-2 admin-feature-grid" id="adminFeatureGrid" aria-label="হোম শর্টকাট"></div>
+        <!-- Super Admin (owner decision 2026-10-16): the signed-in Admin holds
+             full control, so every staff portal opens from here with the
+             Admin session alone — no second login. Only this page ships
+             these doors; every other panel still refuses cross-panel routes
+             (js/panel-lockdown.js lets the Admin through, and each portal
+             re-validates the device-bound Admin session on entry). Student
+             accounts keep their own login: entering as a student would put
+             exam answers and payments in a student's name, so no student
+             door is shipped here. -->
+        <p class="pay-section-label">সব প্যানেল · সুপার অ্যাডমিন</p>
+        <div class="pay-grid is-3 admin-portal-grid" aria-label="সব প্যানেলে যান">
+          <a class="pay-tile admin-portal-card" href="manager.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">ম্যানেজার প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card" href="teacher.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="teacher" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/teacher.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">শিক্ষক প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card" href="payment.html">
+            <span class="pay-tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label">পেমেন্ট কাউন্টার</span>
+          </a>
+        </div>
       </section>
 
       <!-- ================= Staff Management =================
@@ -424,13 +448,16 @@
       <!-- Admin Profile -->
       <section class="admin-view" data-view-panel="profile" aria-labelledby="adminProfileTitle">
         <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
-          <div><h1 id="adminProfileTitle">আমার প্রোফাইল</h1><p class="profile-page-sub">পরিচয়, লগইন তথ্য ও পাসওয়ার্ড — আপনার অ্যাকাউন্টের সবকিছু এক জায়গায়</p></div>
+          <div><h1 id="adminProfileTitle">আমার প্রোফাইল</h1><p class="profile-page-sub">পরিচয়, লগইন তথ্য ও পাসওয়ার্ড — এক জায়গায়</p></div>
         </div>
-        
+
+        <!-- Identity first (owner design 2026-10-16): the dark identity card
+             sits above the settings doors and stays visible whichever group
+             is open — it is who you are, not one group's content. -->
+        <article class="admin-identity-card" id="adminProfileCard" data-settings-row="profile" aria-live="polite"></article>
         <div class="settings-hub" data-settings-hub="admin">
           <div class="profile-section" data-settings-group="account">
-            
-            <article class="admin-card" id="adminProfileCard" data-settings-row="profile" aria-live="polite"></article>
+
             <article class="admin-card staff-overview-card" id="staffOverviewProfile" data-admin-cap="staff.manage"></article>
             
             <article class="admin-card">

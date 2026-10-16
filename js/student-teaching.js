@@ -3,7 +3,7 @@
 import { toBanglaNumber as bn, showFeedback, openModal, closeModal } from './ui.js';
 import { downloadBlob } from './exam-pdf.js';
 import { activitySheetPDF, materialFileName } from './material-pdf.js';
-import { teachingRepository, publishedForStudent, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, displayDate, safeResourceURL, watchTeachingData } from './teaching-data.js';
+import { teachingRepository, publishedForStudent, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, displayDate, safeResourceURL, watchTeachingData, resolveTeacherName } from './teaching-data.js';
 
 export function initStudentTeaching({ getStudent }) {
   let db = { activities: [] }, filter = 'all', request = 0, counts = { all: 0, homework: 0, suggestion: 0, exam: 0, routine: 0 };

@@ -1019,6 +1019,12 @@ async function enterManager() {
     return;
   }
   managerAccount = await readStaffAccount('manager');
+  /* Super Admin entry: the Admin enters with the Admin session alone, so a
+     device that never provisioned a Manager account must not lock here —
+     the Admin's own record stands in for display names and authorship. */
+  if (!managerAccount && await hasStaffSession('admin')) {
+    managerAccount = await readStaffAccount('admin');
+  }
   try { const allStaff = await listStaff(); cachedDirectoryTeachers = allStaff.filter(s => s.role === 'teacher' && s.status === 'active'); } catch { cachedDirectoryTeachers = []; }
   if (!managerAccount) {
     await lockPanel({ role: 'manager.html', clear: 'manager', reason: 'এই ডিভাইসে ম্যানেজার অ্যাকাউন্টের রেকর্ড নেই — লগইন পেজ থেকে আবার প্রবেশ করুন।' });

@@ -565,10 +565,13 @@ export function clearOtherStaffSessions(role) {
   }
 }
 
-/** Every staff role whose device-bound session is still valid right now. */
+/** Every staff role whose OWN device-bound session is still valid right now.
+ *  Deliberately not hasStaffSession(): a Super Admin session must not make
+ *  every panel look "signed in" to the login router or the lock card — the
+ *  person signed in is the Admin, and that is the role reported here. */
 export async function activeStaffRoles() {
   const roles = Object.keys(STAFF_ACCOUNTS);
-  const live = await Promise.all(roles.map(name => hasStaffSession(name)));
+  const live = await Promise.all(roles.map(name => hasOwnStaffSession(name)));
   return roles.filter((name, index) => live[index]);
 }
 
@@ -627,7 +630,8 @@ async function readStaffSession(role) {
   } catch { return null; }
 }
 
-export async function hasStaffSession(role) {
+/** This role's OWN device-bound session — no super-admin borrowing. */
+async function hasOwnStaffSession(role) {
   if (backendMode() === 'firebase') return false;
   const spec = staffSpec(role);
   if (!spec) return false;
@@ -638,6 +642,23 @@ export async function hasStaffSession(role) {
   if (isSessionRecordValid(record)) return true;
   try { local?.removeItem(spec.sessionKey); tab?.removeItem(spec.sessionKey); } catch { /* no-op */ }
   return false;
+}
+
+/** Super Admin (owner decision 2026-10-16): a signed-in Admin holds full
+ *  control of every staff portal on this device. The Admin session — and
+ *  only the Admin session — therefore also answers for the Manager, Teacher
+ *  and Payment roles wherever a panel or data guard asks hasStaffSession().
+ *  The borrow is one-way: no other role's session ever opens the Admin
+ *  panel, and a panel's own account/password records are never touched —
+ *  the Admin enters as Admin, not as the other account. */
+export async function isSuperAdminSession() {
+  return hasOwnStaffSession('admin');
+}
+
+export async function hasStaffSession(role) {
+  if (await hasOwnStaffSession(role)) return true;
+  if (role === 'admin') return false;
+  return isSuperAdminSession();
 }
 
 /* Logging out never drops anyone on a panel's own entry screen: every role signs

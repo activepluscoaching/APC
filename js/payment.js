@@ -72,6 +72,11 @@ async function refreshToday() {
     if($('#payShell').hidden) return;
     state.today=rows; state.ready=true; $('#paymentMain').dataset.counterReady='true'; $('#payLoadError').hidden=true;
   } catch {
+    /* A load that fails after sign-out (or after the page was torn down)
+       has no surface left to report to — the success path already bails
+       on a hidden shell, and the failure path must do the same instead of
+       writing to elements that are gone. */
+    if (!$('#paymentMain') || $('#payShell')?.hidden) return;
     state.ready=false; state.today=[]; $('#paymentMain').dataset.counterReady='false';
     $('#payLoadError').textContent='লেনদেনের ডেটা পড়া যায়নি। ডেটা নিরাপদ রাখতে পেমেন্ট বন্ধ আছে। আবার চেষ্টা করুন।';
     $('#payLoadError').hidden=false;

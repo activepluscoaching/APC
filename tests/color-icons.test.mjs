@@ -11,23 +11,23 @@ const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8'
 const parse = html => new JSDOM(html).window.document;
 
 test('the new family supplies layered colour services and compact matching glyphs', () => {
-  assert.equal(ICON_SET, 'active-plus-color');
+  assert.equal(ICON_SET, 'active-plus-soft3d');
   assert.ok(Object.keys(ILLUSTRATIONS).length >= 30);
   assert.ok(Object.keys(GLYPHS).length >= 60);
   for (const name of Object.keys(ILLUSTRATIONS)) {
     const svg = parse(iconMarkup(name)).querySelector('svg');
     assert.equal(svg.dataset.iconSet, ICON_SET, name);
     assert.equal(svg.dataset.iconStyle, 'color', name);
-    assert.ok(svg.querySelectorAll('path,rect,circle,ellipse').length >= 3, name + ' lacks layers');
-    const fills = new Set([...svg.querySelectorAll('[fill]')].map(el => el.getAttribute('fill')).filter(fill => fill.startsWith('var(--icon-')));
-    assert.ok(fills.size >= 2, name + ' is only a monochrome path');
+    const image = svg.querySelector('image');
+    assert.ok(image, name + ' missing local artwork');
+    assert.ok(existsSync(new URL('../' + image.getAttribute('href'), import.meta.url)));
     assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
     assert.equal(svg.getAttribute('aria-hidden'), 'true');
     assert.equal(svg.getAttribute('focusable'), 'false');
-    assert.ok(!svg.querySelector('image,use,symbol,text,foreignObject,script'));
+    assert.ok(!svg.querySelector('use,symbol,text,foreignObject,script'));
     const glyph = parse(iconMarkup(name, 'nav-icon')).querySelector('svg');
     assert.equal(glyph.dataset.iconStyle, 'glyph');
-    assert.ok(glyph.querySelector('path,rect,circle,ellipse'));
+    assert.ok(glyph.querySelector('image'));
   }
 });
 
@@ -39,7 +39,7 @@ test('all drawings are well-formed SVG without duplicate attributes or external 
       const document = parser.parseFromString(iconMarkup(name, '', { variant }), 'image/svg+xml');
       assert.equal(document.querySelector('parsererror'), null, `${name}/${variant} XML error`);
       assert.equal(document.querySelectorAll('[id]').length, 0, 'repeatable inline icons must not duplicate IDs');
-      assert.equal(document.querySelectorAll('[href],[onload],[onclick],script').length, 0);
+      assert.equal(document.querySelectorAll('[onload],[onclick],script').length, 0);
     }
   }
   window.close();
@@ -58,7 +58,7 @@ test('staff, students, teachers, classes and role/security services have distinc
 test('unknown names safely fall back and caller-provided attributes are escaped', () => {
   for (const name of ['unknown','__proto__','constructor','toString']) {
     assert.equal(iconArtwork(name).canonical, 'help');
-    assert.ok(parse(iconMarkup(name)).querySelector('svg path'));
+    assert.ok(parse(iconMarkup(name)).querySelector('svg image'));
   }
   const document = parse(iconMarkup('"/><script>alert(1)</script>', '" onload="alert(1)'));
   assert.equal(document.querySelectorAll('script,[onload],[onclick]').length, 0);
@@ -72,7 +72,7 @@ test('static named icons on all five portals use the new set before JS boot', ()
     assert.ok(page === 'payment' ? icons.length >= 3 : icons.length > 10, page); // Minimal counter has no decorative service grid/footer.
     for (const svg of icons) {
       assert.equal(svg.dataset.iconSet, ICON_SET, page + ' old icon ' + svg.dataset.icon);
-      assert.ok(svg.querySelector('path,rect,circle,ellipse'));
+      assert.ok(svg.querySelector('image'));
     }
     for (const svg of document.querySelectorAll('.pay-tile-icon svg,.admin-more-icon svg,.pay-pulse-icon svg')) {
       assert.equal(svg.dataset.iconStyle, 'color', page + ' service is not illustrated');

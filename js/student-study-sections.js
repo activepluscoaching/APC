@@ -56,6 +56,21 @@ const norm = value => text(value).normalize('NFC').toLowerCase().replace(/\s+/g,
 const num = value => bn(value);
 const chapterLabel = record => text(record.chapterName) || '';
 
+// Summaries use percentages so papers with different total marks are comparable.
+export function summarizeStudyResults(rows) {
+  const ordered = [...rows].sort((a, b) => Number(b.exam.endAt || b.exam.startAt || 0) - Number(a.exam.endAt || a.exam.startAt || 0) || String(a.exam.id).localeCompare(String(b.exam.id)));
+  return {
+    count: ordered.length,
+    average: ordered.length ? ordered.reduce((sum, item) => sum + item.percent, 0) / ordered.length : null,
+    highest: ordered.length ? Math.max(...ordered.map(item => item.percent)) : null,
+    recent: ordered.map((item, index) => {
+      const time = Number(item.exam.endAt || item.exam.startAt || 0);
+      const previous = ordered.slice(index + 1).find(other => other.exam.subject && other.exam.subject === item.exam.subject && Number(other.exam.endAt || other.exam.startAt || 0) < time);
+      return { ...item, trend: previous ? Math.sign(item.percent - previous.percent) : null };
+    })
+  };
+}
+
 export function initStudentStudySections({ getStudent, teaching = null } = {}) {
   const bar = $(SELECTORS.bar);
   if (!bar) return () => {};
@@ -268,6 +283,25 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     }).join('');
   }
 
+  // Published, student-scoped courses only. These bars show real course
+  // completion, not an invented per-chapter or daily completion percentage.
+  function renderTodayStudy(courses) {
+    const host = $('#studyTodayList');
+    if (!host) return;
+    const running = courses.flatMap(course => (course.chapters || [])
+      .filter(chapter => chapter.status === 'চলছে')
+      .map(chapter => ({ course, chapter })));
+    host.innerHTML = running.length ? running.map(({ course, chapter }) => {
+      const percent = courseProgress(course).percent;
+      return `<article class="study-today-row">
+        <span class="study-today-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h4l3-13h11M14 14l6 6m0-6-6 6"/></svg></span>
+        <div class="study-today-copy"><h3>${esc(course.subject)} · ${esc(chapter.title)}</h3>
+          <progress max="100" value="${percent}" aria-label="${esc(course.subject)} কোর্সের অগ্রগতি">${num(percent)}%</progress>
+        </div>
+      </article>`;
+    }).join('') : '<p class="study-today-empty">এখনো কোনো চলমান অধ্যায় নেই। আমার কোর্স থেকে পড়াশোনা শুরু করো।</p>';
+  }
+
   function paintCounts() {
     renderStudentCourses();
     const counts = teaching?.activityCounts?.() || { homework: 0, suggestion: 0 };
@@ -276,6 +310,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
       if (badge) badge.textContent = num(value);
     };
     const publishedCourses = courseRepository.readStudentCoursesSync(student());
+    renderTodayStudy(publishedCourses);
     set('courses', publishedCourses.length);
     set('homework', counts.homework || 0);
     set('suggestion', (counts.suggestion || 0) + suggestionRecords.length);
@@ -323,21 +358,34 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     const list = $('#studyResultsList');
     if (!list) return;
     const studentId = student().id;
-    const now = Date.now();
     const rows = (examDb.exams || []).filter(exam => isStudentVisibleExam(exam) && examMatchesStudent(exam, student()) && exam.resultsPublished)
       .map(exam => {
         const row = examResults(examDb, exam).find(item => item.studentId === studentId);
         if (!row) return null;
         const total = totalMarks(exam);
-        const percent = total ? row.score / total * 100 : 0;
+        if (!(total > 0) || !Number.isFinite(Number(row.score))) return null;
+        const percent = row.score / total * 100;
         return { exam, row, total, percent, grade: row.grade || gradeFor(row.score, total, exam.passPercent) };
       }).filter(Boolean);
+    const summary = summarizeStudyResults(rows);
+    const paint = (selector, value) => { const node = $(selector); if (node) node.textContent = value; };
+    const rounded = value => value === null ? '—' : num(Number(value.toFixed(1)));
+    paint('#studyResultAverage', rounded(summary.average));
+    paint('#studyResultExamTotal', num(summary.count));
+    paint('#studyResultHighest', rounded(summary.highest));
+    const resultRow = item => {
+      const subject = item.exam.subject || '';
+      const icon = /গণিত|math/i.test(subject) ? '<path d="M2 14h4l3 7 4-18h9m-7 9 6 7m0-7-6 7"/>' : /ইংরেজি|english/i.test(subject) ? '<path d="M3 5h11M8 2v3m-3 0c0 6 4 10 9 12M13 5c0 6-4 10-10 12m12 4 4-11 4 11m-7-4h6"/>' : '<path d="M9 2h6m-5 0v7L4 22h16L14 9V2M7 16h10"/>';
+      const trendLabel = item.trend === null ? 'আগের তুলনাযোগ্য ফলাফল নেই' : item.trend > 0 ? 'আগের পরীক্ষার চেয়ে বেড়েছে' : item.trend < 0 ? 'আগের পরীক্ষার চেয়ে কমেছে' : 'আগের পরীক্ষার সমান';
+      const trend = item.trend === null || item.trend === 0 ? '—' : item.trend > 0 ? '↗' : '↘';
+      return `<article class="study-result-row"><span class="study-result-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span><div class="study-result-copy"><h3>${esc(item.exam.title)}</h3><small>${esc(subject)} · ${num(item.row.score)}/${num(item.total)} · ${num(Number(item.percent.toFixed(1)))}% · ${esc(item.grade)}</small></div><strong class="study-result-score" aria-label="${num(item.row.score)} নম্বর, মোট ${num(item.total)}">${num(item.row.score)}</strong><span class="study-result-trend ${item.trend > 0 ? 'is-up' : item.trend < 0 ? 'is-down' : ''}" role="img" aria-label="${trendLabel}" title="${trendLabel}">${trend}</span></article>`;
+    };
     list.innerHTML = rows.length
-      ? rows.map(item => `<article class="exam-card"><span class="exam-tag">${esc(item.exam.subject || 'পরীক্ষা')}</span><h3>${esc(item.exam.title)}</h3><p><strong>${num(item.row.score)} / ${num(item.total)}</strong> • ${num(item.percent.toFixed(1))}% • গ্রেড ${esc(item.grade)}</p></article>`).join('')
-      : '<p class="teacher-empty">এখনও কোনো ফলাফল প্রকাশ করা হয়নি।</p>';
-    const count = $('#studyResultsCount');
-    if (count) count.textContent = `${num(rows.length)}টি ফলাফল`;
-    void now;
+      ? summary.recent.slice(0, 5).map(resultRow).join('') + (rows.length > 5 ? `<details class="study-result-history"><summary>আরও ফলাফল দেখুন (${num(rows.length - 5)})</summary>${summary.recent.slice(5).map(resultRow).join('')}</details>` : '')
+      : '<p class="study-result-empty">এখনও কোনো ফলাফল প্রকাশ করা হয়নি।</p>';
+    paint('#studyResultsCount', `${num(rows.length)}টি প্রকাশিত ফলাফল`);
+    const weakest = [...rows].sort((a, b) => a.percent - b.percent)[0];
+    paint('#studyResultTip', weakest?.exam.subject ? `${weakest.exam.subject} আরও অনুশীলন করো। ভুলগুলো বুঝে আবার চেষ্টা করো।` : 'নিয়মিত অনুশীলন করো, ভুলগুলো বুঝে আবার চেষ্টা করো।');
   }
 
   function open(next, { history = 'push', skipView = false } = {}) {
@@ -469,7 +517,9 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
       button.disabled = false;
     }
   });
-  watchExams(() => { if (section === 'bank') void loadBank(); });
+  watchExams(() => {
+    if (section === 'bank' || section === 'results') void loadBank().then(() => { if (section === 'results') renderStudyResults(); });
+  });
   $('#studySuggestionFilters')?.addEventListener('click', event => {
     const button = event.target.closest('[data-suggestion-filter]');
     if (!button) return;

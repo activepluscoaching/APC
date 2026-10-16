@@ -88,12 +88,12 @@ test('পড়াশোনা has five sections and one movable teaching board'
   ctx.window.close();
 });
 
-test('আরও holds only প্রোফাইল / রিপোর্ট / নোটিফিকেশন / ফি / সেটিংস / সহায়তা', async () => {
+test('আরও keeps account routes, settings and help separate from academics', async () => {
   const ctx = await loadPage('student.html');
   const more = ctx.$('#profileView');
-  assert.deepEqual(ctx.$$('#profileView .pay-grid button').map(button => button.dataset.view).filter(Boolean),
+  assert.deepEqual(ctx.$$('#profileView .more-menu button').map(button => button.dataset.view).filter(Boolean),
     ['my-profile', 'reports', 'notification-settings', 'student-fee', 'settings']);
-  assert.ok(more.querySelector('.help-card'), 'সহায়তা stays the sixth entry');
+  assert.ok(more.querySelector('[data-action="help"]'), 'সহায়তা remains reachable');
   const academic = [...more.querySelectorAll('[data-view],[data-action]')]
     .filter(node => ['courses', 'exams', 'homework', 'suggestion', 'question-bank'].includes(node.dataset.view || node.dataset.action));
   assert.deepEqual(academic, [], 'no academic item may hide inside আরও');
@@ -185,12 +185,12 @@ test('the retired results route has no leftover button anywhere in the app', () 
 
 const teacherHtml = read('teacher.html');
 
-test('the teacher bottom bar is exactly হোম / কাজ দিন / রুটিন / পরীক্ষা / আরও', () => {
+test('the teacher bottom bar is exactly হোম / ক্লাস / শিক্ষার্থী / পরীক্ষা / আরও', () => {
   const nav = teacherHtml.slice(teacherHtml.indexOf('<nav class="admin-bottom"'), teacherHtml.indexOf('</nav>', teacherHtml.indexOf('<nav class="admin-bottom"')));
   assert.deepEqual([...nav.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['home', 'academic', 'routine-view', 'exam', 'more']);
+    ['home', 'classes', 'students', 'exam', 'more']);
   assert.deepEqual([...nav.matchAll(/<span>([^<]+)<\/span>/g)].map(match => nfc(match[1])),
-    ['হোম', 'কাজ দিন', 'রুটিন', 'পরীক্ষা', 'আরও'].map(nfc));
+    ['হোম', 'ক্লাস', 'শিক্ষার্থী', 'পরীক্ষা', 'আরও'].map(nfc));
   for (const item of nav.split('<button').slice(1)) assert.match(item, /<svg/, 'every bottom-bar item keeps its icon');
 });
 
@@ -217,8 +217,8 @@ test('teacher Home is the launcher: welcome, one 3-column grid over existing scr
      এক ট্যাপে বিদ্যমান create form খোলে; অন্য টাইলগুলো বিদ্যমান স্ক্রিনে যায়। */
   const home = teacherHtml.slice(teacherHtml.indexOf('id="teacherHome"'), teacherHtml.indexOf('id="teacherRecords"'));
   assert.match(home, /teacher-home-grid/);
-  assert.deepEqual([...home.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['homework', 'suggestion', 'courses', 'routine-view', 'online-exams', 'notice'],
+  assert.deepEqual([...home.slice(home.indexOf('<nav class="teacher-home-grid"'), home.indexOf('</nav>', home.indexOf('<nav class="teacher-home-grid"'))).matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
+    ['routine-view', 'homework', 'notice', 'online-exams', 'exam', 'courses'],
     'every grid tile routes to an existing screen');
   assert.equal((home.match(/class="pay-tile"/g) || []).length, 0, 'home grid never copies the pay-tile shelf');
   assert.equal((home.match(/data-new-activity=/g) || []).length, 1, 'exactly one home tile is the one-tap homework entry');

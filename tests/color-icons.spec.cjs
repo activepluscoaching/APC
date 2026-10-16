@@ -6,7 +6,7 @@ test.use({ serviceWorkers: 'block' });
    illustration and glyph the app can paint, mounted into one page. The counts
    are part of the contract — adding artwork means updating them on purpose. */
 const ILLUSTRATION_COUNT = 33;
-const GLYPH_COUNT = 64;
+const GLYPH_COUNT = 65;
 
 for (const theme of ['light', 'dark']) test(`all colour/glyph artwork renders without invalid SVG or clipping (${theme})`, async ({ page }) => {
   const errors = [];
@@ -41,14 +41,15 @@ for (const theme of ['light', 'dark']) test(`all colour/glyph artwork renders wi
   await expect(page.locator('#illustrations svg')).toHaveCount(ILLUSTRATION_COUNT);
   await expect(page.locator('#glyphs svg')).toHaveCount(GLYPH_COUNT);
   await page.evaluate(value => { document.documentElement.setAttribute('data-theme', value); }, theme);
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.querySelectorAll('.picture image')].map(async image => {
+      const probe = new Image(); probe.src = image.getAttribute('href'); await probe.decode();
+    }));
+  });
   const bad = await page.locator('.picture svg').evaluateAll(icons => icons.flatMap(svg => {
     const box = svg.getBBox();
     if (!box.width || !box.height || box.x < -.1 || box.y < -.1 || box.x + box.width > 24.1 || box.y + box.height > 24.1) return [svg.dataset.icon + ': cropped/empty'];
-    if (svg.dataset.iconStyle === 'color') {
-      const fills = new Set([...svg.querySelectorAll('[fill]')].map(el => getComputedStyle(el).fill).filter(fill => fill !== 'none'));
-      if (fills.size < 2) return [svg.dataset.icon + ': not multicolour'];
-    }
     return [];
   }));
   expect(bad).toEqual([]);

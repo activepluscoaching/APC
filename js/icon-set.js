@@ -3,8 +3,8 @@
  * purpose-drawn, simplified silhouettes for navigation/controls. No fonts,
  * sprites, raster images, CDN, animation, storage or application behavior.
  * All paint comes from the shared foundation palette and follows AMOLED. */
-export const ICON_SET = 'active-plus-color';
-export const ICON_SET_VERSION = 1;
+export const ICON_SET = 'active-plus-soft3d';
+export const ICON_SET_VERSION = 2;
 
 const ink = 'var(--icon-outline, currentColor)';
 const color = name => `var(--icon-${name}, currentColor)`;
@@ -52,11 +52,54 @@ export const ILLUSTRATIONS = Object.freeze({
   phone: art(rect(4.8, 2.5, 14.4, 19.1, 'mint', 2.7) + rect(6.8, 5.1, 10.4, 12.9, 'paper', 1) + stroke('M10.3 4h3.4', 'on-color', .8) + path('M9.2 8h2l.7 1.8-1.3.9q.9 2 2.5 2.7l1-1.2 1.8.8v1.9c-4.4.5-7.8-3.3-6.7-6.9', 'blue') + circle(12, 19.8, .6, 'paper', 'stroke="none"'))
 });
 
+/* Distinct service silhouettes/markers; shared utility controls intentionally repeat. */
+const serviceArt = (base, mark) => `<g transform="translate(0 .2) scale(.82)">${ILLUSTRATIONS[base]}</g><circle cx="18" cy="18" r="5.3" fill="var(--icon-paper)" stroke="var(--icon-outline)" stroke-width=".8"/><g fill="none" stroke="var(--icon-blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${mark}</g>`;
+export const SEMANTIC_ART = Object.freeze({
+  'routine-today': serviceArt('calendar', '<circle cx="18" cy="18" r="2.4"/><path d="M18 13.8v1M18 21v1M14 18h1M21 18h1"/>'),
+  'routine-tomorrow': serviceArt('calendar', '<path d="M14.8 18h6m-2.5-2.5L21 18l-2.5 2.5"/>'),
+  'routine-weekly': serviceArt('calendar', '<path d="M15 16h6M15 18h6M15 20h6M17 15v6M19 15v6"/>'),
+  'routine-exam': serviceArt('calendar', '<path d="m15 20 4-5 2 2-4 4-2 .5Z"/>'),
+  'routine-changed': serviceArt('calendar', '<path d="M15 17a3 3 0 0 1 5-1l1 1m0-2v2h-2M21 19a3 3 0 0 1-5 1l-1-1m0 2v-2h2"/>'),
+  'routine-holiday': serviceArt('calendar', '<path d="M14.5 18a3.5 3.5 0 0 1 7 0h-7M18 15v5q0 2 2 1"/>'),
+  'routine-important': serviceArt('clock', '<path d="M18 14.5v4M18 21h.01"/>'),
+  'routine-other': serviceArt('calendar', '<circle cx="15.3" cy="18" r=".4"/><circle cx="18" cy="18" r=".4"/><circle cx="20.7" cy="18" r=".4"/>'),
+  'suggestion': serviceArt('book', '<path d="M16 19q-3-5 2-5t2 5l-1 2h-2Z"/>'),
+  'materials': serviceArt('assignment', '<path d="M15 15h6v6h-6ZM18 15v6M15 18h6"/>'),
+  'model-test': serviceArt('exam', '<path d="m15 18 2 2 4-4"/>'),
+  'practice': serviceArt('mcq', '<path d="M15 18a3 3 0 1 1 1 2m-1 1v-2h2"/>'),
+  'study-other': serviceArt('book', '<path d="M15 18h6M18 15v6"/>'),
+  'exam-upcoming': serviceArt('exam', '<path d="M18 15v3l2 1"/><circle cx="18" cy="18" r="3.5"/>'),
+  'exam-live': serviceArt('exam', '<path d="m16 14 5 4-5 4Z"/>'),
+  'exam-done': serviceArt('exam', '<path d="m14.5 18 2.5 2.5 4.5-5"/>'),
+  'exam-instant': serviceArt('mcq', '<path d="m19 14-4 5h3l-1 3 4-5h-3Z"/>'),
+  'exam-practice': serviceArt('exam', '<path d="M15 18a3 3 0 1 1 1 2m-1 1v-2h2"/>'),
+  'exam-recent': serviceArt('clock', '<path d="M15 18h6M18 15v6"/>'),
+  'exam-bank': serviceArt('mcq', '<path d="M15 16h6v5h-6ZM14.5 15h7"/>'),
+  'exam-other': serviceArt('exam', '<circle cx="15.3" cy="18" r=".4"/><circle cx="18" cy="18" r=".4"/><circle cx="20.7" cy="18" r=".4"/>'),
+  'class-today': serviceArt('classes', '<circle cx="18" cy="18" r="2.5"/>'),
+  'class-upcoming': serviceArt('classes', '<path d="M15 18h6m-3-3 3 3-3 3"/>'),
+  'class-record': serviceArt('reports', '<path d="M15 15h6v6h-6ZM17 15v6"/>'),
+  'class-subjects': serviceArt('book', '<path d="M15 20v-5h2l1 3 1-3h2v5"/>'),
+  'class-notes': serviceArt('assignment', '<path d="m15 20 4-5 2 2-4 4-2 .5Z"/>'),
+  'class-materials': serviceArt('classes', '<path d="M15 15h6v6h-6ZM18 15v6"/>'),
+  'profile-edit': serviceArt('user', '<path d="m15 20 4-5 2 2-4 4-2 .5Z"/>'),
+  'notification-settings': serviceArt('bell', '<path d="M14.5 16h7M14.5 20h7M17 15v2M19 19v2"/>'),
+  'contact-office': serviceArt('staff', '<path d="M15 15h6v5h-3l-2 2v-2h-1Z"/>'),
+  'offline-data': serviceArt('data', '<path d="M15 15l6 6M15 19a4 4 0 0 1 6 0"/>'),
+  'marks-entry': serviceArt('reports', '<path d="m15 20 4-5 2 2-4 4-2 .5Z"/>'),
+  'exam-create': serviceArt('exam', '<path d="M15 18h6M18 15v6"/>'),
+  'class-other': serviceArt('classes', '<path d="M15 18h6M18 15v6"/>'),
+  'pending-user': serviceArt('students', '<path d="M18 15v3l2 1"/><circle cx="18" cy="18" r="3.5"/>'),
+  'inactive-user': serviceArt('user', '<path d="M16 15v6M20 15v6"/>'),
+  'rejected-user': serviceArt('user', '<path d="m15 15 6 6m0-6-6 6"/>'),
+});
+
 /* Same rounded objects, with details reduced for 20–27px utility/navigation
  * use. They inherit currentColor: selected states and the raised action stay
  * high-contrast, rather than squeezing a multi-colour miniature into a tab. */
 const line = d => `<path d="${d}"/>`;
 export const GLYPHS = Object.freeze({
+  camera: '<path d="M3 7h4l2-3h6l2 3h4v14H3Z"/><circle cx="12" cy="13" r="4"/>',
   home: line('m3 10.5 9-7.7 9 7.7M5.2 9.3v10a1.7 1.7 0 0 0 1.7 1.7h10.2a1.7 1.7 0 0 0 1.7-1.7v-10M9.5 21v-6.5h5V21'),
   dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/>',
   book: line('M12 5q-4-2.5-8-1.2v15.9q4-1.3 8 1.2 4-2.5 8-1.2V3.8Q16 2.5 12 5Zm0 0v15.9M7 7.8l2 .5M15 8.3l2-.5'),
@@ -137,9 +180,11 @@ export function resolveIcon(name) {
   return Object.prototype.hasOwnProperty.call(aliases, key) ? aliases[key] : key;
 }
 export function iconArtwork(name, variant = 'color') {
-  const key = resolveIcon(name);
-  if (variant === 'color' && Object.prototype.hasOwnProperty.call(ILLUSTRATIONS, key)) return { markup: ILLUSTRATIONS[key], style: 'color', canonical: key };
-  if (key === 'chevron-down') return { markup: line('m6 9 6 6 6-6'), style: 'glyph', canonical: key };
-  const known = Object.prototype.hasOwnProperty.call(GLYPHS, key);
-  return { markup: known ? GLYPHS[key] : GLYPHS.help, style: 'glyph', canonical: known ? key : 'help' };
+  const resolved = resolveIcon(name);
+  const key = Object.prototype.hasOwnProperty.call(SEMANTIC_ART, resolved) || Object.prototype.hasOwnProperty.call(ILLUSTRATIONS, resolved) || Object.prototype.hasOwnProperty.call(GLYPHS, resolved) || resolved === 'chevron-down' ? resolved : 'help';
+  // Generated raster illustrations plus matching local vector controls. The
+  // outer SVG, semantic name and all caller/control attributes remain intact.
+  const generated = variant === 'color' && ['book','calendar','exam','wallet'].includes(key);
+  const url = `assets/icons/ai-3d/${key}.${generated ? 'png' : 'svg'}`;
+  return { markup: `<image href="${url}" width="24" height="24" preserveAspectRatio="xMidYMid meet"/>`, style: variant === 'color' && Object.prototype.hasOwnProperty.call(ILLUSTRATIONS,key) ? 'color' : 'glyph', canonical: key };
 }

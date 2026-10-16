@@ -1,3 +1,4 @@
+import { examRepository, watchExams } from './exam-data.js';
 import { guardianDraft } from './guardian-message.js';
 import { loadRoutine, loadNotices, saveNotices, WEEK_DAYS } from './office-data.js';
 import { normalizeClassId, normalizeSectionId } from './class-key.js';
@@ -23,7 +24,7 @@ import { teachingRepository, DEMO_TEACHER, ACTIVITY_TYPES, PROGRESS_LABELS, esca
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
-const state = { db: { activities: [] }, courses: [], students: [], assignments: [], teacher: null, view: 'home', status: 'all', ready: false, busy: false, recordLimit: 15, examScreen: '', routineTab: 'today' };
+const state = { db: { activities: [] }, courses: [], students: [], assignments: [], teacher: null, exams: null, view: 'home', status: 'all', ready: false, busy: false, recordLimit: 15, examScreen: '', routineTab: 'today' };
 let modalTrigger, toastTimer;
 initFixedShell();
 /* The examination workspace is the single exam/question surface; the academic
@@ -138,8 +139,8 @@ function renderTypeCounts() {
 function renderHome() {
   const hasAssignments = state.assignments.length > 0;
   $('#teacherAssignmentNotice').hidden = hasAssignments;
-  const today = todayISO();
-  $('#teacherToday').textContent = displayDate(today);
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+  $('#teacherToday').textContent = `${hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা'} · শিক্ষক প্যানেল`;
   /* শিক্ষক-নাম টপবারে এবং welcome hero-তে; textContent ব্যবহার করে account
      profile-এর নাম নিরাপদে দেখানো হয়। */
   const name = String(state.teacher?.fullName || '').trim();
@@ -155,13 +156,18 @@ function renderHome() {
     if (name) headerName.title = name;
     else headerName.removeAttribute('title');
   }
+  if ($('#teacherHomeInitial')) $('#teacherHomeInitial').textContent = name.charAt(0) || 'শি';
   const records = own();
-  const weekday = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date().getDay()];
-  const todays = (loadRoutine()[weekday]?.classes || []).filter(item => state.assignments.some(assignment => assignment.className === item.className)).sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+  const scopedStudents = state.students.filter(student => state.assignments.some(assignment => matchesStudent(assignment, student)));
+  $('#teacherHomeStudentTotal').textContent = hasAssignments ? bn(new Set(scopedStudents.map(student => student.id)).size) : '—';
+  const pending = records.filter(record => record.type === 'homework' && record.status === 'published').reduce((total, record) => total + rosterFor(record).filter(student => !['done', 'reviewed'].includes(record.progress?.[student.id]?.value)).length, 0);
+  $('#teacherHomePendingTotal').textContent = hasAssignments ? bn(pending) : '—';
+  $('#teacherHomeUpcomingTotal').textContent = state.exams === null ? '—' : bn(state.exams.filter(exam => ['published', 'approved'].includes(exam.status) && Number(exam.startAt) > Date.now()).length);
+  const todays = assignedRoutineRows(routineTodayKey()).sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
   $('#teacherTodayClassCount').textContent = hasAssignments ? `${bn(todays.length)}টি ক্লাস` : '—';
   renderTypeCounts();
   $('#teacherTodayClasses').innerHTML = todays.length
-    ? todays.map(item => `<article class="teaching-card"><span class="teaching-kind">Manager routine</span><h3>${esc(item.subject || 'বিষয় উল্লেখ নেই')}</h3><small>${esc(item.className || '')}${item.room ? ` • ${esc(item.room)}` : ''}</small><p>${esc(item.time || 'সময় নির্ধারিত নয়')}</p></article>`).join('')
+    ? todays.map(item => `<article class="teacher-home-class"><span class="teacher-home-class-icon" aria-hidden="true">✓</span><div><h3>${esc(item.className || 'ক্লাস')} · ${esc(item.subject || 'বিষয় উল্লেখ নেই')}</h3><p>${esc(item.time || 'সময় নির্ধারিত নয়')}${item.room ? ` · ${esc(item.room)}` : ''}</p></div><small>আজকের</small></article>`).join('')
     : '<p class="teacher-empty">আজ কোনো নির্ধারিত ক্লাস নেই</p>';
   $('#teacherRecent').innerHTML = records.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 3).map(homeCard).join('') || `<p class="teacher-empty">${hasAssignments ? 'এখনও কোনো academic কাজ যোগ করা হয়নি।' : 'Assignment না থাকায় academic কাজ দেখানো হচ্ছে না।'}</p>`;
 }
@@ -239,11 +245,12 @@ function assignedRoutineRows(day) {
   const routine = loadRoutine() || {};
   return (routine[day]?.classes || []).filter(item => {
     if (item?.teacherId) return isOwnTeacherRecord(item.teacherId);
-    return state.assignments.some(assignment => normalizeClassId(assignment) === normalizeClassId(item));
+    return state.assignments.some(assignment => normalizeClassId(assignment) === normalizeClassId(item) && (!normalizeSectionId(item) || normalizeSectionId(assignment) === normalizeSectionId(item)) && (!item.subject || (assignment.subjects?.length ? assignment.subjects : [assignment.subject]).includes(item.subject)));
   });
 }
 function routineTodayKey(offset = 0) {
-  return WEEK_DAYS[(new Date().getDay() + 1 + offset) % 7];
+  const day = new Date(`${todayISO()}T12:00:00Z`).getUTCDay();
+  return ['sun', 'mon', 'tue', 'wed', 'thu', null, 'sat'][(day + offset) % 7];
 }
 function routineCardHtml(rows, empty, day = '') {
   if (!rows.length) return `<p class="teacher-empty">${empty}</p>`;
@@ -478,9 +485,9 @@ function setView(view) {
   /* The bottom bar keeps its five seats: the academic screens light up the
      একাডেমিক seat, the class-test results the ফলাফল seat. */
   const bottomView = view === 'home' ? 'home'
-    : ['academic', 'homework', 'suggestion', 'online-exams', 'courses', 'notice'].includes(view) ? 'academic'
-      : (view === 'routine-view' || ROUTINE_CHILD_VIEWS.includes(view)) ? 'routine-view'
-        : view === 'exam' ? 'exam' : 'more';
+    : view === 'students' ? 'students'
+      : ['academic', 'classes', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
+        : ['exam', 'online-exams'].includes(view) ? 'exam' : 'more';
   $$('.admin-bottom [data-teacher-view]').forEach(el => {
     const active = el.dataset.teacherView === bottomView;
     el.classList.toggle('active', active);
@@ -502,8 +509,8 @@ async function reload() {
     try {
       if (teacher?.assignment) syncTeacherAssignmentFromDirectory(teacher);
     } catch { /* best-effort: the merged read below still answers */ }
-    const [db, students, courseData] = await Promise.all([teachingRepository.list(), teachingRepository.listStudents(), courseRepository.list({ role: 'teacher' }).catch(() => ({ courses: [] }))]);
-    state.db = db; state.courses = courseData.courses || []; state.students = students; state.teacher = teacher;
+    const [db, students, courseData, examData] = await Promise.all([teachingRepository.list(), teachingRepository.listStudents(), courseRepository.list({ role: 'teacher' }).catch(() => ({ courses: [] })), examRepository.list({ role: 'teacher' }).catch(() => null)]);
+    state.db = db; state.courses = courseData.courses || []; state.students = students; state.teacher = teacher; state.exams = examData?.exams || null;
     state.assignments = await effectiveTeacherAssignments(teacher?.username || 'teacher.apc');
     state.ready = true;
     ['teacherClassFilter', 'teacherStudentClass', 'teacherNoticeClass'].forEach(id => {
@@ -518,6 +525,9 @@ async function reload() {
 }
 function openModal(title, html) {
   if ($('#teacherModalBackdrop').hidden) modalTrigger = document.activeElement;
+  $('#teacherModalBackdrop').classList.remove('is-homework-editor');
+  $('#teacherModalClose').textContent = '×';
+  $('#teacherModalClose').setAttribute('aria-label', 'বন্ধ করুন');
   $('#teacherModalTitle').textContent = title;
   $('#teacherModalBody').innerHTML = html;
   $('#teacherModalBackdrop').hidden = false; document.body.classList.add('admin-modal-open');
@@ -533,7 +543,7 @@ function closeModal() {
 function showEditor(type, old = null) {
   if (type === 'exam') return setView('online-exams');
   if (!state.ready || state.busy) return toast('আগে ডেটা লোড হতে দিন বা আবার চেষ্টা করুন।');
-  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: 'draft', className: assignedClasses()[0] || '' };
+  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: type === 'homework' ? 'published' : 'draft', className: assignedClasses()[0] || '' };
   const timed = ['exam', 'routine'].includes(type);
   const field = (name, label, inputType = 'text', extra = '') => `<div><label for="activity-${name}">${label}</label><input id="activity-${name}" name="${name}" type="${inputType}" value="${esc(a[name] ?? '')}" ${extra}></div>`;
   openModal(`${old ? 'সম্পাদনা: ' : 'নতুন '}${ACTIVITY_TYPES[type].label}`, `<form id="teacherActivityForm" class="teacher-form">
@@ -552,6 +562,7 @@ function showEditor(type, old = null) {
     <p class="finance-error" id="teacherSaveError" role="alert" hidden></p>
     <div class="modal-actions"><button class="admin-btn primary" type="submit">সংরক্ষণ করুন</button><button class="admin-btn ghost" type="button" data-close-teacher>বাতিল</button></div>
   </form>`);
+  if (type === 'homework') prepareHomeworkEditor(a);
   $('#teacherActivityForm').addEventListener('submit', event => {
     event.preventDefault(); const form = event.currentTarget;
     if (!form.reportValidity()) return;
@@ -559,6 +570,85 @@ function showEditor(type, old = null) {
     save(form, () => teachingRepository.saveActivity({ ...values, type, id: old?.id, date: type === 'suggestion' ? a.date : values.date }), 'কাজটি সংরক্ষণ করা হয়েছে');
   });
 }
+// Reuse the same fields, validation and saveActivity path. The simplified
+// homework screen keeps optional controls discoverable without duplicating data.
+function prepareHomeworkEditor(activity) {
+  const form = $('#teacherActivityForm');
+  $('#teacherModalBackdrop').classList.add('is-homework-editor');
+  $('#teacherModalClose').textContent = '←';
+  $('#teacherModalClose').setAttribute('aria-label', 'ফিরুন');
+  form.classList.add('teacher-homework-form');
+  form.addEventListener('invalid', event => {
+    const details = event.target.closest('details');
+    if (details) details.open = true;
+  }, true);
+  const wrap = name => $('#activity-' + name)?.parentElement;
+  const symbols = {
+    className: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-17a3 3 0 0 1 0 6m1 4a6 6 0 0 1 3 5v2"/>',
+    subject: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M10 3v18m4-13h1m-1 4h1"/>',
+    title: '<path d="m4 15 12-12 5 5L9 20l-6 1Zm10-10 5 5M4 15l5 5"/>',
+    details: '<path d="M4 5h16M4 10h16M4 15h16M4 20h10"/>',
+    date: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 11h18"/>',
+    time: '<circle cx="12" cy="12" r="9"/><path d="M12 6v7l4 2"/>',
+    resourceURL: '<path d="m9 16 8-8a3 3 0 0 0-4-4L4 13a5 5 0 0 0 7 7l9-9m-14 5 9-9"/>'
+  };
+  for (const name of Object.keys(symbols)) {
+    const node = wrap(name);
+    if (!node) continue;
+    node.classList.add('homework-field', `homework-field-${name}`);
+    const icon = document.createElement('span'); icon.className = 'homework-field-icon';
+    icon.setAttribute('aria-hidden', 'true'); icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${symbols[name]}</svg>`; node.prepend(icon);
+  }
+  $('#activity-title').placeholder = 'কাজের শিরোনাম';
+  $('#activity-details').placeholder = 'বিস্তারিত নির্দেশনা লিখুন…';
+  $('#activity-resourceURL').placeholder = 'https://…';
+  const classSelect = $('#activity-className');
+  classSelect.innerHTML = state.assignments.map(assignment => `<option value="${esc(assignment.className)}" data-group="${esc(assignment.group || '')}" ${assignment.className === activity.className && (!activity.group || assignment.group === activity.group) ? 'selected' : ''}>শ্রেণি: ${esc(assignment.className)}${assignment.group ? ` · ${esc(assignment.group)}` : ''}</option>`).join('');
+  const subjects = document.createElement('datalist'); subjects.id = 'homeworkAssignedSubjects';
+  $('#activity-subject').setAttribute('list', subjects.id); form.append(subjects);
+  function syncScope(initial = false) {
+    const group = classSelect.selectedOptions[0]?.dataset.group || '';
+    if (!initial || !activity.id) $('#activity-group').value = group;
+    const choices = [...new Set(state.assignments.filter(item => item.className === classSelect.value && (!group || item.group === group))
+      .flatMap(item => item.subjects?.length ? item.subjects : [item.subject]).filter(Boolean))].filter(subject => subject !== 'Test');
+    subjects.innerHTML = choices.map(subject => `<option value="${esc(subject)}"></option>`).join('');
+    if (choices.length === 1 && (!initial || !$('#activity-subject').value)) $('#activity-subject').value = choices[0];
+    else if (!initial && choices.length && !choices.includes($('#activity-subject').value)) $('#activity-subject').value = '';
+    $('#activity-subject').placeholder = choices.length ? 'বিষয় বেছে নিন' : 'বিষয় লিখুন';
+  }
+  classSelect.addEventListener('change', () => syncScope()); syncScope(true);
+  const attachments = document.createElement('details'); attachments.className = 'homework-attachment';
+  const attachmentTitle = document.createElement('summary'); attachmentTitle.textContent = 'ফাইল বা ছবির লিংক যোগ করুন'; attachments.append(attachmentTitle, wrap('resourceURL'));
+  const help = document.createElement('p'); help.textContent = 'শেয়ারযোগ্য https লিংক দিন। এই ফর্মে সরাসরি ফাইল আপলোড হয় না।'; attachments.append(help);
+  if (activity.resourceURL) attachments.open = true;
+  const advanced = document.createElement('details'); advanced.className = 'homework-options';
+  const optionsTitle = document.createElement('summary'); optionsTitle.textContent = 'জমার সময়, বিভাগ ও খসড়ার সেটিংস'; advanced.append(optionsTitle, wrap('time'), wrap('group'), wrap('status'));
+  const deadlineNote = document.createElement('p'); deadlineNote.textContent = 'জমার তারিখের সঙ্গে নিচের সেটিংসে দেওয়া সময়ও প্রযোজ্য।'; advanced.append(deadlineNote);
+  const error = $('#teacherSaveError'), actions = form.querySelector('.modal-actions');
+  const fields = ['className', 'subject', 'title', 'details', 'date'].map(wrap);
+  fields.forEach(node => form.append(node)); form.append(attachments, advanced);
+  const scopeHint = form.querySelector('.finance-hint'); if (scopeHint) form.append(scopeHint);
+  form.append(error, actions);
+  const submit = form.querySelector('[type="submit"]');
+  const syncStatus = () => { submit.textContent = $('#activity-status').value === 'published' ? 'প্রকাশ করুন' : 'খসড়া সংরক্ষণ করুন'; };
+  $('#activity-status').addEventListener('change', syncStatus); syncStatus();
+  const footer = $('.admin-bottom').cloneNode(true);
+  footer.className = 'teacher-composer-nav';
+  footer.setAttribute('aria-label', 'শিক্ষক প্যানেল');
+  footer.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  footer.querySelectorAll('.nav-dot').forEach(node => node.remove());
+  footer.querySelectorAll('button').forEach(button => {
+    button.className = 'teacher-composer-link';
+    const active = button.dataset.teacherView === 'classes';
+    button.classList.toggle('active', active);
+    button.removeAttribute('aria-current');
+    if (active) button.setAttribute('aria-current', 'page');
+    button.addEventListener('click', () => closeModal());
+  });
+  $('#teacherModalBody').append(footer);
+
+}
+
 async function save(form, operation, message) {
   if (state.busy || !state.ready) return;
   state.busy = true; form.setAttribute('aria-busy', 'true'); $('#teacherSaveError').hidden = true;
@@ -1028,6 +1118,11 @@ window.addEventListener('apc-sync-updated', event => {
   const collection = event?.detail?.collection;
   if (!['teacherAssignments', 'staffDirectory', 'staffAccounts'].includes(collection)) return;
   if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
+});
+
+watchExams(() => {
+  if (!state.ready) return;
+  void examRepository.list({ role: 'teacher' }).then(db => { state.exams = db.exams || []; renderHome(); }).catch(() => { state.exams = null; renderHome(); });
 });
 
 // An existing device-bound session opens the panel without asking again.

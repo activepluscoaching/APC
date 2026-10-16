@@ -1805,16 +1805,15 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 /* A finished task gets one small pop — calm, not confetti rain. */
 .app-shell .is-done svg, .app-shell [data-done="true"] svg { animation: apc-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
 /* Student modals rise as bottom sheets with a blurred scrim. */
-#noticeModal, #logoutModal, #editModal, #resourceModal {
+#editModal, #resourceModal {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
-#noticeModal:not([hidden]) .modal, #logoutModal:not([hidden]) .modal,
 #editModal:not([hidden]) .modal, #resourceModal:not([hidden]) .modal {
   animation: apc-sheet-up .28s cubic-bezier(.22, .9, .3, 1);
   border-radius: 24px 24px 0 0;
 }
-#noticeModal .modal, #logoutModal .modal, #editModal .modal, #resourceModal .modal {
+#editModal .modal, #resourceModal .modal {
   background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow-lift);
@@ -1856,140 +1855,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
   font-size: 12.5px;
   font-weight: 600;
 }
-/* §31 ── Action Center redesign (owner screenshot 2026-10-15: "ডিজাইন পছন্দ
-   হল না")। The inbox sheet (the student's #noticeModal and the shared
-   #apcNoticeModal every panel mounts) still wore the old navy-pill wallet
-   look with a clipped header. Same glass language as §30, token colours
-   only, every function (filters, read-all, clear, push row, CTA) untouched. */
-#apcNoticeModal {
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-#apcNoticeModal:not([hidden]) .modal { animation: apc-sheet-up .28s cubic-bezier(.22, .9, .3, 1); }
-#apcNoticeModal .modal, #noticeModal .modal {
-  display: flex; flex-direction: column;
-  max-height: min(92dvh, 720px);
-  border-radius: 24px;
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow-lift);
-  overflow: hidden;
-}
-/* Header: room to breathe, never clipped by the sheet's top edge. */
-#apcNoticeModal .modal-header, #noticeModal .modal-header {
-  padding: 18px 20px 8px;
-  align-items: flex-start;
-}
-#apcNoticeModal .modal-header .eyebrow, #noticeModal .modal-header .eyebrow {
-  color: var(--glass-accent); font-weight: 700; letter-spacing: .04em; margin-bottom: 2px;
-}
-#apcNoticeModal .modal-header h2, #noticeModal .modal-header h2 {
-  font-size: 20px; font-weight: 700; line-height: 1.35;
-}
-#apcNoticeModal .modal-close, #noticeModal .modal-close {
-  width: 40px; height: 40px; min-width: 40px; min-height: 40px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  background: var(--glass-bg-soft);
-  border: 1px solid var(--glass-border);
-  color: var(--color-text);
-  font-size: 20px; line-height: 1;
-  transition: transform .18s ease, background-color .2s ease;
-}
-#apcNoticeModal .modal-close:active, #noticeModal .modal-close:active { transform: scale(.9) rotate(45deg); }
-/* Filters become one calm segmented bar; the active seat is brand green,
-   never the old navy. */
-#apcNoticeModal .notice-filters, #noticeModal .notice-filters {
-  margin: 8px 20px 12px; padding: 4px; gap: 4px;
-  background: var(--glass-bg-soft);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  flex-wrap: nowrap;
-}
-#apcNoticeModal .notice-filters .chip, #noticeModal .notice-filters .chip {
-  min-height: 38px; border: 0; background: transparent;
-  -webkit-backdrop-filter: none; backdrop-filter: none;
-  box-shadow: none;
-  font-weight: 600;
-}
-#apcNoticeModal .notice-filters .chip.active, #noticeModal .notice-filters .chip.active {
-  background: var(--glass-accent);
-  color: var(--color-surface);
-  border-color: transparent;
-}
-#apcNoticeModal .notice-read-all, #noticeModal .notice-read-all {
-  margin-left: auto; min-height: 38px;
-  background: var(--glass-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--color-success) 45%, transparent);
-  color: var(--glass-accent); font-weight: 700; border-radius: 999px;
-}
-#apcNoticeModal [data-apc-notice-clear], #noticeModal [data-apc-notice-clear] {
-  align-self: flex-start; margin: 0 20px 4px;
-  background: transparent; border: 0; min-height: 40px;
-  color: var(--color-text-muted); font-weight: 600;
-  text-decoration: underline; text-underline-offset: 3px;
-}
-#apcNoticeModal .notice-read-status, #noticeModal .notice-read-status { margin: 0 20px; }
-#apcNoticeModal [data-apc-notice-list], #noticeModal [data-apc-notice-list], #noticeListStudent {
-  margin: 4px 20px 8px; padding: 2px 2px 6px;
-  max-height: min(54vh, 480px);
-}
-/* Cards: glass tiles; an unread one leans on a green edge and a soft tint
-   (the birthday gold keeps its own celebration colours). */
-#apcNoticeModal .notice-detail, #noticeModal .notice-detail {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 18px;
-  box-shadow: var(--glass-shadow);
-  padding: 14px 16px;
-}
-#apcNoticeModal .notice-detail.unread:not(.is-birthday), #noticeModal .notice-detail.unread:not(.is-birthday) {
-  background: color-mix(in srgb, var(--color-success) 7%, var(--color-surface));
-  border-inline-start: 3px solid var(--glass-accent);
-}
-#apcNoticeModal .notice-detail-icon, #noticeModal .notice-detail-icon {
-  width: 42px; height: 42px; border-radius: 14px;
-  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
-  color: var(--glass-accent);
-}
-#apcNoticeModal .notice-time, #noticeModal .notice-time {
-  font-size: 12px; color: var(--color-text-muted); font-weight: 600;
-}
-#apcNoticeModal .notice-section-chip, #noticeModal .notice-section-chip {
-  justify-self: start;
-  padding: 2px 10px; border-radius: 999px;
-  background: var(--glass-bg-soft);
-  border: 1px solid var(--glass-border);
-  font-size: 11px; font-weight: 700; color: var(--color-text-secondary);
-}
-#apcNoticeModal .notice-detail-copy h3, #noticeModal .notice-detail-copy h3 {
-  font-size: 15.5px; font-weight: 700; line-height: 1.45;
-}
-#apcNoticeModal .notice-detail-copy p, #noticeModal .notice-detail-copy p {
-  font-size: 13.5px; line-height: 1.65;
-}
-#apcNoticeModal .notice-unread-dot, #noticeModal .notice-unread-dot {
-  background: var(--glass-accent);
-  animation: apc-pulse-dot 2.2s ease-in-out infinite;
-}
-/* The one clear action: brand-green, thumb-sized, calm shadow. */
-#apcNoticeModal .notice-action, #noticeModal .notice-action {
-  min-height: 44px; padding: 10px 20px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--glass-accent), var(--glass-teal-soft));
-  border: 0; color: var(--color-surface); font-weight: 700;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-success) 28%, transparent);
-  transition: transform .15s ease;
-}
-#apcNoticeModal .notice-action:active, #noticeModal .notice-action:active { transform: scale(.97); }
-#apcNoticeModal [data-apc-notice-push], #noticeModal [data-apc-notice-push] {
-  margin: 0 20px 16px; font-size: 12.5px; color: var(--color-text-muted);
-}
-/* Empty inbox: the same friendly dashed glass as the home empty states. */
-#apcNoticeModal .notice-empty, #noticeModal .notice-empty {
-  background: var(--glass-bg-soft);
-  border: 1.5px dashed color-mix(in srgb, var(--color-success) 34%, var(--glass-border));
-  border-radius: var(--glass-radius);
-}
 /* AMOLED / dark: the same glass, tinted by the dark surface token. */
 [data-theme="dark"] .app-shell {
   background:
@@ -2008,4 +1873,725 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
     transition: none !important;
   }
 }
+}
+
+/* Reference student home: flat, quiet cards. Kept portal-scoped so staff,
+   payment and login screens retain their existing skin and theme tokens. */
+@media screen {
+.student-reference .app-shell { background: var(--color-bg); }
+.student-reference #homeView .student-home-overview {
+  display: flex; flex-direction: column; min-height: 0; padding: 0 0 16px;
+}
+.student-reference #homeView .pay-hero { padding: 0; color: var(--color-text); }
+.student-reference #homeView .pay-hero::before { display: none; }
+.student-reference #homeView .pay-hero-id { padding: 18px 0 16px; gap: 14px; }
+.student-reference #homeView .pay-avatar {
+  width: 54px; height: 54px; background: var(--color-primary); color: var(--pay-on-hero);
+  box-shadow: none; font-weight: 500;
+}
+.student-reference #homeView .pay-greeting { font-size: 15px; color: var(--color-text-secondary); }
+.student-reference #homeView .pay-hero-name { font-size: 22px; color: var(--color-text); font-weight: 500; }
+.student-reference #homeView .pay-hero-meta { font-size: 11px; color: var(--color-text-secondary); }
+.student-reference #homeView .pay-hero-link { margin-right: 48px; color: var(--color-text-secondary); background: transparent; border: 0; }
+.student-reference #homeView .study-progress-card {
+  display: block; margin: 0; padding: 20px 16px 16px; border-radius: 22px;
+  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: none;
+}
+.student-reference #homeView .study-progress-top { display: flex; gap: 18px; }
+.student-reference #homeView .study-progress-icon { display: none; }
+.student-reference #homeView .progress-ring { order: -1; width: 78px; height: 78px; margin: 0; }
+.student-reference #homeView .progress-ring::before { inset: 8px; }
+.student-reference #homeView .progress-ring strong { font-size: 18px; font-weight: 600; }
+.student-reference #homeView .progress-ring small { display: none; }
+.student-reference #homeView .study-progress-heading { flex: 1; min-width: 0; }
+.student-reference #homeView .study-progress-heading h1 { font-size: clamp(17px, 4.6vw, 23px); font-weight: 500; }
+.student-reference #homeView .study-progress-subtitle { margin: 3px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.5; }
+.student-reference #homeView .study-progress-card .study-progress-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  margin: 18px 0 0; padding: 0; border: 0;
+}
+.student-reference #homeView .study-progress-card .study-progress-stats > div {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  background: var(--color-bg); border-radius: 14px; padding: 9px 3px; gap: 0;
+}
+.student-reference #homeView .study-progress-card .study-progress-stats svg { display: none; }
+.student-reference #homeView .study-progress-stats strong { font-size: 16px; font-weight: 500; }
+.student-reference #homeView .study-progress-stats small { font-size: 14px; }
+.student-reference #homeView #studentServices {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  padding: 0; margin: 14px 0 0; background: transparent; border: 0; box-shadow: none;
+}
+.student-reference #homeView #studentServices .pay-tile {
+  --shortcut-ink: #159f7c;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 13px 4px; min-height: 96px; border-radius: 19px;
+  border: 1px solid color-mix(in srgb, var(--shortcut-ink) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--shortcut-ink) 9%, var(--color-surface));
+  box-shadow: none; backdrop-filter: none; color: var(--color-text);
+}
+.student-reference #homeView #studentServices .pay-tile:nth-child(2) { --shortcut-ink: #c17b08; }
+.student-reference #homeView #studentServices .pay-tile:nth-child(3) { --shortcut-ink: #328ce0; }
+.student-reference #homeView #studentServices .pay-tile:nth-child(4) { --shortcut-ink: #8774e8; }
+.student-reference #homeView #studentServices .pay-tile:nth-child(5) { --shortcut-ink: #df5082; }
+.student-reference #homeView #studentServices .pay-tile:nth-child(6) { --shortcut-ink: #df5b32; }
+.student-reference #homeView #studentServices .pay-tile-icon {
+  width: 30px; height: 30px; padding: 0; background: transparent; border: 0;
+  border-radius: 0; box-shadow: none; color: var(--shortcut-ink);
+}
+.student-reference #homeView #studentServices .pay-tile-icon svg { width: 30px; height: 30px; stroke: currentColor; fill: none; animation: none; }
+.student-reference #homeView #studentServices .pay-tile-label { font-size: 17px; font-weight: 400; line-height: 1.4; }
+.student-reference #homeView .dashboard-today-section {
+  display: block; flex: none; margin: 14px 0 0; padding: 15px 16px;
+  border: 1px solid var(--color-border); border-radius: 22px; background: var(--color-surface);
+}
+.student-reference #homeView .dashboard-section-heading { margin-bottom: 10px; gap: 8px; }
+.student-reference #homeView .dashboard-section-heading h2 { font-size: 21px; font-weight: 500; }
+.student-reference #homeView .dashboard-text-link { font-size: 15px; color: var(--color-primary); }
+.student-reference #homeView #dashboardRoutineList { display: grid; gap: 8px; }
+.student-reference #homeView .dashboard-routine-card {
+  display: grid; grid-template-columns: 28px minmax(0,1fr) auto; align-items: center;
+  gap: 10px; padding: 4px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.student-reference #homeView .dashboard-routine-icon { width: 26px; height: 26px; background: transparent; }
+.student-reference #homeView .dashboard-routine-main strong { font-size: 16px; font-weight: 500; }
+.student-reference #homeView .dashboard-routine-main small { font-size: 11px; }
+.student-reference #homeView .dashboard-time-pill { padding: 0; background: transparent; font-size: 14px; }
+.student-reference #homeView .dashboard-routine-status { font-size: 12px; }
+.student-reference #homeView .dashboard-empty-card { background: transparent; box-shadow: none; border: 0; padding: 6px 0; }
+.student-reference #homeView #homeRealStatsRow { grid-template-columns: repeat(2, minmax(0,1fr)); border: 0; padding: 8px 0; margin: 0; }
+@media (min-width: 900px) {
+  .student-reference #homeView { display: none; }
+  .student-reference #homeView.active { display: block; max-width: 760px; margin-inline: auto; }
+  .student-reference #homeView #studentServices .pay-tile { min-height: 110px; }
+}
+@media (max-width: 360px) {
+  .student-reference #homeView .study-progress-top { gap: 10px; }
+  .student-reference #homeView .progress-ring { width: 64px; height: 64px; }
+  .student-reference #homeView #studentServices .pay-tile-label { font-size: 14px; }
+  .student-reference #homeView .dashboard-section-heading h2 { font-size: 18px; }
+}
+}
+
+/* Study hub companion to the reference home. Keep all nine existing routes
+   and live count hooks; only their presentation changes. */
+@media screen {
+.student-reference .app-shell:has(#coursesView.active) #studentHeader { display: none; }
+.student-reference #coursesView { max-width: 760px; margin-inline: auto; }
+.student-reference #coursesView .page-intro { margin: 0 0 16px; padding: 18px 0 0; color: var(--color-text); background: transparent; }
+.student-reference #coursesView .page-intro::before { content: none; }
+.student-reference #coursesView .page-intro-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: transparent; }
+.student-reference #coursesView .page-intro .pay-back { display: none; }
+.student-reference #coursesView .page-intro h1 { margin: 0; font-size: 26px; font-weight: 500; line-height: 1.4; color: var(--color-text); background: transparent; box-shadow: none; }
+.student-reference #coursesView .study-hub-subtitle { margin: 4px 0 0; font-size: 16px; line-height: 1.5; color: var(--color-text-secondary); }
+.student-reference #studySections {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none;
+}
+.student-reference #studySections .pay-tile {
+  --study-ink: #159f7c;
+  position: relative; min-height: 96px; padding: 19px 4px 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
+  border-radius: 19px; border: 1px solid color-mix(in srgb, var(--study-ink) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--study-ink) 9%, var(--color-surface));
+  color: var(--color-text); box-shadow: none; backdrop-filter: none;
+}
+.student-reference #studySections .pay-tile:nth-child(2) { --study-ink: #df5b32; }
+.student-reference #studySections .pay-tile:nth-child(3) { --study-ink: #c17b08; }
+.student-reference #studySections .pay-tile:nth-child(4),
+.student-reference #studySections .pay-tile:nth-child(8) { --study-ink: #328ce0; }
+.student-reference #studySections .pay-tile:nth-child(5) { --study-ink: #8774e8; }
+.student-reference #studySections .pay-tile:nth-child(6) { --study-ink: #df5082; }
+.student-reference #studySections .pay-tile:nth-child(9) { --study-ink: #888981; }
+.student-reference #studySections .pay-tile-icon {
+  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 0;
+  background: transparent; color: var(--study-ink); box-shadow: none;
+}
+.student-reference #studySections .pay-tile-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; animation: none; }
+.student-reference #studySections .pay-tile-label { font-size: 17px; font-weight: 400; line-height: 1.35; }
+.student-reference #studySections .learning-filter-count {
+  position: absolute; right: 9px; top: 7px; margin: 0; min-width: 25px; padding: 1px 7px;
+  border-radius: 12px; font-size: 12px; line-height: 1.35; color: var(--color-text);
+  background: color-mix(in srgb, var(--study-ink) 22%, var(--color-surface)); opacity: 1;
+}
+.student-reference #coursesView .study-today-card {
+  margin: 14px 0 0; padding: 16px; border-radius: 22px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+}
+.student-reference #coursesView .study-today-card h2 { margin: 0 0 12px; font-size: 21px; font-weight: 500; }
+.student-reference #coursesView #studyTodayList { display: grid; gap: 14px; }
+.student-reference #coursesView .study-today-row { --study-row-ink: #159f7c; display: flex; align-items: center; gap: 14px; }
+.student-reference #coursesView .study-today-row:nth-child(even) { --study-row-ink: #8774e8; }
+.student-reference #coursesView .study-today-icon { flex: none; width: 28px; height: 28px; color: var(--study-row-ink); }
+.student-reference #coursesView .study-today-icon svg { width: 28px; height: 28px; }
+.student-reference #coursesView .study-today-copy { flex: 1; min-width: 0; }
+.student-reference #coursesView .study-today-copy h3 { margin: 0 0 5px; font-size: 17px; font-weight: 400; overflow-wrap: anywhere; }
+.student-reference #coursesView progress { display: block; width: 100%; height: 8px; border: 0; border-radius: 8px; overflow: hidden; appearance: none; background: var(--color-border); }
+.student-reference #coursesView progress::-webkit-progress-bar { background: var(--color-border); border-radius: 8px; }
+.student-reference #coursesView progress::-webkit-progress-value { background: var(--study-row-ink); border-radius: 8px; }
+.student-reference #coursesView progress::-moz-progress-bar { background: var(--study-row-ink); border-radius: 8px; }
+.student-reference #coursesView .study-today-empty { margin: 0; font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
+@media (max-width: 360px) {
+  .student-reference #studySections .pay-tile-label { font-size: 14px; }
+  .student-reference #coursesView .study-hub-subtitle { font-size: 14px; }
+}
+}
+
+/* More: account identity, single-column menu and native labelled switches. */
+@media screen {
+.student-reference .app-shell:has(#profileView.active) #studentHeader { display: none; }
+.student-reference #profileView { max-width: 600px; margin-inline: auto; padding-top: 18px; }
+.student-reference #profileView .more-identity {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 15px;
+  border: 1px solid var(--color-border); border-radius: 19px; background: var(--color-surface);
+}
+.student-reference #profileView .more-avatar { display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--color-primary); color: var(--pay-on-hero); font-size: 23px; }
+.student-reference #profileView .more-identity-copy { flex: 1; min-width: 0; }
+.student-reference #profileView .more-identity-copy strong { display: block; overflow-wrap: anywhere; font-size: 19px; font-weight: 500; }
+.student-reference #profileView .more-identity-copy small { display: block; color: var(--color-text-secondary); font-size: 12px; }
+.student-reference #profileView .more-share { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 8px; color: var(--color-primary); background: transparent; border: 0; border-radius: 12px; }
+.student-reference #profileView .more-share svg { width: 27px; height: 27px; }
+.student-reference #profileView .more-menu,
+.student-reference #profileView .more-settings { display: grid; gap: 9px; }
+.student-reference #profileView .more-menu-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 11px 14px;
+  border: 1px solid var(--color-border); border-radius: 15px; background: var(--color-surface);
+  color: var(--color-text); text-align: left; font-size: 16px; line-height: 1.5; cursor: pointer;
+}
+.student-reference #profileView .more-menu-row:hover { background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface)); }
+.student-reference #profileView .more-row-icon { display: grid; place-items: center; width: 25px; height: 25px; flex: none; }
+.student-reference #profileView .more-row-icon svg { width: 23px; height: 23px; }
+.student-reference #profileView .more-row-icon.mint { color: #159f7c; }
+.student-reference #profileView .more-row-icon.blue { color: #328ce0; }
+.student-reference #profileView .more-row-icon.gold { color: #c17b08; }
+.student-reference #profileView .more-row-icon.rose { color: #df5082; }
+.student-reference #profileView .more-chevron { display: grid; place-items: center; margin-left: auto; flex: none; width: 16px; height: 16px; color: var(--color-text-secondary); }
+.student-reference #profileView .more-chevron svg { width: 15px; height: 15px; }
+.student-reference #profileView .more-settings { margin-top: 12px; }
+.student-reference #profileView .more-settings h2 { margin: 0 0 -4px; color: var(--color-text-secondary); font-size: 14px; font-weight: 400; }
+.student-reference #profileView .more-toggle { min-height: 65px; }
+.student-reference #profileView .more-setting-copy { flex: 1; min-width: 0; }
+.student-reference #profileView .more-setting-copy strong { display: block; font-size: 15px; font-weight: 400; }
+.student-reference #profileView .more-setting-copy small { display: block; font-size: 11px; line-height: 1.5; color: var(--color-text-secondary); }
+.student-reference #profileView .toggle-switch { flex: none; margin-left: auto; }
+.student-reference #profileView .more-logout { color: var(--color-danger); }
+.student-reference #profileView .app-version { margin: 12px 0 6px; text-align: center; font-size: 11px; color: var(--color-text-secondary); }
+@media (max-width: 360px) {
+  .student-reference #profileView .more-menu-row { gap: 9px; padding-inline: 12px; font-size: 15px; }
+  .student-reference #profileView .more-setting-copy strong { font-size: 14px; }
+}
+}
+.student-reference #profileTitle.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.student-reference #profileView .toggle-switch i { pointer-events: none; }
+.student-reference #profileView .toggle-switch:has(input:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 4px; border-radius: 20px; }
+
+/* Exam hub, using the same nine-seat reference grid as Study. */
+@media screen {
+.student-reference .app-shell:has(#examsView.active) #studentHeader { display: none; }
+.student-reference #examsView { max-width: 760px; margin-inline: auto; }
+.student-reference #examsView .page-intro { margin: 0 0 14px; padding: 22px 0 0; }
+.student-reference #examsView .page-intro .pay-back { display: none; }
+.student-reference #examsView .page-intro h1 { font-size: 29px; font-weight: 500; line-height: 1.3; }
+.student-reference #examTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none; }
+.student-reference #examTabs .pay-tile {
+  --exam-ink: #328ce0; position: relative; min-height: 96px; padding: 15px 4px 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
+  border-radius: 18px; border: 1px solid color-mix(in srgb, var(--exam-ink) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--exam-ink) 9%, var(--color-surface)); color: var(--color-text); box-shadow: none; backdrop-filter: none;
+}
+.student-reference #examTabs .pay-tile:nth-child(2) { --exam-ink: #df5b32; }
+.student-reference #examTabs .pay-tile:nth-child(3),
+.student-reference #examTabs .pay-tile:nth-child(7) { --exam-ink: #159f7c; }
+.student-reference #examTabs .pay-tile:nth-child(4) { --exam-ink: #8774e8; }
+.student-reference #examTabs .pay-tile:nth-child(5) { --exam-ink: #c17b08; }
+.student-reference #examTabs .pay-tile:nth-child(6) { --exam-ink: #df5082; }
+.student-reference #examTabs .pay-tile:nth-child(9) { --exam-ink: #888981; }
+.student-reference #examTabs .pay-tile-icon { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--exam-ink); box-shadow: none; }
+.student-reference #examTabs .pay-tile-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; animation: none; }
+.student-reference #examTabs .pay-tile-label { font-size: 16px; font-weight: 400; line-height: 1.45; }
+.student-reference #examTabs [data-exam-tab-count] { position: absolute; right: 8px; top: 7px; margin: 0; min-width: 24px; padding: 1px 6px; border-radius: 12px; font-size: 12px; line-height: 1.35; color: var(--color-text); opacity: 1; background: color-mix(in srgb, var(--exam-ink) 22%, var(--color-surface)); }
+/* The reference shows badges only on the three exam-state tiles. Keep the
+   results counter in the DOM for existing consumers, without visual clutter. */
+.student-reference #examTabs [data-exam-tab-count="results"] { display: none; }
+.student-reference #examsView .exam-hub-live-list { display: grid; gap: 10px; margin-top: 14px; }
+.student-reference #examsView .exam-hub-live-list[hidden] { display: none; }
+.student-reference #examsView .exam-hub-live-card { display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 13px 16px; border: 1px solid var(--color-border); border-left: 3px solid #eb6269; border-radius: 0 21px 21px 0; background: var(--color-surface); }
+.student-reference #examsView .exam-hub-live-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #eb6269; }
+.student-reference #examsView .exam-hub-live-copy { flex: 1; min-width: 0; }
+.student-reference #examsView .exam-hub-live-copy h2 { margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4; overflow-wrap: anywhere; }
+.student-reference #examsView .exam-hub-live-copy p { margin: 2px 0 0; font-size: 14px; color: var(--color-text-secondary); }
+.student-reference #examsView .exam-hub-live-open { flex: none; min-width: 52px; min-height: 44px; padding: 7px 12px; border: 0; border-radius: 17px; background: var(--color-primary); color: var(--pay-on-hero); font-size: 15px; }
+@media (max-width: 360px) {
+  .student-reference #examTabs .pay-tile-label { font-size: 14px; }
+  .student-reference #examsView .exam-hub-live-copy h2 { font-size: 16px; }
+  .student-reference #examsView .exam-hub-live-copy p { font-size: 12px; }
+}
+}
+
+/* Class hub: the study family's compact nine-card grid and actual monthly
+   attendance sessions. No sample attendance or placeholder percentages. */
+@media screen {
+.student-reference .app-shell:has(#classesView.active) #studentHeader { display: none; }
+.student-reference #classesView { max-width: 760px; margin-inline: auto; }
+.student-reference #classesView .page-intro { margin: 0 0 14px; padding: 22px 0 0; }
+.student-reference #classesView .page-intro .pay-back { display: none; }
+.student-reference #classesView .page-intro h1 { font-size: 29px; font-weight: 500; line-height: 1.3; }
+.student-reference #classHub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none; }
+.student-reference #classHub .pay-tile {
+  --class-ink: #159f7c; position: relative; min-height: 94px; padding: 15px 4px 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
+  border-radius: 18px; border: 1px solid color-mix(in srgb, var(--class-ink) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--class-ink) 9%, var(--color-surface)); color: var(--color-text); box-shadow: none; backdrop-filter: none;
+}
+.student-reference #classHub .pay-tile:nth-child(2),
+.student-reference #classHub .pay-tile:nth-child(8) { --class-ink: #328ce0; }
+.student-reference #classHub .pay-tile:nth-child(3) { --class-ink: #8774e8; }
+.student-reference #classHub .pay-tile:nth-child(4) { --class-ink: #c17b08; }
+.student-reference #classHub .pay-tile:nth-child(5) { --class-ink: #df5082; }
+.student-reference #classHub .pay-tile:nth-child(7) { --class-ink: #df5b32; }
+.student-reference #classHub .pay-tile:nth-child(9) { --class-ink: #888981; }
+.student-reference #classHub .pay-tile-icon { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--class-ink); box-shadow: none; }
+.student-reference #classHub .pay-tile-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; animation: none; }
+.student-reference #classHub .pay-tile-label { font-size: 16px; font-weight: 400; line-height: 1.45; }
+.student-reference #classHub .class-hub-count { position: absolute; right: 8px; top: 7px; min-width: 24px; padding: 1px 6px; border-radius: 12px; font-size: 12px; line-height: 1.35; color: var(--color-text); background: color-mix(in srgb, var(--class-ink) 22%, var(--color-surface)); }
+.student-reference #classesView .class-attendance-card { margin-top: 14px; padding: 16px; border: 1px solid var(--color-border); border-radius: 21px; background: var(--color-surface); }
+.student-reference #classesView .class-attendance-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.student-reference #classesView .class-attendance-heading h2 { margin: 0; font-size: 18px; font-weight: 400; }
+.student-reference #classesView .class-attendance-heading strong { color: var(--color-primary); font-size: 17px; font-weight: 400; }
+.student-reference #classesView .class-attendance-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 5px; }
+.student-reference #classesView .class-attendance-cell { display: block; aspect-ratio: 1; border-radius: 7px; background: var(--color-border); }
+.student-reference #classesView .class-attendance-cell.is-present,
+.student-reference #classesView .class-attendance-cell.is-late { background: #1b9e78; }
+.student-reference #classesView .class-attendance-cell.is-absent { background: #df494e; }
+.student-reference #classesView .class-attendance-note { margin: 10px 0 0; font-size: 11px; line-height: 1.6; color: var(--color-text-secondary); }
+.student-reference #coursesView .study-class-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; margin: 0; padding: 9px 13px; min-height: 44px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-primary); box-shadow: none; font-size: 14px; font-weight: 500; line-height: 1.5; }
+@media (max-width: 360px) {
+  .student-reference #classHub .pay-tile-label { font-size: 14px; }
+  .student-reference #classHub .pay-tile { min-height: 84px; }
+}
+}
+
+/* My profile: centered identity, real summary and readable contact rows. */
+@media screen {
+.student-reference .app-shell:has(#myProfileView.active) #studentHeader { display: none; }
+.student-reference #myProfileView { max-width: 600px; margin-inline: auto; }
+.student-reference #myProfileView .page-intro { padding: 15px 0 0; margin-bottom: 14px; gap: 8px; }
+.student-reference #myProfileView .page-intro h1 { font-size: 20px; font-weight: 500; }
+.student-reference #myProfileView .page-intro .pay-back { color: var(--color-text); background: transparent; border: 0; width: 28px; min-width: 28px; }
+.student-reference #myProfileView .student-profile-summary {
+  display: flex; flex-direction: column; align-items: center; gap: 0; margin: 0; padding: 20px 16px 16px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 19px; box-shadow: none;
+}
+.student-reference #myProfileView .profile-photo-wrap { position: relative; width: 80px; height: 80px; margin-bottom: 9px; }
+.student-reference #myProfileView .profile-avatar,
+.student-reference #myProfileView .profile-photo { width: 80px; height: 80px; padding: 0; border: 0; border-radius: 50%; background: var(--color-primary); color: var(--pay-on-hero); box-shadow: none; object-fit: cover; }
+.student-reference #myProfileView .profile-avatar { display: grid; place-items: center; font-size: 34px; font-weight: 400; }
+.student-reference #myProfileView .profile-avatar[hidden], .student-reference #myProfileView .profile-photo[hidden] { display: none; }
+.student-reference #myProfileView .profile-photo-edit { display: grid; place-items: center; position: absolute; right: -4px; bottom: -2px; width: 32px; height: 32px; padding: 6px; border-radius: 50%; border: 1px solid var(--color-border); color: var(--color-text); background: var(--color-surface); }
+.student-reference #myProfileView .profile-photo-edit svg { width: 18px; height: 18px; }
+.student-reference #myProfileView #profileName { margin: 0; text-align: center; font-size: 23px; font-weight: 500; overflow-wrap: anywhere; }
+.student-reference #myProfileView #profileMeta { margin: 2px 0 12px; text-align: center; font-size: 12px; color: var(--color-text-secondary); }
+.student-reference #myProfileView .profile-summary-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; width: 100%; }
+.student-reference #myProfileView .profile-summary-stats > div { display: grid; justify-items: center; padding: 8px 2px; border-radius: 12px; background: var(--color-bg); }
+.student-reference #myProfileView .profile-summary-stats strong { font-size: 18px; font-weight: 500; }
+.student-reference #myProfileView .profile-summary-stats small { font-size: 12px; color: var(--color-text-secondary); }
+.student-reference #myProfileView .profile-quick-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-block: 12px; }
+.student-reference #myProfileView .profile-quick-actions button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-text); font-size: 15px; }
+.student-reference #myProfileView .profile-quick-actions button:first-child { background: var(--color-primary); color: var(--pay-on-hero); border-color: var(--color-primary); }
+.student-reference #myProfileView .profile-quick-actions svg { width: 19px; height: 19px; }
+.student-reference #myProfileView .profile-quick-actions [data-action="whatsapp-share"] svg { color: var(--color-primary); }
+.student-reference #myProfileView .profile-details-card { padding: 0 14px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 19px; }
+.student-reference #myProfileView .profile-detail-row { display: flex; align-items: center; gap: 12px; min-height: 57px; padding-block: 9px; border-bottom: 1px solid var(--color-border); }
+.student-reference #myProfileView .profile-detail-row:last-of-type { border-bottom: 0; }
+.student-reference #myProfileView .profile-detail-icon { display: grid; place-items: center; flex: none; color: var(--color-primary); width: 22px; }
+.student-reference #myProfileView .profile-detail-icon svg { width: 21px; height: 21px; }
+.student-reference #myProfileView .profile-detail-copy { flex: 1; min-width: 0; }
+.student-reference #myProfileView .profile-detail-copy > span { display: block; font-size: 11px; line-height: 1.4; color: var(--color-text-secondary); }
+.student-reference #myProfileView .profile-detail-copy strong { display: block; font-size: 15px; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
+.student-reference #myProfileView .profile-copy-id { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 12px; color: var(--color-text-secondary); border: 0; background: transparent; border-radius: 10px; }
+.student-reference #myProfileView .profile-copy-id svg { width: 20px; height: 20px; }
+.student-reference #myProfileView .profile-update-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 12px; padding: 10px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-text); font-size: 14px; }
+.student-reference #myProfileView .profile-update-button svg { width: 18px; height: 18px; }
+.student-reference #myProfileView #studentAdditionalMobiles { display: block; margin-bottom: 10px; overflow-wrap: anywhere; font-size: 12px; color: var(--color-text-secondary); }
+.student-reference #myProfileView #studentAdditionalMobiles[hidden] { display: none; }
+}
+
+/* Digital ID card: portrait front/back preview, no third-party QR requests. */
+@media screen {
+.student-reference .app-shell:has(#studentIdCardView.active) #studentHeader,
+.student-reference #studentIdCardView { width: 100%; max-width: 430px; margin-inline: auto; }
+.student-reference #studentIdCardView .page-intro { margin-bottom: 12px; padding-top: 16px; gap: 8px; }
+.student-reference #studentIdCardView .page-intro h1 { font-size: 20px; font-weight: 500; }
+.student-reference #studentIdCardView .pay-back { color: var(--color-text); background: transparent; border: 0; width: 28px; min-width: 28px; }
+.student-reference #studentIdCardView .student-id-preview { border-radius: 22px; overflow: hidden; background: #0e7a55; }
+.student-reference #studentIdCardView .student-id-preview > svg { display: block; width: 100%; height: auto; }
+.student-reference #studentIdCardView .student-id-side-tabs { display: flex; justify-content: center; gap: 6px; margin: 12px 0; }
+.student-reference #studentIdCardView .student-id-side-tabs button { min-height: 36px; padding: 6px 12px; border: 0; background: transparent; color: var(--color-text-secondary); border-radius: 12px; font-size: 12px; }
+.student-reference #studentIdCardView .student-id-side-tabs [aria-pressed="true"] { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); }
+.student-reference #studentIdCardView .student-id-actions { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+.student-reference #studentIdCardView .student-id-actions button { min-height: 44px; padding: 10px 6px; border-radius: 13px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 14px; }
+.student-reference #studentIdCardView #studentIdCardDownload { color: var(--pay-on-hero); background: var(--color-primary); border-color: var(--color-primary); }
+.student-reference #studentIdCardView .student-id-note { margin-top: 12px; font-size: 11px; line-height: 1.7; text-align: center; color: var(--color-text-secondary); }
+}
+
+/* Study results: comparable summary, recent marks and honest subject trends. */
+@media screen {
+.student-reference .app-shell:has(#studyResultsView.active) #studentHeader { display: none; }
+.student-reference #studyResultsView { max-width: 650px; margin-inline: auto; }
+.student-reference #studyResultsView .page-intro { padding-top: 18px; margin-bottom: 14px; gap: 8px; }
+.student-reference #studyResultsView .page-intro h1 { font-size: 23px; font-weight: 500; }
+.student-reference #studyResultsView .pay-back { color: var(--color-text); background: transparent; border: 0; width: 28px; min-width: 28px; }
+.student-reference #studyResultsView .study-section-panel { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.student-reference #studyResultsView .study-result-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-bottom: 14px; }
+.student-reference #studyResultsView .study-result-summary > div { --result-ink: #159f7c; display: grid; justify-items: center; align-content: center; gap: 3px; padding: 13px 3px; min-height: 82px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--result-ink) 40%, var(--color-surface)); background: color-mix(in srgb, var(--result-ink) 9%, var(--color-surface)); }
+.student-reference #studyResultsView .study-result-summary > div:nth-child(2) { --result-ink: #328ce0; }
+.student-reference #studyResultsView .study-result-summary > div:nth-child(3) { --result-ink: #c17b08; }
+.student-reference #studyResultsView .study-result-summary strong { font-size: 25px; font-weight: 500; }
+.student-reference #studyResultsView .study-result-summary span { font-size: 15px; }
+.student-reference #studyResultsView .study-recent-results { padding: 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 21px; }
+.student-reference #studyResultsView .study-recent-results h2 { margin: 0; font-size: 18px; font-weight: 400; }
+.student-reference #studyResultsView .study-result-count { margin: 2px 0 10px; font-size: 11px; color: var(--color-text-secondary); }
+.student-reference #studyResultsView #studyResultsList { display: grid; gap: 12px; }
+.student-reference #studyResultsView .study-result-row { display: flex; align-items: center; gap: 10px; }
+.student-reference #studyResultsView .study-result-icon { flex: none; width: 25px; height: 25px; color: #159f7c; }
+.student-reference #studyResultsView .study-result-icon svg { width: 25px; height: 25px; }
+.student-reference #studyResultsView .study-result-row:nth-child(3n+2) .study-result-icon { color: #328ce0; }
+.student-reference #studyResultsView .study-result-row:nth-child(3n) .study-result-icon { color: #8774e8; }
+.student-reference #studyResultsView .study-result-copy { flex: 1; min-width: 0; }
+.student-reference #studyResultsView .study-result-copy h3 { margin: 0; font-size: 15px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.student-reference #studyResultsView .study-result-copy small { display: block; font-size: 10px; line-height: 1.6; color: var(--color-text-secondary); }
+.student-reference #studyResultsView .study-result-score { flex: none; font-size: 17px; font-weight: 500; }
+.student-reference #studyResultsView .study-result-trend { flex: none; min-width: 17px; color: var(--color-text-secondary); }
+.student-reference #studyResultsView .study-result-trend.is-up { color: #159f7c; }
+.student-reference #studyResultsView .study-result-trend.is-down { color: #df494e; }
+.student-reference #studyResultsView .study-result-history { font-size: 13px; }
+.student-reference #studyResultsView .study-result-history summary { cursor: pointer; padding-block: 8px; }
+.student-reference #studyResultsView .study-result-history .study-result-row { margin-block: 12px; }
+.student-reference #studyResultsView .study-result-empty { font-size: 14px; color: var(--color-text-secondary); }
+.student-reference #studyResultsView .study-result-tip { display: flex; align-items: center; gap: 14px; padding: 15px 16px; margin-top: 14px; border: 1px solid var(--color-border); border-radius: 21px; background: var(--color-surface); }
+.student-reference #studyResultsView .study-result-tip svg { flex: none; width: 27px; height: 27px; color: #c17b08; }
+.student-reference #studyResultsView .study-result-tip p { margin: 0; font-size: 15px; line-height: 1.6; }
+@media (max-width: 360px) {
+  .student-reference #studyResultsView .study-result-summary span { font-size: 13px; }
+  .student-reference #studyResultsView .study-result-copy h3 { font-size: 14px; }
+  .student-reference #studyResultsView .study-recent-results { padding: 13px; }
+}
+}
+
+/* Teacher reference dashboard. Other staff portals keep their own layouts. */
+@media screen {
+.teacher-reference #teacherShell { background: var(--color-bg); }
+.teacher-reference #teacherHome { max-width: 760px; margin-inline: auto; }
+.teacher-reference #teacherHome .teacher-hero { padding: 18px 48px 16px 0; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; color: var(--color-text); }
+.teacher-reference #teacherHome .teacher-hero::before,
+.teacher-reference #teacherHome .teacher-hero::after { display: none; }
+.teacher-reference #teacherHome .admin-hero-head,
+.teacher-reference #teacherHome .admin-hero-title { gap: 12px; }
+.teacher-reference #teacherHome .admin-hero-icon { display: grid; place-items: center; width: 48px; height: 48px; flex: none; border: 0; border-radius: 50%; background: var(--color-primary); color: var(--pay-on-hero); box-shadow: none; font-size: 22px; }
+.teacher-reference #teacherHome .admin-hero-icon svg { display: none; }
+.teacher-reference #teacherHome #teacherToday { color: var(--color-text-secondary); font-size: 13px; margin: 0; }
+.teacher-reference #teacherHome #teacherHomeTitle { color: var(--color-text); font-size: 19px; font-weight: 500; margin: 0; line-height: 1.4; }
+.teacher-reference #teacherHome #teacherIdentityBadge { font-size: 10px; color: var(--color-text-secondary); }
+.teacher-reference #teacherHome .teacher-welcome-note { display: none; }
+.teacher-reference #teacherHome .teacher-home-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-bottom: 14px; }
+.teacher-reference #teacherHome .teacher-home-summary > div { --teacher-stat-ink: #159f7c; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 78px; padding: 10px 3px; border: 1px solid color-mix(in srgb, var(--teacher-stat-ink) 40%, var(--color-surface)); border-radius: 16px; background: color-mix(in srgb, var(--teacher-stat-ink) 9%, var(--color-surface)); }
+.teacher-reference #teacherHome .teacher-home-summary > div:nth-child(2) { --teacher-stat-ink: #c17b08; }
+.teacher-reference #teacherHome .teacher-home-summary > div:nth-child(3) { --teacher-stat-ink: #8774e8; }
+.teacher-reference #teacherHome .teacher-home-summary strong { font-size: 25px; font-weight: 500; }
+.teacher-reference #teacherHome .teacher-home-summary span { font-size: 14px; }
+.teacher-reference #teacherHome .teacher-home-today { padding: 14px; border: 1px solid var(--color-border); border-radius: 20px; background: var(--color-surface); }
+.teacher-reference #teacherHome .teacher-home-today .teacher-section-heading { margin: 0 0 9px; }
+.teacher-reference #teacherHome .teacher-home-today h2 { font-size: 18px; font-weight: 400; }
+.teacher-reference #teacherHome #teacherTodayClassCount { font-size: 11px; }
+.teacher-reference #teacherHome #teacherTodayClasses { display: grid; gap: 9px; }
+.teacher-reference #teacherHome .teacher-home-class { display: flex; align-items: center; gap: 10px; }
+.teacher-reference #teacherHome .teacher-home-class-icon { flex: none; width: 25px; color: #159f7c; font-size: 23px; }
+.teacher-reference #teacherHome .teacher-home-class:nth-child(even) .teacher-home-class-icon { color: #328ce0; }
+.teacher-reference #teacherHome .teacher-home-class > div { flex: 1; min-width: 0; }
+.teacher-reference #teacherHome .teacher-home-class h3 { font-size: 15px; font-weight: 400; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.teacher-reference #teacherHome .teacher-home-class p { font-size: 12px; margin: 0; color: var(--color-text-secondary); }
+.teacher-reference #teacherHome .teacher-home-class > small { font-size: 11px; color: var(--color-text-secondary); }
+.teacher-reference #teacherHome .teacher-home-today .teacher-empty { margin: 0; padding: 8px 0; border: 0; background: transparent; font-size: 13px; }
+.teacher-reference #teacherHome .teacher-home-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin: 14px 0 0; padding: 0; border: 0; background: transparent; }
+.teacher-reference #teacherHome .teacher-home-tile { --teacher-tile-ink: #159f7c; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px; min-height: 90px; padding: 12px 4px; border-radius: 17px; border: 1px solid color-mix(in srgb, var(--teacher-tile-ink) 40%, var(--color-surface)); background: color-mix(in srgb, var(--teacher-tile-ink) 9%, var(--color-surface)); color: var(--color-text); box-shadow: none; }
+.teacher-reference #teacherHome .teacher-home-tile:nth-child(2) { --teacher-tile-ink: #df5b32; }
+.teacher-reference #teacherHome .teacher-home-tile:nth-child(3) { --teacher-tile-ink: #328ce0; }
+.teacher-reference #teacherHome .teacher-home-tile:nth-child(4) { --teacher-tile-ink: #8774e8; }
+.teacher-reference #teacherHome .teacher-home-tile:nth-child(5) { --teacher-tile-ink: #df5082; }
+.teacher-reference #teacherHome .teacher-home-tile:nth-child(6) { --teacher-tile-ink: #c17b08; }
+.teacher-reference #teacherHome .teacher-home-tile svg { width: 28px; height: 28px; stroke: var(--teacher-tile-ink); fill: none; animation: none; }
+.teacher-reference #teacherHome .teacher-home-tile span { font-size: 15px; font-weight: 400; }
+.teacher-reference #teacherHome .teacher-home-extra { display: flex; gap: 10px; margin-top: 14px; }
+.teacher-reference #teacherHome .teacher-home-extra button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-text); font-size: 13px; }
+@media (max-width: 360px) {
+  .teacher-reference #teacherHome .teacher-home-summary span { font-size: 12px; }
+  .teacher-reference #teacherHome .teacher-home-tile span { font-size: 13px; }
+}
+}
+
+/* Homework uses the existing accessible modal and save path, presented like a
+   compact full-page composer. Other teacher dialogs are unchanged. */
+@media screen {
+.teacher-reference #teacherModalBackdrop.is-homework-editor {
+  align-items: flex-start; padding: 0 16px calc(80px + var(--safe-bottom));
+  background: var(--color-bg); overflow-y: auto;
+}
+.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal {
+  width: 100%; max-width: 600px; max-height: none; margin-inline: auto;
+  padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible;
+}
+.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-header {
+  display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding: 18px 0 14px; border: 0; background: transparent;
+}
+.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-header > div { flex: 1; }
+.teacher-reference #teacherModalBackdrop.is-homework-editor #teacherModalTitle { font-size: 22px; font-weight: 400; }
+.teacher-reference #teacherModalBackdrop.is-homework-editor #teacherModalClose { order: -1; min-width: 32px; min-height: 40px; width: 32px; padding: 0; background: transparent; border: 0; border-radius: 8px; color: var(--color-text); font-size: 24px; }
+.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-body { padding: 0; }
+.teacher-reference .teacher-homework-form { display: flex; flex-direction: column; gap: 12px; }
+.teacher-reference .teacher-homework-form > datalist { display: none; }
+.teacher-reference .teacher-homework-form .homework-field { position: relative; display: flex; align-items: center; gap: 10px; padding: 9px 12px; min-height: 52px; border: 1px solid var(--color-border); border-radius: 15px; background: var(--color-surface); }
+.teacher-reference .teacher-homework-form .homework-field > label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.teacher-reference .teacher-homework-form .homework-field input,
+.teacher-reference .teacher-homework-form .homework-field select,
+.teacher-reference .teacher-homework-form .homework-field textarea { flex: 1; min-width: 0; width: 100%; padding: 5px 0; border: 0; border-radius: 0; background: transparent; color: var(--color-text); box-shadow: none; font-size: 15px; }
+.teacher-reference .teacher-homework-form .homework-field-icon { flex: none; width: 18px; color: var(--color-text-secondary); font-size: 18px; }
+.teacher-reference .teacher-homework-form .homework-field-details { align-items: flex-start; min-height: 100px; }
+.teacher-reference .teacher-homework-form .homework-field-details textarea { min-height: 78px; resize: vertical; }
+.teacher-reference .teacher-homework-form .homework-field:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.teacher-reference .teacher-homework-form .homework-attachment,
+.teacher-reference .teacher-homework-form .homework-options { padding: 0; border: 1px solid var(--color-border); border-radius: 15px; background: var(--color-surface); }
+.teacher-reference .teacher-homework-form details summary { cursor: pointer; min-height: 46px; padding: 13px 14px; font-size: 14px; color: var(--color-text-secondary); }
+.teacher-reference .teacher-homework-form details .homework-field,
+.teacher-reference .teacher-homework-form details > div { margin: 0 10px 10px; }
+.teacher-reference .teacher-homework-form details > div:not(.homework-field) { padding: 8px 2px; }
+.teacher-reference .teacher-homework-form details > div:not(.homework-field) label { font-size: 12px; }
+.teacher-reference .teacher-homework-form details p { margin: 0 14px 12px; font-size: 11px; color: var(--color-text-secondary); line-height: 1.6; }
+.teacher-reference .teacher-homework-form .finance-hint { font-size: 11px; margin: 0; line-height: 1.6; }
+.teacher-reference .teacher-homework-form .modal-actions { display: flex; gap: 8px; margin: 0; padding: 0; border: 0; }
+.teacher-reference .teacher-homework-form .modal-actions [type="submit"] { flex: 1; min-height: 48px; background: var(--color-primary); color: var(--pay-on-hero); border: 0; border-radius: 14px; font-size: 17px; }
+.teacher-reference .teacher-homework-form .modal-actions [data-close-teacher] { min-height: 44px; font-size: 13px; border-radius: 12px; }
+}
+@media screen {
+.teacher-reference .teacher-composer-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 2px; width: min(632px,100%); padding: 9px 10px calc(9px + var(--safe-bottom)); background: var(--color-surface); border-top: 1px solid var(--color-border); z-index: 2; }
+.teacher-reference .teacher-composer-link { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 54px; padding: 6px 2px; border: 0; border-radius: 14px; background: transparent; color: var(--color-text-secondary); font-size: 12px; }
+.teacher-reference .teacher-composer-link.active { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); }
+.teacher-reference .teacher-composer-link .nav-chip { display: grid; place-items: center; position: static; width: 24px; height: 24px; margin: 0; border: 0; background: transparent; color: inherit; box-shadow: none; }
+.teacher-reference .teacher-composer-link svg { width: 23px; height: 23px; }
+}
+.teacher-reference .teacher-homework-form .homework-field-icon svg { display: block; width: 18px; height: 18px; }
+
+/* Routine hub: use the same card palette as the class hub only. */
+@media screen {
+.student-reference #routineHub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none; }
+.student-reference #routineHub .pay-tile {
+  --routine-ink: #159f7c; position: relative; min-height: 94px; padding: 15px 4px 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
+  border-radius: 18px; border: 1px solid color-mix(in srgb, var(--routine-ink) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--routine-ink) 9%, var(--color-surface)); color: var(--color-text); box-shadow: none; backdrop-filter: none;
+}
+.student-reference #routineHub .pay-tile:nth-child(2),
+.student-reference #routineHub .pay-tile:nth-child(8) { --routine-ink: #328ce0; }
+.student-reference #routineHub .pay-tile:nth-child(3) { --routine-ink: #8774e8; }
+.student-reference #routineHub .pay-tile:nth-child(4) { --routine-ink: #c17b08; }
+.student-reference #routineHub .pay-tile:nth-child(5) { --routine-ink: #df5082; }
+.student-reference #routineHub .pay-tile:nth-child(7) { --routine-ink: #df5b32; }
+.student-reference #routineHub .pay-tile:nth-child(9) { --routine-ink: #888981; }
+.student-reference #routineHub .pay-tile-icon { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--routine-ink); box-shadow: none; }
+.student-reference #routineHub .pay-tile-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; animation: none; }
+.student-reference #routineHub .pay-tile-label { font-size: 16px; font-weight: 400; line-height: 1.45; }
+
+@media (max-width: 360px) {
+.student-reference #routineHub { gap: 8px; }
+.student-reference #routineHub .pay-tile { min-height: 84px; }
+.student-reference #routineHub .pay-tile-label { font-size: 14px; }
+}
+}
+
+/* Action centre: visual-only bottom sheet. Existing DOM and handlers stay intact. */
+@media screen {
+:is(#noticeModal, #apcNoticeModal):not([hidden]) {
+  display: flex; align-items: flex-end; justify-content: center; padding: 0;
+  background: #0009; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:is(#noticeModal, #apcNoticeModal):not([hidden]) .modal {
+  display: grid; grid-template-columns: minmax(0,1fr) auto;
+  grid-template-rows: auto auto auto minmax(0,1fr) auto;
+  width: 100%; max-width: 100%; height: auto; min-height: 0; max-height: 92dvh;
+  margin: 0; padding: 14px 0 env(safe-area-inset-bottom, 0px);
+  border: 0; border-radius: 28px 28px 0 0;
+  background: var(--color-surface); color: var(--color-text);
+  box-shadow: none; overflow: hidden; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:is(#noticeModal, #apcNoticeModal) .modal::before { display: none; }
+:is(#noticeModal, #apcNoticeModal) .modal-header {
+  grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; padding: 12px 20px 4px; margin: 0;
+  background: transparent; border: 0; box-shadow: none;
+}
+:is(#noticeModal, #apcNoticeModal) .modal-header .eyebrow { display: none; }
+:is(#noticeModal, #apcNoticeModal) .modal-header h2 { margin: 0; color: var(--color-text); font-size: 22px; font-weight: 500; }
+:is(#noticeModal, #apcNoticeModal) .modal-close {
+  display: grid; place-items: center; font-size: 22px; line-height: 1;
+  width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0;
+  border: 1px solid var(--color-border); border-radius: 50%; background: transparent;
+  color: var(--color-text); box-shadow: none; transform: none;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-read-status {
+  grid-column: 1; grid-row: 2; align-self: center; margin: 0;
+  padding: 8px 0 8px 20px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary);
+}
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-clear] {
+  grid-column: 2; grid-row: 2; align-self: center; margin: 0 20px 0 8px;
+  min-height: 48px; padding: 8px 0; border: 0; background: transparent;
+  color: var(--color-success); text-decoration: none; box-shadow: none; font-size: 12px;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-filters {
+  grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: nowrap;
+  align-items: center; gap: 4px; margin: 4px 20px 14px; padding: 4px;
+  border: 1px solid var(--color-border); border-radius: 18px; background: transparent;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-filters .chip {
+  min-height: 40px; padding: 7px 14px; border: 0; border-radius: 13px;
+  background: transparent; color: var(--color-text-secondary); box-shadow: none;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-filters .chip.active,
+:is(#noticeModal, #apcNoticeModal) .notice-action {
+  background: var(--color-success); color: var(--color-surface);
+}
+:is(#noticeModal, #apcNoticeModal) .notice-read-all {
+  width: auto; min-height: 40px; margin: 0 0 0 auto; padding: 6px 12px;
+  border: 1px solid var(--color-success); border-radius: 13px;
+  background: transparent; color: var(--color-success); box-shadow: none; font-size: 12px;
+}
+:is(#noticeModal, #apcNoticeModal) :is(#noticeListStudent, [data-apc-notice-list]) {
+  grid-column: 1 / -1; grid-row: 4; min-height: 0; max-height: none;
+  overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 2px 20px 18px;
+  display: grid; gap: 12px; align-content: start;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-detail {
+  position: relative; overflow: hidden; padding: 14px; gap: 12px; flex-shrink: 0;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 18px; box-shadow: none;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-detail.unread:not(.is-birthday) {
+  border-inline-start: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
+}
+:is(#noticeModal, #apcNoticeModal) .notice-detail.unread::before {
+  content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--color-success);
+}
+:is(#noticeModal, #apcNoticeModal) .notice-detail-icon {
+  width: 44px; height: 44px; border-radius: 14px; color: var(--color-success);
+  animation: notice-badge-float 3s ease-in-out infinite;
+  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
+}
+/* Replace only the award glyph on non-birthday cards, without changing markup. */
+:is(#noticeModal, #apcNoticeModal) .notice-detail:not(.is-birthday) .notice-detail-icon:has(svg[data-icon="award"], use[href="#icon-award"]) svg { display: none; }
+:is(#noticeModal, #apcNoticeModal) .notice-detail:not(.is-birthday) .notice-detail-icon:has(svg[data-icon="award"], use[href="#icon-award"])::after {
+  content: ''; width: 25px; height: 25px; background: transparent url("../assets/icons/ai-3d/approval.svg") center / contain no-repeat;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-detail-icon svg { animation: none; }
+:is(#noticeModal, #apcNoticeModal) .notice-detail-copy { flex: 1; min-width: 0; gap: 5px; }
+:is(#noticeModal, #apcNoticeModal) .notice-time { padding-right: 18px; font-size: 11px; line-height: 1.5; font-weight: 400; color: var(--color-text-secondary); }
+:is(#noticeModal, #apcNoticeModal) .notice-unread-dot { top: 18px; right: 14px; width: 8px; height: 8px; animation: none; background: var(--color-success); }
+:is(#noticeModal, #apcNoticeModal) .notice-section-chip { justify-self: start; border-radius: 999px; margin: 0; padding: 1px 8px; font-size: 10px; font-weight: 400; background: var(--color-surface); color: var(--color-text-secondary); }
+:is(#noticeModal, #apcNoticeModal) .notice-detail-copy h3 { margin: 0; font-size: 15px; font-weight: 500; color: var(--color-text); }
+:is(#noticeModal, #apcNoticeModal) .notice-detail-copy p { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+:is(#noticeModal, #apcNoticeModal) .notice-action {
+  justify-self: start; min-height: 44px; padding: 9px 15px; border: 0;
+  border-radius: 12px; box-shadow: none; font-size: 14px; font-weight: 500;
+}
+:is(#noticeModal, #apcNoticeModal) .notice-action::after { content: '→'; display: inline-block; margin-left: 9px; }
+:is(#noticeModal, #apcNoticeModal) .notice-empty { border-radius: 18px; background: var(--color-surface); border: 1px dashed var(--color-border); box-shadow: none; }
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] { grid-column: 1 / -1; grid-row: 5; margin: 0 20px 10px; color: var(--color-text-secondary); }
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push]:empty { display: none; }
+@keyframes notice-badge-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) {
+  :is(#noticeModal, #apcNoticeModal) .notice-detail-icon { animation: none; }
+}
+}
+
+@media screen {
+:is(#noticeModal, #apcNoticeModal) .notice-empty strong { font-size: 0; }
+:is(#noticeModal, #apcNoticeModal) .notice-empty strong::after { content: 'কোনো নোটিফিকেশন নেই'; font-size: 16px; color: var(--color-text); }
+}
+
+/* Logout confirmation: visual layer only; controls and event wiring unchanged. */
+@media screen {
+#logoutModal:not([hidden]) {
+  display: flex; align-items: flex-end; justify-content: center; padding: 0;
+  background: #0009; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+#logoutModal:not([hidden]) .modal {
+  width: 100%; max-width: none; margin: 0; min-height: 0; height: auto;
+  max-height: 92dvh; overflow-y: auto; padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  background: var(--color-surface); color: var(--color-text);
+  border: 0; border-radius: 28px 28px 0 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+#logoutModal .modal::before { display: none; }
+#logoutModal .modal-header {
+  position: static; top: auto; inset: auto; width: auto; min-height: 0; border-radius: 0;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px 12px;
+  padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none;
+}
+#logoutModal .modal-header::before {
+  content: ''; grid-column: 1; grid-row: 1; width: 48px; height: 48px;
+  border-radius: 14px; background: color-mix(in srgb, var(--logout-confirm-bg) 14%, var(--color-surface));
+}
+#logoutModal .modal-header::after {
+  content: ''; grid-column: 1; grid-row: 1; width: 25px; height: 25px; margin-left: 12px;
+  background: transparent url("../assets/icons/ai-3d/logout.svg") center / contain no-repeat; pointer-events: none; animation: logout-icon-float 3s ease-in-out infinite;
+}
+#logoutModal .modal-header > div { grid-column: 1 / -1; grid-row: 2; background: transparent; border: 0; box-shadow: none; }
+#logoutModalTitle { font-size: 20px; font-weight: 500; line-height: 1.45; margin: 0; color: var(--color-text); }
+#logoutModal .modal-close {
+  grid-column: 2; grid-row: 1; display: grid; place-items: center;
+  width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0;
+  border-radius: 50%; border: 1px solid var(--color-border); font-size: 22px;
+  background: transparent; color: var(--color-text); box-shadow: none;
+}
+#logoutModal .logout-copy { margin: 6px 0 0; font-size: 13px; line-height: 1.65; color: var(--color-text-secondary); }
+#logoutModal .logout-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 22px; }
+#logoutModal .logout-actions button { min-height: 48px; padding: 10px 8px; border-radius: 14px; box-shadow: none; line-height: 1.5; }
+#logoutModal .logout-cancel { background: transparent; border: 1px solid var(--color-border); color: var(--color-text); font-size: 16px; }
+#logoutModal .logout-confirm { background: var(--logout-confirm-bg); color: var(--logout-confirm-text); border: 1px solid var(--logout-confirm-bg); font-size: 19px; font-weight: 700; }
+@keyframes logout-icon-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { #logoutModal .modal-header::after { animation: none; } }
+}
+
+/* More: supplementary settings use the same rows as the existing menu. */
+@media screen {
+.student-reference #profileView .more-setting-copy { flex: 1; min-width: 0; }
+.student-reference #profileView .settings-copy { flex: 1; min-width: 0; display: grid; }
+.student-reference #profileView .settings-copy strong { font-size: 15px; font-weight: 400; }
+.student-reference #profileView .settings-copy small { font-size: 11px; color: var(--color-text-secondary); }
+.student-reference #moreDeviceSettings .settings-icon { width: 25px; height: 25px; flex: 0 0 25px; background: transparent; color: var(--color-success); }
+.student-reference #moreDeviceSettings .settings-icon svg { width: 23px; height: 23px; }
+.student-reference #moreDeviceSettings .settings-value { font-size: 11px; color: var(--color-text-secondary); max-width: 38%; overflow-wrap: anywhere; }
+}
+
+/* Shared Soft 3D motion: visible movement, stable controls and labels. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  svg[data-icon-set="active-plus-soft3d"] {
+    transform-box: view-box; transform-origin: 50% 55%;
+    animation: apc-soft3d-idle 2.2s ease-in-out infinite !important;
+  }
+  svg[data-icon-set="active-plus-soft3d"] > image { pointer-events: none; }
+  :is(button,a,label):nth-child(3n + 2) svg[data-icon-set="active-plus-soft3d"] { animation-delay: -.7s !important; }
+  :is(button,a,label):nth-child(3n) svg[data-icon-set="active-plus-soft3d"] { animation-delay: -1.4s !important; }
+  @keyframes apc-soft3d-idle {
+    0%,100% { transform: translateY(1px) rotate(-4deg) scale(.98); }
+    50% { transform: translateY(-4px) rotate(4deg) scale(1.04); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  svg[data-icon-set="active-plus-soft3d"],
+  svg[data-icon-set="active-plus-soft3d"] > image { animation: none !important; transform: none !important; }
+}
+
+/* Soft grounded shadow belongs to artwork, not the button or its label. */
+@media screen {
+  svg[data-icon-set="active-plus-soft3d"] > image {
+    filter: drop-shadow(0 2px 1.3px color-mix(in srgb, var(--color-text) 24%, transparent));
+  }
 }

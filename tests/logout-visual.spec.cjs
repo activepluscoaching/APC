@@ -1,0 +1,22 @@
+const {test,expect}=require('./fixtures.cjs');
+const {enterStudentApp}=require('./portal-session.cjs');
+test.use({serviceWorkers:'block',reducedMotion:'reduce'});
+for(const theme of ['light','dark']) for(const width of [320,390,1024]) test(`logout sheet ${theme} ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:844});await enterStudentApp(page);
+ await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+ const open=()=>page.locator('#studentLogout').click();
+ await open();const sheet=page.locator('#logoutModal .modal');await expect(sheet).toBeVisible();
+ const b=await sheet.boundingBox();expect(b.width).toBe(width);expect(b.y+b.height).toBe(844);
+ await expect(sheet).toHaveCSS('border-top-left-radius','28px');
+ await expect(page.locator('#logoutModalTitle')).toHaveCSS('font-size','20px');
+ await expect(page.locator('#logoutModal .modal-header')).toHaveCSS('position','static');
+ await expect(page.locator('#logoutModal .modal-header')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+ const cancel=page.locator('#logoutModal .logout-cancel'),confirm=page.locator('#logoutConfirmButton');
+ const a=await cancel.boundingBox(),c=await confirm.boundingBox();expect(Math.abs(a.width-c.width)).toBeLessThan(1);expect(a.height).toBeGreaterThanOrEqual(48);expect(a.y).toBe(c.y);
+ await cancel.click();await expect(sheet).toBeHidden();await open();
+ await page.locator('#logoutModal .modal-close').click();await expect(sheet).toBeHidden();await open();
+ await page.locator('#logoutModal').click({position:{x:5,y:5}});await expect(sheet).toBeHidden();await open();
+ await page.keyboard.press('Escape');await expect(sheet).toBeHidden();await open();
+ if(width===390&&theme==='light')await page.screenshot({path:'/tmp/logout-sheet.png'});
+ await confirm.click();await expect(sheet).toBeHidden();await expect(page.locator('#authScreen')).toBeVisible();
+});

@@ -12,18 +12,18 @@ export function renderStudent(student) {
   $('#studentName') && ($('#studentName').textContent = fullName);
   $('#studentHeaderMeta') && ($('#studentHeaderMeta').textContent = meta);
   $('#avatarInitial') && ($('#avatarInitial').textContent = initial);
+  $('#moreStudentName') && ($('#moreStudentName').textContent = fullName);
+  $('#moreStudentId') && ($('#moreStudentId').textContent = student.id || '—');
+  $('#moreAvatar') && ($('#moreAvatar').textContent = initial);
   $('#profileAvatar') && ($('#profileAvatar').textContent = initial);
-  $('#profileName') && ($('#profileName').textContent = student.name);
-  $('#profileMeta') && ($('#profileMeta').textContent = meta);
+  $('#profileName') && ($('#profileName').textContent = fullName);
+  $('#profileMeta') && ($('#profileMeta').textContent = [student.className, student.group, student.roll ? `রোল ${toBanglaNumber(student.roll)}` : ''].filter(Boolean).join(' · ') || meta);
   $('#studentId') && ($('#studentId').textContent = student.id);
   const usernameChip = $('#profileUsername');
-  const usernameWrap = $('#profileUsernameWrap');
-  if (usernameChip && usernameWrap) {
-    const username = student.username || loadAccount()?.username || '';
-    usernameChip.textContent = username;
-    usernameWrap.hidden = !username;
-  }
-  $('#studentMobileValue') && ($('#studentMobileValue').textContent = toBanglaNumber(student.studentMobile || 'নম্বর নেই'));
+  if (usernameChip) usernameChip.textContent = student.username || loadAccount()?.username || '—';
+  $('#profileInstitution') && ($('#profileInstitution').textContent = student.institution || '—');
+  $('#profileAddress') && ($('#profileAddress').textContent = student.address || '—');
+  $('#studentMobileValue') && ($('#studentMobileValue').textContent = toBanglaNumber(student.studentMobile || loadAccount()?.registrationMobile || loadAccount()?.mobile || 'নম্বর নেই'));
   $('#guardianMobileValue') && ($('#guardianMobileValue').textContent = toBanglaNumber(student.guardianMobile || 'নম্বর নেই'));
   const additional = $('#studentAdditionalMobiles');
   if (additional) {
@@ -93,12 +93,13 @@ const VIEW_ROUTES = Object.freeze([
   'materials', 'model-test', 'study-practice', 'study-results', 'study-other',
   'exams', 'exam-upcoming', 'exam-live', 'exam-done', 'exam-results', 'exam-practice',
   'exam-instant', 'exam-papers', 'exam-recent', 'exam-bank', 'exam-other', 'results',
-  'profile', 'my-profile', 'settings', 'student-fee', 'reports', 'notification-settings', 'notice-board'
+  'profile', 'my-profile', 'student-id-card', 'settings', 'student-fee', 'reports', 'notification-settings', 'notice-board'
 ]);
 /* Views whose id does not follow the `<route>View` rule. */
 const VIEW_ID_OVERRIDES = Object.freeze({
   'notification-settings': 'notificationSettingsView',
   'my-profile': 'myProfileView',
+  'student-id-card': 'studentIdCardView',
   'student-fee': 'studentFeeView',
   'my-courses': 'myCoursesView',
   'question-bank': 'questionBankView',
@@ -138,7 +139,7 @@ const VIEW_ID_OVERRIDES = Object.freeze({
   'class-other': 'classOtherView'
 });
 /* Old/bookmarked names that now live inside another section. */
-const VIEW_ALIASES = Object.freeze({ results: 'exam-results' });
+const VIEW_ALIASES = Object.freeze({ results: 'exam-results', settings: 'profile' });
 /* Which bottom-bar item owns a view that is not itself a bottom-bar item. */
 const NAV_PARENTS = Object.freeze({
   exams: 'exams',
@@ -162,16 +163,16 @@ const NAV_PARENTS = Object.freeze({
   'routine-holiday': 'routine',
   'routine-important': 'routine',
   'routine-other': 'routine',
-  classes: 'home',
-  'class-today': 'home',
-  'class-upcoming': 'home',
-  'class-record': 'home',
-  'class-subjects': 'home',
-  'class-teachers': 'home',
-  'class-notes': 'home',
-  'class-materials': 'home',
-  'class-attendance': 'home',
-  'class-other': 'home',
+  classes: 'courses',
+  'class-today': 'courses',
+  'class-upcoming': 'courses',
+  'class-record': 'courses',
+  'class-subjects': 'courses',
+  'class-teachers': 'courses',
+  'class-notes': 'courses',
+  'class-materials': 'courses',
+  'class-attendance': 'courses',
+  'class-other': 'courses',
   'my-courses': 'courses',
   homework: 'courses',
   suggestion: 'courses',
@@ -185,6 +186,7 @@ const NAV_PARENTS = Object.freeze({
   reports: 'profile',
   'notification-settings': 'profile',
   'my-profile': 'profile',
+  'student-id-card': 'profile',
   settings: 'profile',
   'student-fee': 'profile',
   'notice-board': 'home'

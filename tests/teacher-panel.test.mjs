@@ -75,11 +75,11 @@ test('home is welcome + one 3-column grid over existing screens + today + recent
   assert.equal(tiles.length, 6, 'ছয়টি ফিচার-টাইল');
   assert.ok($('.teacher-home-grid'), 'the grid container exists');
   assert.deepEqual(tiles.map(t => t.dataset.teacherView),
-    ['homework', 'suggestion', 'courses', 'routine-view', 'online-exams', 'notice'],
+    ['routine-view', 'homework', 'notice', 'online-exams', 'exam', 'courses'],
     'প্রতিটি টাইল একটি বিদ্যমান স্ক্রিনে যায়');
   const oneTapHomework = $$('#teacherHome [data-new-activity="homework"]');
   assert.equal(oneTapHomework.length, 1, 'এক ট্যাপের বাড়ির কাজ entry');
-  assert.equal(oneTapHomework[0], tiles[0], 'one-tap action is the existing homework tile, not a duplicate button');
+  assert.equal(oneTapHomework[0], tiles[1], 'one-tap action is the existing homework tile, not a duplicate button');
   assert.ok($('#teacherTodayClasses'), 'আজকের ক্লাস section');
   assert.ok($('#teacherRecent'), 'সাম্প্রতিক কাজ section');
 });

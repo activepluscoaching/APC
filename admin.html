@@ -5,8 +5,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <script src="js/sanitize-url.js"></script>
-  <script src="js/app-entry.js?v=331" data-entry="admin"></script>
-  <script type="module" src="js/admin.js?v=331"></script>
+  <script src="js/app-entry.js?v=337" data-entry="admin"></script>
+  <script type="module" src="js/admin.js?v=337"></script>
   <script src="js/topbar-connectivity.js?v=25161005-syncborder" defer></script>
   <script type="module" src="js/realtime-sync-entry.js"></script>
   <script src="js/appearance-boot.js"></script>
@@ -35,21 +35,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=331">
-  <link rel="stylesheet" href="css/ui-layout.css?v=331">
-  <link rel="stylesheet" href="css/ui-components.css?v=331">
-  <link rel="stylesheet" href="css/ui-forms.css?v=331">
-  <link rel="stylesheet" href="css/ui-features.css?v=331">
-  <link rel="stylesheet" href="css/notice-board.css?v=331">
-  <link rel="stylesheet" href="css/ui-status.css?v=331">
-  <link rel="stylesheet" href="css/ui-auth.css?v=331">
-  <link rel="stylesheet" href="css/app-polish.css?v=331">
-  <link rel="stylesheet" href="css/student-record.css?v=331">
-  <link rel="stylesheet" href="css/exam-archive.css?v=331">
-  <link rel="stylesheet" href="css/academics.css?v=331">
-  <link rel="stylesheet" href="css/notifications.css?v=331">
-  <link rel="stylesheet" href="css/course-hub.css?v=331">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=331">
+  <link rel="stylesheet" href="css/foundation.css?v=337">
+  <link rel="stylesheet" href="css/ui-layout.css?v=337">
+  <link rel="stylesheet" href="css/ui-components.css?v=337">
+  <link rel="stylesheet" href="css/ui-forms.css?v=337">
+  <link rel="stylesheet" href="css/ui-features.css?v=337">
+  <link rel="stylesheet" href="css/notice-board.css?v=337">
+  <link rel="stylesheet" href="css/ui-status.css?v=337">
+  <link rel="stylesheet" href="css/ui-auth.css?v=337">
+  <link rel="stylesheet" href="css/app-polish.css?v=337">
+  <link rel="stylesheet" href="css/student-record.css?v=337">
+  <link rel="stylesheet" href="css/exam-archive.css?v=337">
+  <link rel="stylesheet" href="css/academics.css?v=337">
+  <link rel="stylesheet" href="css/notifications.css?v=337">
+  <link rel="stylesheet" href="css/course-hub.css?v=337">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=337">
   <script type="module" src="js/ui-accessibility.js"></script>
   <script src="js/launch-screen.js" defer></script>
 </head>
@@ -60,17 +60,17 @@
        js/staff-auth.js refuses createInitialAdmin() once one Admin exists. -->
   <!-- Admin Login Screen -->
   <div class="admin-shell" id="adminShell" hidden>
-    <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" data-icon="bell" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5.5 16V9a6.5 6.5 0 0 1 13 0v7l2 2h-17Zm4 5a3 3 0 0 0 5 0"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="adminExitButton" type="button" aria-label="লগআউট"><svg class="apc-glyph-icon" data-icon="logout" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5M8 12h13m-5-5 5 5-5 5"/></svg></button></div></div></header>
+    <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="adminExitButton" type="button" aria-label="লগআউট"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div></header>
 
     <main class="admin-main" id="adminMain">
       <!-- System overview: identity, staff, data and security snapshots.
            No daily collection, routine or notice entry lives here. -->
       <section class="admin-view active" data-view-panel="dashboard" aria-labelledby="dashTitle">
-        <div class="admin-backup-reminder" id="backupReminder" role="status" hidden><span class="admin-backup-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="backup" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 17.5a4.5 4.5 0 0 1-.9-8.9 6.8 6.8 0 0 1 13.1-1.4 5.3 5.3 0 0 1 .6 10.3M12 21V12m-3.5 3.5 3.5-3.5 3.5 3.5"/></svg></span><span class="admin-backup-copy"><strong>ব্যাকআপ নেওয়া হয়নি</strong> — ৭ দিন ব্যাকআপ নেওয়া হয়নি।</span><a class="admin-backup-action" href="#backup">ব্যাকআপ এক্সপোর্ট করুন</a></div>
+        <div class="admin-backup-reminder" id="backupReminder" role="status" hidden><span class="admin-backup-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="backup" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/backup.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-backup-copy"><strong>ব্যাকআপ নেওয়া হয়নি</strong> — ৭ দিন ব্যাকআপ নেওয়া হয়নি।</span><a class="admin-backup-action" href="#backup">ব্যাকআপ এক্সপোর্ট করুন</a></div>
         <article class="admin-hero">
           <div class="admin-hero-head">
             <div class="admin-hero-title">
-              <span class="admin-hero-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="home" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 10.5 9-7.7 9 7.7M5.2 9.3v10a1.7 1.7 0 0 0 1.7 1.7h10.2a1.7 1.7 0 0 0 1.7-1.7v-10M9.5 21v-6.5h5V21"/></svg></span>
+              <span class="admin-hero-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
               <div class="pay-portal-heading"><p class="pay-portal-kicker">সিস্টেম তদারকি</p><div class="admin-welcome" id="adminWelcome" hidden role="status" aria-live="polite"></div><h1 id="dashTitle">এক নজরে ইনস্টিটিউট</h1></div>
             </div>
             <time class="admin-date-pill" id="adminTodayDate"></time>
@@ -78,22 +78,22 @@
           <p class="admin-maintenance-flag" id="adminMaintenanceFlag" hidden role="status"></p>
           <div class="admin-hero-stats">
             <div class="admin-stat-tile tone-mint">
-              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="users" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="7.3" r="3.4"/><path d="M2.5 21v-3a6.5 6.5 0 0 1 13 0v3M16 4.5a3.3 3.3 0 0 1 0 6.4M18 14a5.4 5.4 0 0 1 3.5 5v2"/></svg></span>
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="users" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/users.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
               <p class="tile-label">মোট শিক্ষার্থী</p>
               <p class="tile-value" id="dashStudentCount">—</p>
             </div>
             <div class="admin-stat-tile tone-blue">
-              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="users" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="7.3" r="3.4"/><path d="M2.5 21v-3a6.5 6.5 0 0 1 13 0v3M16 4.5a3.3 3.3 0 0 1 0 6.4M18 14a5.4 5.4 0 0 1 3.5 5v2"/></svg></span>
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="users" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/users.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
               <p class="tile-label">সক্রিয় স্টাফ</p>
               <p class="tile-value" id="dashStaffCount">—</p>
             </div>
             <div class="admin-stat-tile tone-amber">
-              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="book" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5q-4-2.5-8-1.2v15.9q4-1.3 8 1.2 4-2.5 8-1.2V3.8Q16 2.5 12 5Zm0 0v15.9M7 7.8l2 .5M15 8.3l2-.5"/></svg></span>
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
               <p class="tile-label">চলমান ক্লাস</p>
               <p class="tile-value" id="dashClassCount">—</p>
             </div>
             <div class="admin-stat-tile tone-lilac">
-              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="shield" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 3v6c0 4.8-8 9-8 9s-8-4.2-8-9V6Zm-4 9 2.5 2.6 5.5-5.7"/></svg></span>
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
               <p class="tile-label">সুরক্ষিত অ্যাকাউন্ট</p>
               <p class="tile-value" id="dashProtectedCount">—</p>
             </div>
@@ -109,7 +109,7 @@
            Admin-controlled CRUD for every non-student user. A Staff ID is
            unique, permanent and never mixed with a Student ID. -->
       <section class="admin-view" data-view-panel="staff" aria-labelledby="staffTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="staffTitle">স্টাফ ম্যানেজমেন্ট</h1><p class="staff-page-sub">সব স্টাফ অ্যাকাউন্ট খুঁজুন, ফিল্টার করুন ও পরিচালনা করুন</p></div>
         </div>
         <!-- Owner decision 2026-10-14: creating a staff account is the first
@@ -124,10 +124,10 @@
         <p class="finance-error" id="staffReadonlyNote" role="status" hidden>শুধুমাত্র Admin স্টাফ অ্যাকাউন্ট তৈরি, সম্পাদনা বা মুছতে পারবেন।</p>
         <div class="staff-toolbar">
           <label class="staff-search" for="staffSearch">
-            <span class="staff-search-icon" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="search" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span>
+            <span class="staff-search-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
             <input id="staffSearch" type="search" placeholder="স্টাফ খুঁজুন — ID, নাম, ইউজারনেম, মোবাইল বা রোল" autocomplete="off" aria-label="স্টাফ অনুসন্ধান">
             <button class="staff-search-clear" id="staffSearchClear" type="button" aria-label="অনুসন্ধান মুছুন" hidden>
-              <svg class="apc-glyph-icon" data-icon="close" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+              <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="close" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/close.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
             </button>
           </label>
           <div class="staff-filter-block">
@@ -145,7 +145,7 @@
 
       <!-- Roles & Permissions: read-only projection of the existing role tree -->
       <section class="admin-view" data-view-panel="system" aria-labelledby="systemTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="systemTitle">সিস্টেম</h1><p class="admin-view-sub">রোল, নিরাপত্তা, সেটিংস ও একাডেমিক সেটআপ — সিস্টেমের সব নিয়ন্ত্রণ এক জায়গায়</p></div>
         </div>
         
@@ -153,33 +153,33 @@
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="roles" data-admin-cap="roles.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>Roles &amp; Permissions</strong><small>রোলভিত্তিক অনুমতির ম্যাট্রিক্স</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="security" data-admin-cap="security.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>সিকিউরিটি</strong><small>সেশন, পাসওয়ার্ড নীতি ও সুরক্ষিত অ্যাকাউন্ট</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="settings" data-admin-cap="settings.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>সিস্টেম সেটিংস</strong><small>অ্যাপ কন্ট্রোল, ব্র্যান্ডিং ও নোটিশ</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="academics" data-admin-cap="settings.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>ক্লাস ও বিষয়</strong><small>ক্লাস, বিষয় ও শিক্ষক ম্যাপিংয়ের একক কেন্দ্র</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="migration" data-admin-cap="security.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>ভি-টু সিংক মাইগ্রেশন</strong><small>টিচার লিংক ও রোস্টার — কাটওভারের প্রস্তুতি</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
         </nav>
       </section>
 
       <section class="admin-view" data-view-panel="migration" aria-labelledby="migrationTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="migrationTitle">ভি-টু সিংক মাইগ্রেশন</h1><p class="admin-view-sub">ভবিষ্যৎ সিংকের প্রস্তুতি ও রোস্টার যাচাই</p></div>
         </div>
         
@@ -187,7 +187,7 @@
       </section>
 
       <section class="admin-view" data-view-panel="roles" aria-labelledby="rolesTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="rolesTitle">রোল ও অনুমতি</h1><p class="admin-view-sub">প্রতিটি রোল কী করতে পারে — এক নজরে অনুমতির মানচিত্র</p></div>
         </div>
         
@@ -196,16 +196,16 @@
 
       <!-- Student Management / Student Overview -->
       <section class="admin-view" data-view-panel="students" aria-labelledby="studentsTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="studentsTitle">শিক্ষার্থী ব্যবস্থাপনা</h1><p class="admin-view-sub">নিবন্ধন যাচাই, অনুমোদন ও শিক্ষার্থীর তথ্য পরিচালনা</p></div>
         </div>
         <div class="student-toolbar">
           <div class="student-search-box">
             <label class="student-search" for="studentSearch">
-              <svg class="apc-glyph-icon" data-icon="search" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg>
+              <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
               <input id="studentSearch" type="search" placeholder="স্টুডেন্ট আইডি, নাম বা মোবাইল নং দিয়ে খুঁজুন..." autocomplete="off">
               <button class="student-search-clear" id="studentSearchClear" type="button" aria-label="অনুসন্ধান মুছুন" hidden>
-                <svg class="apc-glyph-icon" data-icon="close" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="close" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/close.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
               </button>
             </label>
             <div class="student-search-meta">
@@ -216,7 +216,7 @@
                list carries only name, ID and status, and this panel holds the
                optional filters (class, status). -->
           <button class="student-filter-toggle" type="button" id="studentFilterToggle" aria-expanded="false" aria-controls="studentFilterPanel">
-            <svg class="apc-glyph-icon" data-icon="grid" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/></svg>
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="grid" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/dashboard.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
             <span>ফিল্টার</span>
           </button>
           <div class="student-filter-panel" id="studentFilterPanel" hidden>
@@ -243,7 +243,7 @@
 
       <!-- Report Center: every downloadable report lives here. -->
       <section class="admin-view" data-view-panel="reports" aria-labelledby="reportsTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="reportsTitle">রিপোর্ট সেন্টার</h1><p class="admin-view-sub">সব ধরনের প্রতিবেদন তৈরি, প্রিভিউ ও PDF ডাউনলোড</p></div>
         </div>
         
@@ -260,14 +260,14 @@
 
       <!-- Data Management -->
       <section class="admin-view" data-view-panel="data" aria-labelledby="dataTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="dataTitle">ডেটা ম্যানেজমেন্ট</h1><p class="data-page-sub">সংগ্রহভিত্তিক রেকর্ড সংখ্যা, স্টোরেজ ও নিরাপদভাবে মুছে ফেলার নিয়ন্ত্রণ</p></div>
         </div>
         <nav class="admin-more-menu admin-card" id="adminDataMenu" aria-label="ডেটা division">
           <button class="admin-more-item admin-system-item" type="button" data-admin-view="backup" data-admin-cap="backup.manage">
             <span class="admin-more-icon" aria-hidden="true"></span>
             <span class="admin-more-copy"><strong>ব্যাকআপ ও রিস্টোর</strong><small>সম্পূর্ণ ব্যাকআপ নিন ও ফিরিয়ে আনুন</small></span>
-            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" data-icon="chevron-right" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           </button>
         </nav>
         <article class="admin-card">
@@ -306,7 +306,7 @@
 
       <!-- Backup & Restore -->
       <section class="admin-view" data-view-panel="backup" aria-labelledby="backupTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="data" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="data" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="backupTitle">ব্যাকআপ ও রিস্টোর</h1><p class="admin-view-sub">সম্পূর্ণ ডেটার ব্যাকআপ নিন ও প্রয়োজনে ফিরিয়ে আনুন</p></div>
         </div>
         <article class="admin-card">
@@ -338,7 +338,7 @@
       </section>
 
       <section class="admin-view" data-view-panel="audit" aria-labelledby="auditTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="data" aria-label="ডেটা মেনুতে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button><div><h1 id="auditTitle">নম্বর ও উপস্থিতি অডিট লগ</h1><p class="admin-view-sub">কে, কখন, আগে/পরে কী ছিল এবং পরিবর্তনের কারণ</p></div></div>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="data" aria-label="ডেটা মেনুতে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><div><h1 id="auditTitle">নম্বর ও উপস্থিতি অডিট লগ</h1><p class="admin-view-sub">কে, কখন, আগে/পরে কী ছিল এবং পরিবর্তনের কারণ</p></div></div>
         <article class="admin-card">
           <header class="admin-card-head"><div><h2>সাম্প্রতিক পরিবর্তন</h2></div><span class="badge">সর্বশেষ ২০০টি</span></header>
           <div id="gradeAuditList"></div>
@@ -351,7 +351,7 @@
 
       <!-- Security -->
       <section class="admin-view" data-view-panel="security" aria-labelledby="securityTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="securityTitle">সিকিউরিটি</h1><p class="admin-view-sub">সেশন, পাসওয়ার্ড নীতি ও সুরক্ষিত অ্যাকাউন্টের তদারকি</p></div>
         </div>
         <div class="app-control-grid" id="securityPanels"></div>
@@ -359,7 +359,7 @@
 
       <!-- Academic Setup: the single source of truth for classes and subjects -->
       <section class="admin-view" data-view-panel="academics" aria-labelledby="academicSetupTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="academicSetupTitle">ক্লাসের বিষয় ঠিক করুন</h1><p class="admin-view-sub">কোন ক্লাসে কোন বিষয় পড়ানো হবে — একক কেন্দ্র থেকে ঠিক করুন</p></div>
         </div>
         <div id="adminAcademics"></div>
@@ -367,7 +367,7 @@
 
       <!-- System Settings -->
       <section class="admin-view" data-view-panel="settings" aria-labelledby="appManagementTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="appManagementTitle">সিস্টেম সেটিংস</h1><p class="admin-view-sub">ব্র্যান্ডিং, যোগাযোগ, নোটিফিকেশন ও রক্ষণাবেক্ষণ নিয়ন্ত্রণ</p></div>
         </div>
 
@@ -423,7 +423,7 @@
 
       <!-- Admin Profile -->
       <section class="admin-view" data-view-panel="profile" aria-labelledby="adminProfileTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" data-icon="back" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button>
+        <div class="page-intro"><button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
           <div><h1 id="adminProfileTitle">আমার প্রোফাইল</h1><p class="profile-page-sub">পরিচয়, লগইন তথ্য ও পাসওয়ার্ড — আপনার অ্যাকাউন্টের সবকিছু এক জায়গায়</p></div>
         </div>
         
@@ -485,12 +485,12 @@
             <button class="admin-btn primary" type="submit">পাসওয়ার্ড বদল করুন</button>
           </form>
         </article>
-          <article class="admin-card admin-session-card"><div class="admin-session-copy"><h2>সেশন</h2><p>এই ডিভাইসে লগইন করা আছেন। কাজ শেষ হলে লগআউট করুন।</p></div><button class="admin-btn ghost admin-logout-btn" type="button" data-settings-row="logout" id="adminAccountLogout"><svg class="apc-glyph-icon" data-icon="logout" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5M8 12h13m-5-5 5 5-5 5"/></svg> লগআউট</button></article>
+          <article class="admin-card admin-session-card"><div class="admin-session-copy"><h2>সেশন</h2><p>এই ডিভাইসে লগইন করা আছেন। কাজ শেষ হলে লগআউট করুন।</p></div><button class="admin-btn ghost admin-logout-btn" type="button" data-settings-row="logout" id="adminAccountLogout"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg> লগআউট</button></article>
             </div>
           <div class="profile-section" data-settings-group="notification"><div id="notificationSettings" class="notification-settings-mount"></div></div>
           <div class="profile-section" data-settings-group="app">
             
-            <div class="settings-list"><article class="admin-card theme-card"><label class="settings-toggle theme-switch"><span class="settings-icon purple theme-switch-icon" aria-hidden="true"><svg class="icon-sun apc-glyph-icon" data-icon="sun" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></svg><svg class="icon-moon apc-glyph-icon" data-icon="moon" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.6a9 9 0 0 1-11.1-11A9 9 0 1 0 20.5 14.6Z"/></svg></span><span class="settings-copy"><strong>গাঢ় থিম</strong><small>AMOLED কালো — চোখের আরাম ও ব্যাটারি সাশ্রয়</small></span><span class="toggle-switch"><input type="checkbox" id="darkModeToggle"><i></i></span></label></article></div>
+            <div class="settings-list"><article class="admin-card theme-card"><label class="settings-toggle theme-switch"><span class="settings-icon purple theme-switch-icon" aria-hidden="true"><svg class="icon-sun apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/sun.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><svg class="icon-moon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="moon" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/moon.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="settings-copy"><strong>গাঢ় থিম</strong><small>AMOLED কালো — চোখের আরাম ও ব্যাটারি সাশ্রয়</small></span><span class="toggle-switch"><input type="checkbox" id="darkModeToggle"><i></i></span></label></article></div>
           </div>
           <div class="profile-section" data-settings-group="security"></div>
           <div class="profile-section" data-settings-group="data"></div>
@@ -502,7 +502,7 @@
 
     <!-- Rebuilt by js/admin-panel-ui.js from the signed-in role's capabilities:
          icons, labels, order and visibility all come from the permission model. -->
-    <nav class="admin-bottom" aria-label="এডমিন নেভিগেশন"><button class="admin-bottom-item active" type="button" data-admin-view="dashboard" aria-current="page"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="dashboard" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/></svg></span><span class="nav-label">হোম</span></button><button class="admin-bottom-item" type="button" data-admin-view="staff"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="staff" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2.3"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><circle cx="8" cy="12.5" r="2"/><path d="M5 18a3 3 0 0 1 6 0M14 11.5h4M14 15.5h4"/></svg></span><span class="nav-label">স্টাফ</span></button><button class="admin-bottom-item" type="button" data-admin-view="reports"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="reports" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2.2"/><path d="M7.5 16.5v-4M12 16.5v-9M16.5 16.5V10"/></svg></span><span class="nav-label">রিপোর্ট</span></button><button class="admin-bottom-item" type="button" data-admin-view="system"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="settings" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 6h5m4 0h8M3.5 12h10m4 0h3.5M3.5 18h3m4 0h10"/><circle cx="10.5" cy="6" r="2"/><circle cx="15.5" cy="12" r="2"/><circle cx="8.5" cy="18" r="2"/></svg></span><span class="nav-label">সিস্টেম</span></button><button class="admin-bottom-item" type="button" data-admin-view="data"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="data" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5.5" rx="8.5" ry="3"/><path d="M3.5 5.5v13c0 4 17 4 17 0v-13M3.5 12c0 4 17 4 17 0"/></svg></span><span class="nav-label">ডেটা</span></button><button class="admin-bottom-item" type="button" data-admin-view="profile"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" data-icon="profile" data-icon-set="active-plus-color" data-icon-version="1" data-icon-style="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="7.5" r="4"/><path d="M4 21v-1.5a8 8 0 0 1 16 0V21"/></svg></span><span class="nav-label">অ্যাকাউন্ট</span></button></nav>
+    <nav class="admin-bottom" aria-label="এডমিন নেভিগেশন"><button class="admin-bottom-item active" type="button" data-admin-view="dashboard" aria-current="page"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="dashboard" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/dashboard.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">হোম</span></button><button class="admin-bottom-item" type="button" data-admin-view="staff"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">স্টাফ</span></button><button class="admin-bottom-item" type="button" data-admin-view="reports"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">রিপোর্ট</span></button><button class="admin-bottom-item" type="button" data-admin-view="system"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="settings" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/settings.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">সিস্টেম</span></button><button class="admin-bottom-item" type="button" data-admin-view="data"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="data" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/data.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">ডেটা</span></button><button class="admin-bottom-item" type="button" data-admin-view="profile"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="profile" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">অ্যাকাউন্ট</span></button></nav>
   </div>
 
   <!-- Generic modal (student detail / password reset) -->

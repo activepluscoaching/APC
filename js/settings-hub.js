@@ -249,10 +249,15 @@ function paintGroupHub(root) {
       const head = element('div', 'settings-group-head');
       const back = document.createElement('button');
       back.type = 'button';
-      back.className = 'pay-back';
+      back.className = 'pay-back settings-hub-back';
       back.dataset.settingsHubBack = '1';
       back.setAttribute('aria-label', 'সেটিংস গ্রুপে ফিরুন');
-      back.textContent = '←';
+      /* A real back glyph, never a bare text arrow: .pay-back paints for
+         the dark hero band (white on a translucent chip), which on a
+         group's white card left this button effectively invisible — the
+         "cannot go back" dead end reported on the Admin profile. The
+         settings-hub-back skin below repaints it for surfaces. */
+      back.append(iconElement('back', 'apc-icon-svg'));
       const title = element('h2', 'settings-group-title', group.label);
       head.append(back, title);
       section.prepend(head);
@@ -292,6 +297,24 @@ function paintGroupHub(root) {
     }
     if (event.target.closest('[data-settings-hub-back]')) showGroup('');
   });
+  root.__apcShowSettingsGroup = showGroup;
+}
+
+/** Return a mounted hub to its group menu — no group left open. Panels call
+ *  this when their Settings surface is (re-)entered, so a group opened on an
+ *  earlier visit never greets the person again ("the part I clicked before
+ *  is still showing"). Safe on a hub that was never grouped. */
+export function resetSettingsHub(mount) {
+  const root = typeof mount === 'string' ? document.querySelector(mount) : mount;
+  if (!root) return false;
+  if (typeof root.__apcShowSettingsGroup === 'function') {
+    root.__apcShowSettingsGroup('');
+    return true;
+  }
+  const nav = root.querySelector('[data-settings-groups]');
+  if (nav) nav.hidden = false;
+  root.querySelectorAll('[data-settings-group]').forEach(section => { section.hidden = true; });
+  return Boolean(nav);
 }
 
 /** Student More keeps one copy of each control, with live device/storage facts. */

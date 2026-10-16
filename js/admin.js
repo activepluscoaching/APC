@@ -4,7 +4,7 @@ import { backupOverdue } from './storage-safety.js';
 import { studentRecordMarkup } from './student-record.js';
 import { initAdminAcademics } from './admin-academics.js';
 import { mountV2Migration } from './admin-migration.js';
-import { mountSettingsHub } from './settings-hub.js';
+import { mountSettingsHub, resetSettingsHub } from './settings-hub.js';
 import { iconMarkup } from './icons.js';
 /* Admin panel — System Control + Staff Management + Permissions + Security +
    Data + Reports + Settings.
@@ -1271,7 +1271,10 @@ const VIEW_REFRESHERS = {
   backup: () => renderBackup(),
   audit: () => renderGradeAudit(),
   security: () => renderSecurity(),
-  profile: () => { renderAdminProfile(); refreshStaffOverviews(); },
+  /* Arriving on the profile always lands on the settings menu: a group
+     opened on an earlier visit must not still be open ("the part I
+     clicked before is still showing" — the reported dead end). */
+  profile: () => { resetSettingsHub($('#adminSettingsHub')); renderAdminProfile(); refreshStaffOverviews(); },
   staff: () => { void renderStaff(); },
   reports: () => refreshReports($('#adminReports'))
 };

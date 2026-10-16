@@ -93,6 +93,12 @@
 .settings-value{margin-left:auto;flex:none;color:var(--color-text-secondary);font-size:var(--font-sm);text-align:right}
 .profile-section[data-settings-owner]{padding:0;border:0;background:transparent;margin-bottom:0;box-shadow:none}
 .settings-group-head{display:flex;align-items:center;gap:var(--space-3);margin:0 0 var(--space-3)}
+/* The group back button lives on a white card, not on the dark hero band
+   .pay-back was painted for — repaint it for surfaces so the way back is
+   always visible and tappable (44px), in light and dark alike. */
+.settings-group-head .settings-hub-back{background:var(--color-surface-muted);border:1px solid var(--color-border);color:var(--color-primary);width:44px;height:44px;min-width:44px;min-height:44px}
+.settings-group-head .settings-hub-back svg{width:20px;height:20px}
+.settings-group-head .settings-hub-back:hover{background:var(--color-surface);border-color:var(--color-primary)}
 .settings-group-title{margin:0;font-size:var(--font-md)}
 .settings-hub [data-settings-group][hidden]{display:none}
 .settings-group-grid{margin-top:8px}

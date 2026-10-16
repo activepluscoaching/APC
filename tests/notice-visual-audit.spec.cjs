@@ -26,7 +26,7 @@ for(const theme of ['light','dark']) for(const width of [320,390,1024]) {
   expect(contrast).toBeGreaterThanOrEqual(4.5);
   await expect(modal.locator('.modal-header')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   const icon=modal.locator('.notice-detail-icon').first();
-  expect(await icon.evaluate(el=>getComputedStyle(el,'::after').maskImage)).toContain('data:image/svg+xml');
+  expect(await icon.evaluate(el=>getComputedStyle(el,'::after').backgroundImage)).toContain('ai-3d/approval.svg');
   await page.emulateMedia({reducedMotion:'reduce'});
   await expect(icon).toHaveCSS('animation-name','none');
   const clear=modal.locator('[data-apc-notice-clear]');

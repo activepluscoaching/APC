@@ -7,6 +7,15 @@ for (const width of [320, 390, 1024]) {
     await enterStudentApp(page);
     await page.locator('.bottom-nav [data-view="courses"]').click();
     await expect(page.locator('#coursesView')).toBeVisible();
+    await expect(page.locator('#coursesTitle')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+    expect(await page.locator('#coursesView .page-intro').evaluate(el=>getComputedStyle(el,'::before').content)).toBe('none');
+    const heading=await page.locator('#coursesTitle').boundingBox(),link=await page.locator('#coursesView .study-class-link').boundingBox();
+    expect(Math.abs(heading.y+heading.height/2-link.y-link.height/2)).toBeLessThan(2);
+    expect(link.height).toBeGreaterThanOrEqual(44);
+    await page.locator('#coursesView .study-class-link').click();
+    await expect(page.locator('#classesView')).toBeVisible();
+    await page.locator('.bottom-nav [data-view="courses"]').click();
+
     await expect(page.locator('#studySections .pay-tile')).toHaveCount(9);
     expect(await page.locator('#studySections').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3);
     await expect(page.locator('#studyTodayList')).toContainText('কোনো চলমান অধ্যায় নেই');

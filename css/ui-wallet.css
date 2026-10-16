@@ -1977,9 +1977,11 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 @media screen {
 .student-reference .app-shell:has(#coursesView.active) #studentHeader { display: none; }
 .student-reference #coursesView { max-width: 760px; margin-inline: auto; }
-.student-reference #coursesView .page-intro { margin: 0 0 14px; padding: 22px 0 0; }
+.student-reference #coursesView .page-intro { margin: 0 0 16px; padding: 18px 0 0; color: var(--color-text); background: transparent; }
+.student-reference #coursesView .page-intro::before { content: none; }
+.student-reference #coursesView .page-intro-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: transparent; }
 .student-reference #coursesView .page-intro .pay-back { display: none; }
-.student-reference #coursesView .page-intro h1 { font-size: 29px; font-weight: 500; line-height: 1.3; }
+.student-reference #coursesView .page-intro h1 { margin: 0; font-size: 26px; font-weight: 500; line-height: 1.4; color: var(--color-text); background: transparent; box-shadow: none; }
 .student-reference #coursesView .study-hub-subtitle { margin: 4px 0 0; font-size: 16px; line-height: 1.5; color: var(--color-text-secondary); }
 .student-reference #studySections {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
@@ -2161,7 +2163,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #classesView .class-attendance-cell.is-late { background: #1b9e78; }
 .student-reference #classesView .class-attendance-cell.is-absent { background: #df494e; }
 .student-reference #classesView .class-attendance-note { margin: 10px 0 0; font-size: 11px; line-height: 1.6; color: var(--color-text-secondary); }
-.student-reference #coursesView .study-class-link { margin-top: 6px; padding: 4px 0; min-height: 32px; border: 0; background: transparent; color: var(--color-primary); font-size: 14px; }
+.student-reference #coursesView .study-class-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; margin: 0; padding: 9px 13px; min-height: 44px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-primary); box-shadow: none; font-size: 14px; font-weight: 500; line-height: 1.5; }
 @media (max-width: 360px) {
   .student-reference #classHub .pay-tile-label { font-size: 14px; }
   .student-reference #classHub .pay-tile { min-height: 84px; }
@@ -2485,8 +2487,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 /* Replace only the award glyph on non-birthday cards, without changing markup. */
 :is(#noticeModal, #apcNoticeModal) .notice-detail:not(.is-birthday) .notice-detail-icon:has(svg[data-icon="award"], use[href="#icon-award"]) svg { display: none; }
 :is(#noticeModal, #apcNoticeModal) .notice-detail:not(.is-birthday) .notice-detail-icon:has(svg[data-icon="award"], use[href="#icon-award"])::after {
-  content: ''; width: 25px; height: 25px; background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12 3 3 5-6'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  content: ''; width: 25px; height: 25px; background: transparent url("../assets/icons/ai-3d/approval.svg") center / contain no-repeat;
 }
 :is(#noticeModal, #apcNoticeModal) .notice-detail-icon svg { animation: none; }
 :is(#noticeModal, #apcNoticeModal) .notice-detail-copy { flex: 1; min-width: 0; gap: 5px; }
@@ -2539,8 +2540,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 }
 #logoutModal .modal-header::after {
   content: ''; grid-column: 1; grid-row: 1; width: 25px; height: 25px; margin-left: 12px;
-  background: var(--color-danger); pointer-events: none; animation: logout-icon-float 3s ease-in-out infinite;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5M9 12h12m-5-5 5 5-5 5'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  background: transparent url("../assets/icons/ai-3d/logout.svg") center / contain no-repeat; pointer-events: none; animation: logout-icon-float 3s ease-in-out infinite;
 }
 #logoutModal .modal-header > div { grid-column: 1 / -1; grid-row: 2; background: transparent; border: 0; box-shadow: none; }
 #logoutModalTitle { font-size: 20px; font-weight: 500; line-height: 1.45; margin: 0; color: var(--color-text); }
@@ -2568,4 +2568,30 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #moreDeviceSettings .settings-icon { width: 25px; height: 25px; flex: 0 0 25px; background: transparent; color: var(--color-success); }
 .student-reference #moreDeviceSettings .settings-icon svg { width: 23px; height: 23px; }
 .student-reference #moreDeviceSettings .settings-value { font-size: 11px; color: var(--color-text-secondary); max-width: 38%; overflow-wrap: anywhere; }
+}
+
+/* Shared Soft 3D motion: visible movement, stable controls and labels. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  svg[data-icon-set="active-plus-soft3d"] {
+    transform-box: view-box; transform-origin: 50% 55%;
+    animation: apc-soft3d-idle 2.2s ease-in-out infinite !important;
+  }
+  svg[data-icon-set="active-plus-soft3d"] > image { pointer-events: none; }
+  :is(button,a,label):nth-child(3n + 2) svg[data-icon-set="active-plus-soft3d"] { animation-delay: -.7s !important; }
+  :is(button,a,label):nth-child(3n) svg[data-icon-set="active-plus-soft3d"] { animation-delay: -1.4s !important; }
+  @keyframes apc-soft3d-idle {
+    0%,100% { transform: translateY(1px) rotate(-4deg) scale(.98); }
+    50% { transform: translateY(-4px) rotate(4deg) scale(1.04); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  svg[data-icon-set="active-plus-soft3d"],
+  svg[data-icon-set="active-plus-soft3d"] > image { animation: none !important; transform: none !important; }
+}
+
+/* Soft grounded shadow belongs to artwork, not the button or its label. */
+@media screen {
+  svg[data-icon-set="active-plus-soft3d"] > image {
+    filter: drop-shadow(0 2px 1.3px color-mix(in srgb, var(--color-text) 24%, transparent));
+  }
 }

@@ -83,6 +83,7 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
      const title=card.querySelector('#homeTitle');
      return {
       adviceBand:getComputedStyle(adviceBand).backgroundImage,
+      adviceArtFilter:getComputedStyle(adviceBand.querySelector('.hero-slide--advice .hero-slide__art img')).filter,
       identityBackground:getComputedStyle(identity).backgroundImage,
       greeting:getComputedStyle(identity.querySelector('.pay-greeting')).color,
       name:getComputedStyle(identity.querySelector('.pay-hero-name')).color,
@@ -100,7 +101,9 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
      };
     });
     expect(hero.adviceBand).toContain('linear-gradient');
-    expect(hero.adviceBand).toContain('rgb(15, 118, 110)');
+    expect(hero.adviceBand).toContain('rgb(45, 66, 127)');
+    expect(hero.adviceBand).not.toContain('rgb(15, 118, 110)');
+    expect(hero.adviceArtFilter).toContain('grayscale(1)');
     expect(hero.identityBackground).toBe('none');
     expect(hero.greeting).not.toBe('rgb(255, 255, 255)');
     expect(hero.name).toBe('rgb(23, 26, 24)');
@@ -165,12 +168,15 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
      const card=document.querySelector('#homeView .study-progress-card');
      return {
       adviceBand:getComputedStyle(adviceBand).backgroundImage,
+      adviceArtFilter:getComputedStyle(adviceBand.querySelector('.hero-slide--advice .hero-slide__art img')).filter,
       name:getComputedStyle(identity.querySelector('.pay-hero-name')).color,
       title:getComputedStyle(card.querySelector('#homeTitle')).color,
       summary:getComputedStyle(card.querySelector('.study-progress-subtitle')).color
      };
     });
-    expect(hero.adviceBand).toContain('rgb(8, 97, 116)');
+    expect(hero.adviceBand).toContain('rgb(20, 40, 73)');
+    expect(hero.adviceBand).not.toContain('rgb(8, 97, 116)');
+    expect(hero.adviceArtFilter).toContain('grayscale(1)');
     expect(hero.name).toBe('rgb(244, 246, 250)');
     expect(hero.title).toBe('rgb(244, 246, 250)');
     expect(hero.summary).toBe('rgb(244, 246, 250)');

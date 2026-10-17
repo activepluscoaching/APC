@@ -3865,6 +3865,13 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
 
 /* ── Shared, information-only home hero ────────────────────────────────── */
 .hero-slider {
+  /* Keep the Student advice hero blue-violet; other surfaces retain brand green. */
+  --pay-hero-a: #24396f;
+  --pay-hero-b: #34285f;
+  --pay-on-hero-soft: #e3e9ff;
+  --pay-hero-gradient: linear-gradient(130deg, #2d427f 0%, #59428e 52%, #1c5b91 100%);
+  --pay-hero-line: rgba(255,255,255,.28);
+  --pay-shadow: 0 8px 22px rgba(39,47,105,.20);
   position: relative; isolation: isolate; display: grid;
   grid-template-rows: 46px minmax(0, 1fr); gap: 3px;
   width: min(100%, 520px); max-width: 520px; height: 170px; min-width: 0;
@@ -3926,7 +3933,10 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
 .hero-slide.is-active { opacity: 1; transform: translateX(0); pointer-events: auto; }
 .hero-slide[hidden] { display: none !important; }
 .hero-slide__art { position: absolute; z-index: 0; inset: 0; display: block; overflow: hidden; background: var(--pay-hero-a); }
-.hero-slide__art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .44; }
+.hero-slide__art img {
+  display: block; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .44;
+  filter: grayscale(1) brightness(.94) contrast(1.02);
+}
 .hero-slide::after {
   position: absolute; z-index: 1; inset: 0; content: '';
   background: linear-gradient(90deg, var(--pay-hero-a) 0%, color-mix(in srgb, var(--pay-hero-a) 91%, transparent) 54%, color-mix(in srgb, var(--pay-hero-a) 32%, transparent) 100%);
@@ -4020,8 +4030,16 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
 .admin-home-summary .admin-hero-stats .tile-value, .manager-home-summary .manager-kpi-grid .tile-value { color: var(--color-text); }
 .manager-today-classes { margin: 0 0 14px; }
 .manager-today-count-grid { grid-template-columns: minmax(0, 1fr); }
-html[data-theme="dark"] .hero-slider { border-color: var(--pay-hero-line); box-shadow: none; }
-html[data-theme="dark"] .hero-slide__art img { filter: brightness(.86) saturate(.88); }
+html[data-theme="dark"] .hero-slider {
+  --pay-hero-a: #162847;
+  --pay-hero-b: #241d46;
+  --pay-on-hero-soft: #d4def5;
+  --pay-hero-gradient: linear-gradient(130deg, #142849 0%, #28204b 52%, #173c61 100%);
+  --pay-hero-line: rgba(255,255,255,.24);
+  border-color: var(--pay-hero-line);
+  box-shadow: none;
+}
+html[data-theme="dark"] .hero-slide__art img { filter: grayscale(1) brightness(.78) contrast(1.06); }
 @media (max-width: 359px) {
   .home-dashboard-intro { gap: 7px; }
   .home-dashboard-intro h1 { font-size: 18px; }

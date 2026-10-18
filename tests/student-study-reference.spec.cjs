@@ -9,9 +9,10 @@ for (const width of [320, 390, 1024]) {
     await expect(page.locator('#coursesView')).toBeVisible();
     await expect(page.locator('#coursesTitle')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
     expect(await page.locator('#coursesView .page-intro').evaluate(el=>getComputedStyle(el,'::before').content)).toBe('none');
-    const heading=await page.locator('#coursesTitle').boundingBox(),link=await page.locator('#coursesView .study-class-link').boundingBox();
-    expect(Math.abs(heading.y+heading.height/2-link.y-link.height/2)).toBeLessThan(2);
-    expect(link.height).toBeGreaterThanOrEqual(44);
+    const grid=await page.locator('#studySections').boundingBox(),link=await page.locator('#coursesView .study-class-link').boundingBox();
+    expect(link.y).toBeGreaterThanOrEqual(grid.y+grid.height+8);
+    expect(link.height).toBeGreaterThanOrEqual(48);
+    expect(link.width).toBeGreaterThan(240);
     await page.locator('#coursesView .study-class-link').click();
     await expect(page.locator('#classesView')).toBeVisible();
     await page.locator('.bottom-nav [data-view="courses"]').click();

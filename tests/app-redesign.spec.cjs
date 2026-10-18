@@ -73,51 +73,50 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
     expect(home.tileBackgrounds.every(color=>color!=='rgba(0, 0, 0, 0)')).toBe(true);
    }
    if(role==='student') {
-    const hero=await page.evaluate(()=>{
+    await expect(page.locator('#homeView .student-home-hero')).toBeVisible();
+    await expect(page.locator('#dailyQuoteCard')).toBeHidden();
+    const home=await page.evaluate(()=>{
      const identity=document.querySelector('#homeView .student-home-welcome');
-     const adviceBand=document.querySelector('#homeView .hero-slider');
-     const summary=document.querySelector('#homeView .pay-hero.pay-hero-summary');
-     const card=summary.querySelector('.study-progress-card');
-     const statsRow=card.querySelector('.study-progress-stats:not(#homeRealStatsRow)');
-     const stats=[...statsRow.children];
-     const title=card.querySelector('#homeTitle');
+     const advice=document.querySelector('#dailyQuoteCard');
+     const hero=document.querySelector('#homeView .student-home-hero');
+     const active=hero.querySelector('.hero-slide.is-active');
+     const card=document.querySelector('#homeView .study-progress-card');
+     const stats=[...card.querySelectorAll('#homeRealStatsRow > div')];
      return {
-      adviceBand:getComputedStyle(adviceBand).backgroundImage,
-      adviceArtFilter:getComputedStyle(adviceBand.querySelector('.hero-slide--advice .hero-slide__art img')).filter,
-      identityBackground:getComputedStyle(identity).backgroundImage,
-      greeting:getComputedStyle(identity.querySelector('.pay-greeting')).color,
+      adviceDisplay:getComputedStyle(advice).display,
+      heroDisplay:getComputedStyle(hero).display,
+      heroRadius:getComputedStyle(hero).borderRadius,
+      heroTitle:active.querySelector('[data-hero-title]').textContent.trim(),
+      heroSlides:hero.querySelectorAll('[data-hero-slide]').length,
+      quote:advice.querySelector('[data-daily-quote-text]').textContent.trim(),
+      adviceDate:advice.querySelector('[data-daily-quote-date]').textContent.trim(),
+      adviceSummary:advice.querySelector('[data-daily-advice-summary]').textContent.trim(),
       name:getComputedStyle(identity.querySelector('.pay-hero-name')).color,
-      meta:getComputedStyle(identity.querySelector('.pay-hero-meta')).color,
-      progress:getComputedStyle(card).backgroundImage,
-      blur:getComputedStyle(card).backdropFilter,
-      title:getComputedStyle(title).color,
-      titleSize:getComputedStyle(title).fontSize,
+      title:getComputedStyle(card.querySelector('#homeTitle')).color,
+      titleSize:parseFloat(getComputedStyle(card.querySelector('#homeTitle')).fontSize),
       subtitle:getComputedStyle(card.querySelector('.study-progress-subtitle')).color,
-      subtitleSize:getComputedStyle(card.querySelector('.study-progress-subtitle')).fontSize,
-      weights:[...statsRow.querySelectorAll('strong, small')].map(el=>getComputedStyle(el).fontWeight),
-      labels:[...statsRow.querySelectorAll('small')].map(el=>getComputedStyle(el).color),
-      stats:stats.map(el=>getComputedStyle(el).backgroundColor),
-      realStats:[...card.querySelectorAll('#homeRealStatsRow > div')].map(el=>getComputedStyle(el).backgroundColor)
+      metricLabels:stats.map(el=>el.querySelector('small').textContent.trim()),
+      metricCount:stats.length,
+      quickActions:document.querySelectorAll('#studentServices .pay-tile').length,
+      tabs:document.querySelectorAll('.bottom-nav .bottom-link').length
      };
     });
-    expect(hero.adviceBand).toContain('linear-gradient');
-    expect(hero.adviceBand).toContain('rgb(45, 66, 127)');
-    expect(hero.adviceBand).not.toContain('rgb(15, 118, 110)');
-    expect(hero.adviceArtFilter).toContain('grayscale(1)');
-    expect(hero.identityBackground).toBe('none');
-    expect(hero.greeting).not.toBe('rgb(255, 255, 255)');
-    expect(hero.name).toBe('rgb(23, 26, 24)');
-    expect(hero.meta).not.toBe('rgb(255, 255, 255)');
-    expect(hero.progress).toContain('linear-gradient');
-    expect(hero.blur).toBe('none');
-    expect(hero.title).toBe('rgb(23, 26, 24)');
-    expect(hero.titleSize).toBe('20px');
-    expect(hero.subtitle).toBe('rgb(23, 26, 24)');
-    expect(hero.subtitleSize).toBe('16px');
-    expect(hero.weights.every(weight=>Number(weight)>=700)).toBe(true);
-    expect(hero.labels.every(color=>color==='rgb(23, 26, 24)')).toBe(true);
-    expect(new Set(hero.stats).size).toBe(3);
-    expect(new Set(hero.realStats).size).toBe(4);
+    expect(home.adviceDisplay).toBe('none');
+    expect(home.heroDisplay).not.toBe('none');
+    expect(home.heroRadius).not.toBe('0px');
+    expect(home.heroTitle.length).toBeGreaterThan(0);
+    expect(home.heroSlides).toBe(4);
+    expect(home.quote.length).toBeGreaterThan(10);
+    expect(home.adviceDate).not.toMatch(/লোড/);
+    expect(home.adviceSummary).not.toMatch(/লোড/);
+    expect(home.name).toBe('rgb(23, 74, 118)');
+    expect(home.title).toBe('rgb(118, 80, 27)');
+    expect(home.titleSize).toBe(width <= 480 ? 14 : 19);
+    expect(home.subtitle).not.toBe('rgba(0, 0, 0, 0)');
+    expect(home.metricLabels).toEqual(['উপস্থিতি','গড় ফলাফল']);
+    expect(home.metricCount).toBe(2);
+    expect(home.quickActions).toBe(6);
+    expect(home.tabs).toBe(5);
    }
    const nav=page.locator(role==='student'?'.bottom-nav':'.admin-bottom');
    const navBounds=await nav.boundingBox();
@@ -162,24 +161,30 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
     expect(home.firstTile).not.toBe('rgba(0, 0, 0, 0)');
    }
    if(role==='student') {
-    const hero=await page.evaluate(()=>{
+    const home=await page.evaluate(()=>{
      const identity=document.querySelector('#homeView .student-home-welcome');
-     const adviceBand=document.querySelector('#homeView .hero-slider');
+     const advice=document.querySelector('#dailyQuoteCard');
+     const hero=document.querySelector('#homeView .student-home-hero');
      const card=document.querySelector('#homeView .study-progress-card');
      return {
-      adviceBand:getComputedStyle(adviceBand).backgroundImage,
-      adviceArtFilter:getComputedStyle(adviceBand.querySelector('.hero-slide--advice .hero-slide__art img')).filter,
+      adviceVisible:getComputedStyle(advice).display!=='none'&&!advice.hidden,
+      heroVisible:getComputedStyle(hero).display!=='none',
+      heroTitle:hero.querySelector('.hero-slide.is-active [data-hero-title]').textContent.trim(),
+      heroSlides:hero.querySelectorAll('[data-hero-slide]').length,
       name:getComputedStyle(identity.querySelector('.pay-hero-name')).color,
       title:getComputedStyle(card.querySelector('#homeTitle')).color,
-      summary:getComputedStyle(card.querySelector('.study-progress-subtitle')).color
+      summary:getComputedStyle(card.querySelector('.study-progress-subtitle')).color,
+      metricCount:card.querySelectorAll('#homeRealStatsRow > div').length
      };
     });
-    expect(hero.adviceBand).toContain('rgb(20, 40, 73)');
-    expect(hero.adviceBand).not.toContain('rgb(8, 97, 116)');
-    expect(hero.adviceArtFilter).toContain('grayscale(1)');
-    expect(hero.name).toBe('rgb(244, 246, 250)');
-    expect(hero.title).toBe('rgb(244, 246, 250)');
-    expect(hero.summary).toBe('rgb(244, 246, 250)');
+    expect(home.adviceVisible).toBe(false);
+    expect(home.heroVisible).toBe(true);
+    expect(home.heroTitle.length).toBeGreaterThan(0);
+    expect(home.heroSlides).toBe(4);
+    expect(home.name).toBe('rgb(244, 246, 250)');
+    expect(home.title).toBe('rgb(244, 246, 250)');
+    expect(home.summary).not.toBe('rgba(0, 0, 0, 0)');
+    expect(home.metricCount).toBe(2);
    }
   }
  });

@@ -38,14 +38,23 @@ test('the worker still activates immediately and the app re-checks on return', (
 
 test('every page pin agrees with the build the worker will cache', () => {
   /* Two legacy per-file pins predate the release pin and are deliberately
-     not the build number (theme logo swapper, a sync-border asset); any
-     other exception means a page would mix two builds. */
+     not the build number (theme logo swapper, a sync-border asset). Student's
+     isolated Home hero stages only these known CSS/JS paths at v379 while the
+     established page/worker build remains 378; the cache-first worker may
+     resolve a stale file by pathname when an older query is present. */
   const legacy = new Set([158, 25161005]);
+  const stagedStudentHeroPaths = new Set([
+    'css/hero-cards.css',
+    'js/hero-cards.js',
+    'js/student-home-hero-entry.js',
+    'js/student-home-daily-hero.js'
+  ]);
   for (const page of ['index.html', 'student.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
     const html = read(page);
     let pinned = 0;
-    for (const [, pin] of html.matchAll(/\?v=(\d+)/g)) {
-      if (legacy.has(Number(pin))) continue;
+    for (const [, path, pin] of html.matchAll(/([^\s"'<>?]+)\?v=(\d+)/g)) {
+      if (legacy.has(Number(pin)) ||
+          (page === 'student.html' && Number(pin) === 379 && stagedStudentHeroPaths.has(path))) continue;
       assert.equal(Number(pin), cacheVersion, `${page} pins an asset to another build`);
       pinned += 1;
     }

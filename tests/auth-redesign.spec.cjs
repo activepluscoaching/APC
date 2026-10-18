@@ -76,3 +76,44 @@ test('login password offers letters and digits even before role lookup completes
  // Student registration still requires a 4–6 digit PIN by design.
  await expect(page.locator('#regPin')).toHaveAttribute('inputmode','numeric');
 });
+
+for (const width of [320, 390]) test(`login password show/hide responds immediately at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });
+  // The entry fail-safe loads before main.js; keep the module slow to verify
+  // the visible toggle does not depend on the rest of app startup.
+  await page.route('**/js/main.js*', async route => {
+    await new Promise(resolve => setTimeout(resolve, 1800));
+    await route.continue();
+  });
+  await page.goto('/index.html', { waitUntil: 'commit' });
+  const input = page.locator('#loginPin');
+  const toggle = page.locator('[data-toggle-pin="loginPin"]');
+  await expect(input).toBeVisible({ timeout: 5000 });
+  await expect(input).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.locator('#loginForm').getAttribute('data-login-ready')).toBeNull();
+
+  await input.fill('Abc12345');
+  await toggle.click();
+  await expect(input).toHaveAttribute('type', 'text');
+  await expect(input).toHaveValue('Abc12345');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toHaveAttribute('aria-label', 'পাসওয়ার্ড লুকান');
+  await expect(toggle).toHaveClass(/is-visible/);
+  const slash = await toggle.evaluate(button => {
+    const style = getComputedStyle(button, '::after');
+    return { width: style.width, background: style.backgroundColor };
+  });
+  expect(slash.width).toBe('22px');
+  expect(slash.background).not.toBe('rgba(0, 0, 0, 0)');
+  await toggle.click();
+  await expect(input).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(toggle).toHaveAttribute('aria-label', 'পাসওয়ার্ড দেখুন');
+
+  // It still toggles exactly once after the regular login module initializes.
+  await expect(page.locator('#loginForm')).toHaveAttribute('data-login-ready', 'true', { timeout: 15000 });
+  await toggle.click();
+  await expect(input).toHaveAttribute('type', 'text');
+  await expect(input).toHaveValue('Abc12345');
+});

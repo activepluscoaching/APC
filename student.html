@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=363"></script>
-  <script src="js/app-entry.js?v=363" data-entry="student"></script>
-  <script type="module" src="js/main.js?v=363"></script>
-  <script type="module" src="js/home-hero-entry.js?v=363"></script>
-  <script src="js/topbar-connectivity.js?v=363" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=363"></script>
-  <script src="js/appearance-boot.js?v=363"></script>
-  <script src="js/theme-logos.js?v=363"></script>
+  <script src="js/sanitize-url.js?v=378"></script>
+  <script src="js/app-entry.js?v=378" data-entry="student"></script>
+  <script type="module" src="js/main.js?v=378"></script>
+  <script src="js/topbar-connectivity.js?v=378" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=378"></script>
+  <script src="js/appearance-boot.js?v=378"></script>
+  <script src="js/theme-logos.js?v=378"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="description" content="Active Plus Coaching শিক্ষার্থী অ্যাপ — অফলাইনে রুটিন, ক্লাস, ফলাফল ও নোটিশ দেখুন।">
@@ -33,24 +32,30 @@
        being @import-ed from it: the preload scanner then discovers all 15 in the
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
-       tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=363">
-  <link rel="stylesheet" href="css/ui-layout.css?v=363">
-  <link rel="stylesheet" href="css/ui-components.css?v=363">
-  <link rel="stylesheet" href="css/ui-forms.css?v=363">
-  <link rel="stylesheet" href="css/ui-features.css?v=363">
-  <link rel="stylesheet" href="css/notice-board.css?v=363">
-  <link rel="stylesheet" href="css/ui-status.css?v=363">
-  <link rel="stylesheet" href="css/ui-auth.css?v=363">
-  <link rel="stylesheet" href="css/app-polish.css?v=363">
-  <link rel="stylesheet" href="css/student-record.css?v=363">
-  <link rel="stylesheet" href="css/exam-archive.css?v=363">
-  <link rel="stylesheet" href="css/academics.css?v=363">
-  <link rel="stylesheet" href="css/notifications.css?v=363">
-  <link rel="stylesheet" href="css/course-hub.css?v=363">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=363">
-  <script type="module" src="js/ui-accessibility.js?v=363"></script>
-  <script src="js/launch-screen.js?v=363" defer></script>
+       The Student-only art layer follows the canonical 15; the checker keeps
+       the shared order in sync. -->
+  <link rel="stylesheet" href="css/foundation.css?v=378">
+  <link rel="stylesheet" href="css/ui-layout.css?v=378">
+  <link rel="stylesheet" href="css/ui-components.css?v=378">
+  <link rel="stylesheet" href="css/ui-forms.css?v=378">
+  <link rel="stylesheet" href="css/ui-features.css?v=378">
+  <link rel="stylesheet" href="css/notice-board.css?v=378">
+  <link rel="stylesheet" href="css/ui-status.css?v=378">
+  <link rel="stylesheet" href="css/ui-auth.css?v=378">
+  <link rel="stylesheet" href="css/app-polish.css?v=378">
+  <link rel="stylesheet" href="css/student-record.css?v=378">
+  <link rel="stylesheet" href="css/exam-archive.css?v=378">
+  <link rel="stylesheet" href="css/academics.css?v=378">
+  <link rel="stylesheet" href="css/notifications.css?v=378">
+  <link rel="stylesheet" href="css/course-hub.css?v=378">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=378">
+  <link rel="stylesheet" href="css/student-home-design.css?v=378">
+  <link rel="stylesheet" href="css/hero-cards.css?v=379">
+  <script type="module" src="js/ui-accessibility.js?v=378"></script>
+  <script src="js/launch-screen.js?v=378" defer></script>
+  <script type="module" src="js/hero-cards.js?v=379"></script>
+  <script type="module" src="js/student-home-hero-entry.js?v=379"></script>
+  <script type="module" src="js/student-home-daily-hero.js?v=379"></script>
 </head>
 <body class="student-reference">
   <!-- The signed-in student panel, on its own page like every other portal
@@ -60,7 +65,7 @@
   <!-- A compact, mobile-first app shell. All content is local and works without a network. -->
   <div class="app-shell" id="appShell" hidden>
     <section class="pending-screen" id="pendingScreen" aria-labelledby="pendingTitle">
-      <div class="pending-logo"><img src="assets/icons/logo-128.png" alt="" width="54" height="54"></div>
+      <div class="pending-logo"><img src="assets/icons/logo-128.png" alt="Active Plus Coaching-এর লোগো" width="54" height="54"></div>
       <h1 id="pendingTitle">রেজিস্ট্রেশন সফল হয়েছে</h1>
       <p>তোমার তথ্য কোচিংয়ে জমা হয়েছে। অনুমোদন না হওয়া পর্যন্ত অ্যাপের ফিচারগুলো বন্ধ থাকবে।</p>
       <div class="pending-id"><small>তোমার ইউনিক স্টুডেন্ট ID</small><strong id="pendingStudentId">—</strong></div>
@@ -83,65 +88,49 @@
             </div>
           </div>
         </div>
-        <section class="hero-slider" data-home-hero>
-          <div class="hero-slider__context" data-home-hero-context>
-            <div class="hero-slider__role-copy">
-              <p class="pay-portal-kicker">আজকের তথ্য</p>
+        <section class="daily-quote-section home-advice-section student-home-hero-section" aria-label="পড়াশোনার অনুপ্রেরণা">
+          <section class="student-home-hero" data-home-hero data-student-home-hero></section>
+          <article class="daily-quote-card home-advice-card" id="dailyQuoteCard" data-daily-quote role="region" aria-label="আজকের উপদেশ">
+            <div class="daily-quote-head">
+              <span class="daily-quote-mark" data-daily-quote-icon aria-hidden="true"></span>
+              <p class="daily-quote-kicker">প্রতিদিনের উপদেশ</p>
             </div>
-            <div class="hero-slider__role-copy hero-slider__date-copy">
-              <time class="hero-slider__date" data-home-hero-date></time>
-            </div>
-          </div>
-        </section>
-        <div class="student-home-overview">
-        <div class="pay-hero pay-hero-summary">
-                    <section class="study-progress-card" aria-labelledby="homeTitle">
-          <div class="study-progress-top">
-            <span class="study-progress-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="trending" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
-            <div class="study-progress-heading"><h1 id="homeTitle">পড়াশোনার অগ্রগতি</h1><p class="study-progress-subtitle" id="dashboardPendingSummary">কাজের তথ্য লোড হচ্ছে…</p></div>
-            <div class="progress-ring" id="studyProgressRing" role="img" aria-label="আজকের অগ্রগতি ০ শতাংশ"><div><strong id="studyProgressValue">০%</strong><small>সম্পন্ন</small></div></div>
-          </div>
-          <div class="study-progress-stats">
-            <div><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span><strong id="dashboardDoneCount">০টি কাজ</strong><small>সম্পন্ন হয়েছে</small></span></div>
-            <div><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="clock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/clock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span><strong id="dashboardPendingCount">০টি কাজ</strong><small>বাকি আছে</small></span></div>
-            <div><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="clipboard" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span><strong id="dashboardExamCount">০টি পরীক্ষা</strong><small>প্রকাশিত</small></span></div>
-          </div>
-          <div class="study-progress-stats" id="homeRealStatsRow" data-hero-summary>
-            <div><span><strong id="dashboardWeeklyProgress">—</strong><small>সাপ্তাহিক অগ্রগতি</small></span></div>
-            <div><span><strong id="dashboardAttendanceRate">—</strong><small>উপস্থিতি %</small></span></div>
-            <div><span><strong id="dashboardAverageResult">—</strong><small>গড় ফলাফল</small></span></div>
-            <div><span><strong id="dashboardTermProgress">—</strong><small>এই টার্মের অগ্রগতি</small></span></div>
-          </div>
-
-          <button class="pay-hero-link" type="button" data-view="profile" aria-label="প্রোফাইল খুলুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
-        </section>
-        </div>
-
-
-
-
-        <!-- আজকের অনুপ্রেরণা: a deterministic daily line, filled from storage or
-             the built-in library before any network call. It has no button and
-             never blocks the page; a failed or offline fetch leaves the day's
-             quote exactly as it is. -->
-        <section class="daily-quote-section" aria-label="আজকের অনুপ্রেরণা" hidden>
-          <article class="daily-quote-card" id="dailyQuoteCard" data-daily-quote hidden>
-            <span class="daily-quote-mark" data-daily-quote-icon aria-hidden="true"></span>
             <p class="daily-quote-text"><span data-daily-quote-text>আজকের বাণী তৈরি হচ্ছে…</span> <small class="daily-quote-author" data-daily-quote-author></small></p>
+            <div class="daily-quote-footer">
+              <time class="daily-quote-date" data-daily-quote-date>তারিখ লোড হচ্ছে…</time>
+              <p class="daily-advice-summary" data-daily-advice-summary aria-live="polite">আজকের ক্লাস ও কাজের তথ্য লোড হচ্ছে…</p>
+            </div>
           </article>
         </section>
-
-
-
         <section class="dashboard-section dashboard-today-section" aria-labelledby="todayClassesTitle">
           <div class="dashboard-section-heading"><h2 id="todayClassesTitle">আজকের রুটিন</h2><button type="button" class="dashboard-text-link" data-view="routine">সব রুটিন দেখুন <span aria-hidden="true">›</span></button></div>
-          <div id="dashboardRoutineList" class="dashboard-routine-list" data-hero-today><p class="dashboard-empty">আজকের ক্লাসের তথ্য লোড হচ্ছে…</p></div>
+          <div id="dashboardRoutineList" class="dashboard-routine-list"><p class="dashboard-empty">আজকের ক্লাসের তথ্য লোড হচ্ছে…</p></div>
         </section>
 
-        <nav class="pay-grid" id="studentServices" data-hero-quick aria-label="দ্রুত অ্যাক্সেস"><button class="pay-tile" type="button" data-action="homework"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">বাড়ির কাজ</span></button><button class="pay-tile" type="button" data-action="suggestion"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="suggestion" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/suggestion.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">সাজেশন</span></button><button class="pay-tile" type="button" data-action="question-bank"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="mcq" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/mcq.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">প্রশ্নব্যাংক</span></button><button class="pay-tile" type="button" data-view="exams"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="exam" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">পরীক্ষা</span></button><button class="pay-tile" type="button" data-view="exam-results" data-exam-tab="results"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="result" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/result.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">ফলাফল</span></button><button class="pay-tile notice-board-shortcut" type="button" data-view="notice-board"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="notice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/notice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">Notice Board</span><span class="notice-board-shortcut-count" id="noticeBoardUnreadBadge" hidden aria-label="অপঠিত নোটিশ"></span></button></nav>
-
-                </div>
-
+        <div class="student-home-overview">
+          <div class="pay-hero pay-hero-summary">
+            <section class="study-progress-card" aria-labelledby="homeTitle">
+              <div class="study-progress-top">
+                <span class="study-progress-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="trending" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+                <div class="study-progress-heading"><h1 id="homeTitle">পড়াশোনার অগ্রগতি</h1><p class="study-progress-subtitle" id="dashboardPendingSummary">কাজের তথ্য লোড হচ্ছে…</p></div>
+                <div class="progress-ring" id="studyProgressRing" role="img" aria-label="পড়াশোনার অগ্রগতি এখনো নেই"><div><strong id="studyProgressValue">—</strong><small>সম্পন্ন</small></div></div>
+              </div>
+              <div class="study-progress-stats" id="homeRealStatsRow" aria-label="উপস্থিতি ও গড় ফলাফল">
+                <div><span><strong id="dashboardAttendanceRate">—</strong><small>উপস্থিতি</small></span></div>
+                <div><span><strong id="dashboardAverageResult">—</strong><small>গড় ফলাফল</small></span></div>
+              </div>
+              <button class="pay-hero-link" type="button" data-view="profile" aria-label="প্রোফাইল খুলুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+            </section>
+          </div>
+          <nav class="pay-grid" id="studentServices" aria-label="দ্রুত অ্যাক্সেস">
+            <button class="pay-tile" type="button" data-action="homework"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">বাড়ির কাজ</span></button>
+            <button class="pay-tile" type="button" data-view="exams"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="exam" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">পরীক্ষা</span></button>
+            <button class="pay-tile" type="button" data-action="suggestion"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="suggestion" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/suggestion.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">সাজেশন</span></button>
+            <button class="pay-tile" type="button" data-action="question-bank"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="mcq" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/mcq.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">প্রশ্নব্যাংক</span></button>
+            <button class="pay-tile" type="button" data-view="exam-results" data-exam-tab="results"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="result" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/result.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">ফলাফল</span></button>
+            <button class="pay-tile notice-board-shortcut" type="button" data-view="notice-board"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="notice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/notice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">Notice Board</span><span class="notice-board-shortcut-count" id="noticeBoardUnreadBadge" hidden aria-label="অপঠিত নোটিশ"></span></button>
+          </nav>
+        </div>
         <section class="dashboard-exam-card" id="dashboardExamCard" hidden>
           <span class="dashboard-feature-icon exam-feature-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="clipboard" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
           <div class="dashboard-feature-copy"><strong id="dashboardExamTitle">অনলাইন পরীক্ষা</strong><small id="dashboardExamMeta">প্রকাশিত পরীক্ষা ও ফলাফল দেখুন</small></div>
@@ -206,7 +195,7 @@
 
       <!-- COURSES -->
       <section class="view" id="coursesView" data-view-panel="courses" aria-labelledby="coursesTitle">
-        <div class="page-intro"><button class="pay-back" type="button" data-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="arrow-left" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><div class="page-intro-copy"><h1 id="coursesTitle">পড়াশোনা</h1><p class="study-hub-subtitle">বিষয় বেছে অধ্যায় খুলে পড়ো, প্র্যাকটিস করো</p><button type="button" class="study-class-link" data-view="classes">ক্লাস দেখুন <span aria-hidden="true">›</span></button></div></div>
+        <div class="page-intro"><button class="pay-back" type="button" data-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="arrow-left" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><div class="page-intro-copy"><h1 id="coursesTitle">পড়াশোনা</h1><p class="study-hub-subtitle">বিষয় বেছে অধ্যায় খুলে পড়ো, প্র্যাকটিস করো</p></div></div>
         <nav class="pay-grid is-3" id="studySections" role="group" aria-label="পড়াশোনার ভাগ">
           <button class="pay-tile" type="button" data-study-section="courses" data-view="my-courses" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">আমার কোর্স <span class="learning-filter-count" data-study-count="courses">০</span></span></button>
           <button class="pay-tile" type="button" data-study-section="homework" data-view="homework" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">বাড়ির কাজ <span class="learning-filter-count" data-study-count="homework">০</span></span></button>
@@ -214,6 +203,7 @@
           <button class="pay-tile" type="button" data-study-section="bank" data-view="question-bank" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="mcq" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/mcq.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">প্রশ্নব্যাংক <span class="learning-filter-count" data-study-count="bank">০</span></span></button>
           <button class="pay-tile" type="button" data-study-section="materials" data-view="materials" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="materials" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/materials.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">উপকরণ <span class="learning-filter-count" data-study-count="materials">০</span></span></button>
         <button class="pay-tile" type="button" data-study-section="model-test" data-view="model-test" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="model-test" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/model-test.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">মডেল টেস্ট</span></button><button class="pay-tile" type="button" data-study-section="practice" data-view="study-practice" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="practice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/practice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">অনুশীলন</span></button><button class="pay-tile" type="button" data-study-section="results" data-view="study-results" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="result" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/result.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">ফলাফল</span></button><button class="pay-tile" type="button" data-study-section="other" data-view="study-other" aria-pressed="false"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="study-other" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/study-other.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">অন্যান্য</span></button></nav>
+        <button type="button" class="study-class-link" data-view="classes">ক্লাস দেখুন <span aria-hidden="true">›</span></button>
         <section class="study-today-card" aria-labelledby="studyTodayTitle">
           <h2 id="studyTodayTitle">আজকের পড়াশোনা</h2>
           <div id="studyTodayList" aria-live="polite"><p class="study-today-empty">চলমান অধ্যায়ের তথ্য লোড হচ্ছে…</p></div>
@@ -585,7 +575,7 @@
   </div>
 
     <div class="install-toast" id="installToast" hidden>
-      <span class="install-toast-icon"><img src="assets/icons/logo-128.png" alt="" width="30" height="30"></span><span class="settings-copy"><strong>অ্যাপ হিসেবে ব্যবহার করুন</strong><small>হোম স্ক্রিনে Active Plus যোগ করুন</small></span><button type="button" id="installButton">ইনস্টল</button><button type="button" class="dismiss-button" id="dismissInstall" aria-label="বন্ধ করুন">×</button>
+      <span class="install-toast-icon"><img src="assets/icons/logo-128.png" alt="Active Plus Coaching অ্যাপের লোগো" width="30" height="30"></span><span class="settings-copy"><strong>অ্যাপ হিসেবে ব্যবহার করুন</strong><small>হোম স্ক্রিনে Active Plus যোগ করুন</small></span><button type="button" id="installButton">ইনস্টল</button><button type="button" class="dismiss-button" id="dismissInstall" aria-label="বন্ধ করুন">×</button>
     </div>
 
     <div class="modal-backdrop" id="noticeModal" hidden>
@@ -625,6 +615,6 @@
         <button class="modal-action" type="submit">তথ্য সংরক্ষণ করুন</button>
       </form><p class="form-note"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg> শিক্ষার্থী আইডি সিস্টেম থেকে তৈরি হয়, তাই এটি অপরিবর্তনযোগ্য।</p></section>
     </div>
-  <script type="module" src="js/pull-to-refresh.js?v=363"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=378"></script>
 </body>
 </html>

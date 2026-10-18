@@ -377,18 +377,7 @@ async function handleLogin(event, state, onAuthenticated) {
   }
 }
 
-function initPinVisibility() {
-  $$('[data-toggle-pin]').forEach(button => {
-    button.addEventListener('click', () => {
-      const input = $(`#${button.dataset.togglePin}`);
-      if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-    });
-  });
-}
-
 export function initLogin({ state, onAuthenticated }) {
-  initPinVisibility();
   $$('[data-auth-tab]').forEach(trigger => trigger.addEventListener('click', () => {
     if (trigger.dataset.authTab === 'first-admin') void openFirstAdminSetup();
     else switchAuthTab(trigger.dataset.authTab);

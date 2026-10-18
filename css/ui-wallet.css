@@ -313,26 +313,29 @@ html[data-theme="dark"] .dashboard-exam-card .dashboard-primary-action { backgro
 .daily-challenge-section .challenge-card { margin-top: 0; }
 .challenge-star { display: none; }
 
-/* আজকের অনুপ্রেরণা — one compact row between today's classes and the quick
-   menu. Same card material as the other home rows (surface, hairline, 20px
-   radius); the mark is a small tinted disc. Nothing here depends on the
-   network, so the row can never be a spinner or an empty box. */
+/* Daily advice hero: a small day/date header, one deterministic quote and a
+   live one-line class/homework summary. Offline-first quote data fills it before
+   any request; no controls, carousel state or network spinner. */
 .daily-quote-section { margin: 14px 0 0; }
 .daily-quote-card {
-  display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 10px;
-  margin: 0; padding: 12px 14px;
+  display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px;
+  margin: 0; padding: 14px;
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: 20px; box-shadow: var(--pay-shadow); color: var(--color-text);
 }
 .daily-quote-card[hidden] { display: none; }
+.daily-quote-head { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .daily-quote-mark {
-  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
-  background: var(--tone-violet-soft); color: var(--tone-violet);
+  display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 11px;
+  background: var(--tone-mint-soft); color: var(--tone-mint);
 }
-.daily-quote-mark svg { width: 20px; height: 20px; }
-.daily-quote-text { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.5; overflow-wrap: anywhere; }
-.daily-quote-author { font-size: 12px; color: var(--color-text-secondary); }
+.daily-quote-mark svg { width: 19px; height: 19px; }
+.daily-quote-kicker { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 700; line-height: 1.35; }
+.daily-quote-date { flex: none; color: var(--color-text-secondary); font-size: 11.5px; line-height: 1.35; text-align: right; }
+.daily-quote-text { margin: 0; min-width: 0; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+.daily-quote-author { margin-left: 3px; font-size: 12px; color: var(--color-text-secondary); }
 .daily-quote-author[hidden] { display: none; }
+.daily-advice-summary { margin: 0; padding-top: 9px; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 
 /* 7 ── Page header: clean white title row with a soft back action. */
 :is(.view, .admin-view, .manager-view, .teacher-view, .finance-panel) > .page-intro:first-child {
@@ -1233,7 +1236,9 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 #homeView.is-empty-routine .pay-tile-label { font-size: 12px; }
 #homeView.is-empty-routine .dashboard-today-section { display: flex; flex-direction: column; flex: 1; margin-top: 10px; }
 #homeView.is-empty-routine .daily-quote-section { margin-top: 8px; }
-#homeView.is-empty-routine .daily-quote-card { grid-template-columns: 30px minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-radius: 16px; }
+/* The advice card now has a full-width header, quote and summary; the old
+   icon/quote two-column layout squeezed the header into a 30px strip. */
+#homeView.is-empty-routine .daily-quote-card { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-radius: 16px; }
 #homeView.is-empty-routine .daily-quote-mark { width: 30px; height: 30px; }
 #homeView.is-empty-routine .daily-quote-mark svg { width: 17px; height: 17px; }
 #homeView.is-empty-routine .daily-quote-text { font-size: 12.5px; line-height: 1.45; }
@@ -1550,6 +1555,19 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #homeView .student-home-overview {
   display: flex; flex-direction: column; min-height: 0; padding: 0 0 16px;
 }
+.student-reference #homeView .daily-quote-section { margin: 0 0 12px; }
+.student-reference #homeView .daily-quote-card {
+  grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px;
+  border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  border-radius: 19px; background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface)); box-shadow: none;
+}
+.student-reference #homeView .daily-quote-head { gap: 8px; }
+.student-reference #homeView .daily-quote-mark { width: 32px; height: 32px; border-radius: 11px; }
+.student-reference #homeView .daily-quote-kicker { color: var(--color-primary); font-size: 12.5px; }
+.student-reference #homeView .daily-quote-date { max-width: 126px; font-size: 11px; }
+.student-reference #homeView .daily-quote-text { font-size: 16px; font-weight: 650; line-height: 1.55; }
+.student-reference #homeView .daily-quote-author { font-size: 11.5px; font-weight: 500; }
+.student-reference #homeView .daily-advice-summary { font-size: 12px; }
 .student-reference #homeView .pay-hero { padding: 0; color: var(--color-text); }
 .student-reference #homeView .pay-hero::before { display: none; }
 .student-reference #homeView .pay-hero-id { padding: 18px 0 16px; gap: 14px; }
@@ -1567,7 +1585,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 }
 .student-reference #homeView .study-progress-top { display: flex; gap: 18px; }
 .student-reference #homeView .study-progress-icon { display: none; }
-.student-reference #homeView .progress-ring { order: -1; width: 78px; height: 78px; margin: 0; }
+.student-reference #homeView .progress-ring { order: 0; width: 76px; height: 76px; margin: 0; }
 .student-reference #homeView .progress-ring::before { inset: 8px; }
 .student-reference #homeView .progress-ring strong { font-size: 18px; font-weight: 600; }
 .student-reference #homeView .progress-ring small { display: none; }
@@ -1575,8 +1593,8 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #homeView .study-progress-heading h1 { font-size: clamp(17px, 4.6vw, 23px); font-weight: 500; }
 .student-reference #homeView .study-progress-subtitle { margin: 3px 0 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.5; }
 .student-reference #homeView .study-progress-card .study-progress-stats {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
-  margin: 18px 0 0; padding: 0; border: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+  margin: 14px 0 0; padding: 0; border: 0;
 }
 .student-reference #homeView .study-progress-card .study-progress-stats > div {
   display: flex; align-items: center; justify-content: center; text-align: center;
@@ -1591,10 +1609,9 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 }
 .student-reference #homeView #studentServices .pay-tile {
   --shortcut-ink: var(--tone-mint);
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 13px 4px; min-height: 96px; border-radius: 19px;
-  border: 1px solid color-mix(in srgb, var(--shortcut-ink) 40%, var(--color-surface));
-  background: color-mix(in srgb, var(--shortcut-ink) 9%, var(--color-surface));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+  min-height: 100px; padding: 10px 5px; border-radius: 18px;
+  border: 1px solid var(--color-border); background: var(--color-surface);
   box-shadow: none; backdrop-filter: none; color: var(--color-text);
 }
 .student-reference #homeView #studentServices .pay-tile:nth-child(2) { --shortcut-ink: var(--tone-amber); }
@@ -1603,11 +1620,11 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #homeView #studentServices .pay-tile:nth-child(5) { --shortcut-ink: var(--tone-rose); }
 .student-reference #homeView #studentServices .pay-tile:nth-child(6) { --shortcut-ink: var(--tone-coral); }
 .student-reference #homeView #studentServices .pay-tile-icon {
-  width: 30px; height: 30px; padding: 0; background: transparent; border: 0;
-  border-radius: 0; box-shadow: none; color: var(--shortcut-ink);
+  width: 48px; height: 48px; padding: 8px; background: color-mix(in srgb, var(--shortcut-ink) 14%, var(--color-surface));
+  border: 0; border-radius: 15px; box-shadow: none; color: var(--shortcut-ink);
 }
-.student-reference #homeView #studentServices .pay-tile-icon svg { width: 30px; height: 30px; stroke: currentColor; fill: none; animation: none; }
-.student-reference #homeView #studentServices .pay-tile-label { font-size: 17px; font-weight: 400; line-height: 1.4; }
+.student-reference #homeView #studentServices .pay-tile-icon svg { width: 32px; height: 32px; stroke: currentColor; fill: none; animation: none; }
+.student-reference #homeView #studentServices .pay-tile-label { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 .student-reference #homeView .dashboard-today-section {
   display: block; flex: none; margin: 14px 0 0; padding: 15px 16px;
   border: 1px solid var(--color-border); border-radius: 22px; background: var(--color-surface);
@@ -1616,15 +1633,26 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #homeView .dashboard-section-heading h2 { font-size: 21px; font-weight: 500; }
 .student-reference #homeView .dashboard-text-link { font-size: 15px; color: var(--color-primary); }
 .student-reference #homeView #dashboardRoutineList { display: grid; gap: 8px; }
-.student-reference #homeView .dashboard-routine-card {
-  display: grid; grid-template-columns: 28px minmax(0,1fr) auto; align-items: center;
-  gap: 10px; padding: 4px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none;
+.student-reference #homeView #dashboardRoutineList:has(.dashboard-routine-card) {
+  background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible;
 }
-.student-reference #homeView .dashboard-routine-icon { width: 26px; height: 26px; background: transparent; }
-.student-reference #homeView .dashboard-routine-main strong { font-size: 16px; font-weight: 500; }
-.student-reference #homeView .dashboard-routine-main small { font-size: 11px; }
-.student-reference #homeView .dashboard-time-pill { padding: 0; background: transparent; font-size: 14px; }
-.student-reference #homeView .dashboard-routine-status { font-size: 12px; }
+.student-reference #homeView .dashboard-routine-card {
+  display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center;
+  gap: 10px; padding: 6px 0; background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.student-reference #homeView .dashboard-routine-icon { width: 28px; height: 28px; background: var(--tone-mint-soft); color: var(--tone-mint); }
+.student-reference #homeView .dashboard-routine-main strong { font-size: 15px; font-weight: 650; }
+.student-reference #homeView .dashboard-routine-main small { font-size: 11.5px; }
+.student-reference #homeView .dashboard-time-pill { margin-top: 2px; padding: 0; background: transparent; color: var(--color-text-secondary); font-size: 12px; font-weight: 500; line-height: 1.4; }
+.student-reference #homeView .dashboard-routine-status {
+  align-self: center; padding: 5px 9px; border: 1px solid var(--color-border); border-radius: 999px;
+  background: var(--color-surface-muted); color: var(--color-text-secondary); font-size: 11px;
+}
+.student-reference #homeView .dashboard-routine-status.is-running {
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); color: var(--color-primary);
+}
+.student-reference #homeView .dashboard-routine-status i { width: 6px; height: 6px; }
 .student-reference #homeView .dashboard-empty-card { background: transparent; box-shadow: none; border: 0; padding: 6px 0; }
 .student-reference #homeView #homeRealStatsRow { grid-template-columns: repeat(2, minmax(0,1fr)); border: 0; padding: 8px 0; margin: 0; }
 @media (max-width: 360px) {
@@ -1638,7 +1666,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 /* Study hub companion to the reference home. Keep all nine existing routes
    and live count hooks; only their presentation changes. */
 @media screen {
-.student-reference .app-shell:has(#coursesView.active) #studentHeader { display: none; }
 .student-reference #coursesView { max-width: 760px; margin-inline: auto; }
 .student-reference #coursesView .page-intro { margin: 0 0 16px; padding: 18px 0 0; color: var(--color-text); background: transparent; }
 .student-reference #coursesView .page-intro::before { content: none; }
@@ -1701,7 +1728,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 
 /* More: account identity, single-column menu and native labelled switches. */
 @media screen {
-.student-reference .app-shell:has(#profileView.active) #studentHeader { display: none; }
 .student-reference #profileView { max-width: 600px; margin-inline: auto; padding-top: 18px; }
 .student-reference #profileView .more-identity {
   display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 15px;
@@ -1749,7 +1775,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 
 /* Exam hub, using the same nine-seat reference grid as Study. */
 @media screen {
-.student-reference .app-shell:has(#examsView.active) #studentHeader { display: none; }
 .student-reference #examsView { max-width: 760px; margin-inline: auto; }
 .student-reference #examsView .page-intro { margin: 0 0 14px; padding: 22px 0 0; }
 .student-reference #examsView .page-intro .pay-back { display: none; }
@@ -1793,7 +1818,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 /* Class hub: the study family's compact nine-card grid and actual monthly
    attendance sessions. No sample attendance or placeholder percentages. */
 @media screen {
-.student-reference .app-shell:has(#classesView.active) #studentHeader { display: none; }
 .student-reference #classesView { max-width: 760px; margin-inline: auto; }
 .student-reference #classesView .page-intro { margin: 0 0 14px; padding: 22px 0 0; }
 .student-reference #classesView .page-intro .pay-back { display: none; }
@@ -1826,7 +1850,14 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #classesView .class-attendance-cell.is-late { background: var(--color-success); }
 .student-reference #classesView .class-attendance-cell.is-absent { background: var(--color-danger); }
 .student-reference #classesView .class-attendance-note { margin: 10px 0 0; font-size: 11px; line-height: 1.6; color: var(--color-text-secondary); }
-.student-reference #coursesView .study-class-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; margin: 0; padding: 9px 13px; min-height: 44px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-primary); box-shadow: none; font-size: 14px; font-weight: 500; line-height: 1.5; }
+.student-reference #coursesView .study-class-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 48px; margin: 12px 0 0; padding: 11px 16px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border)); border-radius: 15px;
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface)); color: var(--color-primary);
+  box-shadow: none; font-size: 15px; font-weight: 650; line-height: 1.4; text-align: left;
+}
+.student-reference #coursesView .study-class-link span { font-size: 22px; font-weight: 500; line-height: 1; }
 @media (max-width: 360px) {
   .student-reference #classHub .pay-tile-label { font-size: 14px; }
   .student-reference #classHub .pay-tile { min-height: 84px; }
@@ -1835,7 +1866,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 
 /* My profile: centered identity, real summary and readable contact rows. */
 @media screen {
-.student-reference .app-shell:has(#myProfileView.active) #studentHeader { display: none; }
 .student-reference #myProfileView { max-width: 600px; margin-inline: auto; }
 .student-reference #myProfileView .page-intro { padding: 15px 0 0; margin-bottom: 14px; gap: 8px; }
 .student-reference #myProfileView .page-intro h1 { font-size: 20px; font-weight: 500; }
@@ -1880,7 +1910,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 
 /* Digital ID card: portrait front/back preview, no third-party QR requests. */
 @media screen {
-.student-reference .app-shell:has(#studentIdCardView.active) #studentHeader,
 .student-reference #studentIdCardView { width: 100%; max-width: 430px; margin-inline: auto; }
 .student-reference #studentIdCardView .page-intro { margin-bottom: 12px; padding-top: 16px; gap: 8px; }
 .student-reference #studentIdCardView .page-intro h1 { font-size: 20px; font-weight: 500; }
@@ -1898,7 +1927,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 
 /* Study results: comparable summary, recent marks and honest subject trends. */
 @media screen {
-.student-reference .app-shell:has(#studyResultsView.active) #studentHeader { display: none; }
 .student-reference #studyResultsView { max-width: 650px; margin-inline: auto; }
 .student-reference #studyResultsView .page-intro { padding-top: 18px; margin-bottom: 14px; gap: 8px; }
 .student-reference #studyResultsView .page-intro h1 { font-size: 23px; font-weight: 500; }
@@ -2736,38 +2764,40 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
   }
   .nav-chip { width: 48px; height: 30px; border-radius: 14px; }
 
-  /* The student/student-service hubs use the same round illustration discs as
-     the staff hubs; their labels and routes remain in their original places. */
+  /* Student Home keeps six stacked shortcuts with tidy, softly tinted icon
+     boxes; the linked actions and their order are unchanged. */
   body.student-reference #homeView #studentServices {
-    background: var(--glass-bar); border-color: var(--glass-border);
-    border-radius: var(--glass-radius); box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    margin: 14px 0 0; padding: 0; background: transparent; border: 0;
+    border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   body.student-reference #homeView #studentServices .pay-tile {
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    gap: 8px; min-height: 92px; padding: 8px 4px;
-    color: var(--color-text); background: transparent; border: 0; box-shadow: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; min-height: 100px; padding: 10px 5px;
+    color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: 18px; box-shadow: none;
   }
   body.student-reference #homeView #studentServices .pay-tile-icon,
   body.student-reference .app-shell :is(#studySections, #examTabs, #classHub, #routineHub) .pay-tile-icon {
-    display: grid; place-items: center; flex: none; width: 56px; height: 56px;
-    padding: 8px; border: 0; border-radius: 50%;
-    background: var(--icon-plate-blue); color: var(--color-primary); box-shadow: none;
+    display: grid; place-items: center; flex: none; width: 48px; height: 48px;
+    padding: 8px; border: 0; border-radius: 15px;
+    background: color-mix(in srgb, var(--shortcut-ink, var(--tone-mint)) 14%, var(--color-surface));
+    color: var(--shortcut-ink, var(--color-primary)); box-shadow: none;
   }
   body.student-reference #homeView #studentServices .pay-tile-icon svg,
   body.student-reference .app-shell :is(#studySections, #examTabs, #classHub, #routineHub) .pay-tile-icon svg {
-    width: 36px; height: 36px; fill: none; stroke: currentColor; animation: none;
+    width: 32px; height: 32px; fill: none; stroke: currentColor; animation: none;
   }
   body.student-reference #homeView #studentServices .pay-tile-label,
   body.student-reference .app-shell :is(#studySections, #examTabs, #classHub, #routineHub) .pay-tile-label {
     max-width: 100%; font-size: 13px; font-weight: 600; line-height: 1.4; text-align: center;
   }
   body.student-reference #homeView #studentServices .pay-tile:nth-child(3n+2) .pay-tile-icon,
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(3n) .pay-tile-icon {
+    background: color-mix(in srgb, var(--shortcut-ink) 14%, var(--color-surface)); color: var(--shortcut-ink);
+  }
   body.student-reference .app-shell :is(#studySections, #examTabs, #classHub, #routineHub) .pay-tile:nth-child(3n+2) .pay-tile-icon {
     background: var(--icon-plate-green); color: var(--color-success);
   }
-  body.student-reference #homeView #studentServices .pay-tile:nth-child(3n) .pay-tile-icon,
   body.student-reference .app-shell :is(#studySections, #examTabs, #classHub, #routineHub) .pay-tile:nth-child(3n) .pay-tile-icon {
     background: var(--icon-plate-gold); color: var(--color-warning);
   }
@@ -3448,7 +3478,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
     margin: 18px 0 0; padding: 0; border: 0;
   }
   .study-progress-note { grid-column: auto; }
-  .student-reference #homeView { display: block; }
   .student-reference #homeView.active { max-width: none; margin-inline: 0; }
   .student-reference #homeView #studentServices .pay-tile { min-height: 92px; }
   .academics-tools { grid-template-columns: minmax(0, 1fr); }
@@ -3576,8 +3605,8 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   }
 }
 
-/* Student home hero: a jewel-tone brand band, a frosted progress card, and
-   distinct summary tints. Body copy stays dark/light by theme for contrast. */
+/* Student identity and progress presentation: keep the greeting calm, the
+   summary card clear, and real metrics distinct in both themes. */
 body.student-reference #homeView .pay-hero {
   position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 0;
   margin: 0; padding: 14px; overflow: hidden; border-radius: 26px;
@@ -3618,11 +3647,8 @@ body.student-reference #homeView .study-progress-card .study-progress-stats > di
 }
 body.student-reference #homeView .study-progress-card .study-progress-stats > div:nth-child(1) { --stat-tone: var(--tone-mint); }
 body.student-reference #homeView .study-progress-card .study-progress-stats > div:nth-child(2) { --stat-tone: var(--tone-blue); }
-body.student-reference #homeView .study-progress-card .study-progress-stats > div:nth-child(3) { --stat-tone: var(--tone-amber); }
 body.student-reference #homeView #homeRealStatsRow > div:nth-child(1) { --stat-tone: var(--tone-mint); }
 body.student-reference #homeView #homeRealStatsRow > div:nth-child(2) { --stat-tone: var(--tone-blue); }
-body.student-reference #homeView #homeRealStatsRow > div:nth-child(3) { --stat-tone: var(--tone-violet); }
-body.student-reference #homeView #homeRealStatsRow > div:nth-child(4) { --stat-tone: var(--tone-amber); }
 body.student-reference #homeView .study-progress-card .study-progress-stats > div {
   background-color: var(--color-surface);
   background-color: color-mix(in srgb, var(--stat-tone, var(--tone-blue)) 14%, var(--color-surface));
@@ -3863,105 +3889,123 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   html[data-theme="dark"] body{background:var(--color-bg)!important;background-image:none!important}
 }
 
-/* ── Shared, information-only home hero ────────────────────────────────── */
+/* ── Student learning hero carousel ─────────────────────────────────────── */
 .hero-slider {
-  /* Keep the Student advice hero blue-violet; other surfaces retain brand green. */
-  --pay-hero-a: #24396f;
-  --pay-hero-b: #34285f;
-  --pay-on-hero-soft: #e3e9ff;
-  --pay-hero-gradient: linear-gradient(130deg, #2d427f 0%, #59428e 52%, #1c5b91 100%);
-  --pay-hero-line: rgba(255,255,255,.28);
-  --pay-shadow: 0 8px 22px rgba(39,47,105,.20);
-  position: relative; isolation: isolate; display: grid;
-  grid-template-rows: 46px minmax(0, 1fr); gap: 3px;
-  width: min(100%, 520px); max-width: 520px; height: 170px; min-width: 0;
-  margin: 12px auto 14px; padding: 10px 12px; overflow: hidden;
-  border: 1px solid var(--pay-hero-line); border-radius: 22px;
-  background: var(--pay-hero-gradient); color: var(--pay-on-hero);
-  box-shadow: var(--pay-shadow);
+  position: relative; isolation: isolate; display: block;
+  width: min(100%, 1000px); max-width: 1000px; height: clamp(290px, 31vw, 360px); min-height: 290px;
+  margin: 14px auto 18px; padding: 0; overflow: hidden; touch-action: pan-y;
+  border: 1px solid color-mix(in srgb, var(--tone-blue) 18%, var(--color-border)); border-radius: 28px;
+  background: var(--color-surface); color: var(--color-text);
+  box-shadow: var(--glass-shadow-lift);
 }
 .hero-slider:focus { outline: none; }
 .hero-slider__context {
-  position: relative; z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center; gap: 8px; width: 100%; min-width: 0; max-height: 46px; margin: 0;
-  overflow: hidden; color: var(--pay-on-hero);
+  position: absolute; z-index: 5; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; height: 45px; min-width: 0; padding: 12px 24px 0; pointer-events: none;
 }
-.hero-slider__role-copy { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.hero-slider__date-copy { grid-column: 2; grid-row: 1; align-items: flex-end; max-width: 94px; }
+.hero-slider__role-copy { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.hero-slider__date-copy { align-items: flex-end; max-width: 190px; }
+.hero-slider .pay-portal-kicker {
+  max-width: 100%; margin: 0; padding: 0; color: var(--color-primary); font-size: 12px; font-weight: 750;
+  line-height: 1.3; letter-spacing: .025em; overflow-wrap: anywhere;
+}
 .hero-slider [data-home-hero-date] {
-  grid-column: 2; grid-row: 1; align-self: center; justify-self: end; width: auto; max-width: 94px;
-  margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
-  color: var(--pay-on-hero-soft); font-size: 10.5px; font-weight: 600; line-height: 1.25;
+  display: block; width: auto; max-width: 190px; margin: 0; padding: 0; border: 0; border-radius: 0;
+  background: transparent; color: var(--color-text-secondary); font-size: 11px; font-weight: 600; line-height: 1.3;
   text-align: right; white-space: normal; overflow-wrap: anywhere;
 }
-.hero-slider .admin-hero-head {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px;
-  width: 100%; min-width: 0; max-height: 46px; margin: 0; padding: 0; overflow: hidden; flex-wrap: nowrap;
-}
-.hero-slider .admin-hero-title { grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; }
-.hero-slider .admin-hero-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; }
-.hero-slider .admin-hero-icon svg { width: 19px; height: 19px; }
-.hero-slider .admin-hero-title h1, .hero-slider__role-copy h1 {
-  max-width: 100%; margin: 0; color: var(--pay-on-hero); font-size: 14px; font-weight: 750;
-  line-height: 1.28; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere;
-}
-.hero-slider .pay-portal-heading { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.hero-slider .pay-portal-kicker, .hero-slider .admin-welcome {
-  max-width: 100%; margin: 0 0 1px; padding: 0; color: var(--pay-on-hero-soft);
-  font-size: 10px; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere;
-}
-.hero-slider .teacher-id-badge, .hero-slider .teacher-welcome-note {
-  display: block; max-width: 100%; margin: 1px 0 0; color: var(--pay-on-hero-soft);
-  font-size: 9.5px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.hero-slider .teacher-welcome-note { color: var(--pay-on-hero-soft); }
-.hero-slider .pay-hero-id { grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; }
-.hero-slider .pay-avatar { width: 34px; height: 34px; font-size: 16px; box-shadow: 0 0 0 2px var(--pay-hero-line); }
-.hero-slider .pay-hero-copy { min-width: 0; line-height: 1.2; }
-.hero-slider .pay-hero-copy p { margin: 0; }
-.hero-slider .pay-greeting { color: var(--pay-on-hero-soft); font-size: 9.5px; line-height: 1.2; }
-.hero-slider .pay-hero-name { color: var(--pay-on-hero); font-size: 14px; line-height: 1.25; }
-.hero-slider .pay-hero-meta { color: var(--pay-on-hero-soft); font-size: 9.5px; line-height: 1.2; }
-.hero-slider .birthday-banner { max-width: 100%; margin: 2px 0 0; padding: 2px 5px; font-size: 9px; line-height: 1.2; }
-.hero-slider__slides { position: relative; display: block; width: 100%; min-width: 0; min-height: 0; overflow: hidden; border-radius: 13px; }
+.hero-slider__slides { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; min-width: 0; overflow: hidden; border-radius: inherit; }
 .hero-slide {
   position: absolute; inset: 0; display: block; min-width: 0; min-height: 0; overflow: hidden;
-  border-radius: 13px; background: transparent; color: var(--pay-on-hero);
-  opacity: 0; transform: translateX(-10px); pointer-events: none;
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
+  border-radius: inherit; color: var(--hero-ink); background: linear-gradient(118deg, var(--hero-bg) 0%, var(--hero-bg-soft) 70%, var(--color-surface) 100%);
+  opacity: 0; pointer-events: none; transition: opacity 380ms cubic-bezier(.2,.72,.25,1), transform 380ms cubic-bezier(.2,.72,.25,1);
+  will-change: opacity, transform;
 }
-.hero-slide.is-active { opacity: 1; transform: translateX(0); pointer-events: auto; }
-.hero-slide[hidden] { display: none !important; }
-.hero-slide__art { position: absolute; z-index: 0; inset: 0; display: block; overflow: hidden; background: var(--pay-hero-a); }
+.hero-slide--own-pace { --hero-bg: color-mix(in srgb, var(--color-surface) 93%, var(--tone-blue)); --hero-bg-soft: color-mix(in srgb, var(--color-surface) 92%, var(--tone-violet)); --hero-ink: var(--color-text); --hero-muted: var(--color-text-secondary); --hero-accent: var(--tone-violet); }
+.hero-slide--daily-goal { --hero-bg: color-mix(in srgb, var(--color-surface) 93%, var(--tone-mint)); --hero-bg-soft: color-mix(in srgb, var(--color-surface) 92%, var(--tone-blue)); --hero-ink: var(--color-text); --hero-muted: var(--color-text-secondary); --hero-accent: var(--tone-mint); }
+.hero-slide--joy-of-learning { --hero-bg: color-mix(in srgb, var(--color-surface) 93%, var(--tone-amber)); --hero-bg-soft: color-mix(in srgb, var(--color-surface) 92%, var(--tone-coral)); --hero-ink: var(--color-text); --hero-muted: var(--color-text-secondary); --hero-accent: var(--tone-amber); }
+.hero-slide--daily-tip { --hero-bg: color-mix(in srgb, var(--color-surface) 93%, var(--tone-violet)); --hero-bg-soft: color-mix(in srgb, var(--color-surface) 92%, var(--tone-blue)); --hero-ink: var(--color-text); --hero-muted: var(--color-text-secondary); --hero-accent: var(--tone-violet); }
+.hero-slider[data-direction="next"] .hero-slide { transform: translateX(-28px); }
+.hero-slider[data-direction="previous"] .hero-slide { transform: translateX(28px); }
+.hero-slide.is-active { opacity: 1; transform: translateX(0) !important; pointer-events: auto; }
+.hero-slide__art {
+  position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; overflow: hidden;
+  background: var(--hero-bg); opacity: 1;
+}
 .hero-slide__art img {
-  display: block; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .44;
-  filter: grayscale(1) brightness(.94) contrast(1.02);
+  display: block; width: 100%; height: 100%; object-fit: contain; object-position: right center;
+  opacity: 1; filter: none;
 }
 .hero-slide::after {
   position: absolute; z-index: 1; inset: 0; content: '';
-  background: linear-gradient(90deg, var(--pay-hero-a) 0%, color-mix(in srgb, var(--pay-hero-a) 91%, transparent) 54%, color-mix(in srgb, var(--pay-hero-a) 32%, transparent) 100%);
+  background: linear-gradient(90deg, var(--hero-bg) 0%, color-mix(in srgb, var(--hero-bg) 94%, transparent) 37%, color-mix(in srgb, var(--hero-bg) 72%, transparent) 46%, transparent 68%);
   pointer-events: none;
 }
 .hero-slide.has-art-fallback .hero-slide__art { display: none; }
 .hero-slide__copy {
-  position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center;
-  width: 100%; max-width: 520px; min-width: 0; height: 100%; padding: 6px 10px; overflow: hidden;
+  position: absolute; z-index: 2; inset: 0 auto 0 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  width: 47%; min-width: 0; height: 100%; padding: 48px 24px 68px 30px; overflow: hidden;
 }
-.hero-slide__eyebrow { display: block; max-width: 100%; margin: 0 0 1px; color: var(--pay-on-hero-soft); font-size: 9.5px; font-weight: 700; line-height: 1.2; }
-.hero-slide__copy h2 { max-width: 100%; margin: 0; color: var(--pay-on-hero); font-size: 13px; font-weight: 750; line-height: 1.25; overflow-wrap: anywhere; }
-.hero-slide__copy p {
-  display: -webkit-box; max-width: 37ch; margin: 2px 0 0; overflow: hidden;
-  color: var(--pay-on-hero); font-size: 12px; font-weight: 550; line-height: 1.35;
-  overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+.hero-slide__copy h2 {
+  max-width: 100%; margin: 0; color: var(--hero-ink); font-size: clamp(24px, 3vw, 36px); font-weight: 780;
+  line-height: 1.28; letter-spacing: -.025em; overflow-wrap: anywhere;
 }
-.hero-slide--advice .hero-slide__copy p { max-width: 35ch; font-size: 13px; font-weight: 700; line-height: 1.35; }
-.hero-slide__source { display: block; max-width: 100%; margin-top: 1px; overflow: hidden; color: var(--pay-on-hero-soft); font-size: 9px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
-.hero-slider__transcript {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+.hero-slide__description {
+  max-width: 31ch; margin: 9px 0 0; color: var(--hero-muted); font-size: clamp(15px, 1.55vw, 18px);
+  font-weight: 550; line-height: 1.65; overflow-wrap: anywhere;
 }
-.hero-slider.is-static .hero-slide, .hero-slider.is-reduced-motion .hero-slide, .hero-slider.is-no-motion .hero-slide { transition: none !important; }
+.hero-slider__controls {
+  position: absolute; z-index: 6; inset: auto auto 16px 22px; display: flex; align-items: center; justify-content: flex-start;
+  gap: 9px; min-width: 0;
+}
+.hero-slider__arrow {
+  display: grid; place-items: center; flex: none; width: 48px; min-width: 48px !important; height: 48px; min-height: 48px !important;
+  padding: 0; border: 1px solid color-mix(in srgb, var(--color-border) 82%, var(--color-primary)); border-radius: 50%;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent); color: var(--color-text); box-shadow: var(--glass-shadow);
+  font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1; cursor: pointer;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.hero-slider__arrow span { display: block; margin-top: -3px; }
+.hero-slider__arrow:hover { background: var(--color-surface-muted); box-shadow: var(--glass-shadow-lift); transform: translateY(-1px); }
+.hero-slider__arrow:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+.hero-slider__indicators { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 4px; }
+.hero-slider__dot { display: block; width: 7px; height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--color-text-secondary) 36%, transparent); transition: width 220ms ease, background-color 220ms ease; }
+.hero-slider__dot.is-active { width: 21px; background: var(--color-primary); }
+.hero-slider.is-static .hero-slide,
+.hero-slider.is-reduced-motion .hero-slide,
+.hero-slider.is-no-motion .hero-slide { transition: none !important; }
 .pay-counter-minimal [data-home-hero] { display: none !important; }
+@media (max-width: 640px) {
+  .hero-slider { height: 320px; min-height: 320px; margin: 10px auto 16px; border-radius: 23px; }
+  .hero-slider__context { height: 42px; gap: 7px; padding: 10px 15px 0; }
+  .hero-slider .pay-portal-kicker { font-size: 11px; }
+  .hero-slider__date-copy { max-width: 132px; }
+  .hero-slider [data-home-hero-date] { max-width: 132px; font-size: 9.5px; }
+  .hero-slider__slides { inset: 42px 0 0; height: auto; }
+  .hero-slide { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 96px minmax(0, 1fr); }
+  .hero-slide__art { position: relative; inset: auto; grid-column: 1; grid-row: 2; width: 100%; height: 100%; }
+  .hero-slide__art img { object-fit: cover; object-position: right center; }
+  .hero-slide::after { display: none; }
+  .hero-slide__copy { position: relative; inset: auto; grid-column: 1; grid-row: 1; width: 100%; height: 100%; padding: 10px 18px 7px; justify-content: center; gap: 6px; }
+  .hero-slide__copy h2 { font-size: 23px; line-height: 1.3; text-wrap: balance; }
+  .hero-slide__description { max-width: 38ch; margin: 0; font-size: 14px; line-height: 1.45; text-wrap: pretty; }
+  .hero-slider__controls { inset: auto auto 8px 10px; gap: 5px; }
+  .hero-slider__arrow { width: 48px; height: 48px; font-size: 26px; }
+  .hero-slider__indicators { gap: 6px; padding-inline: 2px; }
+}
+@media (max-width: 359px) {
+  .hero-slider { height: 310px; min-height: 310px; border-radius: 21px; }
+  .hero-slide { grid-template-rows: 100px minmax(0, 1fr); }
+  .hero-slide__copy { padding-inline: 13px; }
+  .hero-slide__copy h2 { font-size: 21px; }
+  .hero-slide__description { font-size: 13px; line-height: 1.42; }
+  .hero-slider__context { padding-inline: 12px; }
+  .hero-slider__date-copy, .hero-slider [data-home-hero-date] { max-width: 116px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide, .hero-slider__arrow, .hero-slider__dot { transition: none !important; }
+}
+@media print { .hero-slider { display: none !important; } }
 #homeView .pay-hero.pay-hero-summary { display: block; position: relative; margin: 0; padding: 0; color: var(--color-text); background: transparent; }
 #homeView .pay-hero.pay-hero-summary::before { display: none; }
 #homeView .pay-hero.pay-hero-summary .study-progress-card { margin: 0; }
@@ -4030,36 +4074,12 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
 .admin-home-summary .admin-hero-stats .tile-value, .manager-home-summary .manager-kpi-grid .tile-value { color: var(--color-text); }
 .manager-today-classes { margin: 0 0 14px; }
 .manager-today-count-grid { grid-template-columns: minmax(0, 1fr); }
-html[data-theme="dark"] .hero-slider {
-  --pay-hero-a: #162847;
-  --pay-hero-b: #241d46;
-  --pay-on-hero-soft: #d4def5;
-  --pay-hero-gradient: linear-gradient(130deg, #142849 0%, #28204b 52%, #173c61 100%);
-  --pay-hero-line: rgba(255,255,255,.24);
-  border-color: var(--pay-hero-line);
-  box-shadow: none;
-}
-html[data-theme="dark"] .hero-slide__art img { filter: grayscale(1) brightness(.78) contrast(1.06); }
 @media (max-width: 359px) {
   .home-dashboard-intro { gap: 7px; }
   .home-dashboard-intro h1 { font-size: 18px; }
   .home-dashboard-intro .admin-date-pill { max-width: 88px; padding-inline: 7px; font-size: 10px; }
   .student-reference #homeView .student-home-welcome .pay-avatar { width: 46px; height: 46px; }
-  .hero-slider { height: 160px; grid-template-rows: 44px minmax(0, 1fr); gap: 2px; padding: 8px 9px; border-radius: 19px; }
-  .hero-slider__context, .hero-slider .admin-hero-head { max-height: 44px; }
-  .hero-slider .admin-hero-icon, .hero-slider .pay-avatar { width: 31px; height: 31px; }
-  .hero-slider .admin-hero-title h1, .hero-slider__role-copy h1 { font-size: 12.5px; }
-  .hero-slider .pay-hero-name { font-size: 12.5px; }
-  .hero-slider [data-home-hero-date] { max-width: 82px; font-size: 9.5px; }
-  .hero-slide__copy { padding: 4px 8px; }
-  .hero-slide__copy h2 { font-size: 12px; }
-  .hero-slide__copy p { max-width: 34ch; font-size: 11px; line-height: 1.28; }
-  .hero-slide--advice .hero-slide__copy p { font-size: 12px; line-height: 1.28; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .hero-slide { transition: none !important; }
-}
-@media print { .hero-slider { display: none !important; } }
 
 /* ── Admin/Manager daily-advice editor ───────────────────────────────────── */
 .advice-admin-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; margin: 0 0 var(--space-3); }
@@ -4095,5 +4115,187 @@ html[data-theme="dark"] .hero-slide__art img { filter: grayscale(1) brightness(.
   .advice-admin-toolbar { align-items: stretch; }
   .advice-admin-toolbar > .btn { width: 100%; }
   .advice-admin-actions > .btn { flex: 1 1 auto; }
+}
+
+/* Student mobile consistency pass — keep the home, study, exam, routine and
+   account views in the same phone-first rhythm without touching other roles. */
+@media screen and (max-width: 430px) {
+  body.student-reference .view > .page-intro:first-child {
+    margin: 0 0 14px;
+    padding: 10px 0 12px;
+  }
+  body.student-reference .view > .page-intro:first-child :is(h1, h2) {
+    color: var(--color-text);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.35;
+  }
+  body.student-reference .view > .page-intro:first-child .pay-back {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-surface-muted);
+    color: var(--color-primary);
+  }
+
+  /* These views had independent title sizes and intro offsets; bring them
+     back to the same 21px title and 10px top rhythm as the other routes. */
+  body.student-reference #coursesView > .page-intro,
+  body.student-reference #examsView > .page-intro,
+  body.student-reference #classesView > .page-intro,
+  body.student-reference #myProfileView > .page-intro,
+  body.student-reference #studentIdCardView > .page-intro,
+  body.student-reference #studyResultsView > .page-intro {
+    margin: 0 0 14px;
+    padding: 10px 0 12px;
+  }
+  body.student-reference #coursesView > .page-intro h1,
+  body.student-reference #examsView > .page-intro h1,
+  body.student-reference #classesView > .page-intro h1,
+  body.student-reference #myProfileView > .page-intro h1,
+  body.student-reference #studentIdCardView > .page-intro h1,
+  body.student-reference #studyResultsView > .page-intro h1 {
+    color: var(--color-text);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.35;
+  }
+  body.student-reference #myProfileView > .page-intro .pay-back,
+  body.student-reference #studentIdCardView > .page-intro .pay-back,
+  body.student-reference #studyResultsView > .page-intro .pay-back {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-surface-muted);
+    color: var(--color-primary);
+  }
+
+  /* The three persistent navigation hubs do not need an extra Home back
+     action. Nested routes still use the same circular back control. */
+  body.student-reference #routineView > .page-intro .pay-back { display: none; }
+
+  /* The visible daily advice uses the same crisp card material as the other
+     Student home surfaces; quote rotation stays in its offline-first module. */
+  body.student-reference #homeView .daily-quote-card {
+    border-radius: 20px;
+    box-shadow: var(--pay-shadow);
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-text);
+    box-shadow: none;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary::before { display: none; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--pay-shadow);
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-heading h1 {
+    color: var(--color-text);
+    font-size: clamp(18px, 5vw, 21px);
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.35;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-subtitle {
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card .study-progress-stats > div {
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface-muted);
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-stats strong {
+    color: var(--color-text);
+    font-weight: 700;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-stats small {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+@media screen and (max-width: 430px) {
+  /* Keep the Home progress summary useful but visually compact on phones. */
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .pay-hero-link { display: none; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-top { gap: 10px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring {
+    order: 0; width: 62px; height: 62px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring::before { inset: 6px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring strong { font-size: 15px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-heading h1 {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-subtitle {
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow > div {
+    min-width: 0;
+    min-height: 54px;
+    padding: 8px 5px;
+    border-radius: 12px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow strong { font-size: 15px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow small {
+    font-size: 11.5px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+}
+@media screen and (max-width: 430px) {
+  body.student-reference #homeView .student-home-welcome .pay-avatar {
+    width: 54px;
+    height: 54px;
+    background: var(--color-primary);
+    border: 0;
+    color: var(--pay-on-hero);
+    box-shadow: none;
+  }
+  /* The global decorative SVG stroke is for line icons, not the ID card's
+     text. Remove that inherited outline so the white card lettering stays
+     clean and readable on the brand-green card. */
+  body.student-reference #studentIdCardPreview > svg text {
+    fill: var(--pay-on-hero);
+    stroke: none;
+  }
 }
 }

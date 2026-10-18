@@ -135,10 +135,10 @@ test('the ফি screen is read-only and reads the one finance store', async () 
   ctx.window.close();
 });
 
-test('Home keeps the five quick academic cards and the Notice Board tile', async () => {
+test('Home keeps the six quick academic cards, reference order and existing routes', async () => {
   const ctx = await loadPage('student.html');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
-    ['বাড়ির কাজ', 'সাজেশন', 'প্রশ্নব্যাংক', 'পরীক্ষা', 'ফলাফল', 'Notice Board']);
+    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'Notice Board']);
   assert.deepEqual(ctx.$$('#studentServices [data-action]').map(node => node.dataset.action),
     ['homework', 'suggestion', 'question-bank']);
   assert.deepEqual(ctx.$$('#studentServices [data-view]').map(node => node.dataset.view), ['exams', 'exam-results', 'notice-board']);

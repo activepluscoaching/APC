@@ -18,7 +18,9 @@ test('the active wallet skin parses, is screen-only and resolves its palette tok
   const defined = new Set([...read('css/foundation.css').matchAll(/(--[a-z0-9-]+)\s*:/g)].map(match => match[1]));
   // Per-component variables are deliberately not global palette entries.
   // --tile-index is set inline per quick-access tile by the admin shell.
+  // The Student learning hero uses local aliases over the existing color/tone palette.
   ['--tone', '--tone-soft', '--stat-tone', '--progress', '--tile-index'].forEach(name => defined.add(name));
+  for (const [, name] of css.matchAll(/(--hero-(?:bg(?:-soft)?|ink|muted|accent))\s*:/g)) defined.add(name);
   // Palette channels scoped to one component/tile (not global palette tokens).
   for (const [, name] of css.matchAll(/(--[a-z0-9-]*(?:ink|index))\s*:/g)) defined.add(name);
   // The Manager roster uses local semantic tones for each status group.
@@ -65,8 +67,8 @@ test('student, manager and teacher have real, named service shortcuts', () => {
   };
   const expectedCount = { manager: 9, teacher: 0 };
   const studentCards = [
-    ['homework', 'বাড়ির কাজ'], ['suggestion', 'সাজেশন'], ['question-bank', 'প্রশ্নব্যাংক'],
-    ['exams', 'পরীক্ষা'], ['exam-results', 'ফলাফল'], ['notice-board', 'Notice Board']
+    ['homework', 'বাড়ির কাজ'], ['exams', 'পরীক্ষা'], ['suggestion', 'সাজেশন'],
+    ['question-bank', 'প্রশ্নব্যাংক'], ['exam-results', 'ফলাফল'], ['notice-board', 'Notice Board']
   ];
   const studentTiles = [...doc('student').querySelectorAll('#studentServices .pay-tile')];
   assert.equal(studentTiles.length, studentCards.length);
@@ -144,13 +146,27 @@ test('hero band covers the whole hero and the summary card straddles its edge', 
   assert.match(css, /#homeView\.is-empty-routine \.study-progress-card \{ margin-top: 0;/);
 });
 
-test('student home keeps the same phone-width layout on wide browsers', () => {
+test('student home uses the full-match two-column reference grid without changing other portals', () => {
   const home = doc('student');
+  const design = read('css/student-home-design.css');
   assert.ok(home.querySelector('#homeView #dashboardExamCard'), 'the exam banner is on Home');
-  assert.doesNotMatch(css, /@media \(min-width:\s*1000px\)/,
-    'wide viewports must not enable the retired two-column student dashboard');
-  assert.match(css, /@media screen and \(min-width: 431px\)[\s\S]*?\.student-home-view \.pay-grid, #homeView #studentServices[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/,
-    'wide browsers keep the same three-column phone service grid');
+  assert.match(read('student.html'), /css\/student-home-design\.css\?v=\d+/,
+    'Student Home loads its dedicated visual layer');
+  assert.match(read('sw.js'), /'\.\/css\/student-home-design\.css'/,
+    'the offline worker precaches the Student-only visual layer');
+  assert.match(design, /body\.student-reference #homeView #studentServices\s*\{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    'six quick actions use two equal columns');
+  assert.match(design, /@media screen and \(min-width: 768px\)[\s\S]*?#appShell\s*\{[\s\S]*?border-radius: 34px/,
+    'wide screens get the roomy, rounded app shell');
+  assert.ok(['--student-home-welcome: #2165a5', '--student-home-advice: #5549b3',
+    '--student-home-routine: #106d57', '--student-home-progress: #89520b']
+    .every(color => design.includes(color)), 'the four cards retain their distinct palette');
+  assert.match(design, /#studyProgressRing\s*\{\s*transition:\s*--progress 2\.4s/u,
+    'the ring eases to the real computed percentage instead of showing an instant jump');
+  for (const name of ['admin', 'manager', 'teacher', 'payment', 'index']) {
+    assert.doesNotMatch(read(name + '.html'), /student-home-design\.css/,
+      name + ' does not load Student-specific styling');
+  }
 });
 
 test('exam workspace rows keep one even gap with no dead space', () => {

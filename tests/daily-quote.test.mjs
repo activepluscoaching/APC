@@ -1,20 +1,12 @@
-/* Legacy daily quote card tests. The Student home hero owns the visible
-   advice; this cached Student widget remains intact but hidden for migration.
-
-   The site's rules, one test each:
-     • the legacy quote markup stays hidden and the Student home keeps its new
-       welcome → hero → summary → today → quick-action order;
-     • the day picks the legacy line deterministically for compatibility;
-     • it is offline-first: the card is filled from the built-in library or the
-       cached feed before any request, and a failed/absent/corrupt fetch changes
-       nothing, blanks nothing and raises nothing;
-     • it keeps one private cache key and never touches another record. */
+/* The legacy daily-quote renderer remains deterministic and offline-first in
+   its retained mount, while the Student Home Hero carousel occupies that slot.
+   The six shortcut actions and private quote-cache contract remain intact. */
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadPage } from './jsdom-harness.mjs';
 import {
-  BUILT_IN_QUOTES, DAILY_QUOTE_KEY, initDailyQuote, loadQuoteFeed, normalizeQuotes,
+  BUILT_IN_QUOTES, DAILY_QUOTE_KEY, formatQuoteDate, initDailyQuote, loadQuoteFeed, normalizeQuotes,
   parseQuoteFeed, pickQuote, quoteDateKey, quoteDayNumber, readQuoteCache, saveQuoteCache
 } from '../js/daily-quote.js';
 import { KEYS } from '../js/database.js';
@@ -26,33 +18,54 @@ const FEED = readFileSync(new URL('../assets/daily-quotes.json', import.meta.url
 const contexts = [];
 after(() => contexts.forEach(ctx => ctx.window.close()));
 
-test('Student home places the welcome before the hero, then summary, today and quick actions', () => {
+test('Student home orders top bar → welcome → Hero carousel in the advice slot → routine → progress → six quick actions → tabs', () => {
   const html = readFileSync(new URL('../student.html', import.meta.url), 'utf8');
   const at = name => html.indexOf(name);
-  assert.ok(at('id="studentName"') < at('data-home-hero'), 'the student name/Welcome is above the advice card');
-  assert.ok(at('data-home-hero') < at('class="pay-hero pay-hero-summary"'));
-  assert.ok(at('class="pay-hero pay-hero-summary"') < at('dashboard-today-section'));
-  assert.ok(at('class="dashboard-today-section"') < at('id="studentServices"'));
-  assert.ok(at('id="studentServices"') < at('id="dashboardExamCard"'), 'existing optional study/fee cards remain below quick actions');
-  assert.match(html, /class="daily-quote-section"[^>]*\shidden/u, 'the legacy quote section stays hidden under the advice hero');
+  assert.ok(at('id="studentHeader"') < at('id="studentName"'), 'the top bar precedes the Student identity');
+  const adviceSlot = at('class="daily-quote-section home-advice-section student-home-hero-section"');
+  const studentHero = at('data-student-home-hero');
+  assert.ok(at('id="studentName"') < adviceSlot);
+  assert.ok(adviceSlot < studentHero && studentHero < at('id="dailyQuoteCard"'));
+  assert.ok(adviceSlot < at('dashboard-today-section'));
+  assert.ok(at('dashboard-today-section') < at('class="pay-hero pay-hero-summary"'));
+  assert.ok(at('class="pay-hero pay-hero-summary"') < at('id="studentServices"'));
+  assert.ok(at('id="studentServices"') < at('id="dashboardExamCard"'), 'optional study/fee cards stay below quick actions');
+  assert.match(html, /data-daily-quote-date/u, 'the retained quote renderer keeps its date hook');
+  assert.match(html, /data-daily-advice-summary/u, 'the retained quote renderer keeps its legacy summary hook');
+  assert.match(html, /js\/student-home-hero-entry\.js\?v=379/u, 'the Student carousel has its own versioned entry');
+  assert.match(html, /js\/student-home-daily-hero\.js\?v=379/u, 'its featured slide follows the Dhaka calendar automatically');
+  const studentCss = readFileSync(new URL('../css/hero-cards.css', import.meta.url), 'utf8');
+  assert.match(studentCss, /student-home-hero-section #dailyQuoteCard\s*\{[^}]*display:\s*none !important/u,
+    'the carousel replaces the visible quote card without deleting its renderer');
 });
 
-test('the legacy quote card still paints offline but remains hidden in the page flow', async () => {
+test('the retained quote renderer still paints offline behind the replacement Hero carousel', async () => {
   const ctx = await loadPage('student.html', { seed: { 'activePlus.demo.autofill.v1': 'off' } });
   contexts.push(ctx);
-  /* jsdom does not run page modules, so mount the legacy compatibility card. */
+  /* jsdom does not run page modules, so mount the same quote hero explicitly. */
   const card = initDailyQuote({ mount: '#dailyQuoteCard', now: () => DAY, autoFetch: false });
   const quote = ctx.$('#dailyQuoteCard');
-  assert.equal(quote.hidden, false, 'the card can still be populated for migration compatibility');
-  assert.equal(ctx.$('.daily-quote-section').hidden, true, 'the legacy card cannot duplicate visible hero advice');
+  assert.equal(quote.hidden, false, 'the retained quote node remains renderable for existing data logic');
+  assert.equal(ctx.$('.daily-quote-section').hidden, false, 'the Hero section stays in the page flow');
+  assert.equal(ctx.$('[data-daily-quote-date]').dateTime, '2026-10-03');
+  assert.equal(ctx.$('[data-daily-quote-date]').textContent, formatQuoteDate('2026-10-03'));
+  assert.ok(ctx.$('[data-daily-quote-text]').textContent.length > 10);
+  const welcome = ctx.$('.student-home-welcome');
+  const hero = ctx.$('[data-student-home-hero]');
+  const summary = ctx.$('.pay-hero.pay-hero-summary');
   const today = ctx.$('.dashboard-today-section');
   const menu = ctx.$('#studentServices');
   const order = (a, b) => a.compareDocumentPosition(b) & ctx.window.Node.DOCUMENT_POSITION_FOLLOWING;
-  assert.ok(order(today, menu), 'today’s classes precede quick actions');
-  assert.equal(ctx.$$('#homeView .daily-quote-card').length, 1, 'the existing ID and single card remain');
+  assert.ok(order(welcome, hero));
+  assert.ok(order(hero, quote));
+  assert.ok(order(quote, today));
+  assert.ok(order(today, summary), 'today’s routine precedes the progress card');
+  assert.ok(order(summary, menu), 'progress precedes the six shortcuts');
+  assert.ok(order(ctx.$('.daily-quote-text'), ctx.$('.daily-quote-footer')), 'the date and summary sit below the advice');
+  assert.equal(ctx.$$('#homeView .daily-quote-card').length, 1, 'the existing offline quote renderer is preserved but hidden under the new Hero');
   assert.equal(ctx.$$('#studentServices .pay-tile').length, 6, 'the quick menu keeps its existing cards');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
-    ['বাড়ির কাজ', 'সাজেশন', 'প্রশ্নব্যাংক', 'পরীক্ষা', 'ফলাফল', 'Notice Board']);
+    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'Notice Board']);
   card.stop();
 });
 
@@ -184,11 +197,14 @@ test('the card keeps one private key and leaves every other record alone', async
 test('the home keeps its quote card compact inside the phone layout at every viewport width', () => {
   const css = readFileSync(new URL('../css/ui-wallet.css', import.meta.url), 'utf8');
   assert.match(css, /\.daily-quote-section \{ margin: 14px 0 0; \}/);
-  assert.match(css, /\.daily-quote-card \{[^}]*grid-template-columns: 36px minmax\(0, 1fr\);/, 'no fixed width, no clipping');
+  assert.match(css, /\.daily-quote-card \{[^}]*grid-template-columns: minmax\(0, 1fr\);/, 'the advice card uses a responsive single-column layout');
+  assert.match(css, /\.daily-quote-head \{[^}]*align-items: center/u);
+  assert.match(css, /\.daily-quote-date \{/u);
+  assert.match(css, /\.daily-advice-summary \{/u);
   assert.match(css, /\.daily-quote-card\[[^\]]*hidden[^\]]*\] \{ display: none; \}/);
   assert.match(css, /@media screen and \(min-width: 431px\) \{[\s\S]*?\.student-home-view #dashboardExamCard, \.daily-quote-section, \.daily-challenge-section \{\s*grid-column: auto; grid-row: auto;/, 'a wide browser keeps the quote in the same phone-width content flow');
   assert.doesNotMatch(css, /@media\s*\(min-width:\s*1000px\)/, 'there is no desktop-only home layout');
-  assert.match(css, /#homeView\.is-empty-routine \.daily-quote-card \{[^}]*padding: 9px 12px/, 'the one-screen home compacts the card');
+  assert.match(css, /body\.student-reference #homeView \.daily-quote-card \{[^}]*border-radius: 20px/, 'the Student advice hero is a proper home card');
   assert.match(css, /@media \(max-height: 820px\) \{[\s\S]*?\.daily-quote-section \{ margin-top: 6px; \}/, 'a short viewport tightens the gap');
 });
 

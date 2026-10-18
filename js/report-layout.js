@@ -553,7 +553,7 @@ export function renderPreviewHTML(pages) {
         return `<span class="rp-rect" style="left:${item.x1}px;top:${item.y}px;width:${item.x2 - item.x1}px;height:1px;background:${item.color}"></span>`;
       }
       if (item.kind === 'image' && item.image?.src) {
-        return `<img class="rp-logo" alt="" src="${escapeHtml(item.image.src)}" style="left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${item.h}px">`;
+        return `<img class="rp-logo" alt="${escapeHtml(BRAND)}-এর লোগো" src="${escapeHtml(item.image.src)}" style="left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${item.h}px">`;
       }
       return '';
     }).join('');

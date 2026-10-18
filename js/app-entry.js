@@ -16,6 +16,21 @@
     const authMessage = document.getElementById('authMessage');
     if (authMessage) { authMessage.hidden = false; authMessage.textContent = text; }
   }
+  // Password visibility is delegated from the head-loaded fail-safe script so
+  // the eye works immediately, even while the app module is still booting.
+  document.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest('[data-toggle-pin]');
+    if (!button) return;
+    const input = document.getElementById(button.dataset.togglePin);
+    if (!input) return;
+    const visible = input.type === 'password';
+    input.type = visible ? 'text' : 'password';
+    button.setAttribute('aria-pressed', String(visible));
+    button.setAttribute('aria-label', visible ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন');
+    button.classList.toggle('is-visible', visible);
+  });
+
   // Installed in <head>, before any form can be interacted with.
   document.addEventListener('submit', event => {
     if (event.target.id !== 'loginForm' || event.target.dataset.loginReady === 'true') return;

@@ -218,7 +218,19 @@ export function setView(viewName, { history: historyMode = 'push' } = {}) {
   const name = VIEW_ALIASES[viewName] || viewName;
   const panel = document.getElementById(`${name}View`) || document.getElementById(VIEW_ID_OVERRIDES[name] || '');
   if (!panel) return;
-  $$('[data-view-panel]').forEach(item => item.classList.toggle('active', item === panel));
+
+  // Hide every non-current page before exposing the destination. In addition
+  // to the active class, set `hidden` so page-level CSS cannot accidentally
+  // leave an inactive view visible (notably Home's former ID-specific rule).
+  const panels = new Set([...$$('.view'), ...$$('[data-view-panel]')]);
+  for (const item of panels) {
+    if (item === panel) continue;
+    item.classList.remove('active');
+    item.hidden = true;
+  }
+  panel.hidden = false;
+  panel.classList.add('active');
+
   const parent = NAV_PARENTS[name] || name;
   $$('.bottom-link').forEach(item => {
     const active = item.dataset.view === parent;

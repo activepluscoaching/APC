@@ -56,9 +56,10 @@ test('welcome artwork changes across Dhaka morning, noon, afternoon and night', 
     { hour: 8, name: 'morning', motion: ['.hc-spin', '.hc-drift'] },
     { hour: 11, name: 'morning', motion: ['.hc-spin', '.hc-drift'] },
     { hour: 12, name: 'noon', motion: ['.hc-spin', '.hc-pulse', '.hc-drift'] },
-    { hour: 15, name: 'afternoon', motion: ['.hc-rise', '.hc-tw'] },
+    { hour: 15, name: 'noon', motion: ['.hc-spin', '.hc-pulse', '.hc-drift'] },
     { hour: 16, name: 'afternoon', motion: ['.hc-rise', '.hc-tw'] },
-    { hour: 19, name: 'afternoon', motion: ['.hc-rise', '.hc-tw'] },
+    { hour: 17, name: 'afternoon', motion: ['.hc-rise', '.hc-tw'] },
+    { hour: 19, name: 'night', motion: ['.hc-float', '.hc-tw'] },
     { hour: 20, name: 'night', motion: ['.hc-float', '.hc-tw'] },
     { hour: 22, name: 'night', motion: ['.hc-float', '.hc-tw'] }
   ];

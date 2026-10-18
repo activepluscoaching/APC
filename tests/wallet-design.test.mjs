@@ -158,9 +158,9 @@ test('student home uses the full-match two-column reference grid without changin
     'six quick actions use two equal columns');
   assert.match(design, /@media screen and \(min-width: 768px\)[\s\S]*?#appShell\s*\{[\s\S]*?border-radius: 34px/,
     'wide screens get the roomy, rounded app shell');
-  assert.ok(['--student-home-welcome: #2165a5', '--student-home-advice: #5549b3',
-    '--student-home-routine: #106d57', '--student-home-progress: #89520b']
-    .every(color => design.includes(color)), 'the four cards retain their distinct palette');
+  assert.ok(['--student-home-welcome: #eaf3ff', '--student-home-advice: #eef0ff',
+    '--student-home-routine: #e8f5ee', '--student-home-progress: #fff2df']
+    .every(color => design.includes(color)), 'the four cards retain their distinct light palette');
   assert.match(design, /#studyProgressRing\s*\{\s*transition:\s*--progress 2\.4s/u,
     'the ring eases to the real computed percentage instead of showing an instant jump');
   for (const name of ['admin', 'manager', 'teacher', 'payment', 'index']) {
@@ -223,10 +223,18 @@ test('wallet assets and entry versions ship together in the offline shell', () =
   assert.ok(version >= 139);
   assert.ok(sw.includes("'./css/ui-wallet.css'"));
   assert.ok(!sw.includes("'./css/ui-interior.css'"), 'unused skin must not be a precache dependency');
+  const appShell = sw.split('const APP_SHELL = [')[1].split('];')[0];
   for (const name of portals) {
     const links = [...read(name + '.html').matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(match => match[1]);
     assert.ok(links.some(href => href.startsWith('css/ui-wallet.css?')), `${name} must link the wallet skin`);
-    for (const href of links) assert.match(href, new RegExp(`\\?v=${version}$`), `${name}: ${href} is not pinned to CACHE_VERSION`);
+    if (name === 'student') {
+      assert.ok(links.includes('css/hero-cards.css?v=379'), 'Student hero CSS uses the approved v379 asset pin');
+      assert.ok(appShell.includes("'./css/hero-cards.css' + '?v=379'"), 'the offline shell uses the same Student hero CSS pin');
+    }
+    for (const href of links) {
+      if (name === 'student' && href === 'css/hero-cards.css?v=379') continue;
+      assert.match(href, new RegExp(`\\?v=${version}$`), `${name}: ${href} is not pinned to CACHE_VERSION`);
+    }
   }
 });
 

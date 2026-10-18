@@ -13,6 +13,58 @@ import { toBanglaNumber as bn } from './ui.js';
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const DAY_FOR_DATE = ['sun', 'mon', 'tue', 'wed', 'thu', null, 'sat'];
+const DHAKA_CLOCK = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+});
+const TIME_TOKEN = /(\d{1,2})\s*[:.]\s*(\d{2})(?:\s*(am|pm))?/gi;
+const toLatinDigits = value => String(value ?? '').replace(/[০-৯]/g, digit => String('০১২৩৪৫৬৭৮৯'.indexOf(digit)));
+
+function clockMinutes(hourValue, minuteValue, marker, context) {
+  let hour = Number(hourValue);
+  const minute = Number(minuteValue);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour > 23 || minute > 59) return null;
+  const cue = `${context || ''} ${marker || ''}`.toLowerCase();
+  if (marker) {
+    if (marker.toLowerCase() === 'pm' && hour < 12) hour += 12;
+    if (marker.toLowerCase() === 'am' && hour === 12) hour = 0;
+  } else if (hour <= 12 && /দুপুর|বিকেল|সন্ধ্যা|রাত/u.test(cue) && hour < 12) {
+    hour += 12;
+  } else if (hour === 12 && /ভোর|সকাল/u.test(cue)) {
+    hour = 0;
+  }
+  return hour * 60 + minute;
+}
+
+/** Converts a saved routine's 24-hour start/range into Dhaka clock minutes. */
+export function routineInterval(item = {}) {
+  const context = `${item.period || ''} ${item.time || ''}`;
+  const timeText = toLatinDigits(item.time);
+  const matches = [...timeText.matchAll(TIME_TOKEN)];
+  const raw = toLatinDigits(item.rawTime).match(/^(\d{1,2})\s*:\s*(\d{2})$/);
+  const start = raw
+    ? clockMinutes(raw[1], raw[2], '', context)
+    : matches.length
+      ? clockMinutes(matches[0][1], matches[0][2], matches[0][3], context)
+      : null;
+  if (start === null) return null;
+  const rangeEnd = matches.length > 1
+    ? clockMinutes(matches[1][1], matches[1][2], matches[1][3], context)
+    : null;
+  const duration = Number(item.duration);
+  let end = rangeEnd ?? start + (Number.isFinite(duration) && duration > 0 ? duration : 60);
+  if (end <= start) end += 24 * 60;
+  return { start, end };
+}
+
+/** True only while the saved class interval is active in Asia/Dhaka. */
+export function isClassInProgress(item, at = nowEpoch()) {
+  const interval = routineInterval(item);
+  const epoch = at instanceof Date ? at.getTime() : Number(at);
+  if (!interval || !Number.isFinite(epoch)) return false;
+  const parts = Object.fromEntries(DHAKA_CLOCK.formatToParts(new Date(epoch)).map(part => [part.type, part.value]));
+  const minute = Number(parts.hour) * 60 + Number(parts.minute);
+  return minute >= interval.start && minute < interval.end;
+}
 
 function iconFor(subject = '') {
   const text = String(subject).toLowerCase();
@@ -22,29 +74,48 @@ function iconFor(subject = '') {
   return 'icon-book';
 }
 
-function routineCard(item, index, kind = 'class') {
+function routineTimeLabel(item) {
+  const period = String(item.period || '').trim();
+  let time = String(item.time || item.rawTime || '').trim();
+  if (period && !time.includes(period)) time = `${period} ${time}`.trim();
+  return time ? bn(time) : 'সময় নির্ধারিত নয়';
+}
+
+function roomLabel(value) {
+  const room = String(value || '').trim();
+  if (!room) return 'রুম নির্ধারিত নয়';
+  return /^(?:রুম|কক্ষ|room)(?:\s|$)/iu.test(room) ? room : `রুম ${room}`;
+}
+
+function routineCard(item, index, kind = 'class', at = nowEpoch()) {
   const title = kind === 'teacher' ? item.title : item.subject;
-  const subtitle = kind === 'teacher' ? `${item.subject} · ${item.teacherName}` : `${item.teacher || 'শিক্ষক নির্ধারিত'}${item.room ? ` · ${item.room}` : ''}`;
-  const time = kind === 'teacher' ? item.time : `${item.period || ''} ${item.time || ''}`.trim();
+  const subtitle = kind === 'teacher'
+    ? [item.subject, item.teacherName || item.teacher].filter(Boolean).join(' · ')
+    : item.teacher || 'শিক্ষক নির্ধারিত';
+  const timeAndRoom = `${routineTimeLabel(item)} · ${roomLabel(item.room)}`;
+  const running = isClassInProgress(item, at);
+  const status = running ? 'চলছে' : kind === 'teacher' ? 'শিক্ষকের কাজ' : 'রুটিনে আছে';
   return `<article class="dashboard-routine-card" data-dashboard-class="${esc(item.id || index)}">
     <span class="dashboard-routine-icon tone-${index % 3}" aria-hidden="true">${iconMarkup(iconFor(title))}</span>
-    <span class="dashboard-routine-main"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small><span class="dashboard-time-pill">${esc(time || 'সময় দেওয়া হয়নি')}</span></span>
-    <span class="dashboard-routine-status"><i></i>${kind === 'teacher' ? 'শিক্ষকের কাজ' : 'রুটিনে আছে'}</span>
+    <span class="dashboard-routine-main">
+      <span class="dashboard-routine-status${running ? ' is-running' : ''}" data-routine-status="${running ? 'running' : 'scheduled'}"><i></i>${status}</span>
+      <strong>${esc(title)}</strong><small>${esc(subtitle)}</small><span class="dashboard-time-pill">${esc(timeAndRoom)}</span>
+    </span>
   </article>`;
 }
 
-function renderRoutine(student, teachingActivities) {
-  const key = DAY_FOR_DATE[new Date(`${dhakaKey()}T12:00:00Z`).getUTCDay()];
+function renderRoutine(student, teachingActivities, at = nowEpoch()) {
+  const today = dhakaKey(at);
+  const key = DAY_FOR_DATE[new Date(`${today}T12:00:00Z`).getUTCDay()];
   const dayClasses = key ? loadRoutine()[key]?.classes || [] : [];
   const officeClasses = student ? dayClasses.filter(item => matchesClassSection(item, student)) : dayClasses;
-  const today = dhakaKey();
   const teacherClasses = teachingActivities.filter(item => item.type === 'routine' && item.date === today);
   const cards = [
-    ...officeClasses.map((item, index) => routineCard(item, index)),
-    ...teacherClasses.map((item, index) => routineCard(item, officeClasses.length + index, 'teacher'))
+    ...officeClasses.map((item, index) => routineCard(item, index, 'class', at)),
+    ...teacherClasses.map((item, index) => routineCard(item, officeClasses.length + index, 'teacher', at))
   ];
   const root = $('#dashboardRoutineList');
-  if (!root) return;
+  if (!root) return cards.length;
   // Presentation state only: the empty home can fill the first screen without
   // inventing classes or changing which real office/teacher records qualify.
   $('#homeView')?.classList.toggle('is-empty-routine', cards.length === 0);
@@ -52,6 +123,7 @@ function renderRoutine(student, teachingActivities) {
   root.innerHTML = cards.length
     ? cards.join('')
     : `<article class="challenge-card dashboard-empty-card"><span class="challenge-icon dashboard-empty-icon" aria-hidden="true">${iconMarkup("calendar")}</span><span class="challenge-copy dashboard-empty-copy"><strong>আজ কোনো ক্লাস নেই</strong><small>সব রুটিন দেখতে রুটিন খুলুন।</small></span><button class="challenge-open" type="button" data-view="routine" aria-label="সব রুটিন দেখুন">${iconMarkup("chevron-right", "apc-icon-svg", { variant: "glyph" })}</button></article>`;
+  return cards.length;
 }
 
 
@@ -171,11 +243,15 @@ function renderProgress(activities, exams, student, examDb, courses) {
   const ring = $('#studyProgressRing');
   if (ring) {
     ring.style.setProperty('--progress', `${percent * 3.6}deg`);
-    ring.setAttribute('aria-label', `আজকের অগ্রগতি ${bn(percent)} শতাংশ`);
+    ring.setAttribute('aria-label', stats.termProgressPercent === null
+      ? 'পড়াশোনার অগ্রগতি এখনো নেই'
+      : `পড়াশোনার অগ্রগতি ${bn(percent)} শতাংশ`);
   }
   if ($('#studyProgressValue')) $('#studyProgressValue').textContent = stats.termProgressPercent === null ? '—' : `${bn(percent)}%`;
   if ($('#dashboardDoneCount')) $('#dashboardDoneCount').textContent = `${bn(stats.doneCount)}টি কাজ`;
-  if ($('#dashboardPendingSummary')) $('#dashboardPendingSummary').textContent = stats.pendingCount ? `আরও ${bn(stats.pendingCount)}টি কাজ বাকি` : 'কোনো কাজ বাকি নেই';
+  if ($('#dashboardPendingSummary')) $('#dashboardPendingSummary').textContent = stats.homework.length
+    ? `${bn(stats.doneCount)}টি কাজ সম্পন্ন, ${bn(stats.pendingCount)}টি বাকি`
+    : 'এখনও কোনো বাড়ির কাজ প্রকাশ হয়নি';
   if ($('#dashboardPendingCount')) $('#dashboardPendingCount').textContent = `${bn(stats.pendingCount)}টি কাজ`;
   if ($('#dashboardExamCount')) $('#dashboardExamCount').textContent = `${bn(exams.length)}টি পরীক্ষা`;
   /* No data yet is not an error and must not read like one: a cold dash
@@ -195,6 +271,20 @@ function renderProgress(activities, exams, student, examDb, courses) {
     ? `মোট ${bn(stats.homework.length)}টি বাড়ির কাজ ও ${bn((courses || []).length)}টি কোর্সের অগ্রগতির ভিত্তিতে।`
     : 'এখনও কোনো বাড়ির কাজ বা কোর্সের অগ্রগতি পাওয়া যায়নি।';
   return { ...stats, done: stats.doneCount, pending: stats.pendingCount, percent };
+}
+
+function renderDailyAdviceSummary(classCount, pendingCount, error = false) {
+  const summary = $('[data-daily-advice-summary]');
+  if (!summary) return;
+  if (error) {
+    summary.textContent = 'আজকের ক্লাস ও কাজের তথ্য পাওয়া যায়নি';
+    return;
+  }
+  const classes = Math.max(0, Number(classCount) || 0);
+  const pending = Math.max(0, Number(pendingCount) || 0);
+  const classText = classes ? `${bn(classes)}টি ক্লাস` : 'ক্লাস নেই';
+  const homeworkText = pending ? `${bn(pending)}টি বাড়ির কাজ বাকি` : 'বাড়ির কাজ বাকি নেই';
+  summary.textContent = `আজ ${classText} · ${homeworkText}`;
 }
 
 function renderChallenge(stats) {
@@ -246,15 +336,17 @@ export function initStudentDashboard({ getStudent, getAccount }) {
       if (current !== request) return;
       const activities = publishedForStudent(teachingDb.activities || [], student);
       const exams = (examDb.exams || []).filter(exam => isStudentVisibleExam(exam) && examMatchesStudent(exam, student));
-      renderRoutine(student, activities);
+      const todayClassCount = renderRoutine(student, activities);
       const courses = courseRepository.readStudentCoursesSync(student);
       const progress = renderProgress(activities, exams, student, examDb, courses);
+      renderDailyAdviceSummary(todayClassCount, progress.pendingCount);
       renderChallenge(progress);
       renderExam(exams);
       renderFees(student, account, transactions);
     } catch {
       if (current !== request) return;
       $('#homeView')?.classList.remove('is-empty-routine');
+      renderDailyAdviceSummary(0, 0, true);
       const list = $('#dashboardRoutineList');
       /* Off the panel page (or before the view exists) there is no list to
          paint the error into — the next panel render retries anyway. */

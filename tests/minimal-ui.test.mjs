@@ -48,8 +48,13 @@ test('no panel keeps a standing offline-workspace or sync-not-connected notice',
 });
 test('precache URLs are unique and all local shell assets exist',()=>{
  const shell=read('sw.js').split('const APP_SHELL = [')[1].split('];')[0];
- const paths=[...shell.matchAll(/'\.\/([^']+)'/g)].map(m=>m[1]);
- assert.equal(paths.length,new Set(paths).size,'Cache.addAll rejects duplicate URLs');
+ // Keep query strings: the Student slider imports the same source at its
+ // versioned URL while legacy pages still use the unversioned module URL.
+ const entries=[...shell.matchAll(/'(\.\/[^']*)'(?:\s*\+\s*'([^']*)')?/g)]
+  .map(([,path,suffix=''])=>`${path}${suffix}`);
+ const urls=entries.map(entry=>new URL(entry,'https://app.test/').href);
+ assert.equal(urls.length,new Set(urls).size,'Cache.addAll rejects duplicate URLs');
+ const paths=entries.map(entry=>new URL(entry,'https://app.test/').pathname.slice(1)).filter(Boolean);
  for(const path of paths)readFileSync(path);
  for(const path of ['js/status-surface.js','js/ui-accessibility.js','js/print-tokens.js','css/ui-status.css'])assert.ok(paths.includes(path));
 });

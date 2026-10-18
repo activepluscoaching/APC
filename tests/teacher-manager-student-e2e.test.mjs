@@ -255,8 +255,9 @@ test('E2E: Manager sets routine -> Teacher takes attendance, gives homework & ex
     noticeApi.refresh();
 
     assert.equal(ctx.$('#dashboardAttendanceRate').textContent, '১০০%');
-    assert.equal(ctx.$('#dashboardWeeklyProgress').textContent, '১০০%');
-    assert.equal(ctx.$('#dashboardTermProgress').textContent, '৬৭%');
+    assert.equal(ctx.$$('#homeRealStatsRow > div').length, 2, 'Home only shows attendance and average result metrics');
+    assert.deepEqual(ctx.$$('#homeRealStatsRow small').map(node => node.textContent.trim()), ['উপস্থিতি', 'গড় ফলাফল']);
+    assert.match(ctx.$('[data-daily-advice-summary]').textContent, /^আজ .+ · বাড়ির কাজ বাকি নেই$/);
     assert.match(ctx.$('#studentCourseChaptersList').textContent, /বাস্তব সংখ্যা/);
     assert.match(ctx.$('#studentCourseChaptersList').textContent, /৫০%/);
     assert.match(ctx.$('#noticeBoardList').textContent, /আগামীকাল গণিত ক্লাস টেস্ট/);

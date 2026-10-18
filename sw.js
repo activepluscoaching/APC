@@ -1,3 +1,9 @@
+// v378: Student Home reference-match shortcut sizing, violet active tab, and Dhaka-clock greeting/art.
+// v376: staggered Student icon motion, time-of-day greetings, and eased truthful progress.
+// v373: motion-aware, offline hero-card illustrations for the current Student Home layout.
+// v372: Student Home daily advice, focused progress metrics, and scannable routine status.
+// v370: less empty Student mobile hero cards with more room for local artwork.
+// v368: resilient early login password visibility toggle and accessible state feedback.
 // v363: shared Dhaka-time advice bank, accessible home carousel, semantic skin, and role navigation polish.
 // v356: dashboard heroes use a colorful, high-contrast gradient and distinct readable metric cards.
 // v352: Admin Staff Management adds sorting, secure card details and a three-step create flow.
@@ -120,7 +126,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 363;
+const CACHE_VERSION = 378;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -243,6 +249,8 @@ const APP_SHELL = [
   './css/app-polish.css',
   './css/student-record.css',
   './css/ui-wallet.css',
+  './css/hero-cards.css' + '?v=379',
+  './css/student-home-design.css',
   './js/student-record.js',
   './sync/cloud-access.js',
   './sync/backend-selection.js',
@@ -363,21 +371,25 @@ const APP_SHELL = [
   './js/student-more.js',
   './js/course-editor.js',
   './js/daily-quote.js',
+  './js/hero-cards.js' + '?v=379',
   './assets/daily-quotes.json',
   './js/daily-advice.js',
   './assets/daily-advice.json',
   './js/home-hero.js',
+  './js/home-hero.js' + '?v=379',
   './js/home-hero-entry.js',
+  './js/student-home-hero-entry.js' + '?v=379',
+  './js/student-home-daily-hero.js' + '?v=379',
   './js/advice-admin.js',
   './js/advice-admin-entry.js',
-  './assets/home-hero/hero-study.avif',
-  './assets/home-hero/hero-study.webp',
-  './assets/home-hero/hero-class.avif',
-  './assets/home-hero/hero-class.webp',
-  './assets/home-hero/hero-library.avif',
-  './assets/home-hero/hero-library.webp',
-  './assets/home-hero/hero-advice.avif',
-  './assets/home-hero/hero-advice.webp',
+  './assets/home-hero/hero-own-pace.webp',
+  './assets/home-hero/hero-daily-goal.webp',
+  './assets/home-hero/hero-joy-of-learning.webp',
+  './assets/home-hero/hero-daily-tip.webp',
+  './assets/student-home-hero/hero-own-pace.webp' + '?v=379',
+  './assets/student-home-hero/hero-daily-goal.webp' + '?v=379',
+  './assets/student-home-hero/hero-joy-of-learning.webp' + '?v=379',
+  './assets/student-home-hero/hero-daily-tip.webp' + '?v=379',
   './js/exam-manager.js',
   './js/exam-archive.js',
   './js/exam-pdf.js',

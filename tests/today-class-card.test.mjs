@@ -3,7 +3,7 @@
 import test, { beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadPage } from './jsdom-harness.mjs';
-import { initStudentDashboard } from '../js/student-dashboard.js';
+import { initStudentDashboard, isClassInProgress, routineInterval } from '../js/student-dashboard.js';
 import { blankRoutine, ROUTINE_KEY } from '../js/office-data.js';
 import { TEACHING_KEY } from '../js/teaching-data.js';
 import { TRANSACTIONS_KEY } from '../js/finance-data.js';
@@ -42,6 +42,7 @@ test('empty Today uses the shared Today-study card/icon/copy/action layout and c
   assert.equal(card.querySelector('strong').textContent, 'আজ কোনো ক্লাস নেই');
   assert.equal(card.querySelector('small').textContent, 'সব রুটিন দেখতে রুটিন খুলুন।');
   assert.equal(ctx.$('#dashboardRoutineList').dataset.state, 'empty');
+  assert.equal(ctx.$('[data-daily-advice-summary]').textContent, 'আজ ক্লাস নেই · বাড়ির কাজ বাকি নেই');
   assert.equal(ctx.$$('#studentServices .pay-tile').length, 6);
   assert.ok(ctx.$('#dashboardChallengeCard'), 'do not remove or hide Today study');
 });
@@ -73,6 +74,26 @@ test('a saved own-class schedule replaces the empty entry and removing it restor
   await ctx.refresh();
   assert.equal(ctx.$('#dashboardRoutineList').dataset.state, 'empty');
   assert.ok(ctx.$('.dashboard-empty-card.challenge-card'));
+});
+
+test('the current class gets a চলছি badge and exposes its time and room at a glance', async () => {
+  const routine = blankRoutine();
+  routine.thu.classes.push(
+    { id:'RUNNING-CLASS', className:student.className, subject:'পদার্থবিজ্ঞান', teacher:'রহিম স্যার', period:'বিকেল', time:'৪:০০', rawTime:'15:30', duration:60, room:'২' },
+    { id:'NEXT-CLASS', className:student.className, subject:'গণিত', teacher:'করিম স্যার', period:'বিকেল', time:'৫:০০', rawTime:'17:00', duration:60, room:'রুম ৩' }
+  );
+  const ctx = await render({ routine });
+  const running = ctx.$('[data-dashboard-class="RUNNING-CLASS"]');
+  const upcoming = ctx.$('[data-dashboard-class="NEXT-CLASS"]');
+  assert.equal(routineInterval(routine.thu.classes[0]).start, 15 * 60 + 30);
+  assert.equal(isClassInProgress(routine.thu.classes[0], Date.parse('2026-10-01T10:00:00Z')), true);
+  assert.equal(ctx.$('[data-daily-advice-summary]').textContent, 'আজ ২টি ক্লাস · বাড়ির কাজ বাকি নেই');
+  assert.equal(running.querySelector('[data-routine-status]').dataset.routineStatus, 'running');
+  assert.match(running.querySelector('[data-routine-status]').textContent, /চলছে/);
+  assert.match(running.querySelector('.dashboard-time-pill').textContent, /বিকেল ৪:০০ · রুম ২/);
+  assert.equal(upcoming.querySelector('[data-routine-status]').dataset.routineStatus, 'scheduled');
+  assert.doesNotMatch(upcoming.querySelector('[data-routine-status]').textContent, /চলছে/);
+  assert.match(upcoming.querySelector('.dashboard-time-pill').textContent, /বিকেল ৫:০০ · রুম ৩/);
 });
 
 test('unreadable academic data stays a truthful load error, not a fake no-classes result', async () => {

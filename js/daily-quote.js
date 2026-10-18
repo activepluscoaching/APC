@@ -76,6 +76,23 @@ export function quoteDateKey(now = Date.now()) {
   return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`;
 }
 
+/** A compact human-readable Dhaka date for the visible advice card. */
+export function formatQuoteDate(dateKey = quoteDateKey()) {
+  const match = String(dateKey).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+  const [, year, month, day] = match.map(Number);
+  const at = new Date(Date.UTC(year, month - 1, day, 12));
+  try {
+    return new Intl.DateTimeFormat('bn-BD', {
+      timeZone: QUOTE_TIME_ZONE, day: 'numeric', month: 'long', year: 'numeric'
+    }).format(at);
+  } catch {
+    return new Intl.DateTimeFormat('bn-BD', {
+      timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(at);
+  }
+}
+
 /** Whole days since the epoch — the deterministic rotation counter. */
 export function quoteDayNumber(dateKey = quoteDateKey()) {
   const [year, month, day] = String(dateKey).split('-').map(Number);
@@ -189,9 +206,14 @@ export function initDailyQuote({ mount = '#dailyQuoteCard', now = () => Date.now
     const text = root.querySelector('[data-daily-quote-text]');
     if (!text || !quote?.text) return;
     const author = root.querySelector('[data-daily-quote-author]');
+    const date = root.querySelector('[data-daily-quote-date]');
     const icon = root.querySelector('[data-daily-quote-icon]');
     if (icon && !icon.childElementCount) {
       try { icon.innerHTML = iconMarkup('award'); } catch { /* artwork is optional */ }
+    }
+    if (date) {
+      date.textContent = formatQuoteDate(dateKey);
+      date.dateTime = dateKey;
     }
     text.textContent = quote.text;
     if (author) {

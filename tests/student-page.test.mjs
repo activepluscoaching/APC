@@ -47,8 +47,13 @@ test('session restore lands in the app and every bottom-nav view opens', async (
     const panel = $(`[data-view-panel="${view}"]`);
     assert.ok(panel, `view panel ${view} is missing`);
     assert.equal(panel.classList.contains('active'), true, `${view} did not become the active view`);
+    assert.equal(panel.hidden, false, `${view} must be unhidden before it is shown`);
     assert.equal($(`.bottom-link[data-view="${view}"]`).getAttribute('aria-current'), 'page', `${view} link not marked current`);
     assert.equal($$('.view.active').length, 1, 'exactly one view may be active');
+    const visibleViews = $$('.view:not([hidden])');
+    assert.equal(visibleViews.length, 1, 'exactly one main view may be visible');
+    assert.equal(visibleViews[0], panel, `${view} is the only visible view`);
+    if (view !== 'home') assert.equal($('#homeView').hidden, true, 'Home must be hidden before another page is shown');
   }
   assert.deepEqual(navErrors(ctx), [], 'script errors on the student page');
 });

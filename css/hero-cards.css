@@ -1,0 +1,863 @@
+/* Student-only decorative art for the existing app cards.
+   SVGs are local markup; this layer adds no network assets or page content. */
+@media screen {
+  body.student-reference :is(
+    .student-home-welcome,
+    #dailyQuoteCard,
+    .study-progress-card,
+    .dashboard-today-section,
+    #coursesView .study-today-card,
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item,
+    #studyResultsView .study-result-summary,
+    #studentResultOverview .exam-summary,
+    #examUpcomingView #studentExamWorkspace .exam-card,
+    #examsView .exam-hub-live-card,
+    #emptyRoutine,
+    #profileView .more-avatar,
+    #myProfileView .profile-photo-wrap,
+    #studentIdCardPreview,
+    #studentFeeMount .student-fee-stat,
+    #noticeBoardDetail,
+    #classesView .class-attendance-card
+  ):has(> .hc-art) {
+    position: relative;
+    isolation: isolate;
+  }
+
+  body.student-reference .hc-art {
+    position: absolute;
+    z-index: -1;
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 0;
+    pointer-events: none;
+    opacity: .78;
+  }
+
+  body.student-reference .hc-art > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  body.student-reference .hc-art *,
+  body.student-reference #studentServices .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile-icon svg,
+  body.student-reference #examTabs [data-practice-mode] .pay-tile-icon svg,
+  body.student-reference #profileView .more-menu-row > .more-row-icon svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg > image,
+  body.student-reference #studyResultsView .study-result-tip svg {
+    animation-play-state: paused;
+  }
+
+  body.student-reference .hc-art text {
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  /* All card illustrations stay in the right-side decorative gutter. */
+  body.student-reference #homeView .student-home-welcome:has(> .hc-art--welcome) {
+    padding-right: 108px;
+    background-color: var(--student-home-welcome, #eaf3ff);
+    color: var(--student-home-welcome-ink, #174a76);
+  }
+  body.student-reference #homeView .student-home-welcome:has(> .hc-art--welcome) :is(.pay-greeting, .pay-hero-name, .pay-hero-meta) {
+    color: var(--student-home-welcome-ink, #174a76);
+  }
+  body.student-reference #homeView .hc-art--welcome {
+    top: 50%;
+    right: 16px;
+    width: 80px;
+    height: 80px;
+    transform: translateY(-50%);
+    opacity: .94;
+  }
+
+  body.student-reference #homeView #dailyQuoteCard:has(> .hc-art--advice) {
+    padding-right: 110px;
+    background-color: var(--student-home-advice, #5549B3);
+    background-image: none;
+    color: #fff;
+  }
+  body.student-reference #homeView #dailyQuoteCard:has(> .hc-art--advice) :is(.daily-quote-kicker, .daily-quote-date, .daily-quote-text, .daily-quote-author, .daily-advice-summary) {
+    color: #fff;
+  }
+  /* Keep class/homework status out of the advice: the card is quote + date only. */
+  body.student-reference #homeView #dailyQuoteCard .daily-advice-summary {
+    display: none;
+  }
+  body.student-reference #homeView .hc-art--advice {
+    top: 50%;
+    right: 16px;
+    width: 80px;
+    height: 80px;
+    transform: translateY(-50%);
+    opacity: .96;
+  }
+
+  body.student-reference #homeView .study-progress-card:has(> .hc-art--progress) {
+    padding-right: 22px;
+    background-color: var(--student-home-progress, #fff2df);
+    color: var(--student-home-progress-ink, #76501b);
+  }
+  body.student-reference #homeView .study-progress-card:has(> .hc-art--progress) :is(.study-progress-heading h1, .study-progress-subtitle, .study-progress-stats strong, .study-progress-stats small, .study-progress-note) {
+    color: var(--student-home-progress-ink, #76501b);
+  }
+  body.student-reference #homeView .study-progress-card:has(> .hc-art--progress) .progress-ring::before {
+    background: var(--student-home-progress, #fff2df);
+  }
+  body.student-reference #homeView .study-progress-card:has(> .hc-art--progress) .progress-ring strong,
+  body.student-reference #homeView .study-progress-card:has(> .hc-art--progress) .progress-ring small {
+    color: var(--student-home-progress-ink, #76501b);
+  }
+  body.student-reference #homeView .hc-art--progress {
+    top: auto;
+    right: 8px;
+    bottom: 8px;
+    width: 52px;
+    height: 52px;
+    padding: 4px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--student-home-progress-ink, #76501b) 9%, transparent);
+    opacity: .92;
+  }
+
+  body.student-reference #homeView .dashboard-today-section:has(> .hc-art--today) {
+    background-color: var(--student-home-routine, #e8f5ee);
+    color: var(--student-home-routine-ink, #195e4b);
+  }
+  body.student-reference #homeView .dashboard-today-section:has(> .hc-art--today) :is(.dashboard-section-heading h2, .dashboard-text-link, .dashboard-routine-main strong, .dashboard-routine-main small, .dashboard-time-pill, .dashboard-routine-status, .dashboard-empty-card, .dashboard-empty-copy strong, .dashboard-empty-copy small) {
+    color: var(--student-home-routine-ink, #195e4b);
+  }
+  body.student-reference #homeView .dashboard-today-section:has(> .hc-art--today) .dashboard-routine-main small,
+  body.student-reference #homeView .dashboard-today-section:has(> .hc-art--today) .dashboard-empty-copy small {
+    color: color-mix(in srgb, var(--student-home-routine-ink, #195e4b) 76%, var(--color-text-secondary));
+  }
+  body.student-reference #homeView .dashboard-today-section:has(> .hc-art--today) .dashboard-empty-card .challenge-open {
+    background: color-mix(in srgb, var(--student-home-routine-ink, #195e4b) 12%, var(--student-home-routine, #e8f5ee));
+    color: var(--student-home-routine-ink, #195e4b);
+  }
+  body.student-reference #homeView .hc-art--today {
+    top: 50%;
+    right: 16px;
+    width: 80px;
+    height: 80px;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--student-home-routine-ink, #195e4b) 8%, transparent);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--student-home-routine-ink, #195e4b) 7%, transparent);
+    transform: translateY(-50%);
+    opacity: .98;
+  }
+
+  /* Course study card: the art and solid subject colour use the real first
+     running course; empty states keep their existing surface and wording. */
+  body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) {
+    padding-right: 104px;
+    background-color: var(--hc-subject, #0F6E56);
+    background-image: none;
+    color: #fff;
+  }
+  body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) :is(h2, h3, p, small) {
+    color: #fff;
+  }
+  body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) progress {
+    accent-color: #FAC775;
+  }
+  body.student-reference #coursesView .hc-art--study-today {
+    top: 50%;
+    right: 12px;
+    width: 80px;
+    height: 80px;
+    transform: translateY(-50%);
+    opacity: .96;
+  }
+
+  body.student-reference #routineList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineTodayList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineTomorrowList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineClassList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineChangedList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineImportantList .routine-item:has(> .hc-art--subject),
+  body.student-reference #routineOtherList .routine-item:has(> .hc-art--subject),
+  body.student-reference #classTodayList .routine-item:has(> .hc-art--subject),
+  body.student-reference #classUpcomingList .routine-item:has(> .hc-art--subject),
+  body.student-reference #classRecordList .routine-item:has(> .hc-art--subject) {
+    padding-right: 98px;
+    background-color: var(--hc-subject, #0F6E56);
+    background-image: none;
+    color: #fff;
+  }
+  body.student-reference :is(
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item
+  ):has(> .hc-art--subject) :is(.routine-time, .routine-body strong) {
+    color: #fff;
+  }
+  body.student-reference :is(
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item
+  ):has(> .hc-art--subject) :is(.routine-time small, .routine-body small) {
+    color: rgb(255 255 255 / 82%);
+  }
+  body.student-reference :is(
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item
+  ):has(> .hc-art--subject) .routine-tag {
+    background: rgb(255 255 255 / 18%);
+    color: #fff;
+  }
+  body.student-reference :is(
+    #routineList .hc-art--subject,
+    #routineTodayList .hc-art--subject,
+    #routineTomorrowList .hc-art--subject,
+    #routineClassList .hc-art--subject,
+    #routineChangedList .hc-art--subject,
+    #routineImportantList .hc-art--subject,
+    #routineOtherList .hc-art--subject,
+    #classTodayList .hc-art--subject,
+    #classUpcomingList .hc-art--subject,
+    #classRecordList .hc-art--subject
+  ) {
+    top: 50%;
+    right: 12px;
+    width: 72px;
+    height: 72px;
+    transform: translateY(-50%);
+    opacity: .98;
+  }
+
+  body.student-reference #studyResultsView .study-result-summary:has(> .hc-art--trophy),
+  body.student-reference #studentResultOverview .exam-summary:has(> .hc-art--trophy) {
+    padding-right: 62px;
+  }
+  body.student-reference #studyResultsView .hc-art--trophy,
+  body.student-reference #studentResultOverview .hc-art--trophy {
+    top: 50%;
+    right: 8px;
+    width: 52px;
+    height: 52px;
+    transform: translateY(-50%);
+    opacity: .88;
+  }
+
+  body.student-reference #routineDayView .routine-date .calendar-dot svg > image {
+    animation: hc-calendar-flip 4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  body.student-reference #studyResultsView .study-result-tip svg {
+    animation: hc-bolt-pulse 3.6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  body.student-reference #routineDayView #emptyRoutine:has(> .hc-art--coffee-steam) {
+    padding-right: 92px;
+  }
+  body.student-reference #routineDayView .hc-art--coffee-steam {
+    top: 50%;
+    right: 14px;
+    width: 60px;
+    height: 60px;
+    transform: translateY(-50%);
+    opacity: .9;
+  }
+
+  body.student-reference #examUpcomingView #studentExamWorkspace .exam-card:has(> .hc-art--hourglass) {
+    padding-right: 78px;
+    background-image: none;
+  }
+  body.student-reference #examUpcomingView #studentExamWorkspace .hc-art--hourglass {
+    top: 12px;
+    right: 12px;
+    width: 60px;
+    height: 60px;
+    opacity: .9;
+  }
+
+  body.student-reference #examsView .exam-hub-live-card:has(> .hc-art--live-clock) {
+    background-color: #0F6E56;
+    background-image: none;
+    color: #fff;
+  }
+  body.student-reference #examsView .exam-hub-live-card:has(> .hc-art--live-clock) .exam-hub-live-copy {
+    margin-right: 60px;
+  }
+  body.student-reference #examsView .exam-hub-live-card:has(> .hc-art--live-clock) .exam-hub-live-copy p {
+    color: rgb(255 255 255 / 82%);
+  }
+  body.student-reference #examsView .hc-art--live-clock {
+    top: 50%;
+    right: 108px;
+    width: 52px;
+    height: 52px;
+    transform: translateY(-50%);
+    opacity: .94;
+  }
+
+  body.student-reference #profileView .more-avatar:has(> .hc-art--avatar-ring),
+  body.student-reference #myProfileView .profile-photo-wrap:has(> .hc-art--avatar-ring) {
+    isolation: isolate;
+  }
+  body.student-reference #profileView .hc-art--avatar-ring {
+    top: -6px;
+    left: -6px;
+    width: 68px;
+    height: 68px;
+    opacity: .82;
+  }
+  body.student-reference #myProfileView .hc-art--avatar-ring {
+    top: -6px;
+    left: -6px;
+    width: 92px;
+    height: 92px;
+    opacity: .78;
+  }
+
+  /* This overlay exists only in the screen preview. The ID download/share
+     helpers serialize their original card SVG, so the moving sheen is absent. */
+  body.student-reference #studentIdCardView #studentIdCardPreview:has(> .hc-art--id-shine) {
+    position: relative;
+    isolation: isolate;
+  }
+  body.student-reference #studentIdCardView #studentIdCardPreview:has(> .hc-art--id-shine) > svg {
+    position: relative;
+    z-index: -2;
+  }
+  body.student-reference #studentIdCardView #studentIdCardPreview > .hc-art--id-shine {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+  }
+
+  body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) {
+    padding-right: 62px;
+    background-color: #085041;
+    background-image: none;
+    color: #fff;
+  }
+  body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) :is(small, strong) {
+    color: #fff;
+  }
+  body.student-reference #studentFeeMount .hc-art--fee-coin {
+    top: 50%;
+    right: 6px;
+    width: 52px;
+    height: 52px;
+    transform: translateY(-50%);
+    opacity: .92;
+  }
+
+  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) {
+    padding-right: 94px;
+  }
+  body.student-reference #noticeBoardDetail .hc-art--megaphone {
+    top: 16px;
+    right: 12px;
+    width: 68px;
+    height: 68px;
+    opacity: .92;
+  }
+
+  body.student-reference #classesView .class-attendance-card:has(> .hc-art--attendance-check) .class-attendance-heading {
+    padding-right: 68px;
+  }
+  body.student-reference #classesView .hc-art--attendance-check {
+    top: 8px;
+    right: 10px;
+    width: 52px;
+    height: 52px;
+    opacity: .9;
+  }
+
+  body.student-reference .hc-art svg .hc-spin,
+  body.student-reference .hc-art svg .hc-spin2 {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  body.student-reference .hc-art svg .hc-spin { animation: hc-spin 14s linear infinite; }
+  body.student-reference .hc-art svg .hc-spin2 { animation: hc-spin 9s linear infinite; }
+  body.student-reference .hc-art svg .hc-pulse { animation: hc-pulse 3.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-float { animation: hc-float 3.6s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-tw { animation: hc-twinkle 3.4s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-drift { animation: hc-drift 6s ease-in-out infinite alternate; }
+  body.student-reference .hc-art svg .hc-rise { animation: hc-rise 4.8s ease-in-out infinite alternate; }
+  body.student-reference .hc-art svg .hc-bubble { animation: hc-bubble 3.4s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-grow { animation: hc-grow 2.8s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center bottom; }
+  body.student-reference .hc-art svg .hc-type { animation: hc-type 3.8s steps(8, end) infinite; transform-box: fill-box; transform-origin: left center; }
+  body.student-reference .hc-art svg .hc-blink { animation: hc-blink 2.8s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-sway { animation: hc-sway 4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center bottom; }
+  body.student-reference .hc-art svg .hc-globe { animation: hc-globe 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-bob { animation: hc-bob 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-hourglass { animation: hc-hourglass 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-coin { animation: hc-coin 4s linear infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-mega-pulse { animation: hc-mega-pulse 3.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-avatar-ring { animation: hc-avatar-ring 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-id-shine { animation: hc-id-shine 6s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-steam { animation: hc-steam 3.4s ease-in-out infinite; }
+  body.student-reference .hc-art svg .hc-fall { animation: hc-fall 4.2s ease-in infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-flame { animation: hc-flame 2.6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center top; }
+  body.student-reference .hc-art svg .hc-minute-hand { animation: hc-minute-hand 60s linear infinite; transform-box: view-box; transform-origin: 40px 40px; }
+  body.student-reference .hc-art svg .hc-live-dot { animation: hc-live-dot 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  body.student-reference .hc-art svg .hc-check-path:not(.hc-check-drawn) { animation: hc-check-draw 2.4s cubic-bezier(.22, .8, .36, 1) forwards; }
+  body.student-reference .hc-art .hc-check-path.hc-check-drawn { stroke-dashoffset: 0; }
+  body.student-reference .hc-art .hc-delay-4 { animation-delay: .4s; }
+  body.student-reference .hc-art .hc-delay-6 { animation-delay: .6s; }
+  body.student-reference .hc-art .hc-delay-7 { animation-delay: .7s; }
+  body.student-reference .hc-art .hc-delay-8 { animation-delay: .8s; }
+  body.student-reference .hc-art .hc-delay-9 { animation-delay: .9s; }
+  body.student-reference .hc-art .hc-delay-10 { animation-delay: 1s; }
+  body.student-reference .hc-art .hc-delay-11 { animation-delay: 1.1s; }
+  body.student-reference .hc-art .hc-delay-12 { animation-delay: 1.2s; }
+  body.student-reference .hc-art .hc-delay-13 { animation-delay: 1.3s; }
+  body.student-reference .hc-art .hc-delay-17 { animation-delay: 1.7s; }
+  body.student-reference .hc-art .hc-delay-18 { animation-delay: 1.8s; }
+  body.student-reference .hc-art .hc-delay-19 { animation-delay: 1.9s; }
+  body.student-reference .hc-art .hc-delay-25 { animation-delay: 2.5s; }
+
+  body.student-reference #studentServices .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile-icon svg,
+  body.student-reference #examTabs [data-practice-mode] .pay-tile-icon svg,
+  body.student-reference #profileView .more-menu-row > .more-row-icon svg {
+    animation: hc-icon-bob 3.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  body.student-reference #studentServices .pay-tile:nth-child(2) .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile:nth-child(2) .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile:nth-child(2) .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile:nth-child(2) .pay-tile-icon svg { animation-delay: .35s; }
+  body.student-reference #studentServices .pay-tile:nth-child(3) .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile:nth-child(3) .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile:nth-child(3) .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile:nth-child(3) .pay-tile-icon svg { animation-delay: .7s; }
+  body.student-reference #routineHub .pay-tile:nth-child(4) .pay-tile-icon svg { animation-delay: 1.05s; }
+  body.student-reference #routineHub .pay-tile:nth-child(5) .pay-tile-icon svg { animation-delay: 1.4s; }
+  body.student-reference #routineHub .pay-tile:nth-child(6) .pay-tile-icon svg { animation-delay: 1.75s; }
+  body.student-reference #routineHub .pay-tile:nth-child(7) .pay-tile-icon svg { animation-delay: 2.1s; }
+  body.student-reference #routineHub .pay-tile:nth-child(8) .pay-tile-icon svg { animation-delay: 2.45s; }
+  body.student-reference #routineHub .pay-tile:nth-child(9) .pay-tile-icon svg { animation-delay: 2.8s; }
+  body.student-reference #profileView .more-menu-row:nth-child(2) > .more-row-icon svg { animation-delay: .4s; }
+  body.student-reference #profileView .more-menu-row:nth-child(3) > .more-row-icon svg { animation-delay: .8s; }
+  body.student-reference #profileView .more-menu-row:nth-child(4) > .more-row-icon svg { animation-delay: 1.2s; }
+
+  body.student-reference .hc-art svg :is(
+    .hc-spin, .hc-spin2, .hc-pulse, .hc-float, .hc-tw, .hc-drift, .hc-rise, .hc-bubble,
+    .hc-grow, .hc-type, .hc-blink, .hc-sway, .hc-globe, .hc-bob, .hc-hourglass, .hc-coin,
+    .hc-mega-pulse, .hc-avatar-ring, .hc-id-shine, .hc-steam, .hc-fall, .hc-flame,
+    .hc-minute-hand, .hc-live-dot, .hc-check-path:not(.hc-check-drawn)
+  ) { animation-play-state: paused; }
+  body.student-reference #studentServices .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile-icon svg,
+  body.student-reference #examTabs [data-practice-mode] .pay-tile-icon svg,
+  body.student-reference #profileView .more-menu-row > .more-row-icon svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg > image,
+  body.student-reference #studyResultsView .study-result-tip svg { animation-play-state: paused; }
+}
+
+@media screen and (max-width: 480px) {
+  body.student-reference #homeView .student-home-welcome:has(> .hc-art--welcome) { padding-right: 84px; }
+  body.student-reference #homeView .hc-art--welcome { right: 10px; width: 64px; height: 64px; }
+  body.student-reference #homeView #dailyQuoteCard:has(> .hc-art--advice) { padding-right: 88px; }
+  body.student-reference #homeView .hc-art--advice { right: 10px; width: 60px; height: 60px; }
+  body.student-reference #homeView .hc-art--progress { top: auto; right: 8px; bottom: 4px; width: 52px; height: 52px; }
+  body.student-reference #homeView .hc-art--today { right: 12px; width: 60px; height: 60px; }
+  body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) { padding-right: 82px; }
+  body.student-reference #coursesView .hc-art--study-today { right: 10px; width: 60px; height: 60px; }
+  body.student-reference :is(
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item
+  ):has(> .hc-art--subject) { padding-right: 72px; }
+  body.student-reference :is(
+    #routineList .hc-art--subject,
+    #routineTodayList .hc-art--subject,
+    #routineTomorrowList .hc-art--subject,
+    #routineClassList .hc-art--subject,
+    #routineChangedList .hc-art--subject,
+    #routineImportantList .hc-art--subject,
+    #routineOtherList .hc-art--subject,
+    #classTodayList .hc-art--subject,
+    #classUpcomingList .hc-art--subject,
+    #classRecordList .hc-art--subject
+  ) { right: 8px; width: 56px; height: 56px; }
+  body.student-reference #studyResultsView .study-result-summary:has(> .hc-art--trophy),
+  body.student-reference #studentResultOverview .exam-summary:has(> .hc-art--trophy) { padding-right: 58px; }
+  body.student-reference #studyResultsView .hc-art--trophy,
+  body.student-reference #studentResultOverview .hc-art--trophy { right: 4px; width: 52px; height: 52px; }
+  body.student-reference #routineDayView #emptyRoutine:has(> .hc-art--coffee-steam) { padding-right: 80px; }
+  body.student-reference #routineDayView .hc-art--coffee-steam { right: 8px; width: 56px; height: 56px; }
+  body.student-reference #examUpcomingView #studentExamWorkspace .exam-card:has(> .hc-art--hourglass) { padding-right: 70px; }
+  body.student-reference #examUpcomingView #studentExamWorkspace .hc-art--hourglass { right: 8px; width: 56px; height: 56px; }
+  body.student-reference #examsView .hc-art--live-clock { right: 108px; width: 52px; height: 52px; }
+  body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) { padding-right: 58px; }
+  body.student-reference #studentFeeMount .hc-art--fee-coin { right: 4px; width: 52px; height: 52px; }
+  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) { padding-right: 78px; }
+  body.student-reference #noticeBoardDetail .hc-art--megaphone { right: 8px; width: 58px; height: 58px; }
+  body.student-reference #classesView .class-attendance-card:has(> .hc-art--attendance-check) .class-attendance-heading { padding-right: 62px; }
+  body.student-reference #classesView .hc-art--attendance-check { right: 8px; width: 52px; height: 52px; }
+}
+
+@media screen and (max-width: 360px) {
+  body.student-reference #homeView .student-home-welcome:has(> .hc-art--welcome) { padding-right: 72px; }
+  body.student-reference #homeView .hc-art--welcome { right: 8px; width: 52px; height: 52px; }
+  body.student-reference #homeView #dailyQuoteCard:has(> .hc-art--advice) { padding-right: 76px; }
+  body.student-reference #homeView .hc-art--advice { right: 8px; width: 52px; height: 52px; }
+  body.student-reference #homeView .hc-art--progress { top: auto; right: 8px; bottom: 4px; width: 52px; height: 52px; }
+  body.student-reference #homeView .hc-art--today { right: 8px; width: 52px; height: 52px; }
+  body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) { padding-right: 72px; }
+  body.student-reference #coursesView .hc-art--study-today { right: 8px; width: 52px; height: 52px; }
+  body.student-reference :is(
+    #routineList .routine-item,
+    #routineTodayList .routine-item,
+    #routineTomorrowList .routine-item,
+    #routineClassList .routine-item,
+    #routineChangedList .routine-item,
+    #routineImportantList .routine-item,
+    #routineOtherList .routine-item,
+    #classTodayList .routine-item,
+    #classUpcomingList .routine-item,
+    #classRecordList .routine-item
+  ):has(> .hc-art--subject) { padding-right: 66px; }
+  body.student-reference :is(
+    #routineList .hc-art--subject,
+    #routineTodayList .hc-art--subject,
+    #routineTomorrowList .hc-art--subject,
+    #routineClassList .hc-art--subject,
+    #routineChangedList .hc-art--subject,
+    #routineImportantList .hc-art--subject,
+    #routineOtherList .hc-art--subject,
+    #classTodayList .hc-art--subject,
+    #classUpcomingList .hc-art--subject,
+    #classRecordList .hc-art--subject
+  ) { right: 6px; width: 52px; height: 52px; }
+  body.student-reference #studyResultsView .study-result-summary:has(> .hc-art--trophy),
+  body.student-reference #studentResultOverview .exam-summary:has(> .hc-art--trophy) { padding-right: 56px; }
+  body.student-reference #routineDayView #emptyRoutine:has(> .hc-art--coffee-steam) { padding-right: 72px; }
+  body.student-reference #routineDayView .hc-art--coffee-steam { right: 6px; width: 52px; height: 52px; }
+  body.student-reference #examUpcomingView #studentExamWorkspace .exam-card:has(> .hc-art--hourglass) { padding-right: 64px; }
+  body.student-reference #examUpcomingView #studentExamWorkspace .hc-art--hourglass { right: 6px; width: 52px; height: 52px; }
+  body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) { padding-right: 56px; }
+  body.student-reference #studentFeeMount .hc-art--fee-coin { right: 3px; width: 52px; height: 52px; }
+  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) { padding-right: 70px; }
+  body.student-reference #noticeBoardDetail .hc-art--megaphone { right: 6px; width: 52px; height: 52px; }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  body.student-reference .hc-art *,
+  body.student-reference #studentServices .pay-tile-icon svg,
+  body.student-reference #studySections .pay-tile-icon svg,
+  body.student-reference #classHub .pay-tile-icon svg,
+  body.student-reference #routineHub .pay-tile-icon svg,
+  body.student-reference #examTabs [data-practice-mode] .pay-tile-icon svg,
+  body.student-reference #profileView .more-menu-row > .more-row-icon svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg,
+  body.student-reference #routineDayView .routine-date .calendar-dot svg > image,
+  body.student-reference #studyResultsView .study-result-tip svg {
+    animation: none !important;
+  }
+  body.student-reference .hc-art--attendance-check .hc-check-path {
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+@keyframes hc-spin { to { transform: rotate(360deg); } }
+@keyframes hc-pulse { 0%, 100% { transform: scale(.94); opacity: .55; } 50% { transform: scale(1.04); opacity: .92; } }
+@keyframes hc-float { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-4px); } }
+@keyframes hc-twinkle { 0%, 100% { opacity: .35; } 50% { opacity: .95; } }
+@keyframes hc-drift { from { transform: translateX(-6px); } to { transform: translateX(7px); } }
+@keyframes hc-rise { from { transform: translateY(6px); } to { transform: translateY(0); } }
+@keyframes hc-bubble { 0% { transform: translateY(5px); opacity: .2; } 22% { opacity: .9; } 100% { transform: translateY(-14px); opacity: .15; } }
+@keyframes hc-grow { from { transform: translateY(4px) scaleY(.72); } to { transform: translateY(0) scaleY(1); } }
+@keyframes hc-type { 0%, 12% { transform: scaleX(.08); } 70%, 100% { transform: scaleX(1); } }
+@keyframes hc-blink { 0%, 100% { opacity: .42; } 50% { opacity: 1; } }
+@keyframes hc-sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes hc-globe { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.16); } }
+@keyframes hc-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.035); } }
+@keyframes hc-hourglass { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes hc-coin { to { transform: rotateY(360deg); } }
+@keyframes hc-mega-pulse { 0%, 100% { transform: scale(.94); opacity: .58; } 50% { transform: scale(1.04); opacity: 1; } }
+@keyframes hc-avatar-ring { 0%, 100% { transform: scale(.95); opacity: .35; } 50% { transform: scale(1.04); opacity: .86; } }
+@keyframes hc-id-shine { 0% { transform: translateX(-460px); opacity: 0; } 24% { opacity: .2; } 70% { opacity: .14; } 100% { transform: translateX(460px); opacity: 0; } }
+@keyframes hc-steam { 0% { transform: translateY(4px); opacity: .15; } 45% { opacity: .85; } 100% { transform: translateY(-6px); opacity: .1; } }
+@keyframes hc-fall { 0% { transform: translateY(-8px) rotate(0); opacity: .2; } 18% { opacity: .9; } 100% { transform: translateY(64px) rotate(120deg); opacity: .2; } }
+@keyframes hc-flame { from { transform: scaleY(.78); } to { transform: scaleY(1.08); } }
+@keyframes hc-calendar-flip { 0%, 42%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.08); } 58% { transform: scaleY(1); } }
+@keyframes hc-bolt-pulse { 0%, 100% { transform: scale(.96); opacity: .72; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes hc-icon-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes hc-minute-hand { to { transform: rotate(360deg); } }
+@keyframes hc-live-dot { 0%, 100% { transform: scale(.92); opacity: .68; } 50% { transform: scale(1.12); opacity: 1; } }
+@keyframes hc-check-draw { to { stroke-dashoffset: 0; } }
+
+/* Student Home replaces the old visible quote card with a private carousel.
+   The shared Payment carousel keeps its existing sizing and illustrations. */
+@media screen {
+  body.student-reference #homeView .student-home-hero-section #dailyQuoteCard {
+    display: none !important;
+  }
+  body.student-reference #homeView .student-home-hero-section .student-home-hero.hero-slider {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    width: min(100%, 1000px);
+    max-width: 1000px;
+    height: clamp(280px, 30vw, 350px);
+    min-height: 280px;
+    margin: 0 auto;
+    padding: 0;
+    overflow: hidden;
+    touch-action: pan-y;
+    border: 1px solid color-mix(in srgb, var(--tone-blue) 18%, var(--color-border));
+    border-radius: 28px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--glass-shadow-lift);
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__context {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: start;
+    align-content: start;
+    justify-content: initial;
+    gap: 4px 10px;
+    height: 84px;
+    min-height: 84px;
+    box-sizing: border-box;
+    padding: 11px 22px 8px;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-surface) 98%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface) 88%, transparent) 72%,
+      transparent 100%);
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__context .pay-portal-kicker {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__context [data-home-hero-date] {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+  body.student-reference #homeView .student-home-hero .student-home-daily-quote {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    color: var(--color-text);
+    text-align: left;
+  }
+  body.student-reference #homeView .student-home-hero .student-home-daily-quote__text {
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--color-text);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.28;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  body.student-reference #homeView .student-home-hero .student-home-daily-quote__author {
+    align-self: flex-end;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.student-reference #homeView .student-home-hero.hero-slider:focus { outline: none; }
+  body.student-reference #homeView .student-home-hero .hero-slider__slides {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__art {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: right center !important;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__copy {
+    width: 47%;
+    padding: 48px 24px 68px 30px;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  body.student-reference #homeView .student-home-hero-section .student-home-hero.hero-slider {
+    height: 260px;
+    min-height: 260px;
+    border-radius: 22px;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__context {
+    height: 84px;
+    min-height: 84px;
+    gap: 3px 7px;
+    padding: 8px 14px 7px;
+  }
+  body.student-reference #homeView .student-home-hero .student-home-daily-quote__text {
+    font-size: 11px;
+    line-height: 1.23;
+  }
+  body.student-reference #homeView .student-home-hero .student-home-daily-quote__author {
+    font-size: 8px;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__slides {
+    inset: 0;
+    height: 100%;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide {
+    display: block;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__art {
+    position: absolute;
+    inset: 0;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    height: 100%;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__art img {
+    object-fit: contain !important;
+    object-position: right center !important;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide::after {
+    display: block;
+    background: linear-gradient(90deg, var(--hero-bg) 0%, color-mix(in srgb, var(--hero-bg) 92%, transparent) 38%, color-mix(in srgb, var(--hero-bg) 66%, transparent) 51%, transparent 72%);
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__copy {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 52%;
+    height: 100%;
+    padding: 46px 8px 56px 14px;
+    justify-content: center;
+    gap: 6px;
+    overflow: hidden;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__copy h2 {
+    font-size: clamp(20px, 5vw, 24px);
+    line-height: 1.28;
+    text-wrap: balance;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__description {
+    max-width: 100%;
+    margin: 0;
+    font-size: clamp(13px, 3.8vw, 15px);
+    line-height: 1.42;
+    text-wrap: pretty;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__controls {
+    inset: auto auto 6px 10px;
+    gap: 5px;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__arrow {
+    width: 48px;
+    min-width: 48px !important;
+    height: 48px;
+    min-height: 48px !important;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__indicators {
+    gap: 6px;
+    padding-inline: 2px;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  body.student-reference #homeView .student-home-hero-section .student-home-hero.hero-slider {
+    height: 270px;
+    min-height: 270px;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slider__context { padding-inline: 12px; }
+  body.student-reference #homeView .student-home-hero .hero-slide__copy {
+    width: 52%;
+    padding: 46px 7px 56px 12px;
+  }
+  body.student-reference #homeView .student-home-hero .hero-slide__copy h2 { font-size: 20px; }
+  body.student-reference #homeView .student-home-hero .hero-slide__description {
+    font-size: 13px;
+    line-height: 1.38;
+  }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  body.student-reference #homeView .student-home-hero .hero-slide,
+  body.student-reference #homeView .student-home-hero .hero-slider__arrow,
+  body.student-reference #homeView .student-home-hero .hero-slider__dot {
+    transition: none !important;
+  }
+}

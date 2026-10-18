@@ -23,6 +23,21 @@ function getTimeTheme(hour) {
   })?.[0] || 'day';
 }
 
+/** Student greetings follow the same Asia/Dhaka clock as classes and Home art;
+ * other portals retain their existing device-local theme behavior. */
+export function getTimeThemeHour(at = new Date(), useDhakaClock = false) {
+  if (useDhakaClock) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Dhaka', hour: '2-digit', hourCycle: 'h23'
+      }).formatToParts(at);
+      const hour = Number(parts.find(part => part.type === 'hour')?.value);
+      if (Number.isInteger(hour) && hour >= 0 && hour <= 23) return hour;
+    } catch { /* older browser: fall through to its local clock */ }
+  }
+  return at.getHours();
+}
+
 function loadWeather() {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.weather);
@@ -31,7 +46,8 @@ function loadWeather() {
 }
 
 function applyTimeTheme() {
-  const theme = getTimeTheme(new Date().getHours());
+  const studentHome = document.body?.classList.contains('student-reference') || false;
+  const theme = getTimeTheme(getTimeThemeHour(new Date(), studentHome));
   document.documentElement.dataset.timeTheme = theme;
   /* The student header carries the brand, one bell and one exit — no clock, no
      date strip, no daily advice line. Only the greeting card still renders the

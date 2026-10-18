@@ -1,26 +1,45 @@
-/* The Student home hero (with a retained legacy counter mount). The first
-   slide is today's advice; the next three echo summary, today's work and quick actions. */
-import { createAdviceStore, DAILY_ADVICE_FALLBACK } from './daily-advice.js';
+/* Shared hero carousel implementation. Each slide keeps its illustration,
+   heading and message together so autoplay/manual navigation cannot desync. */
 import { quoteDateKey } from './daily-quote.js';
 
-export const HERO_FIRST_DELAY_MS = 8000;
-export const HERO_AUTOPLAY_MS = 6000;
-export const HERO_TRANSITION_MS = 400;
+export const HERO_FIRST_DELAY_MS = 5000;
+export const HERO_AUTOPLAY_MS = 5000;
+export const HERO_TRANSITION_MS = 380;
 
-const SLIDE_COPY = Object.freeze([
-  { id: 'advice', eyebrow: 'আজকের উপদেশ', title: 'আজকের পরামর্শ', image: 'advice' },
-  { id: 'summary', eyebrow: 'এক নজরে', title: 'আজকের সারাংশ', image: 'study' },
-  { id: 'today', eyebrow: 'আজকের কাজ', title: 'আজকের ক্লাস ও কাজ', image: 'class' },
-  { id: 'quick', eyebrow: 'দ্রুত কাজ', title: 'প্রয়োজনীয় কাজ', image: 'library' }
+const SLIDES = Object.freeze([
+  {
+    id: 'own-pace',
+    title: 'নিজের ছন্দে',
+    description: 'অন্যের সঙ্গে নয়, গতকালের নিজের সঙ্গে প্রতিযোগিতা করো।',
+    image: 'assets/home-hero/hero-own-pace.webp',
+    imageAlt: 'বাংলাদেশি এক ছাত্র খোলা বই পড়ছে, পাশে ছাত্রী খাতায় নোট লিখছে; টেবিলে বই, পেন্সিল বক্স ও স্কুলব্যাগ।'
+  },
+  {
+    id: 'daily-goal',
+    title: 'আজকের লক্ষ্য',
+    description: 'আজ অন্তত ২০ মিনিট মনোযোগ দিয়ে পড়ো।',
+    image: 'assets/home-hero/hero-daily-goal.webp',
+    imageAlt: 'বাংলাদেশি স্কুলছাত্রী খোলা বইয়ের পাশে নোটবুকে দিনের পড়ার পরিকল্পনা লিখছে; পাশে ঘড়ি, বই ও টিক দেওয়া চেকলিস্ট।'
+  },
+  {
+    id: 'joy-of-learning',
+    title: 'শেখার আনন্দ',
+    description: 'প্রতিটি নতুন বিষয় তোমার দক্ষতা আরও বাড়ায়।',
+    image: 'assets/home-hero/hero-joy-of-learning.webp',
+    imageAlt: 'বাংলাদেশি ছাত্র ও ছাত্রী খোলা বইয়ের বিজ্ঞানচিত্র নিয়ে আলোচনা করছে; টেবিলে বিজ্ঞান মডেল, জ্যামিতি বক্স ও খাতা।'
+  },
+  {
+    id: 'daily-tip',
+    title: 'আজকের পরামর্শ',
+    description: 'পড়া শেষে বই বন্ধ করে, নিজের ভাষায় বিষয়টি মনে করো।',
+    image: 'assets/home-hero/hero-daily-tip.webp',
+    imageAlt: 'বাংলাদেশি স্কুলছাত্র নিজের ভাষায় মনে করে খাতায় লিখছে; পাশে বন্ধ বই ও পড়ার সামগ্রী।'
+  }
 ]);
 
-const ART_PATHS = Object.freeze({
-  study: ['assets/home-hero/hero-study.avif', 'assets/home-hero/hero-study.webp'],
-  class: ['assets/home-hero/hero-class.avif', 'assets/home-hero/hero-class.webp'],
-  library: ['assets/home-hero/hero-library.avif', 'assets/home-hero/hero-library.webp'],
-  advice: ['assets/home-hero/hero-advice.avif', 'assets/home-hero/hero-advice.webp']
-});
-const bnNumber = value => String(value).replace(/\d/g, digit => '০১২৩৪৫৬৭৮৯'[Number(digit)]);
+function bnNumber(value) {
+  return String(value).replace(/\d/g, digit => '০১২৩৪৫৬৭৮৯'[Number(digit)]);
+}
 
 function formatDhakaDate(now = new Date()) {
   try {
@@ -47,157 +66,135 @@ function createElement(documentRef, tag, className, text = '') {
   return node;
 }
 
-function ensureContext(root, documentRef) {
+function ensureHeroMarkup(root, documentRef, slideSpecs) {
   let context = root.querySelector('[data-home-hero-context]');
   if (!context) {
     context = createElement(documentRef, 'div', 'hero-slider__context');
     context.dataset.homeHeroContext = '';
-    const date = createElement(documentRef, 'time', 'hero-slider__date');
-    date.dataset.homeHeroDate = '';
-    context.append(date);
   }
   context.classList.add('hero-slider__context');
-  if (!context.querySelector('[data-home-hero-date]')) {
-    const date = createElement(documentRef, 'time', 'hero-slider__date');
+  let kicker = context.querySelector('.pay-portal-kicker, [data-hero-kicker]');
+  if (!kicker) {
+    const label = createElement(documentRef, 'p', 'pay-portal-kicker', 'আজকের পড়ার অনুপ্রেরণা');
+    label.dataset.heroKicker = '';
+    context.prepend(label);
+    kicker = label;
+  } else {
+    kicker.textContent = 'আজকের পড়ার অনুপ্রেরণা';
+  }
+
+  let date = context.querySelector('[data-home-hero-date]');
+  if (!date) {
+    date = createElement(documentRef, 'time', 'hero-slider__date');
     date.dataset.homeHeroDate = '';
     context.append(date);
   }
+
   let stage = root.querySelector('[data-home-hero-slides]');
   if (!stage) {
     stage = createElement(documentRef, 'div', 'hero-slider__slides');
     stage.dataset.homeHeroSlides = '';
   }
-  let transcript = root.querySelector('[data-home-hero-transcript]');
-  if (!transcript) {
-    transcript = createElement(documentRef, 'ol', 'hero-slider__transcript');
-    transcript.dataset.homeHeroTranscript = '';
-    transcript.setAttribute('aria-label', 'আজকের তথ্য');
-  }
-  // Keep the role-specific ID hooks, but remove the old generated carousel UI.
-  root.replaceChildren(context, stage, transcript);
-  return { context, stage, transcript };
+  stage.classList.add('hero-slider__slides');
+
+  const controls = createElement(documentRef, 'div', 'hero-slider__controls');
+  controls.dataset.heroControls = '';
+  controls.setAttribute('role', 'group');
+  controls.setAttribute('aria-label', 'স্লাইড নিয়ন্ত্রণ');
+
+  const previous = createElement(documentRef, 'button', 'hero-slider__arrow hero-slider__previous');
+  previous.type = 'button';
+  previous.dataset.heroPrevious = '';
+  previous.setAttribute('aria-label', 'আগের স্লাইড');
+  previous.append(createElement(documentRef, 'span', '', '‹'));
+
+  const indicators = createElement(documentRef, 'div', 'hero-slider__indicators');
+  indicators.dataset.heroIndicators = '';
+  indicators.setAttribute('aria-hidden', 'true');
+  slideSpecs.forEach((slide, index) => {
+    const dot = createElement(documentRef, 'span', 'hero-slider__dot');
+    dot.dataset.heroDot = '';
+    dot.dataset.slideIndex = String(index);
+    dot.setAttribute('aria-label', `${bnNumber(index + 1)} নম্বর স্লাইড`);
+    indicators.append(dot);
+  });
+
+  const next = createElement(documentRef, 'button', 'hero-slider__arrow hero-slider__next');
+  next.type = 'button';
+  next.dataset.heroNext = '';
+  next.setAttribute('aria-label', 'পরের স্লাইড');
+  next.append(createElement(documentRef, 'span', '', '›'));
+  controls.append(previous, indicators, next);
+
+  root.replaceChildren(context, stage, controls);
+  return { context, stage, controls, previous, next, indicators };
 }
 
-function createSlide(documentRef, spec) {
+function createSlide(documentRef, spec, index, slideCount) {
   const slide = createElement(documentRef, 'article', `hero-slide hero-slide--${spec.id}`);
   slide.dataset.heroSlide = '';
   slide.dataset.heroId = spec.id;
+  slide.setAttribute('role', 'group');
+  slide.setAttribute('aria-roledescription', 'স্লাইড');
+  slide.setAttribute('aria-label', `${bnNumber(index + 1)} / ${bnNumber(slideCount)}: ${spec.title}`);
   slide.setAttribute('aria-hidden', 'true');
 
   const picture = createElement(documentRef, 'picture', 'hero-slide__art');
-  picture.setAttribute('aria-hidden', 'true');
-  const [avif, webp] = ART_PATHS[spec.image];
-  const source = createElement(documentRef, 'source');
-  source.type = 'image/avif';
-  source.srcset = avif;
   const image = createElement(documentRef, 'img');
-  image.src = webp;
-  image.width = 1080;
-  image.height = 600;
-  image.alt = '';
+  image.src = spec.image;
+  image.width = 1280;
+  image.height = 720;
+  image.alt = spec.imageAlt;
   image.decoding = 'async';
-  image.loading = 'lazy';
-  picture.append(source, image);
+  image.setAttribute('loading', index === 0 ? 'eager' : 'lazy');
+  if (index === 0) image.setAttribute('fetchpriority', 'high');
+  picture.append(image);
 
   const copy = createElement(documentRef, 'div', 'hero-slide__copy');
-  copy.append(createElement(documentRef, 'span', 'hero-slide__eyebrow', spec.eyebrow));
-  copy.append(createElement(documentRef, 'h2', '', spec.title));
-  const description = createElement(documentRef, 'p', 'hero-slide__description');
+  const title = createElement(documentRef, 'h2', '', spec.title);
+  title.dataset.heroTitle = '';
+  const description = createElement(documentRef, 'p', 'hero-slide__description', spec.description);
   description.dataset.heroDescription = '';
-  copy.append(description);
-  if (spec.id === 'advice') {
-    const attribution = createElement(documentRef, 'small', 'hero-slide__source');
-    attribution.dataset.heroSource = '';
-    copy.append(attribution);
-  }
+  copy.append(title, description);
   slide.append(picture, copy);
   image.addEventListener('error', () => slide.classList.add('has-art-fallback'), { once: true });
   return slide;
 }
 
-function textOf(node, max = 140) {
-  return String(node?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, max);
-}
-
-function summaryText(documentRef) {
-  const host = documentRef.querySelector('[data-hero-summary]');
-  if (!host) return 'নিচের সারাংশ কার্ডে সর্বশেষ হিসাব দেখুন।';
-  const cards = [...host.querySelectorAll('.admin-stat-tile, .teacher-home-summary > div, .study-progress-stats > div')];
-  const values = cards.slice(0, 3).map(card => {
-    const label = textOf(card.querySelector('.tile-label, small, span'));
-    const value = textOf(card.querySelector('.tile-value, strong'));
-    return [label, value].filter(Boolean).join(' ');
-  }).filter(Boolean);
-  return values.length ? values.join(' · ') : textOf(host, 120) || 'নিচের সারাংশ কার্ডে সর্বশেষ হিসাব দেখুন।';
-}
-
-function todayText(documentRef) {
-  const host = documentRef.querySelector('[data-hero-today]');
-  if (!host) return 'আজকের কাজ ও পরিচালনার তথ্য হোমের নিচে রয়েছে।';
-  const first = host.querySelector('.teacher-home-class, .dashboard-empty-card, .dashboard-routine-row, article, p') || host;
-  return textOf(first, 120) || textOf(host, 120) || 'আজকের ক্লাস ও কাজের তথ্য নিচে রয়েছে।';
-}
-
-function quickText(documentRef) {
-  const host = documentRef.querySelector('[data-hero-quick]');
-  if (!host) return 'প্রয়োজনীয় কাজের টাইলগুলো হোমে রয়েছে।';
-  const count = host.querySelectorAll('button, a').length;
-  return count ? `নিচে ${bnNumber(count)}টি দ্রুত কাজের টাইল আছে।` : 'প্রয়োজনীয় কাজের টাইলগুলো হোমে রয়েছে।';
-}
-
-function setDescription(slides, id, text) {
-  const target = slides.querySelector(`[data-hero-id="${id}"] [data-hero-description]`);
-  if (target) target.textContent = text;
-}
-
-function updateTranscript(transcript, advice, documentRef) {
-  const rows = [
-    `আজকের উপদেশ: ${advice.text}। উৎস: ${advice.source || DAILY_ADVICE_FALLBACK.source}`,
-    `আজকের সারাংশ: ${summaryText(documentRef)}`,
-    `আজকের ক্লাস ও কাজ: ${todayText(documentRef)}`,
-    `দ্রুত কাজ: ${quickText(documentRef)}`
-  ];
-  transcript.replaceChildren(...rows.map(text => createElement(documentRef, 'li', '', text)));
-}
-
-/** Mounts the Student home hero; payment keeps its legacy mount separately. */
-export function initHomeHero(rootOrSelector, {
-  autoConnect = true,
-  adviceStoreFactory = createAdviceStore
-} = {}) {
+/** Mounts the shared carousel into an existing hero hook. */
+export function initHomeHero(rootOrSelector, options = {}) {
   const root = typeof rootOrSelector === 'string' ? document.querySelector(rootOrSelector) : rootOrSelector;
   if (!root || root.dataset.heroReady === '1') return { stop() {}, show() {} };
   const documentRef = root.ownerDocument || globalThis.document;
   const view = documentRef?.defaultView || globalThis;
   if (!documentRef) return { stop() {}, show() {} };
+  const slideSpecs = Array.isArray(options?.slides) && options.slides.length ? options.slides : SLIDES;
+
   root.dataset.heroReady = '1';
   root.classList.add('hero-slider');
   root.setAttribute('role', 'region');
-  root.setAttribute('aria-label', 'আজকের তথ্য');
+  root.setAttribute('aria-label', 'শিক্ষার্থীদের পড়াশোনার অনুপ্রেরণা');
+  root.setAttribute('aria-roledescription', 'carousel');
   root.setAttribute('aria-live', 'off');
-  root.removeAttribute('aria-roledescription');
-  root.removeAttribute('tabindex');
+  root.dataset.direction = 'next';
 
-  const { stage, transcript } = ensureContext(root, documentRef);
-  stage.classList.add('hero-slider__slides');
-  stage.setAttribute('aria-hidden', 'true');
-  transcript.classList.add('hero-slider__transcript');
-  stage.replaceChildren(...SLIDE_COPY.map(spec => createSlide(documentRef, spec)));
-  const adviceSlide = stage.querySelector('[data-hero-id="advice"]');
-  const adviceText = adviceSlide?.querySelector('[data-hero-description]');
-  const adviceSource = adviceSlide?.querySelector('[data-hero-source]');
-  let advice = { ...DAILY_ADVICE_FALLBACK };
-  let active = 0;
+  const { stage, controls, previous, next, indicators } = ensureHeroMarkup(root, documentRef, slideSpecs);
+  stage.replaceChildren(...slideSpecs.map((spec, index) => createSlide(documentRef, spec, index, slideSpecs.length)));
+  const slides = [...stage.querySelectorAll('[data-hero-slide]')];
+  const dots = [...indicators.querySelectorAll('[data-hero-dot]')];
+  const dateNodes = [...root.querySelectorAll('[data-home-hero-date]')];
+
+  let active = -1;
   let timer = 0;
   let stopped = false;
   let pressed = false;
   let hovering = false;
   let outsideViewport = false;
+  let pointerOrigin = null;
   let reducedMotion = Boolean(view.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   const noAnimation = needsLowMotion(view);
   root.classList.toggle('is-no-motion', noAnimation);
 
-  const dateNodes = [...root.querySelectorAll('[data-home-hero-date]')];
   function updateDate(now = new Date()) {
     const key = quoteDateKey(now.getTime());
     const label = formatDhakaDate(now);
@@ -206,85 +203,68 @@ export function initHomeHero(rootOrSelector, {
       if (node.tagName === 'TIME') node.dateTime = key;
     });
   }
-  updateDate();
 
-  function enabledSlides() {
-    return [...stage.querySelectorAll('[data-hero-slide]:not([hidden])')];
-  }
-  function setActive(index) {
-    const slides = enabledSlides();
+  function setActive(index, direction = 'next') {
     if (!slides.length) return;
-    active = ((Number(index) % slides.length) + slides.length) % slides.length;
+    const nextIndex = ((Number(index) % slides.length) + slides.length) % slides.length;
+    if (nextIndex !== active) root.dataset.direction = direction;
+    active = nextIndex;
     slides.forEach((slide, slot) => {
       const selected = slot === active;
       slide.classList.toggle('is-active', selected);
       slide.setAttribute('aria-hidden', String(!selected));
     });
+    dots.forEach((dot, slot) => {
+      dot.classList.toggle('is-active', slot === active);
+      if (slot === active) dot.setAttribute('aria-current', 'true');
+      else dot.removeAttribute('aria-current');
+    });
+    root.dataset.activeSlide = slides[active].dataset.heroId;
     root.classList.toggle('is-static', slides.length < 2 || reducedMotion);
   }
+
   function clearTimer() {
     if (timer) view.clearTimeout(timer);
     timer = 0;
   }
+
   function canAdvance() {
     return !stopped && !reducedMotion && !pressed && !hovering && !outsideViewport &&
-      documentRef.visibilityState !== 'hidden' && !documentRef.hidden && enabledSlides().length > 1;
+      documentRef.visibilityState !== 'hidden' && !documentRef.hidden && slides.length > 1;
   }
+
   function schedule() {
     clearTimer();
     if (!canAdvance()) return;
     timer = view.setTimeout(() => {
+      timer = 0;
       if (!canAdvance()) { schedule(); return; }
-      setActive(active + 1);
+      setActive(active + 1, 'next');
       schedule();
-    }, active === 0 ? HERO_FIRST_DELAY_MS : HERO_AUTOPLAY_MS);
+    }, active < 0 ? HERO_FIRST_DELAY_MS : HERO_AUTOPLAY_MS);
   }
-  function refreshDescriptions() {
-    setDescription(stage, 'summary', summaryText(documentRef));
-    setDescription(stage, 'today', todayText(documentRef));
-    setDescription(stage, 'quick', quickText(documentRef));
-    updateTranscript(transcript, advice, documentRef);
-  }
-  function setAdvice(value) {
-    advice = {
-      text: String(value?.text || DAILY_ADVICE_FALLBACK.text),
-      source: String(value?.source || DAILY_ADVICE_FALLBACK.source)
-    };
-    if (adviceText) adviceText.textContent = advice.text;
-    if (adviceSource) adviceSource.textContent = advice.source;
-    updateTranscript(transcript, advice, documentRef);
-  }
-  function applyMotionPreference(value) {
+
+  function updateMotionPreference(value) {
     reducedMotion = Boolean(value);
     root.classList.toggle('is-reduced-motion', reducedMotion);
-    stage.querySelectorAll('[data-hero-slide]').forEach(slide => {
-      slide.hidden = reducedMotion && slide.dataset.heroId !== 'advice';
-    });
-    setActive(0);
+    setActive(active < 0 ? 0 : active);
     schedule();
   }
 
-  setAdvice(advice);
-  refreshDescriptions();
-  applyMotionPreference(reducedMotion);
+  updateDate();
+  setActive(0, 'next');
+  updateMotionPreference(reducedMotion);
 
-  const store = adviceStoreFactory({
-    autoConnect,
-    onChange(state) {
-      setAdvice(state?.advice || DAILY_ADVICE_FALLBACK);
-      if (state?.dateKey) {
-        const midday = new Date(`${state.dateKey}T06:00:00Z`);
-        updateDate(midday);
-      }
-    }
-  });
-
-  const mutationObserver = typeof view.MutationObserver === 'function'
-    ? new view.MutationObserver(refreshDescriptions)
-    : null;
-  for (const host of documentRef.querySelectorAll('[data-hero-summary], [data-hero-today], [data-hero-quick]')) {
-    mutationObserver?.observe(host, { subtree: true, childList: true, characterData: true });
-  }
+  const previousClick = () => {
+    setActive(active - 1, 'previous');
+    schedule();
+  };
+  const nextClick = () => {
+    setActive(active + 1, 'next');
+    schedule();
+  };
+  previous.addEventListener('click', previousClick);
+  next.addEventListener('click', nextClick);
 
   const visibilityChange = () => {
     if (documentRef.visibilityState !== 'hidden') updateDate();
@@ -292,12 +272,35 @@ export function initHomeHero(rootOrSelector, {
   };
   documentRef.addEventListener('visibilitychange', visibilityChange);
   const motionQuery = view.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const motionChange = event => applyMotionPreference(event.matches);
+  const motionChange = event => updateMotionPreference(event.matches);
   if (typeof motionQuery?.addEventListener === 'function') motionQuery.addEventListener('change', motionChange);
   else motionQuery?.addListener?.(motionChange);
 
-  const pointerDown = () => { pressed = true; schedule(); };
-  const pointerRelease = () => { pressed = false; schedule(); };
+  const pointerDown = event => {
+    if (event.isPrimary === false) return;
+    pressed = true;
+    const target = event.target;
+    const onArrow = target?.closest?.('[data-hero-previous], [data-hero-next]');
+    pointerOrigin = event.pointerType === 'touch' && !onArrow
+      ? { x: event.clientX, y: event.clientY }
+      : null;
+    schedule();
+  };
+  const pointerRelease = event => {
+    if (!pressed) return;
+    const start = pointerOrigin;
+    pointerOrigin = null;
+    pressed = false;
+    if (start && event.type === 'pointerup') {
+      const deltaX = Number(event.clientX) - start.x;
+      const deltaY = Number(event.clientY) - start.y;
+      if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+        const direction = deltaX < 0 ? 'next' : 'previous';
+        setActive(active + (direction === 'next' ? 1 : -1), direction);
+      }
+    }
+    schedule();
+  };
   const pointerEnter = event => {
     if (event.pointerType === 'mouse' || event.type === 'mouseenter') { hovering = true; schedule(); }
   };
@@ -323,7 +326,8 @@ export function initHomeHero(rootOrSelector, {
   } else {
     scrollFallback = () => {
       const rect = root.getBoundingClientRect();
-      outsideViewport = rect.bottom <= 0 || rect.top >= view.innerHeight;
+      const viewportHeight = Number(view.innerHeight) || 0;
+      outsideViewport = rect.bottom <= 0 || rect.top >= viewportHeight;
       schedule();
     };
     view.addEventListener?.('scroll', scrollFallback, { passive: true });
@@ -331,12 +335,10 @@ export function initHomeHero(rootOrSelector, {
     scrollFallback();
   }
 
-  const stop = () => {
+  function stop() {
     if (stopped) return;
     stopped = true;
     clearTimer();
-    store.stop?.();
-    mutationObserver?.disconnect();
     intersectionObserver?.disconnect();
     if (scrollFallback) {
       view.removeEventListener?.('scroll', scrollFallback);
@@ -350,9 +352,21 @@ export function initHomeHero(rootOrSelector, {
     root.removeEventListener('pointerleave', pointerLeave);
     root.removeEventListener('mouseenter', pointerEnter);
     root.removeEventListener('mouseleave', pointerLeave);
+    previous.removeEventListener('click', previousClick);
+    next.removeEventListener('click', nextClick);
     if (typeof motionQuery?.removeEventListener === 'function') motionQuery.removeEventListener('change', motionChange);
     else motionQuery?.removeListener?.(motionChange);
-  };
+    view.removeEventListener?.('pagehide', stop);
+  }
+
   view.addEventListener?.('pagehide', stop, { once: true });
-  return { stop, show: setActive, store };
+  return {
+    stop,
+    show(index) {
+      const target = ((Number(index) % slides.length) + slides.length) % slides.length;
+      const forward = (target - active + slides.length) % slides.length;
+      setActive(target, forward > slides.length / 2 ? 'previous' : 'next');
+      schedule();
+    }
+  };
 }

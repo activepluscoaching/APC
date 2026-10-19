@@ -33,17 +33,48 @@ const maskedPhone = value => {
   return digits ? `${digits.slice(0, 3)}${'•'.repeat(Math.max(3, digits.length - 5))}${digits.slice(-2)}` : '—';
 };
 export function studentIdCardSVG(student, photo = '', side = 'front') {
-  const name = student?.name || student?.nameBn || 'শিক্ষার্থী';
-  const row = (label, value, y) => `<text x="20" y="${y}" font-size="13">${esc(label)}</text><text x="360" y="${y}" text-anchor="end" font-size="13" font-weight="600"${String(value || '').length > 24 ? ' textLength="220" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(value || '—')}</text><path d="M20 ${y + 9}h340" stroke="white" stroke-opacity=".3"/>`;
-  const front = `<text x="190" y="35" text-anchor="middle" font-size="19" font-weight="700">▤ Active Plus Coaching</text>
-    <circle cx="190" cy="113" r="49" fill="#ffffff22" stroke="white" stroke-width="2"/>
-    ${validPhoto(photo) ? `<defs><clipPath id="id-photo-clip"><circle cx="190" cy="113" r="48"/></clipPath></defs><image x="142" y="65" width="96" height="96" href="${photo}" clip-path="url(#id-photo-clip)"/>` : `<text x="190" y="130" text-anchor="middle" font-size="42">${esc(name.charAt(0))}</text>`}
-    <text x="190" y="194" text-anchor="middle" font-size="23" font-weight="600"${name.length > 24 ? ' textLength="330" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(name)}</text><text x="190" y="216" text-anchor="middle" font-size="14">Student</text>
-    ${row('Student ID', student?.id, 254)}${row('শ্রেণি', [student?.className, student?.group].filter(Boolean).join(' · '), 289)}${row('ক্লাস রোল', student?.roll ? bn(student.roll) : '—', 324)}${row('প্রতিষ্ঠান', student?.institution || 'Active Plus Coaching', 359)}${row('মেয়াদ', student?.validUntil || 'নির্ধারিত হয়নি', 394)}`;
-  const back = `${qrMarkup(student)}<text x="190" y="235" text-anchor="middle" font-size="15">স্ক্যান করে Student ID দেখুন</text>
-    ${row('অভিভাবক', maskedPhone(student?.guardianMobile), 279)}${row('জরুরি যোগাযোগ', maskedPhone(student?.studentMobile), 316)}${row('ঠিকানা', student?.address, 353)}
-    <text x="190" y="392" text-anchor="middle" font-size="13">কার্ডটি শুধু শিক্ষার্থীর ব্যবহারের জন্য।</text>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="430" viewBox="0 0 380 430" role="img" aria-label="ডিজিটাল আইডি কার্ড · ${side === 'back' ? 'পেছনের পাশ' : 'সামনের পাশ'}"><rect width="380" height="430" rx="24" fill="#0e7a55"/><g fill="white" font-family="Noto Sans Bengali, sans-serif">${side === 'back' ? back : front}</g></svg>`;
+  const name = student?.nameBn || student?.name || 'শিক্ষার্থী';
+  const classLine = [student?.className, student?.group].filter(Boolean).join(' · ') || 'শ্রেণি নির্ধারিত হয়নি';
+  const idSource = String(student?.roll || student?.registrationNo || student?.id || '001').replace(/[^a-zA-Z0-9]/g, '');
+  const classCode = String(student?.className || 'ST').replace(/[^a-zA-Z0-9]/g, '').slice(0, 3) || 'ST';
+  const idCode = 'APC-' + classCode + '-' + idSource.slice(-3).padStart(3, '0');
+  const session = String(student?.session || student?.academicYear || new Date().getFullYear());
+  const row = (label, value, y) => '<text x="458" y="' + y + '" font-size="21" fill="#425466">' + esc(label) + '</text><text x="820" y="' + y + '" text-anchor="end" font-size="22" font-weight="650" fill="#172b25">' + esc(value || '—') + '</text><path d="M458 ' + (y + 12) + 'H820" stroke="#dfe8e3" stroke-width="1.5"/>';
+  const logo = '<image href="assets/icons/logo-128.png" x="30" y="24" width="76" height="76" preserveAspectRatio="xMidYMid meet"/>';
+  const front = '<rect x="0" y="0" width="856" height="116" fill="#0e7a55"/>' +
+    logo +
+    '<text x="126" y="56" font-size="31" font-weight="750" fill="#ffffff">Active Plus Coaching</text>' +
+    '<text x="128" y="86" font-size="19" fill="#e6fff4">শিখতে থাকো, এগিয়ে যাও</text>' +
+    '<rect x="684" y="30" width="142" height="42" rx="21" fill="#ffffff" fill-opacity=".16" stroke="#d9fff0" stroke-opacity=".7"/>' +
+    '<text x="755" y="57" text-anchor="middle" font-size="19" font-weight="700" fill="#ffffff">আইডি কার্ড</text>' +
+    '<circle cx="110" cy="270" r="68" fill="#e4f4ec" stroke="#b5ddca" stroke-width="4"/>' +
+    (validPhoto(photo) ? '<defs><clipPath id="id-photo-clip"><circle cx="110" cy="270" r="64"/></clipPath></defs><image x="46" y="206" width="128" height="128" href="' + photo + '" clip-path="url(#id-photo-clip)" preserveAspectRatio="xMidYMid slice"/>' : '<text x="110" y="290" text-anchor="middle" font-size="58" font-weight="700" fill="#0e7a55">' + esc(name.trim().charAt(0) || 'শি') + '</text>') +
+    '<text x="208" y="178" font-size="18" fill="#61746b">শিক্ষার্থীর নাম</text>' +
+    '<text x="208" y="218" font-size="31" font-weight="750" fill="#172b25">' + esc(name) + '</text>' +
+    '<text x="208" y="252" font-size="21" fill="#0e7a55">শিক্ষার্থী</text>' +
+    '<text x="208" y="286" font-size="22" font-weight="600" fill="#344b41">' + esc(classLine) + '</text>' +
+    row('শিক্ষার্থী আইডি', idCode, 356) +
+    row('ক্লাস রোল', student?.roll ? bn(student.roll) : '—', 402) +
+    row('সেশন', bn(session), 448) +
+    '<rect x="30" y="490" width="796" height="2" rx="1" fill="#e3eee8"/>' +
+    '<text x="30" y="520" font-size="17" fill="#61746b">শুধু কোচিং পরিচয়ের জন্য · সরকারি পরিচয়পত্র নয়</text>';
+  const back = '<rect x="0" y="0" width="856" height="116" fill="#0e7a55"/>' +
+    '<text x="32" y="54" font-size="30" font-weight="750" fill="#ffffff">Active Plus Coaching</text>' +
+    '<text x="34" y="84" font-size="19" fill="#e6fff4">শিক্ষার্থী পরিচয় যাচাই</text>' +
+    '<rect x="28" y="142" width="238" height="270" rx="20" fill="#f1f8f4" stroke="#d9e9e0" stroke-width="2"/>' +
+    qrMarkup(student) +
+    '<text x="147" y="384" text-anchor="middle" font-size="18" font-weight="650" fill="#0e7a55">স্ক্যান করে আইডি দেখুন</text>' +
+    '<text x="310" y="164" font-size="18" fill="#61746b">শিক্ষার্থীর নাম</text>' +
+    '<text x="310" y="198" font-size="25" font-weight="700" fill="#172b25">' + esc(name) + '</text>' +
+    row('অভিভাবকের মোবাইল', maskedPhone(student?.guardianMobile), 260) +
+    row('জরুরি যোগাযোগ', maskedPhone(student?.studentMobile), 306) +
+    row('ঠিকানা', student?.address, 352) +
+    '<rect x="28" y="440" width="800" height="60" rx="14" fill="#f1f8f4"/>' +
+    '<text x="428" y="465" text-anchor="middle" font-size="18" font-weight="650" fill="#0e7a55">কার্ডটি হারিয়ে গেলে Active Plus Coaching-এ যোগাযোগ করুন</text>' +
+    '<text x="428" y="489" text-anchor="middle" font-size="16" fill="#61746b">এটি সরকারি পরিচয়পত্র নয়; QR-এ শিক্ষার্থী আইডি রয়েছে</text>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="856" height="540" viewBox="0 0 856 540" role="img" aria-label="ডিজিটাল আইডি কার্ড">' +
+    '<rect width="856" height="540" rx="28" fill="#ffffff"/><rect x="1.5" y="1.5" width="853" height="537" rx="27" fill="none" stroke="#d9e5de" stroke-width="3"/>' +
+    '<g font-family="Noto Sans Bengali, sans-serif">' + (side === 'back' ? back : front) + '</g></svg>';
 }
 
 export function initStudentProfileCard({ getStudent }) {

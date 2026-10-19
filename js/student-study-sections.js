@@ -151,7 +151,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     return `<article class="course-item" data-study-item="${esc(record.id)}">
       <header class="course-item-head"><span class="course-item-type">${esc(record.type === 'pdf' ? 'PDF' : record.type === 'important_question' ? 'গুরুত্বপূর্ণ প্রশ্ন' : record.type === 'model_test' ? 'মডেল টেস্ট' : record.type === 'previous_question' ? 'পূর্বের প্রশ্ন' : record.type === 'mcq' ? 'MCQ' : 'নোট')}</span>
         <div><h3>${esc(record.title)}</h3><small>${esc([text(record.subject) || '', chapterOf(record)].filter(Boolean).join(' • '))}</small></div></header>
-      ${body ? `<div class="course-item-body">${esc(body).replace(/\n/g, '<br>')}</div>` : ''}
+      ${body ? `<div class="course-item-body course-rich-reading">${body}</div>` : ''}
       ${link ? `<a class="course-item-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer">ফাইল খুলুন <svg class="resource-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>` : ''}
     </article>`;
   }

@@ -252,7 +252,11 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
       }, { actor, role });
       editing = null;
       say(`${saved.id} সংরক্ষিত হয়েছে।`);
-      toast('কনটেন্ট সংরক্ষিত হয়েছে।');
+      const isPublished = data.get('published') === 'on';
+      const contentType = String(data.get('type') || 'lesson');
+      toast(isPublished && ['note', 'lesson'].includes(contentType)
+        ? 'লেকচার শিট প্রকাশিত — উপকরণে শিক্ষার্থীরা পড়তে পারবে'
+        : isPublished ? 'কনটেন্ট প্রকাশিত হয়েছে।' : 'কনটেন্ট খসড়া হিসেবে সংরক্ষিত হয়েছে।');
       paint();
       announce();
     } catch (error) {

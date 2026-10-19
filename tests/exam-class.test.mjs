@@ -86,10 +86,15 @@ test('a class the app does not run is refused', () => {
 test('only that class can start the published exam', async () => {
   const id = exams()[0].id;
   assert.ok(id, 'the exam saved in the previous test is still there');
+  // The editor may have been opened several minutes before this test reaches
+  // approval (the full suite runs in parallel); give approval a fresh future
+  // window, then move only the attempt window into the past for this test.
+  const db = JSON.parse(ctx.window.localStorage.getItem(EXAM_KEY));
+  db.exams[0].startAt = Date.now() + 60000;
+  db.exams[0].endAt = Date.now() + 3660000;
+  write(db);
   await repo.requestApproval(id);
   await repo.review(id, 'publish', {}, MANAGER_ACTOR);
-  // Open the window: publishing requires a future start, taking it a past one.
-  const db = JSON.parse(ctx.window.localStorage.getItem(EXAM_KEY));
   db.exams[0].startAt = Date.now() - 60000;
   db.exams[0].endAt = Date.now() + 3600000;
   write(db);

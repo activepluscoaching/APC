@@ -16,6 +16,7 @@ import { iconMarkup } from './icons.js';
 import { classByName, listClasses, subjectsForClass } from './academics.js';
 import { assignedClasses, subjectsForTeacherClass, listTeacherAssignments, isTeacherAssignedSubject } from './teacher-assignments.js';
 import { loadRoster } from './office-data.js';
+import { sanitizeRichHtml } from './sanitize.js';
 import {
   COURSE_TYPES, archiveCourseRecord, listCourseContentForStaff,
   saveCourseRecord, setContentPublished, typeLabel, typeOf
@@ -171,7 +172,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
           </select></label>
           <label>শিরোনাম<input name="title" maxlength="160" required value="${esc(record?.title || '')}"></label>
           <label>সংক্ষিপ্ত বর্ণনা<input name="description" maxlength="600" value="${esc(record?.description || '')}"></label>
-          <label>মূল লেখা<textarea name="content" rows="5" maxlength="8000">${esc(record?.content || '')}</textarea></label>
+          <div class="course-rich-field"><span class="course-rich-label">লেকচার শিট / মূল লেখা</span><div class="course-rich-toolbar" role="toolbar" aria-label="লেখার ফরম্যাট"><button type="button" data-rich-command="bold" aria-label="মোটা লেখা"><strong>B</strong></button><button type="button" data-rich-command="italic" aria-label="তির্যক লেখা"><em>I</em></button><button type="button" data-rich-command="insertUnorderedList">• তালিকা</button><button type="button" data-rich-command="insertOrderedList">১. তালিকা</button><button type="button" data-rich-command="formatBlock" data-rich-value="h2">শিরোনাম</button><button type="button" data-rich-command="removeFormat">ফরম্যাট পরিষ্কার</button></div><div class="course-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-rich-editor>${record?.richContent ? sanitizeRichHtml(record.richContent) : esc(record?.content || '').replace(/\n/g, '<br>')}</div><textarea name="content" hidden>${esc(record?.content || '')}</textarea><input type="hidden" name="richContent" value="${esc(record?.richContent || '')}"><small class="form-note">Word/Google Docs থেকে কপি করে এখানে পেস্ট করুন। ফরম্যাট রাখা হবে; নিরাপদ নয় এমন কোড বাদ যাবে।</small></div>
           <label>সংযুক্তি লিংক (ভিডিও/PDF)<input name="attachmentUrl" maxlength="1000" inputmode="url" value="${esc(record?.attachmentUrl || '')}"></label>
           <label class="course-manage-publish"><input type="checkbox" name="published"${record?.published === true ? ' checked' : ''}> শিক্ষার্থীদের জন্য প্রকাশ করুন</label>
           <button class="admin-btn primary" type="submit"${classes.length && subjects.length ? '' : ' disabled'}>${record ? 'পরিবর্তন সংরক্ষণ করুন' : 'সংরক্ষণ করুন'}</button>
@@ -190,6 +191,25 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     if (line) { line.textContent = message; line.classList.toggle('admin-error-text', isError); }
     if (isError) toast(message, true);
   }
+
+  root.addEventListener('input', event => {
+    const editor = event.target.closest('[data-rich-editor]');
+    if (!editor) return;
+    const form = editor.closest('[data-course-form]');
+    if (!form) return;
+    form.elements.content.value = editor.innerText || editor.textContent || '';
+    form.elements.richContent.value = editor.innerHTML;
+  });
+
+  root.addEventListener('click', event => {
+    const button = event.target.closest('[data-rich-command]');
+    if (!button) return;
+    const editor = root.querySelector('[data-rich-editor]');
+    if (!editor) return;
+    editor.focus();
+    document.execCommand(button.dataset.richCommand, false, button.dataset.richValue || null);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  });
 
   root.addEventListener('change', event => {
     if (event.target.name === 'className') { pickedClass = classByName(event.target.value)?.id || ''; pickedSubject = ''; pickedGroup = ''; editing = null; paint(); return; }
@@ -223,6 +243,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
         title: String(data.get('title') || ''),
         description: String(data.get('description') || ''),
         content: String(data.get('content') || ''),
+        richContent: String(data.get('richContent') || ''),
         attachmentUrl: String(data.get('attachmentUrl') || ''),
         thumbnail: '',
         published: data.get('published') === 'on',

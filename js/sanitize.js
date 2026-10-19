@@ -48,6 +48,7 @@ export function sanitizeRichHtml(value, { max = 8000 } = {}) {
             child.remove();
             continue;
           }
+          visit(child);
           child.replaceWith(...child.childNodes);
           continue;
         }

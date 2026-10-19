@@ -4294,3 +4294,27 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   body.student-reference #studentIdCardPreview > svg text { stroke: none; }
 }
 }
+
+
+/* Accessible, mobile-first rich-text lesson sheet editor and reading surface. */
+.course-rich-field { display: grid; gap: 8px; min-width: 0; }
+.course-rich-label { font-weight: 700; color: var(--text-primary, #20352b); }
+.course-rich-toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
+.course-rich-toolbar button { min-height: 36px; padding: 6px 10px; border: 1px solid #cbdcd1; border-radius: 10px; background: #f4f8f5; color: #183c2c; font: inherit; }
+.course-rich-editor { min-height: 190px; max-height: 55vh; overflow: auto; padding: 14px; border: 1px solid #b8cec0; border-radius: 14px; background: #fff; color: #172b25; line-height: 1.8; overflow-wrap: anywhere; }
+.course-rich-editor:focus { outline: 2px solid #16865c; outline-offset: 2px; }
+.course-rich-editor h1, .course-rich-editor h2, .course-rich-editor h3 { line-height: 1.4; margin: 1em 0 .5em; }
+.course-rich-editor ul, .course-rich-editor ol, .course-rich-reading ul, .course-rich-reading ol { padding-inline-start: 1.6em; }
+.course-rich-editor table, .course-rich-reading table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.course-rich-editor th, .course-rich-editor td, .course-rich-reading th, .course-rich-reading td { border: 1px solid #cbdcd1; padding: 6px 9px; }
+.course-rich-reading { color: var(--text-primary, #25352c); font-size: 1rem; line-height: 1.9; overflow-wrap: anywhere; }
+.course-rich-reading h1 { font-size: 1.5rem; line-height: 1.4; }
+.course-rich-reading h2 { font-size: 1.3rem; line-height: 1.45; }
+.course-rich-reading h3 { font-size: 1.12rem; line-height: 1.5; }
+.course-rich-reading p { margin: .65em 0; }
+.course-rich-reading blockquote { margin: .8em 0; padding: .5em .9em; border-inline-start: 3px solid #16865c; background: #f4f8f5; }
+@media (max-width: 520px) {
+  .course-rich-editor { min-height: 160px; padding: 11px; }
+  .course-rich-toolbar button { flex: 0 0 auto; }
+  .course-rich-reading { font-size: 1rem; line-height: 1.85; }
+}

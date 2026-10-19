@@ -14,6 +14,7 @@ import { toBanglaNumber as bn } from './ui.js';
 import { setView } from './shell.js';
 import { classByName, subjectsForClass, listChapters } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
+import { sanitizeRichHtml } from './sanitize.js';
 import { teachingRepository, publishedForStudent, watchTeachingData } from './teaching-data.js';
 import { courseRepository, courseProgress, watchCourses, COURSES_KEY } from './course-data.js';
 import { listQuestionsForStudent, questionRowsFromPastExams, QUESTION_TYPES } from './question-bank.js';
@@ -146,7 +147,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
 
   function contentCard(record) {
     const link = /^https?:\/\//i.test(record.attachmentUrl || '') ? record.attachmentUrl : '';
-    const body = text(record.content || record.description || '').slice(0, 600);
+    const body = record.richContent ? sanitizeRichHtml(record.richContent) : esc(text(record.content || record.description || '').slice(0, 600)).replace(/\n/g, '<br>');
     return `<article class="course-item" data-study-item="${esc(record.id)}">
       <header class="course-item-head"><span class="course-item-type">${esc(record.type === 'pdf' ? 'PDF' : record.type === 'important_question' ? 'গুরুত্বপূর্ণ প্রশ্ন' : record.type === 'model_test' ? 'মডেল টেস্ট' : record.type === 'previous_question' ? 'পূর্বের প্রশ্ন' : record.type === 'mcq' ? 'MCQ' : 'নোট')}</span>
         <div><h3>${esc(record.title)}</h3><small>${esc([text(record.subject) || '', chapterOf(record)].filter(Boolean).join(' • '))}</small></div></header>

@@ -13,6 +13,7 @@
 import { classByName, listChapters as listAcademicChapters, subjectsForClass } from './academics.js';
 import { KEYS, readRaw } from './database.js';
 import { iconMarkup } from './icons.js';
+import { sanitizeRichHtml } from './sanitize.js';
 import {
   COURSE_SECTIONS, COURSE_TYPES, listCourseContent, typeLabel, typeOf
 } from './course-content.js';
@@ -186,7 +187,7 @@ export function initCourseHub({ getStudent, onAction = () => {} } = {}) {
   function contentCard(record) {
     const type = typeOf(record);
     const link = /^https?:\/\//i.test(record.attachmentUrl || '') ? record.attachmentUrl : '';
-    const body = esc(record.content || '').replace(/\n/g, '<br>');
+    const body = record.richContent ? sanitizeRichHtml(record.richContent) : esc(record.content || '').replace(/\n/g, '<br>');
     return '<article class="course-item" data-course-item="' + esc(record.id) + '">' +
         '<header class="course-item-head">' +
           '<span class="course-item-icon" aria-hidden="true">' + iconMarkup(COURSE_TYPES[type].icon) + '</span>' +

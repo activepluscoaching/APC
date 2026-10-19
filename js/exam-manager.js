@@ -476,6 +476,18 @@ export function initExamManager(container, role) {
       </section>
 
       <label>টেমপ্লেট অনুযায়ী প্রশ্ন পেস্ট করুন *<textarea name="template" data-question-source rows="12" required maxlength="150000" placeholder="${type === 'mcq' ? 'প্রশ্ন: …\nA: …\nB: …\nC: …\nD: …\nউত্তর: A' : 'প্রশ্ন: …\nনম্বর: …'}">${esc(data.template)}</textarea><small class="exam-note">${type === 'mcq' ? 'MCQ-তে প্রতি প্রশ্নের নম্বর ১ নির্ধারিত — “নম্বর:” লাইন লিখতে হবে না। মোট নম্বর = প্রশ্ন সংখ্যা।' : 'প্রতি প্রশ্নের নম্বর আলাদা করে লিখুন।'}</small></label>
+      ${type === 'mcq' ? `<details class="exam-card" data-manual-mcq><summary>একটি করে MCQ লিখুন</summary>
+        <div class="exam-form-grid">
+          <label>প্রশ্ন *<textarea data-manual-question rows="2" maxlength="1200"></textarea></label>
+          <label>বিকল্প A *<input data-manual-option="A" maxlength="500"></label>
+          <label>বিকল্প B *<input data-manual-option="B" maxlength="500"></label>
+          <label>বিকল্প C *<input data-manual-option="C" maxlength="500"></label>
+          <label>বিকল্প D *<input data-manual-option="D" maxlength="500"></label>
+          <label>সঠিক উত্তর<select data-manual-answer><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></label>
+        </div>
+        <button type="button" data-exam-action="add-manual-mcq">প্রশ্নের তালিকায় যোগ করুন</button>
+        <p class="exam-note">যোগ করলে প্রশ্নটি উপরের প্রশ্নের ঘরে যুক্ত হবে। তারপরও খসড়া সংরক্ষণ করুন।</p>
+      </details>` : ''}
       <div class="exam-preview" data-parsed-preview aria-live="polite"></div>
       <button type="submit" class="primary">খসড়া সংরক্ষণ করুন</button>
     </form>`;
@@ -518,6 +530,23 @@ export function initExamManager(container, role) {
     $('[name=className]').addEventListener('change', repaintSubjects);
     $('[name=subject]')?.addEventListener('change', repaintChapters);
     $('[name=template]').addEventListener('input', preview);
+    $('[data-exam-action="add-manual-mcq"]')?.addEventListener('click', () => {
+      const question = $('[data-manual-question]')?.value.trim() || '';
+      const options = ['A', 'B', 'C', 'D'].map(key => [key, $(`[data-manual-option="${key}"]`)?.value.trim() || '']);
+      if (!question || options.some(([, value]) => !value)) {
+        showFeedback('প্রশ্ন এবং A, B, C, D—চারটি বিকল্প পূরণ করুন।');
+        return;
+      }
+      const answer = $('[data-manual-answer]')?.value || 'A';
+      const block = [`প্রশ্ন: ${question}`, ...options.map(([key, value]) => `${key}: ${value}`), `উত্তর: ${answer}`].join('\\n');
+      const source = $('[name=template]');
+      source.value = source.value.trim() ? `${source.value.trim()}\\n---\\n${block}` : block;
+      source.dispatchEvent(new Event('input', { bubbles: true }));
+      $('[data-manual-question]').value = '';
+      options.forEach(([key]) => { const input = $(`[data-manual-option="${key}"]`); if (input) input.value = ''; });
+      $('[data-manual-question]').focus();
+      showFeedback('প্রশ্ন তালিকায় যোগ হয়েছে। খসড়া সংরক্ষণ করুন।');
+    });
     $('[name=startAt]')?.addEventListener('change', refreshIdentity);
     $('[name=endAt]')?.addEventListener('change', refreshIdentity);
     refreshIdentity(); preview();

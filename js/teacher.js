@@ -545,7 +545,7 @@ function closeModal() {
 function showEditor(type, old = null) {
   if (type === 'exam') return setView('online-exams');
   if (!state.ready || state.busy) return toast('আগে ডেটা লোড হতে দিন বা আবার চেষ্টা করুন।');
-  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: type === 'homework' ? 'published' : 'draft', className: assignedClasses()[0] || '' };
+  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: ['homework', 'suggestion'].includes(type) ? 'published' : 'draft', className: assignedClasses()[0] || '' };
   const timed = ['exam', 'routine'].includes(type);
   const field = (name, label, inputType = 'text', extra = '') => `<div><label for="activity-${name}">${label}</label><input id="activity-${name}" name="${name}" type="${inputType}" value="${esc(a[name] ?? '')}" ${extra}></div>`;
   openModal(`${old ? 'সম্পাদনা: ' : 'নতুন '}${ACTIVITY_TYPES[type].label}`, `<form id="teacherActivityForm" class="teacher-form">

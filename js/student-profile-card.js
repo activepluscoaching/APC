@@ -40,7 +40,8 @@ export function studentIdCardSVG(student, photo = '', side = 'front') {
   const idCode = 'APC-' + classCode + '-' + idSource.slice(-3).padStart(3, '0');
   const session = String(student?.session || student?.academicYear || new Date().getFullYear());
   const row = (label, value, y) => '<text x="458" y="' + y + '" font-size="21" fill="#425466">' + esc(label) + '</text><text x="820" y="' + y + '" text-anchor="end" font-size="22" font-weight="650" fill="#172b25">' + esc(value || '—') + '</text><path d="M458 ' + (y + 12) + 'H820" stroke="#dfe8e3" stroke-width="1.5"/>';
-  const logo = '<image href="assets/icons/logo-128.png" x="30" y="24" width="76" height="76" preserveAspectRatio="xMidYMid meet"/>';
+  const logoUrl = new URL('assets/icons/logo-128.png', window.location.href).href;
+  const logo = '<image href="' + esc(logoUrl) + '" x="30" y="24" width="76" height="76" preserveAspectRatio="xMidYMid meet"/>';
   const front = '<rect x="0" y="0" width="856" height="116" fill="#0e7a55"/>' +
     logo +
     '<text x="126" y="56" font-size="31" font-weight="750" fill="#ffffff">Active Plus Coaching</text>' +

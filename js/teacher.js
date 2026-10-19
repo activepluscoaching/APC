@@ -498,7 +498,7 @@ function setView(view) {
   paintTeacherExam();
   $('#teacherMain').scrollTo({ top: 0, behavior: 'instant' }); render();
   // The open page lives in the URL, so a refresh lands back on it.
-  rememberRoute(view);
+  rememberRoute(view === 'exam' ? 'online-exams' : view);
 }
 async function reload() {
   try {

@@ -439,7 +439,8 @@ export function initExamManager(container, role) {
     const nextDay = parseDhakaDateTime(`${dhakaKey(nowEpoch() + 86400000)}T18:00`);
     const localTime = dhakaDateTimeInput;
     const classNames = roleClasses();
-    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: nextDay, endAt: nextDay + 3600000, lateMinutes: 10, negative: 0, passPercent: 33, template: '', instructions: '' };
+    const quickStart = nowEpoch();
+    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: type === 'mcq' ? quickStart : nextDay, endAt: type === 'mcq' ? quickStart + 20 * 60000 : nextDay + 3600000, lateMinutes: type === 'mcq' ? 5 : 10, negative: 0, passPercent: 33, template: '', instructions: '' };
     const classOptions2 = value => `<option value="">শ্রেণি নির্বাচন করুন</option>${classNames.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('')}`;
     const field = (name, label, kind = 'text', extra = '') => `<label>${label}<input name="${name}" type="${kind}" value="${esc(['startAt', 'endAt'].includes(name) ? localTime(data[name]) : data[name])}" ${extra}></label>`;
     content.innerHTML = `${back()}<h2>${e ? 'সম্পাদনা' : 'নতুন পরীক্ষা'} — ${EXAM_TYPES[type]}${e ? ` <small>(${esc(shortExamId(e.id))})</small>` : ''}</h2>
@@ -452,6 +453,7 @@ export function initExamManager(container, role) {
       ${field('title', 'পরীক্ষার নাম *', 'text', 'required maxlength="150"')}
       <label>কোন শ্রেণির জন্য *<select name="className" required>${classOptions2(data.className)}</select></label>
       <label>কোন বিষয়ের পরীক্ষা *<span data-exam-subject-slot>${subjectSelectMarkup(data.className, data.subject)}</span></label>
+      ${type === 'mcq' ? `<label class="exam-quick-duration">সময়কাল *<select data-quick-duration><option value="15">১৫ মিনিট</option><option value="20" selected>২০ মিনিট</option><option value="30">৩০ মিনিট</option></select><small class="exam-note">শুরুর সময় থেকে নির্বাচিত সময় অনুযায়ী শেষ সময় স্বয়ংক্রিয়ভাবে বসবে।</small></label>` : ''}
       <label>অধ্যায়<input name="chapterName" maxlength="120" list="examChapters" value="${esc(data.chapterName || '')}" placeholder="যেমন: অধ্যায় ১ — বীজগণিত"><datalist id="examChapters" data-exam-chapters>${(data.className && data.subject ? listChapters(data.className, data.subject) : []).map(item => `<option value="${esc(item.name)}"></option>`).join('')}</datalist><small class="exam-note">এখানে লিখলে অধ্যায়টি Academic Setup-এও যুক্ত হবে, তাই পরের পরীক্ষায় তালিকায় পাবেন।</small></label>
       <label>টপিক / অংশ<input name="topic" maxlength="120" value="${esc(data.topic || '')}" placeholder="যেমন: বহুপদী সমীকরণ"></label>
       <label>প্রশ্নের ক্রম<select name="questionOrder"><option value="shuffle" ${data.questionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.questionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
@@ -616,6 +618,18 @@ export function initExamManager(container, role) {
 
   root.addEventListener('change', event => {
     if (busy) return;
+    const quickForm = event.target.closest('[data-exam-form]');
+    if (quickForm && ['startAt', 'data-quick-duration'].includes(event.target.name || (event.target.matches('[data-quick-duration]') ? 'data-quick-duration' : ''))) {
+      const start = parseDhakaDateTime(quickForm.elements.startAt?.value);
+      const duration = Number(quickForm.querySelector('[data-quick-duration]')?.value || 20);
+      if (start && Number.isFinite(start) && quickForm.elements.endAt && [15, 20, 30].includes(duration)) {
+        quickForm.elements.endAt.value = localTime(start + duration * 60000);
+        quickForm.elements.endAt.dispatchEvent(new Event('input', { bubbles: true }));
+        const readout = quickForm.querySelector('[data-duration-readout]');
+        if (readout) readout.textContent = `সময়কাল: ${num(duration)} মিনিট`;
+      }
+      return;
+    }
     if (event.target.closest('[data-exam-filters]')) { readFilterForm(); applyFilters(); return; }
     if (event.target.closest('[data-bank-filters]')) {
       bankFilters = { ...bankFilters, ...Object.fromEntries(new FormData(event.target.closest('[data-bank-filters]'))) };

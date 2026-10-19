@@ -51,9 +51,10 @@ export function sanitizeRichHtml(value, { max = 8000 } = {}) {
           child.replaceWith(...child.childNodes);
           continue;
         }
+        const rawHref = child.tagName === 'A' ? (child.getAttribute('href') || '') : '';
         for (const attr of [...child.attributes]) child.removeAttribute(attr.name);
         if (child.tagName === 'A') {
-          const raw = child.getAttribute('href') || '';
+          const raw = rawHref;
           if (/^https?:\/\//i.test(raw)) {
             child.setAttribute('href', raw);
             child.setAttribute('target', '_blank');

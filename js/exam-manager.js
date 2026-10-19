@@ -439,7 +439,7 @@ export function initExamManager(container, role) {
     const nextDay = parseDhakaDateTime(`${dhakaKey(nowEpoch() + 86400000)}T18:00`);
     const localTime = dhakaDateTimeInput;
     const classNames = roleClasses();
-    const quickStart = nowEpoch();
+    const quickStart = nowEpoch() + 5 * 60000;
     const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: type === 'mcq' ? quickStart : nextDay, endAt: type === 'mcq' ? quickStart + 20 * 60000 : nextDay + 3600000, lateMinutes: type === 'mcq' ? 5 : 10, negative: 0, passPercent: 33, template: '', instructions: '' };
     const classOptions2 = value => `<option value="">শ্রেণি নির্বাচন করুন</option>${classNames.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('')}`;
     const field = (name, label, kind = 'text', extra = '') => `<label>${label}<input name="${name}" type="${kind}" value="${esc(['startAt', 'endAt'].includes(name) ? localTime(data[name]) : data[name])}" ${extra}></label>`;

@@ -76,7 +76,7 @@ export function initExamManager(container, role) {
         ${button('bank', '📚 প্রশ্ন সংরক্ষণ করুন')}
       </div>
       <div class="exam-actions" aria-label="পরীক্ষা তৈরি করুন">
-        ${Object.entries(EXAM_TYPES).map(([type, label]) => button('new-' + type, `পরীক্ষা তৈরি করুন — ${label}`, '', 'primary')).join('')}
+        ${Object.entries(EXAM_TYPES).map(([type, label]) => button('new-' + type, type === 'mcq' ? '⚡ দ্রুত MCQ পরীক্ষা' : `পরীক্ষা তৈরি করুন — ${label}`, '', 'primary')).join('')}
       </div>
       ${countersMarkup(exams)}
     </section>`;

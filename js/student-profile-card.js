@@ -18,7 +18,7 @@ function readPhoto(student) {
   catch { return ''; }
 }
 
-export const studentIdQRPayload = student => `Active Plus Coaching | Student ID: ${String(student?.id || '').slice(0, 128)}`;
+export const studentIdQRPayload = student => `Active Plus Coaching | শিক্ষার্থী আইডি: ${String(student?.id || '').slice(0, 128)}`;
 function qrMarkup(student) {
   const qr = qrcode(0, 'M'); qr.addData(studentIdQRPayload(student)); qr.make();
   const count = qr.getModuleCount(), size = count + 8;

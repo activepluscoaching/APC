@@ -1908,13 +1908,13 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .student-reference #myProfileView #studentAdditionalMobiles[hidden] { display: none; }
 }
 
-/* Digital ID card: portrait front/back preview, no third-party QR requests. */
+/* Digital ID card: landscape front/back preview, no third-party QR requests. */
 @media screen {
-.student-reference #studentIdCardView { width: 100%; max-width: 430px; margin-inline: auto; }
+.student-reference #studentIdCardView { width: 100%; max-width: 720px; margin-inline: auto; }
 .student-reference #studentIdCardView .page-intro { margin-bottom: 12px; padding-top: 16px; gap: 8px; }
 .student-reference #studentIdCardView .page-intro h1 { font-size: 20px; font-weight: 500; }
 .student-reference #studentIdCardView .pay-back { color: var(--color-text); background: transparent; border: 0; width: 28px; min-width: 28px; }
-.student-reference #studentIdCardView .student-id-preview { border-radius: 22px; overflow: hidden; background: var(--color-success); }
+.student-reference #studentIdCardView .student-id-preview { border-radius: 22px; overflow: hidden; background: #f4f8f5; box-shadow: 0 12px 30px rgb(15 54 37 / 12%); }
 .student-reference #studentIdCardView .student-id-preview > svg { display: block; width: 100%; height: auto; }
 .student-reference #studentIdCardView .student-id-side-tabs { display: flex; justify-content: center; gap: 6px; margin: 12px 0; }
 .student-reference #studentIdCardView .student-id-side-tabs button { min-height: 36px; padding: 6px 12px; border: 0; background: transparent; color: var(--color-text-secondary); border-radius: 12px; font-size: 12px; }
@@ -4290,12 +4290,7 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
     color: var(--pay-on-hero);
     box-shadow: none;
   }
-  /* The global decorative SVG stroke is for line icons, not the ID card's
-     text. Remove that inherited outline so the white card lettering stays
-     clean and readable on the brand-green card. */
-  body.student-reference #studentIdCardPreview > svg text {
-    fill: var(--pay-on-hero);
-    stroke: none;
-  }
+  /* Card artwork sets its own dark-on-light and white-on-green text colors. */
+  body.student-reference #studentIdCardPreview > svg text { stroke: none; }
 }
 }

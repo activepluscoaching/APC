@@ -4293,8 +4293,6 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   /* Card artwork sets its own dark-on-light and white-on-green text colors. */
   body.student-reference #studentIdCardPreview > svg text { stroke: none; }
 }
-}
-
 
 /* Accessible, mobile-first rich-text lesson sheet editor and reading surface. */
 .course-rich-field { display: grid; gap: 8px; min-width: 0; }
@@ -4317,4 +4315,5 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   .course-rich-editor { min-height: 160px; padding: 11px; }
   .course-rich-toolbar button { flex: 0 0 auto; }
   .course-rich-reading { font-size: 1rem; line-height: 1.85; }
+}
 }

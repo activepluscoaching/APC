@@ -538,9 +538,9 @@ export function initExamManager(container, role) {
         return;
       }
       const answer = $('[data-manual-answer]')?.value || 'A';
-      const block = [`প্রশ্ন: ${question}`, ...options.map(([key, value]) => `${key}: ${value}`), `উত্তর: ${answer}`].join('\\n');
+      const block = [`প্রশ্ন: ${question}`, ...options.map(([key, value]) => `${key}: ${value}`), `উত্তর: ${answer}`].join('\n');
       const source = $('[name=template]');
-      source.value = source.value.trim() ? `${source.value.trim()}\\n---\\n${block}` : block;
+      source.value = source.value.trim() ? `${source.value.trim()}\n---\n${block}` : block;
       source.dispatchEvent(new Event('input', { bubbles: true }));
       $('[data-manual-question]').value = '';
       options.forEach(([key]) => { const input = $(`[data-manual-option="${key}"]`); if (input) input.value = ''; });

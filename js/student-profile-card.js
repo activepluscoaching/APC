@@ -26,7 +26,7 @@ function qrMarkup(student) {
   for (let y = 0; y < count; y++) for (let x = 0; x < count; x++) {
     if (qr.isDark(y, x)) paths += `M${x + 4},${y + 4}h1v1h-1z`;
   }
-  return `<svg x="102" y="32" width="176" height="176" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="white"/><path d="${paths}" fill="#0e7a55"/></svg>`;
+  return `<svg x="57" y="174" width="180" height="180" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="white"/><path d="${paths}" fill="#0e7a55"/></svg>`;
 }
 const maskedPhone = value => {
   const digits = String(value || '').replace(/[^0-9০-৯]/g, '');
@@ -136,11 +136,34 @@ export function initStudentProfileCard({ getStudent }) {
     if ($('#studentIdCardFlip')) $('#studentIdCardFlip').textContent = cardSide === 'front' ? 'পেছনে' : 'সামনে';
   }
   const cardFileName = () => `student-id-${String(getStudent()?.id || '').replace(/[^a-zA-Z0-9_-]/g, '_')}-${cardSide}.svg`;
-  function downloadCard() {
+  async function cardPNGFile() {
+    const svgBlob = new Blob([cardSVG()], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1712; canvas.height = 1080;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('কার্ডের ছবি তৈরি করা যায়নি।');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('PNG তৈরি করা যায়নি।');
+      return new File([blob], cardFileName().replace('.svg', '.png'), { type: 'image/png' });
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function downloadCard() {
     if (!getStudent()?.id) return showFeedback('শিক্ষার্থীর তথ্য পাওয়া যায়নি।');
-    const url = URL.createObjectURL(new Blob([cardSVG()], { type: 'image/svg+xml;charset=utf-8' }));
-    const link = document.createElement('a'); link.href = url; link.download = cardFileName();
-    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+      const file = await cardPNGFile();
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a'); link.href = url; link.download = file.name;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (error) { showFeedback(error.message || 'কার্ড ডাউনলোড করা যায়নি।'); }
   }
   $('#profileIdCardButton')?.addEventListener('click', () => { cardSide = 'front'; setView('student-id-card'); paintCard(); });
   document.querySelectorAll('[data-id-card-side]').forEach(button => button.addEventListener('click', () => {
@@ -150,12 +173,13 @@ export function initStudentProfileCard({ getStudent }) {
   $('#studentIdCardDownload')?.addEventListener('click', downloadCard);
   $('#studentIdCardShare')?.addEventListener('click', async () => {
     if (!getStudent()?.id) return;
-    const file = new File([cardSVG()], cardFileName(), { type: 'image/svg+xml' });
-    if (!navigator.canShare?.({ files: [file] })) {
-      showFeedback('এই ব্রাউজারে ফাইল শেয়ার নেই। কার্ডটি ডাউনলোড করে শেয়ার করুন।'); return;
-    }
-    try { await navigator.share({ files: [file], title: 'Active Plus · শিক্ষার্থী কার্ড' }); }
-    catch (error) { if (error.name !== 'AbortError') showFeedback('শেয়ার করা যায়নি। ডাউনলোড করে শেয়ার করুন।'); }
+    try {
+      const file = await cardPNGFile();
+      if (!navigator.canShare?.({ files: [file] })) {
+        showFeedback('এই ব্রাউজারে ফাইল শেয়ার নেই। কার্ডটি ডাউনলোড করে শেয়ার করুন।'); return;
+      }
+      await navigator.share({ files: [file], title: 'Active Plus · শিক্ষার্থী কার্ড' });
+    } catch (error) { if (error.name !== 'AbortError') showFeedback(error.message || 'শেয়ার করা যায়নি। ডাউনলোড করে শেয়ার করুন।'); }
   });
   window.addEventListener('apc-view-change', event => { if (event.detail?.view === 'student-id-card') paintCard(); });
   window.addEventListener('apc-session-ready', refresh);

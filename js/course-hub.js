@@ -195,7 +195,7 @@ export function initCourseHub({ getStudent, onAction = () => {} } = {}) {
           '<h4>' + esc(record.title) + '</h4></div>' +
         '</header>' +
         (record.description ? '<p class="course-item-desc">' + esc(record.description) + '</p>' : '') +
-        (body ? '<div class="course-item-body">' + body + '</div>' : '') +
+        (body ? '<div class="course-item-body course-rich-reading">' + body + '</div>' : '') +
         (link
           ? '<a class="course-item-link" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">' +
               (type === 'video' ? 'ভিডিও দেখুন' : type === 'pdf' ? 'PDF খুলুন' : 'সংযুক্তি খুলুন') +

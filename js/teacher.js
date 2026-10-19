@@ -462,6 +462,7 @@ function render() { renderHome(); renderRecords(); renderStudents(); renderTeach
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
 const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'students', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
 function setView(view) {
+  if (view === 'exams') view = 'online-exams';
   if (!TEACHER_VIEWS.includes(view)) return;
   /* The nine routine pages are one screen now; their routes stay as aliases
      so old deep links and notifications keep landing on the right tab. */
@@ -962,9 +963,13 @@ async function showTeacherShell() {
   }
   $('#teacherShell').hidden = false;
   // A refresh (or a shared link) reopens the page that was open.
-  const wanted = routeName();
+  const rawWanted = routeName();
+  const wanted = rawWanted === 'exams' ? 'online-exams' : rawWanted;
   setView(TEACHER_VIEWS.includes(wanted) ? wanted : 'home');
-  onRouteChange(name => { if (TEACHER_VIEWS.includes(name) && name !== state.view) setView(name); });
+  onRouteChange(name => {
+    const canonical = name === 'exams' ? 'online-exams' : name;
+    if (TEACHER_VIEWS.includes(canonical) && canonical !== state.view) setView(canonical);
+  });
   const loaded = await reload();
   /* Settings → the shared five-group structure. The profile card, password row
      and theme switch keep their homes; the hub adds the notification group and

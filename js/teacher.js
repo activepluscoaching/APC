@@ -569,7 +569,7 @@ function showEditor(type, old = null) {
     event.preventDefault(); const form = event.currentTarget;
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(new FormData(form));
-    save(form, () => teachingRepository.saveActivity({ ...values, type, id: old?.id, date: type === 'suggestion' ? a.date : values.date }), 'কাজটি সংরক্ষণ করা হয়েছে');
+    save(form, () => teachingRepository.saveActivity({ ...values, type, id: old?.id, date: type === 'suggestion' ? a.date : values.date }), type === 'suggestion' ? (values.status === 'published' ? 'সাজেশন প্রকাশিত — শিক্ষার্থী অ্যাপে দেখা যাবে' : 'সাজেশন খসড়া হিসেবে সংরক্ষিত হয়েছে') : 'কাজটি সংরক্ষণ করা হয়েছে');
   });
 }
 // Reuse the same fields, validation and saveActivity path. The simplified

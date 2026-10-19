@@ -23,6 +23,7 @@ import { KEYS, readRaw, writeRaw, listDocuments } from './database.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { classById, listClasses, subjectsForClass } from './academics.js';
 import { isTeacherAssignedSubject } from './teacher-assignments.js';
+import { sanitizeRichHtml } from './sanitize.js';
 
 export const COURSE_CONTENT_KEY = KEYS.courseContent;
 export const COURSE_VERSION = 1;
@@ -204,6 +205,7 @@ function clean(patch, { records, id, actor }) {
   if (title.length > 160) throw new Error('শিরোনাম সর্বোচ্চ ১৬০ অক্ষর।');
   const description = text(patch.description);
   const content = text(patch.content);
+  const richContent = sanitizeRichHtml(patch.richContent || '');
   if (description.length > 600) throw new Error('সংক্ষিপ্ত বর্ণনা সর্বোচ্চ ৬০০ অক্ষর।');
   if (content.length > 8000) throw new Error('মূল লেখা সর্বোচ্চ ৮০০০ অক্ষর।');
   const link = text(patch.attachmentUrl);
@@ -223,6 +225,7 @@ function clean(patch, { records, id, actor }) {
     type,
     description,
     content,
+    richContent,
     attachmentUrl: link,
     thumbnail,
     createdBy: text(patch.createdBy) || actor || '',

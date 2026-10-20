@@ -171,6 +171,7 @@ $('#payCollectionForm').addEventListener('submit',async event=>{
   state.today=saved.today; renderToday();
   clearSelection(); search.value=''; state.matches=[]; renderResults(); $('#paySearchStatus').textContent=''; $('#paySearchClear').hidden=true;
   toast('পেমেন্ট সংরক্ষিত হয়েছে; অনুমোদন বাকি।','success');
+  /* entry → receipt → daily collection */
   state.afterReceipt='home';
   openReceipt(saved.transaction);
 });

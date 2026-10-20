@@ -586,8 +586,10 @@ async function fetchWeatherSnapshot() {
 }
 
 export async function paintAuthSky(now = new Date()) {
-  let snapshot = readWeatherCache();
-  if (!snapshot || Date.now() - Number(snapshot.at) > 30 * 60 * 1000) {
+  // When rendering a supplied historical/future time, don't reuse today's weather.
+  const simulatedTime = Math.abs(Date.now() - now.getTime()) > 5 * 60 * 1000;
+  let snapshot = simulatedTime ? null : readWeatherCache();
+  if (!simulatedTime && (!snapshot || Date.now() - Number(snapshot.at) > 30 * 60 * 1000)) {
     try {
       const fresh = await fetchWeatherSnapshot();
       if (fresh) {

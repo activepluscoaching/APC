@@ -1545,8 +1545,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
     transition: none !important;
   }
 }
-}
-
 /* Reference student home: flat, quiet cards. Kept portal-scoped so staff,
    payment and login screens retain their existing skin and theme tokens. */
 @media screen {
@@ -4314,4 +4312,5 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   .course-rich-editor { min-height: 160px; padding: 11px; }
   .course-rich-toolbar button { flex: 0 0 auto; }
   .course-rich-reading { font-size: 1rem; line-height: 1.85; }
+}
 }

@@ -77,7 +77,7 @@ export function studentIdCardSVG(student, photo = '', side = 'front') {
     '<rect x="28" y="440" width="800" height="60" rx="14" fill="#f1f8f4"/>' +
     '<text x="428" y="465" text-anchor="middle" font-size="18" font-weight="650" fill="#0e7a55">কার্ডটি হারিয়ে গেলে Active Plus Coaching-এ যোগাযোগ করুন</text>' +
     '<text x="428" y="489" text-anchor="middle" font-size="16" fill="#61746b">এটি সরকারি পরিচয়পত্র নয়; QR-এ শিক্ষার্থী আইডি রয়েছে</text>';
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="856" height="540" viewBox="0 0 856 540" role="img" aria-label="ডিজিটাল আইডি কার্ড">' +
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="856" height="540" viewBox="0 0 856 540" role="img" aria-label="' + esc('ডিজিটাল আইডি কার্ড' + (student?.institution ? ' — ' + student.institution : '')) + '">' +
     '<rect width="856" height="540" rx="28" fill="#ffffff"/><rect x="1.5" y="1.5" width="853" height="537" rx="27" fill="none" stroke="#d9e5de" stroke-width="3"/>' +
     '<g font-family="Noto Sans Bengali, sans-serif">' + (side === 'back' ? back : front) + '</g></svg>';
 }

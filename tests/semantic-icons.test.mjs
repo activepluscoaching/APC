@@ -39,6 +39,9 @@ test('icon refresh preserves control routes, IDs and action attributes from appr
    continue;
   }
   const old=new JSDOM(execFileSync('git',['show',`f2571fb:${page}.html`],{encoding:'utf8'})).window.document;
+  /* The teacher's existing "পরীক্ষা নিন" hint now targets the explicit online-exams route;
+     both routes resolve to the same panel, but notifications and task links use online-exams. */
+  if(page==='teacher') old.querySelector('.admin-bottom [data-teacher-view="exam"]')?.setAttribute('data-teacher-view','online-exams');
   const now=controls(current);
   if(page==='manager'||page==='admin'){
    if(page==='manager'){

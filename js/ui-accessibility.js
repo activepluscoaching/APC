@@ -45,6 +45,15 @@ function start() {
     const opener = event.relatedTarget;
     if (dialog && dialog !== activeDialog && opener && !dialog.contains(opener)) previousFocus.set(dialog, opener);
   });
+  /* Bengali constraint messages — the native bubbles are English
+     ("Please fill out this field" → «এই ঘর পূরণ করুন»). */
+  document.addEventListener('invalid', event => {
+    const f = event.target, v = f.validity;
+    f.setCustomValidity?.(!v ? '' : v.valueMissing ? 'এই ঘর পূরণ করুন'
+      : v.patternMismatch || v.typeMismatch ? 'সঠিক তথ্য লিখুন'
+        : v.tooShort ? `কমপক্ষে ${f.minLength} অক্ষর লিখুন` : '');
+  }, true);
+  document.addEventListener('input', event => event.target.setCustomValidity?.(''), true);
   enhance();
   new MutationObserver(enhance).observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['hidden','class']});
   document.addEventListener('keydown', event => {

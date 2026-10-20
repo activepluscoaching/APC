@@ -26,6 +26,60 @@ export const NOTIFICATIONS_KEY = KEYS.notifications;
 export const NOTIFICATION_SETTINGS_KEY = KEYS.notificationSettings;
 export const RECORDS_VERSION = 1;
 export const MAX_RECORDS_PER_USER = 600;
+const SHARED_READ_PREFIX = '__apcNotificationSeenV1_';
+const MAX_SHARED_RECEIPTS_PER_USER = 600;
+
+/* Notification receipts are mirrored as small, opaque per-user settings
+   records. Settings already has the deployed sync path/rules; adding one
+   top-level key per receipt lets the existing record outbox merge concurrent
+   reads without replacing the app config or introducing a new RTDB path. */
+function receiptHash(value) {
+  let first = 0x811c9dc5, second = 0x9e3779b9;
+  for (const char of String(value)) {
+    const code = char.codePointAt(0);
+    first = Math.imul(first ^ code, 0x01000193) >>> 0;
+    second = Math.imul(second ^ code, 0x85ebca6b) >>> 0;
+  }
+  return `${first.toString(36)}_${second.toString(36)}`;
+}
+
+function sharedReadKey(userId, key) {
+  return `${SHARED_READ_PREFIX}${receiptHash(userId)}_${receiptHash(key)}`;
+}
+
+function readSharedSettings() {
+  try {
+    const raw = readRaw(KEYS.settings);
+    if (raw == null) return {};
+    const value = JSON.parse(raw);
+    return isObject(value) ? value : null;
+  } catch { return null; }
+}
+
+function receiptState(userId, key, settings = readSharedSettings()) {
+  if (!settings) return undefined;
+  const property = sharedReadKey(userId, key);
+  if (!Object.hasOwn(settings, property)) return undefined;
+  if (settings[property] === false) return false;
+  return Number.isFinite(Number(settings[property])) && Number(settings[property]) > 0;
+}
+
+function saveSharedReceipt(userId, key, value) {
+  const settings = readSharedSettings();
+  if (!settings) return false;
+  const property = sharedReadKey(userId, key);
+  const stamp = Math.abs(Number(value) || Date.now());
+  const nextValue = value === false ? -stamp : stamp;
+  if (settings[property] === nextValue) return true;
+  settings[property] = nextValue;
+  const ownerPrefix = `${SHARED_READ_PREFIX}${receiptHash(userId)}_`;
+  const receipts = Object.entries(settings)
+    .filter(([name]) => name.startsWith(ownerPrefix))
+    .sort((left, right) => Math.abs(Number(left[1]) || 0) - Math.abs(Number(right[1]) || 0));
+  for (const [name] of receipts.slice(0, Math.max(0, receipts.length - MAX_SHARED_RECEIPTS_PER_USER))) delete settings[name];
+  try { writeRaw(KEYS.settings, JSON.stringify(settings)); return true; }
+  catch { return false; }
+}
 
 /** Where each notification type lives, in the person's own words. */
 export const SECTION_LABEL = Object.freeze({
@@ -175,16 +229,19 @@ export function markRead(userId, keys, at = Date.now()) {
     changed += 1;
     return { ...record, read: true, readAt: new Date(at).toISOString() };
   });
+  for (const key of wanted) saveSharedReceipt(userId, key, at);
   return changed;
 }
 
 export function markAllRead(userId, at = Date.now()) {
+  const keys = listNotifications(userId).filter(record => record.read === false).map(record => record.key);
   let changed = 0;
   writeUser(userId, record => {
     if (record.read !== false) return record;
     changed += 1;
     return { ...record, read: true, readAt: new Date(at).toISOString() };
   });
+  for (const key of keys) saveSharedReceipt(userId, key, at);
   return changed;
 }
 
@@ -199,6 +256,7 @@ export function markUnread(userId, keys) {
     }
     return record;
   });
+  for (const key of wanted) saveSharedReceipt(userId, key, false);
   return changed;
 }
 
@@ -284,20 +342,39 @@ export function syncNotifications({ userId, feed = [], legacyRead = [], now = Da
   const items = Array.isArray(feed) ? feed : [];
   const live = new Set(items.map(item => text(item?.key)).filter(Boolean));
   const stamp = Number(now) || Date.now();
+  const legacy = new Set((Array.isArray(legacyRead) ? legacyRead : []).map(text));
+  const settings = readSharedSettings();
+  // Promote existing device-local receipts into the already-synced settings
+  // collection, so old installs gradually establish the cross-device baseline.
+  for (const key of legacy) {
+    if (receiptState(owner, key, settings) === undefined) saveSharedReceipt(owner, key, stamp);
+  }
+  const receipt = key => receiptState(owner, key, settings);
   let resolved = false;
   const base = store.records.map(record => {
-    if (text(record.userId) !== owner || record.type !== 'homework' || record.read !== false || live.has(text(record.key))) return record;
+    if (text(record.userId) !== owner) return record;
+    const key = text(record.key);
+    const shared = receipt(key);
+    if (shared !== undefined && (record.read !== shared || (shared && !record.readAt))) {
+      resolved = true;
+      return { ...record, read: shared, readAt: shared ? (record.readAt || new Date(stamp).toISOString()) : '' };
+    }
+    if (record.type !== 'homework' || record.read !== false || live.has(key)) return record;
     resolved = true;
     return { ...record, read: true, readAt: new Date(stamp).toISOString() };
   });
   const known = new Set(base.filter(record => text(record.userId) === owner).map(record => text(record.key)));
-  const legacy = new Set((Array.isArray(legacyRead) ? legacyRead : []).map(text));
   const fresh = [];
   for (const item of items) {
     const key = text(item?.key);
     if (!key || known.has(key)) continue;
     known.add(key);
-    fresh.push(recordFromFeedItem(item, { userId: owner, read: legacy.has(key), at: now }));
+    const shared = receipt(key);
+    fresh.push(recordFromFeedItem(item, {
+      userId: owner,
+      read: shared === undefined ? legacy.has(key) : shared,
+      at: shared === true ? Number(settings?.[sharedReadKey(owner, key)]) || now : now
+    }));
   }
   if (!fresh.length && !resolved) return { created: 0, kept: 0, records: listNotifications(owner) };
   const withIds = [];

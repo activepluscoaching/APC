@@ -276,7 +276,13 @@ export function loadAppConfig() {
 }
 
 export function saveAppConfig(config) {
-  const saved = writeJSON(STORAGE_KEYS.appConfig, config);
+  // Notification read receipts share the existing synced settings collection.
+  // An Admin page may hold an older in-memory config when a remote receipt
+  // arrives, so preserve those internal receipt keys when saving normal settings.
+  const current = readJSON(STORAGE_KEYS.appConfig, {});
+  const receipts = Object.fromEntries(Object.entries(current || {})
+    .filter(([key]) => key.startsWith('__apcNotificationSeenV1_')));
+  const saved = writeJSON(STORAGE_KEYS.appConfig, { ...(config || {}), ...receipts });
   // The admin who typed the urgent announcement does not get their own push.
   if (saved) {
     try {

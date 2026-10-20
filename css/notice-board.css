@@ -33,6 +33,13 @@
 .notice-board-open:hover{background:var(--color-primary);color:var(--color-on-primary,#fff)}
 .notice-board-detail{display:grid;gap:var(--space-3);padding:var(--space-4);margin:0 0 var(--space-4);border:1px solid var(--color-primary);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:0 12px 34px color-mix(in srgb,var(--color-primary) 11%,transparent);scroll-margin-top:calc(90px + var(--space-3))}
 .notice-board-detail[hidden]{display:none!important}
+/* Single view: opening a notice makes the list leave the screen and the
+   detail becomes a fixed modal sheet over the board (backdrop/×/Esc closes). */
+.notice-board-list[hidden]{display:none!important}
+body.notice-board-detail-open{overflow:hidden}
+body.notice-board-detail-open:before{content:"";position:fixed;inset:0;z-index:70;background:color-mix(in srgb,var(--color-text) 42%,transparent)}
+.notice-board-detail:not([hidden]){position:fixed;z-index:71;left:0;right:0;bottom:0;top:auto;width:100%;max-height:88vh;overflow-y:auto;margin:0;border:0;border-top:1px solid var(--color-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding-bottom:calc(var(--space-4) + env(safe-area-inset-bottom,0px));box-shadow:0 -14px 44px color-mix(in srgb,var(--color-text) 24%,transparent);scroll-margin-top:0;overscroll-behavior:contain}
+@media(min-width:760px){.notice-board-detail:not([hidden]){top:50%;bottom:auto;left:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 48px));max-height:84vh;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:0 24px 64px color-mix(in srgb,var(--color-text) 28%,transparent)}}
 .notice-board-detail h2{margin:0;font-size:var(--font-lg);line-height:1.4;overflow-wrap:anywhere}
 .notice-board-detail p{margin:0;color:var(--color-text-secondary);font-size:var(--font-md);line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
 .notice-board-detail-close{display:grid;place-items:center;width:36px;height:36px;flex:none;border:1px solid var(--color-border);border-radius:50%;background:var(--color-surface);color:var(--color-text-secondary);font-size:22px}

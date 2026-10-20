@@ -14,6 +14,7 @@ import { toBanglaNumber as bn } from './ui.js';
 import { setView } from './shell.js';
 import { classByName, subjectsForClass, listChapters } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 import { courseRepository, courseProgress, watchCourses, COURSES_KEY } from './course-data.js';
 import { listQuestionsForStudent, questionRowsFromPastExams, QUESTION_TYPES } from './question-bank.js';
 import { examRepository as examRepo, examMatchesStudent, isStudentVisibleExam, watchExams, examResults, totalMarks, gradeFor } from './exam-data.js';
@@ -145,11 +146,11 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
 
   function contentCard(record) {
     const link = /^https?:\/\//i.test(record.attachmentUrl || '') ? record.attachmentUrl : '';
-    const body = text(record.content || record.description || '').slice(0, 600);
+    const body = record.richContent ? sanitizeRichHtml(record.richContent) : esc(text(record.content || record.description || '').slice(0, 600)).replace(/\n/g, '<br>');
     return `<article class="course-item" data-study-item="${esc(record.id)}">
       <header class="course-item-head"><span class="course-item-type">${esc(record.type === 'pdf' ? 'PDF' : record.type === 'important_question' ? 'গুরুত্বপূর্ণ প্রশ্ন' : record.type === 'model_test' ? 'মডেল টেস্ট' : record.type === 'previous_question' ? 'পূর্বের প্রশ্ন' : record.type === 'mcq' ? 'MCQ' : 'নোট')}</span>
         <div><h3>${esc(record.title)}</h3><small>${esc([text(record.subject) || '', chapterOf(record)].filter(Boolean).join(' • '))}</small></div></header>
-      ${body ? `<div class="course-item-body">${esc(body).replace(/\n/g, '<br>')}</div>` : ''}
+      ${body ? `<div class="course-item-body course-rich-reading">${body}</div>` : ''}
       ${link ? `<a class="course-item-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer">ফাইল খুলুন <svg class="resource-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>` : ''}
     </article>`;
   }
@@ -307,7 +308,10 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     const counts = teaching?.activityCounts?.() || { homework: 0, suggestion: 0 };
     const set = (key, value) => {
       const badge = bar.querySelector(`[data-study-count="${key}"]`);
-      if (badge) badge.textContent = num(value);
+      if (badge) {
+        badge.textContent = num(value);
+        badge.classList.toggle('is-zero', !value);
+      }
     };
     const publishedCourses = courseRepository.readStudentCoursesSync(student());
     renderTodayStudy(publishedCourses);
@@ -439,14 +443,39 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     renderBank(); paintCounts();
   }
 
-  function loadShelves() {
+  async function loadShelves() {
     try {
       const rows = recordsFor();
-      /* Both shelves read the same published course-content store; the section
-         picks which record types it shows (nothing is copied anywhere). */
-      suggestionRecords = rows.filter(record => SUGGESTION_SECTIONS.includes(courseTypeOf(record))
+      /* Published course records and published teacher suggestions share this
+         student shelf; the original records remain in their own source store. */
+      const courseSuggestions = rows.filter(record => SUGGESTION_SECTIONS.includes(courseTypeOf(record))
         || ['mcq', 'pdf'].includes(courseTypeOf(record)));
-      materialRecords = rows.filter(record => ['note', 'pdf', 'lesson', 'video', 'previous_question', 'model_test'].includes(courseTypeOf(record)));
+      let activitySuggestions = [];
+      try {
+        const { teachingRepository, publishedForStudent } = await import('./teaching-data.js');
+        const db = await teachingRepository.listForStudent(student().id);
+        activitySuggestions = publishedForStudent(db?.activities || [], student())
+          .filter(activity => activity.type === 'suggestion')
+          .map(activity => ({
+            id: activity.id,
+            type: 'suggestion',
+            title: activity.title,
+            subject: activity.subject,
+            chapterName: '',
+            content: activity.details || '',
+            description: '',
+            attachmentUrl: activity.resourceURL || '',
+            createdAt: activity.updatedAt || activity.createdAt || activity.date || '',
+            className: activity.className,
+            group: activity.group,
+            published: true
+          }));
+      } catch {
+        /* Keep course-content suggestions visible if activity storage is unavailable. */
+      }
+      const seen = new Set(courseSuggestions.map(record => String(record.id)));
+      suggestionRecords = [...courseSuggestions, ...activitySuggestions.filter(record => !seen.has(String(record.id)))];
+
       suggestionReady = true; suggestionError = '';
       materialReady = true; materialError = '';
     } catch {
@@ -461,7 +490,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
 
   async function refresh() {
     fillFilters();
-    loadShelves();
+    await loadShelves();
     await loadBank();
   }
 

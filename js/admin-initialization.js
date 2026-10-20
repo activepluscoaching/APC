@@ -29,15 +29,15 @@ const CLAIM_BUDGET_MS = 12000;
 
 /** The Admin Account already exists — creation is closed, login is the way in. */
 export const ADMIN_EXISTS_MESSAGE =
-  'প্রথম Admin Account ইতিমধ্যে তৈরি হয়েছে — PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT.';
+  'প্রথম অ্যাডমিন অ্যাকাউন্ট ইতিমধ্যে তৈরি হয়েছে — বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন।';
 
 /** The cloud could not be asked, so "no Admin exists" may not be concluded. */
 export const ADMIN_VERIFY_REQUIRED_MESSAGE =
-  'Existing Admin Account আছে কি না যাচাই করতে ইন্টারনেট সংযোগ দরকার (Internet connection required) — ইন্টারনেট চালু করে আবার চেষ্টা করুন।';
+  'বিদ্যমান অ্যাডমিন অ্যাকাউন্ট আছে কি না যাচাই করতে ইন্টারনেট সংযোগ দরকার — ইন্টারনেট চালু করে আবার চেষ্টা করুন।';
 
 /** Verification succeeded, but the atomic cloud claim could not be completed. */
 export const ADMIN_CLAIM_FAILED_MESSAGE =
-  'Admin Account ক্লাউডে সংরক্ষণ করা যায়নি — ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+  'অ্যাডমিন অ্যাকাউন্ট ক্লাউডে সংরক্ষণ করা যায়নি — ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
 
 function withDeadline(promise, what, budget) {
   let timer;

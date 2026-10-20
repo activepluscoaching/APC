@@ -282,9 +282,9 @@ function studentSnapshot(db, student) {
   };
 }
 function assertAssigned(className, group = '', subject = '') {
-  if (!isTeacherAssigned(teachingScopeUsername(), className, group)) fail('এই class/batch-এ আপনার Manager assignment নেই।');
+  if (!isTeacherAssigned(teachingScopeUsername(), className, group)) fail('এই ক্লাস/ব্যাচে আপনার ম্যানেজার অ্যাসাইনমেন্ট নেই।');
   if (subject && !isTeacherAllowedSubject(teachingScopeUsername(), className, subject, group)) {
-    fail('এই বিষয়ে আপনার Manager assignment নেই।');
+    fail('এই বিষয়ে আপনার ম্যানেজার অ্যাসাইনমেন্ট নেই।');
   }
 }
 async function roleProfileAccount(role) {
@@ -308,9 +308,9 @@ async function roleProfileAccount(role) {
   return account;
 }
 async function requireRoleSession(role) {
-  if (!(await hasStaffSession(role))) fail(`সক্রিয় ${role === 'teacher' ? 'Teacher' : 'Manager'} session ছাড়া এই কাজ করা যাবে না।`);
+  if (!(await hasStaffSession(role))) fail(`সক্রিয় ${role} session ছাড়া এই কাজ করা যাবে না।`);
   const account = await roleProfileAccount(role);
-  if (!account || ['disabled', 'inactive', 'rejected'].includes(account.status) || account.accountStatus === 'disabled') fail(`সক্রিয় ${role === 'teacher' ? 'Teacher' : 'Manager'} profile ছাড়া এই কাজ করা যাবে না।`);
+  if (!account || ['disabled', 'inactive', 'rejected'].includes(account.status) || account.accountStatus === 'disabled') fail(`সক্রিয় ${role} profile ছাড়া এই কাজ করা যাবে না।`);
 }
 async function mutate(change) {
   const save = () => {
@@ -324,12 +324,13 @@ async function mutate(change) {
 }
 function ownedActivity(db, id) {
   const activity = db.activities.find(a => a.id === id);
-  if (!activity || !isOwnTeacherRecord(activity.teacherId) || !isTeacherAssigned(teachingScopeUsername(), activity.className, activity.group) || !isTeacherAllowedSubject(teachingScopeUsername(), activity.className, activity.subject, activity.group)) fail('কাজটি পাওয়া যায়নি বা এই class/batch-এর assignment নেই।');
+  if (!activity || !isOwnTeacherRecord(activity.teacherId) || !isTeacherAssigned(teachingScopeUsername(), activity.className, activity.group) || !isTeacherAllowedSubject(teachingScopeUsername(), activity.className, activity.subject, activity.group)) fail('কাজটি পাওয়া যায়নি বা এই ক্লাস/ব্যাচের অ্যাসাইনমেন্ট নেই।');
   return activity;
 }
 export const teachingRepository = {
   async list(actor = null) {
     if (actor?.role === 'student') return teachingRepository.listForStudent(actor.studentId || actor.id);
+    if (actor?.role === 'admin') { await requireRoleSession('admin'); return readData(); }
     if (actor?.role === 'manager') { await requireRoleSession('manager'); return readData(); }
     if (actor?.role === 'teacher') { await requireRoleSession('teacher'); return teacherSnapshot(readData()); }
     if (await hasStaffSession('manager')) { await requireRoleSession('manager'); return readData(); }
@@ -352,11 +353,11 @@ export const teachingRepository = {
     assertAssigned(fields.className, fields.group, fields.subject);
     const activeId = teacher?.staffId && teacher?.kind !== 'system' ? String(teacher.staffId) : currentTeacherId();
     const teacherName = String(teacher?.fullName || teacher?.username || '').trim();
-    if (!teacherName) fail('Teacher profile পাওয়া যায়নি।');
+    if (!teacherName) fail('শিক্ষক প্রোফাইল পাওয়া যায়নি।');
     const db = await mutate(db => {
       const old = input.id ? ownedActivity(db, input.id) : null;
       if (old && old.type !== fields.type) fail('কাজের ধরন বদলানো যাবে না।');
-      if (old?.type === 'routine' && Object.values(old.progress || {}).some(row => nowEpoch() - Date.parse(row.updatedAt) > 7 * 86400000)) fail('৭ দিন পেরিয়েছে; এই উপস্থিতি ক্লাস শুধু Manager সংশোধন করতে পারবেন।');
+      if (old?.type === 'routine' && Object.values(old.progress || {}).some(row => nowEpoch() - Date.parse(row.updatedAt) > 7 * 86400000)) fail('৭ দিন পেরিয়েছে; এই উপস্থিতি ক্লাস শুধু ম্যানেজার সংশোধন করতে পারবেন।');
       if (old && Object.keys(old.progress).length && (old.className !== fields.className || groupKey(old.group) !== groupKey(fields.group))) fail('নম্বর/অগ্রগতি আছে। এই কাজের শ্রেণি বা বিভাগ বদলানো যাবে না।');
       if (fields.type === 'exam' && old && Object.values(old.progress).some(p => Number(p.value) > fields.totalMarks)) fail('পূর্ণমান সংরক্ষিত নম্বরের চেয়ে কম হতে পারে না।');
       if (fields.status === 'published' && ['exam', 'routine'].includes(fields.type)) {
@@ -381,10 +382,24 @@ export const teachingRepository = {
     });
     return teacherSnapshot(db);
   },
-  async deleteActivity(id) {
-    await requireRoleSession('teacher');
-    const db = await mutate(data => { const activity = ownedActivity(data, id); if (activity.type === 'exam') fail('পরীক্ষার রেকর্ড এখানে মুছতে বা পরিবর্তন করতে পারবেন না।'); if (activity.type === 'routine' && Object.keys(activity.progress || {}).length) fail('উপস্থিতি থাকা ক্লাস মুছবেন না; Manager-এর সাহায্য নিন।'); data.activities = data.activities.filter(a => a.id !== id); });
-    return teacherSnapshot(db);
+  /* Teacher deletes own content; Admin/Manager may remove any non-exam
+     content for moderation (owner requirement: admin deletes everything,
+     manager deletes at least notices and can clear content records too).
+     Exam records and attendance-bearing routine classes stay protected for
+     every role — the workflows that own them already do. */
+  async deleteActivity(id, actor = { role: 'teacher' }) {
+    const role = actor?.role === 'manager' || actor?.role === 'admin' ? actor.role : 'teacher';
+    await requireRoleSession(role);
+    const db = await mutate(data => {
+      const activity = role === 'teacher'
+        ? ownedActivity(data, id)
+        : data.activities.find(row => row.id === id);
+      if (!activity) fail('কাজটি পাওয়া যায়নি।');
+      if (activity.type === 'exam') fail('পরীক্ষার রেকর্ড এখানে মুছতে বা পরিবর্তন করতে পারবেন না।');
+      if (activity.type === 'routine' && Object.keys(activity.progress || {}).length) fail('উপস্থিতি থাকা ক্লাস মুছবেন না; উপস্থিতি সংশোধনের জন্য উপস্থিতি সংশোধন ব্যবহার করুন।');
+      data.activities = data.activities.filter(row => row.id !== id);
+    });
+    return role === 'teacher' ? teacherSnapshot(db) : db;
   },
   async saveProgress(id, entries, actor = { role: 'teacher' }, reason = '') {
     await requireRoleSession(actor.role);
@@ -392,7 +407,7 @@ export const teachingRepository = {
       const activity = actor.role === 'teacher' ? ownedActivity(db, id) : db.activities.find(row => row.id === id);
       if (!activity) fail('উপস্থিতি ক্লাস পাওয়া যায়নি।');
       if (actor.role !== 'teacher' && activity.type !== 'routine') fail('এই কাজ সংশোধনের অনুমতি নেই।');
-      if (activity.type === 'exam') fail('নম্বর ও ফলাফল কেবল Manager-approved Examination workflow-এ পরিবর্তন করা যাবে।');
+      if (activity.type === 'exam') fail('নম্বর ও ফলাফল কেবল ম্যানেজার-অনুমোদিত পরীক্ষা ওয়ার্কফ্লোতে পরিবর্তন করা যাবে।');
       if (activity.status !== 'published' || activity.type === 'suggestion') fail('আগে কাজটি প্রকাশ করুন।');
       const allowed = (actor.role === 'teacher' ? roster() : approvedRoster()).filter(s => matchesStudent(activity, s));
       for (const [studentId, entry] of Object.entries(entries)) {

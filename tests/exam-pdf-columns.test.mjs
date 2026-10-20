@@ -37,7 +37,8 @@ test('a question taller than a whole column continues instead of looping', () =>
 
 test('the paper names the exam and only MCQ papers use two columns', () => {
   const source = read('js/exam-pdf.js');
-  assert.match(source, /পরীক্ষার নাম: \$\{exam\.title\}/, 'the heading reads পরীক্ষার নাম: <title>');
+  assert.match(source, /await drawParagraph\(exam\.title, \{ bold: true/, 'the paper opens on the bare exam title');
+  assert.doesNotMatch(source, /drawIdentity/, 'the identity summary table is gone from the paper start');
   assert.match(source, /columnMode = exam\.type === 'mcq'/, 'written papers keep the full width');
   assert.match(source, /colIndex = 1/, 'the flow moves to the right column');
 });

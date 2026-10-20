@@ -64,7 +64,7 @@ export function initStudentExams({ getStudent, getAccount }) {
     }
     const average = rows.reduce((sum, item) => sum + item.percent, 0) / rows.length;
     mount.innerHTML = `<div class="exam-summary"><h3>সারসংক্ষেপ</h3><dl><div><dt>প্রকাশিত ফলাফল</dt><dd>${num(rows.length)}</dd></div><div><dt>গড় শতকরা</dt><dd>${num(average.toFixed(1))}%</dd></div><div><dt>সামগ্রিক গ্রেড</dt><dd>${esc(gradeFor(average, 100))}</dd></div></dl></div>
-      <div class="exam-results">${rows.map(item => `<article class="exam-card"><span class="exam-tag">${esc(item.exam.subject || 'পরীক্ষা')}</span><h3>${esc(item.exam.title)}</h3><small>Exam ID ${esc(item.exam.id)} • প্রচেষ্টা ${num(item.row.number || 1)}</small><p><strong>${num(item.row.score)} / ${num(item.total)}</strong> • ${num(item.percent.toFixed(1))}% • গ্রেড ${esc(item.grade)}</p>${item.row.rank ? `<small>মেধাক্রম ${num(item.row.rank)}</small>` : ''}</article>`).join('')}</div>`;
+      <div class="exam-results">${rows.map(item => `<article class="exam-card"><span class="exam-tag">${esc(item.exam.subject || 'পরীক্ষা')}</span><h3>${esc(item.exam.title)}</h3><small>পরীক্ষা আইডি ${esc(item.exam.id)} • প্রচেষ্টা ${num(item.row.number || 1)}</small><p><strong>${num(item.row.score)} / ${num(item.total)}</strong> • ${num(item.percent.toFixed(1))}% • গ্রেড ${esc(item.grade)}</p>${item.row.rank ? `<small>মেধাক্রম ${num(item.row.rank)}</small>` : ''}</article>`).join('')}</div>`;
   }
   function paintHubLive(exams, now) {
     const host = document.querySelector('#examHubLiveList');
@@ -98,7 +98,11 @@ export function initStudentExams({ getStudent, getAccount }) {
         const key = item.dataset.examTab;
         item.setAttribute('aria-pressed', String(key === tab));
         const badge = item.querySelector('[data-exam-tab-count]');
-        if (badge) badge.textContent = num(counts[key] || 0);
+        if (badge) {
+          const count = counts[key] || 0;
+          badge.textContent = num(count);
+          badge.classList.toggle('is-zero', !count);
+        }
       });
     }
     const examWorkspace = document.querySelector('#studentExamWorkspace');
@@ -152,7 +156,7 @@ export function initStudentExams({ getStudent, getAccount }) {
       return `<article class="exam-card" data-student-exam="${esc(e.id)}">${examMeta(e)}<p class="exam-note">${stageTag(e)}${codeTag(e)}</p><p class="exam-note">${esc(e.instructions)}</p>${e.type === 'mcq' ? `<p class="exam-note">সব প্রশ্ন একসঙ্গে থাকবে। প্রতি ভুলে ${num(e.negative)} নম্বর কাটা হবে; সর্বনিম্ন মোট ০। প্রথম প্রবেশের সীমা ${num(e.lateMinutes)} মিনিট।</p>${queued ? `<p class="exam-message">${esc(attemptStage(attempts.find(a => a.status === 'queued'), e))}</p>` : ''}` : ''}
         <div class="exam-actions">${e.type === 'mcq' ? active && now < e.endAt ? button('resume', 'পরীক্ষায় ফিরে যাও', e.id, 'primary') : canFirst ? button('start', 'পরীক্ষা শুরু করো', e.id, 'primary') : retry ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : `<small>${now < e.startAt ? 'নির্ধারিত সময়ে পরীক্ষা শুরু হবে।' : now >= e.endAt ? 'পরীক্ষার সময় শেষ।' : attempts.length ? 'চলমান গড়ের নিচে হলে দ্বিতীয় সুযোগ এখানে আসবে।' : 'প্রথম প্রবেশের সময়সীমা শেষ।'}</small>` : now >= e.startAt ? button('paper', 'প্রশ্নপত্র PDF ডাউনলোড', e.id, 'primary') : '<small>শুরুর সময় হলে PDF পাওয়া যাবে।</small>'}
         ${e.resultsPublished ? button('results', 'প্রকাশিত ফলাফল ও ক্লাসের মেধাক্রম', e.id): e.type === 'mcq' ? `<small>সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।</small>` : '<small>ফলাফল Manager-এর প্রকাশের অপেক্ষায়।</small>'}${e.type === 'mcq' && now >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF', e.id) : ''}</div></article>`;
-    }).join('') || `<p class="exam-card">${visible.length ? EMPTY_TAB_TEXT[tab] : 'Admin এখনও কোনো পরীক্ষা প্রকাশ করেননি।'}</p>`}</div>`;
+    }).join('') || `<p class="exam-card">${visible.length ? EMPTY_TAB_TEXT[tab] : 'অ্যাডমিন এখনও কোনো পরীক্ষা প্রকাশ করেননি।'}</p>`}</div>`;
     paintTabs();
   }
   function activeExam(e, a) {
@@ -170,7 +174,7 @@ export function initStudentExams({ getStudent, getAccount }) {
     clock(); scrollTop();
   }
   function results(e, reset = true) {
-    if (!e.resultsPublished) { view = 'list'; examId = null; attemptId = null; list(); message(e.type === 'mcq' ? 'ফলাফল এখনো প্রকাশিত হয়নি — সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।' : 'ফলাফল এখনো Manager প্রকাশ করেননি।'); return; }
+    if (!e.resultsPublished) { view = 'list'; examId = null; attemptId = null; list(); message(e.type === 'mcq' ? 'ফলাফল এখনো প্রকাশিত হয়নি — সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।' : 'ফলাফল এখনো ম্যানেজার প্রকাশ করেননি।'); return; }
     view = 'results'; examId = e.id; attemptId = null;
     const mine = own(e), pending = mine.some(a => a.status === 'queued'), mean = firstAttemptMean(db, e.id);
     content.innerHTML = `<div class="exam-actions">${button('list', '← পরীক্ষার তালিকা')}${button('refresh', 'হালনাগাদ')}</div>${examMeta(e)}

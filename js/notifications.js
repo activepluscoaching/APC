@@ -7,9 +7,10 @@ import { mountStatusNotice } from './status-surface.js';
        new notice, urgent broadcast, exam or result arrives through the sync
        bridge while the app is open — including a backgrounded tab.
 
-   The rules live in js/notification-rules.js (pure, tested). This file only
-   reads local data, keeps this device's seen receipts and shows the
-   notification. It never uploads anything: the FCM device token is handled by
+   The rules live in js/notification-rules.js (pure, tested). This file reads
+   local feed data and keeps the inbox on-device; opaque per-user read receipts
+   are mirrored through the existing syncable settings collection. It does not
+   upload notification bodies. The FCM device token is handled by
    js/push-notifications.js, and that module is optional — if it fails, the
    centre still works.
 
@@ -662,6 +663,13 @@ export function refreshNotifications() {
   } catch (error) {
     console.warn('[Active Plus] notification records unavailable:', error?.name || 'unknown');
   }
+  // A read receipt may have arrived from another device in this refresh. Keep
+  // it out of the operating-system tray as well as the in-app card.
+  const readKeys = new Set(listNotifications(viewerKey)
+    .filter(record => record.read === true)
+    .map(record => record.key)
+    .filter(key => typeof key === 'string' && key));
+  plan.notify = plan.notify.filter(item => !readKeys.has(item.key));
   // The in-app card needs no phone permission (owner decision 2026-09-30).
   if (armed && inAppNotificationsEnabled()) queueInAppAlerts(generalNotificationItems(feed), generalNotificationItems(full));
   let delivered = 0;

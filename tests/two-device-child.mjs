@@ -567,6 +567,27 @@ const commands = {
     });
     return { items: items.map(item => ({ key: item.key, kind: item.kind, title: item.title, body: item.body })) };
   },
+  async 'record-notification-read'({ userId, feed, key }) {
+    const store = await mod('notification-store.js');
+    const before = readLocal(db.KEYS.settings) || {};
+    store.syncNotifications({ userId, feed });
+    store.markRead(userId, [key]);
+    const settings = readLocal(db.KEYS.settings) || {};
+    const receiptKey = Object.keys(settings).find(name => name.startsWith('__apcNotificationSeenV1_') && !Object.hasOwn(before, name));
+    return { record: store.notificationByKey(userId, key), receiptKey };
+  },
+  async 'wait-shared-notification-read'({ receiptKey }) {
+    await waitUntil(() => {
+      const value = readLocal(db.KEYS.settings)?.[receiptKey];
+      return typeof value === 'number' && value > 0;
+    });
+    return { hasReceipt: true };
+  },
+  async 'sync-notification-records'({ userId, feed }) {
+    const store = await mod('notification-store.js');
+    store.syncNotifications({ userId, feed });
+    return { records: store.listNotifications(userId) };
+  },
 
   async 'wait-record-status'({ key, id, status }) {
     await waitUntil(() => {

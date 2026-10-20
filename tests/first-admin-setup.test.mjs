@@ -168,7 +168,7 @@ test('a direct function call cannot create a second first Admin', async () => {
   });
   assert.equal(second.ok, false, 'the data layer refuses while one Admin exists');
   assert.equal(second.code, 'ADMIN_EXISTS');
-  assert.match(second.error, /PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT/);
+  assert.match(second.error, /বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন/);
   assert.equal(cloud.claims, 1, 'no second claim was even attempted');
   // Even a username smuggled in is ignored: the id is always generated.
   const smuggled = await createInitialAdmin({

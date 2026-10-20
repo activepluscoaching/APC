@@ -108,10 +108,10 @@ async function mutate(change) {
 }
 
 async function requireTeacherSession() {
-  if (!(await hasStaffSession('teacher'))) fail('সক্রিয় Teacher session ছাড়া এই কাজ করা যাবে না।');
+  if (!(await hasStaffSession('teacher'))) fail('সক্রিয় শিক্ষক সেশন ছাড়া এই কাজ করা যাবে না।');
   const profile = await currentTeacherProfile();
   if (!profile || ['disabled', 'inactive', 'rejected'].includes(profile.status || '')) {
-    fail('সক্রিয় Teacher profile ছাড়া এই কাজ করা যাবে না।');
+    fail('সক্রিয় শিক্ষক প্রোফাইল ছাড়া এই কাজ করা যাবে না।');
   }
   return profile;
 }
@@ -190,8 +190,8 @@ export const courseRepository = {
     const group = String(input.group ?? input.sectionId ?? '').normalize('NFC').trim();
     const subject = String(input.subject || '').normalize('NFC').trim();
     if (!className || !subject) fail('শ্রেণি ও বিষয় নির্বাচন করুন।');
-    if (!isTeacherAssigned(username, className, group)) fail('এই শ্রেণি/বিভাগে আপনার Manager assignment নেই।');
-    if (!isTeacherAllowedSubject(username, className, subject, group)) fail('এই বিষয়ে আপনার Manager assignment নেই।');
+    if (!isTeacherAssigned(username, className, group)) fail('এই শ্রেণি/বিভাগে আপনার ম্যানেজার অ্যাসাইনমেন্ট নেই।');
+    if (!isTeacherAllowedSubject(username, className, subject, group)) fail('এই বিষয়ে আপনার ম্যানেজার অ্যাসাইনমেন্ট নেই।');
     const activeId = teacher?.staffId && teacher?.kind !== 'system' ? String(teacher.staffId) : currentTeacherId();
     const teacherName = String(teacher?.fullName || teacher?.username || '').trim();
     const now = new Date().toISOString();

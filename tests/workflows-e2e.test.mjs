@@ -333,7 +333,7 @@ test('workflow 4 + 5 — the student sits the published exam from পরীক�
   const overview = back.$('#studentResultOverview').textContent;
   assert.match(overview, /সারসংক্ষেপ/, 'the published result opens with the summary');
   assert.match(overview, /ওয়ার্কফ্লো MCQ পরীক্ষা/, 'the exam is listed by name');
-  assert.match(overview, /Exam ID/, 'the Exam ID travels with the result');
+  assert.match(overview, /পরীক্ষা আইডি/, 'the Exam ID travels with the result');
   assert.match(overview, /গ্রেড/, 'the result carries a grade');
   assert.match(overview, /%/, 'the result carries a percentage');
   assert.match(overview, /\/\s*২/, 'the result carries score / total');

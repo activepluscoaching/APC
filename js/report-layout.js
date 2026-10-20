@@ -204,6 +204,39 @@ function drawTitleBlock(page, doc) {
   page.y = y + 16;
 }
 
+/* Owner decision (2026-10-20): a report opens straight on its main content.
+ * The dashboard-style summary tiles that used to sit BEFORE the first table or
+ * question list are dropped here, at layout time — builders keep their blocks
+ * (CSV exports, tests and cached documents are untouched) and the preview and
+ * PDF stay byte-identical because both read the same laid-out pages. A heading
+ * that only titles such a tiles row goes with it; a document with no table or
+ * questions at all (a tiles-only summary) renders unchanged — there would be
+ * nothing left to show. The branded header (institution, title, period) and
+ * footer are drawn by drawHeader/drawFooter, never filtered. */
+function withoutLeadingSummary(blocks) {
+  const list = Array.isArray(blocks) ? blocks : [];
+  const firstMain = list.findIndex(item => item && (item.type === 'table' || item.type === 'questions'));
+  const drop = new Set();
+  if (firstMain >= 0) {
+    for (let index = 0; index < firstMain; index += 1) {
+      if (list[index]?.type === 'tiles') drop.add(index);
+    }
+  } else if (list.length && list.some(item => item && item.type !== 'tiles')) {
+    // No table/questions anywhere: still skip a leading run of tiles when
+    // other blocks (kv/heading/paragraph) carry the actual content.
+    for (let index = 0; index < list.length && list[index]?.type === 'tiles'; index += 1) drop.add(index);
+  } else {
+    return list; // tiles-only (or empty) — the tiles ARE the document
+  }
+  for (let index = 0; index < list.length; index += 1) {
+    if (list[index]?.type !== 'heading') continue;
+    const next = list[index + 1];
+    if (next?.type === 'tiles' && drop.has(index + 1)) drop.add(index);
+  }
+  const kept = list.filter((_, index) => !drop.has(index));
+  return kept.length ? kept : list;
+}
+
 /**
  * Flow the document into pages.
  * `layoutReport` is synchronous: the wrapped lines it emits are the lines both
@@ -222,9 +255,10 @@ export function layoutReport(doc, logo = null) {
 
   drawTitleBlock(page, doc);
 
-  for (let index = 0; index < doc.blocks.length; index += 1) {
-    const current = doc.blocks[index];
-    const next = doc.blocks[index + 1];
+  const blocks = withoutLeadingSummary(doc.blocks);
+  for (let index = 0; index < blocks.length; index += 1) {
+    const current = blocks[index];
+    const next = blocks[index + 1];
     if (current.type === 'heading') layoutHeading(current, next, flow);
     else if (current.type === 'paragraph' || current.type === 'note') layoutParagraph(current, flow);
     else if (current.type === 'spacer') flow.page.y += current.height;

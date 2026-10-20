@@ -193,6 +193,7 @@ export async function ensureBootstrapStaffAccounts(ownerUsername = 'admin.apc') 
   const index = readJSON(KEYS.usernames, {}) || {};
   const pending = [];
   try {
+    const { staffRoleNameBn } = await import('./staff-role-names.js');
     for (const role of ['manager', 'teacher', 'payment']) {
       if (await readStaffAccount(role)) continue;
       const spec = staffSpec(role);
@@ -203,7 +204,7 @@ export async function ensureBootstrapStaffAccounts(ownerUsername = 'admin.apc') 
         role, username, password,
         profile: {
           role, status: 'active', accountStatus: 'active', owner: normalizeStaffUsername(ownerUsername),
-          fullName: `প্রাথমিক ${role} অ্যাকাউন্ট`, mobile: '', email: '', username,
+          fullName: `প্রাথমিক ${staffRoleNameBn(role)} অ্যাকাউন্ট`, mobile: '', email: '', username,
           password: await hashPassword(password), mustChangePassword: true,
           createdAt: new Date().toISOString(), bootstrapAccount: true
         }
@@ -228,7 +229,6 @@ export async function ensureBootstrapStaffAccounts(ownerUsername = 'admin.apc') 
   return { ok: true, accounts: pending.map(({ role, username, password }) => ({ role, username, password })) };
 }
 
-// Read the identity actually saved on this device, not a newly generated/default ID.
 // Older cash-counter records used userId/pin; these aliases are read-only until
 // the existing password has been verified and the normal hash upgrade runs.
 function storedStaffUsername(account, role) {
@@ -364,7 +364,6 @@ export async function staffNeedsSetup(role) {
 /**
  * One call for every login form. Resolves to:
  *  { ok: false, error }                      — wrong username or password
- *  { ok: false, needsSetup: true, error }   — no credential: provisioning required
  *  { ok: true, needsPasswordChange: true }   — verified, but a new password is due
  *  { ok: true }                              — verified and up to date
  * Legacy plaintext records are verified once and immediately re-hashed.
@@ -604,7 +603,6 @@ export async function saveStaffSession(role, remember = true, identity = null) {
         ? writeJSON(spec.sessionKey, envelope)
         : writeJSON(spec.sessionKey, record);
     }
-    // Tab-only session: marker in sessionStorage, token in localStorage is not written.
     tab.setItem(spec.sessionKey, TAB_SESSION_MARKER);
     return true;
   } catch { return false; }

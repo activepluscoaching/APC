@@ -184,8 +184,8 @@ export function validateFilters(definition, filters = {}) {
   if ((definition.filters || []).includes('period') && filters.period === 'custom') {
     const from = filters.from ? String(filters.from) : '';
     const to = filters.to ? String(filters.to) : '';
-    if (!from || !to) return 'From Date ও To Date উভয়ই দিন।';
-    if (from > to) return 'From Date অবশ্যই To Date-এর আগে বা সমান হতে হবে।';
+    if (!from || !to) return 'শুরুর তারিখ ও শেষ তারিখ উভয়ই দিন।';
+    if (from > to) return 'শুরুর তারিখ অবশ্যই শেষ তারিখের আগে বা সমান হতে হবে।';
   }
   if ((definition.filters || []).includes('exam') && definition.requiresExam && !filters.examId) {
     return 'একটি পরীক্ষা নির্বাচন করুন।';

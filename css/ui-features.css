@@ -160,6 +160,13 @@
 .learning-teacher{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-3);font-size:var(--font-xs);color:var(--color-text-secondary)}
 .learning-teacher>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--color-surface-muted);color:var(--color-primary);font-weight:600}
 .learning-card-actions{display:grid;gap:var(--space-2);margin-top:var(--space-3)}
+/* Collapsed-card quick row: the PDF/complete actions stay reachable before the
+   toggle is opened; expanding the card hides this duplicate. */
+.learning-card-quick{margin-top:var(--space-3)}
+.learning-card-quick button,.learning-card-quick a{min-height:40px;padding:0 var(--space-3);border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface-muted);color:var(--color-text);font-size:var(--font-sm);font-weight:650;text-decoration:none;cursor:pointer;text-align:center;transition:border-color .16s,color .16s}
+.learning-card-quick button:hover,.learning-card-quick a:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.learning-card-quick button:disabled{opacity:.6;cursor:default}
+.learning-card:has(.learning-card-toggle[aria-expanded="true"]) .learning-card-quick{display:none}
 .learning-action-note{color:var(--color-text-secondary);font-size:var(--font-xs)}
 .learning-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2);text-align:center}
 .learning-summary>div{display:grid;gap:2px;padding:var(--space-2);border-radius:var(--radius-sm);background:var(--color-surface-muted)}

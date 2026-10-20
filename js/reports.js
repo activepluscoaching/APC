@@ -27,7 +27,7 @@ const today = () => {
 };
 
 const slug = value => String(value || 'Report')
-  .replace(/[^\p{L}\p{N}]+/gu, '_')
+  .replace(/[^\p{L}\p{M}\p{N}]+/gu, '_')
   .replace(/^_+|_+$/g, '')
   .slice(0, 70) || 'Report';
 
@@ -36,7 +36,7 @@ const reportFileName = definition => `ActivePlus_${slug(definition.title)}_${tod
 const optionLabel = (definition, key, value, options) => {
   if (!value || value === 'all') return '';
   if (key === 'period') {
-    const labels = { all:'সব সময়', daily:'Daily', weekly:'Weekly', monthly:'Monthly', custom:'Custom Date Range' };
+    const labels = { all:'সব সময়', daily:'দৈনিক', weekly:'সাপ্তাহিক', monthly:'মাসিক', custom:'নির্দিষ্ট তারিখসীমা' };
     return labels[value] || value;
   }
   return (options?.[FILTER_META[key]?.options] || []).find(item => String(item.value) === String(value))?.label || String(value);
@@ -149,7 +149,7 @@ function addPeriodExtra(form, period) {
     field.append(el('span','rc-label','মাস'));
     const input=el('input','rc-control'); input.type='month'; input.name='month'; field.append(input); box.append(field);
   } else {
-    for (const [name,label] of [['from','From Date'],['to','To Date']]) {
+    for (const [name,label] of [['from','শুরুর তারিখ'],['to','শেষ তারিখ']]) {
       const field=el('label','rc-field',''); field.append(el('span','rc-label',label));
       const input=el('input','rc-control'); input.type='date'; input.name=name; field.append(input); box.append(field);
     }
@@ -185,7 +185,7 @@ class ReportCenter {
 
     const head=el('header','rc-head');
     head.append(el('p','rc-eyebrow','REPORT CENTER'));
-    head.append(el('h2','rc-title','Report Center'));
+    head.append(el('h2','rc-title','রিপোর্ট সেন্টার'));
     this.root.append(head);
 
     const form=el('form','rc-form');
@@ -193,10 +193,10 @@ class ReportCenter {
     this.form=form;
 
     const reportField=el('label','rc-field rc-report-field');
-    reportField.append(el('span','rc-label','Select Report'));
+    reportField.append(el('span','rc-label','রিপোর্ট নির্বাচন করুন'));
     const reportSelect=el('select','rc-control');
     reportSelect.name='report'; reportSelect.required=true;
-    reportSelect.append(new Option('Select Report',''));
+    reportSelect.append(new Option('রিপোর্ট নির্বাচন করুন',''));
     for (const report of this.catalog) {
       reportSelect.append(new Option(report.title,report.id));
     }
@@ -209,7 +209,7 @@ class ReportCenter {
     form.append(this.dynamic);
 
     const actions=el('div','rc-actions');
-    const generate=el('button','rc-generate','Generate Report');
+    const generate=el('button','rc-generate','রিপোর্ট তৈরি করুন');
     generate.type='submit';
     actions.append(generate); form.append(actions);
 
@@ -293,7 +293,7 @@ class ReportCenter {
     const back=el('button','rc-back','Back');
     back.type='button';
     back.addEventListener('click',()=>this.closePreview());
-    const title=el('strong','rc-preview-title',this.definition?.title || 'PDF Preview');
+    const title=el('strong','rc-preview-title',this.definition?.title || 'PDF প্রিভিউ');
     bar.append(back,title);
     preview.append(bar);
 
@@ -315,7 +315,7 @@ class ReportCenter {
     previewBody.innerHTML=previewHtml || '<p class="rc-preview-empty">রিপোর্ট প্রিভিউ তৈরি করা যায়নি।</p>';
     preview.append(previewBody);
 
-    const download=el('button','rc-download','Download PDF');
+    const download=el('button','rc-download','PDF ডাউনলোড');
     download.type='button';
     download.addEventListener('click',()=>downloadBlob(this.pdfBlob,reportFileName(this.definition)));
     preview.append(download);
@@ -341,7 +341,7 @@ class ReportCenter {
   clearStatus() { if(this.status){this.status.hidden=true;this.status.textContent='';} }
   setBusy(busy) {
     const button=this.form?.querySelector('.rc-generate');
-    if(button){button.disabled=busy;button.textContent=busy?'Generating Report…':'Generate Report';}
+    if(button){button.disabled=busy;button.textContent=busy?'রিপোর্ট তৈরি হচ্ছে…':'রিপোর্ট তৈরি করুন';}
   }
 
   refreshOptions() {

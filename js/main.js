@@ -266,7 +266,6 @@ function initStudentFeatureSurface(f) {
     mount: '#moreDeviceSettings',
     session: { value: 'লগইন সেশন এই ডিভাইসে', hint: 'নিরাপত্তার জন্য সেশন ডিভাইস-বাউন্ড' }
   }));
-  // Settings → Notification Settings (the full screen behind এই নোটিফিকেশন সেটিংস).
   boot('notification-settings', () => f.notificationSettings.initNotificationSettings({ mount: '#notificationSettings' }));
   boot('reports', () => f.reports.mountReports($('#studentReports'), { panel: 'student' }));
   featureHandles.refreshReports = f.reports.refreshReports;
@@ -389,7 +388,6 @@ function leaveApp() {
   }
   switchAuthTab('login');
   showAuthScreen();
-  // Logout always lands on the login page itself — drop a leftover view hash too.
   if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
   setAuthMessage('');
 }
@@ -427,7 +425,6 @@ window.addEventListener('apc-sync-updated', event => {
 window.addEventListener('storage', event => {
   if (!event.key || event.key === ROSTER_KEY) void applyRosterProfileToStudent();
 });
-// Firebase is optional during online testing; offline startup remains independent.
 // The connection smoke test is diagnostic-only and costs an extra SDK download,
 // so it runs only when explicitly asked (index.html?fbtest=1) — never on a
 // normal boot, and never as an unhandled rejection that can take the page down.
@@ -503,7 +500,6 @@ window.addEventListener('pageshow', event => {
 });
 void restoreEntrySession();
 
-// Cloud writes occur in this window; native storage events alone never fire here.
 window.addEventListener('storage', async event => {
   if (!event.apcRemote) return;
   try {

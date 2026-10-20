@@ -152,7 +152,7 @@ export const financeRepository = {
     return navigator.locks ? navigator.locks.request(TRANSACTIONS_KEY, save) : save();
   },
   async reviewTransaction(transactionId, decision, reason = '') {
-    if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু Manager লেনদেন পর্যালোচনা করতে পারবেন।'), { code: 'ACCESS_DENIED' });
+    if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু ম্যানেজার লেনদেন পর্যালোচনা করতে পারবেন।'), { code: 'ACCESS_DENIED' });
     if (!['approved', 'rejected'].includes(decision)) throw new Error('সিদ্ধান্ত সঠিক নয়।');
     const note = String(reason ?? '').trim().slice(0, 500);
     if (decision === 'rejected' && !note) throw new Error('বাতিলের কারণ লিখুন।');

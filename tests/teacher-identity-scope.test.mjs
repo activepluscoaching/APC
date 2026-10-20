@@ -124,7 +124,7 @@ test('Staff Directory teacher session carries staffId and stamps teacherId on ac
       status: 'published',
       details: 'Chapter 1'
     }),
-    /বিষয়ে আপনার Manager assignment নেই/
+    /বিষয়ে আপনার ম্যানেজার অ্যাসাইনমেন্ট নেই/
   );
 
   const saved = await repo.saveActivity({

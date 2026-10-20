@@ -16,7 +16,7 @@
       button.disabled = true;
       button.textContent = 'চেক হচ্ছে...';
       output.hidden = false;
-      output.textContent = 'Firebase connection পরীক্ষা চলছে...';
+      output.textContent = 'ফায়ারবেস সংযোগ পরীক্ষা চলছে…';
       try {
         const { diagnoseFirebaseSync } = await import('./firebase-diagnostics.js?v=20261008-syncfix');
         const r = await diagnoseFirebaseSync();
@@ -38,7 +38,7 @@
         if (r.guidance) lines.push('', 'কী করবেন: ' + r.guidance);
         output.textContent = lines.join('\n');
       } catch (error) {
-        output.textContent = 'Diagnostic error: ' + (error?.message || error);
+        output.textContent = 'ডায়াগনস্টিক ত্রুটি: ' + (error?.message || error);
       } finally {
         button.disabled = false;
         button.textContent = 'সিঙ্ক সংযোগ পরীক্ষা';

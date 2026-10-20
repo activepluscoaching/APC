@@ -138,7 +138,7 @@ test('the ফি screen is read-only and reads the one finance store', async () 
 test('Home keeps the six quick academic cards, reference order and existing routes', async () => {
   const ctx = await loadPage('student.html');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
-    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'Notice Board']);
+    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'নোটিশ বোর্ড']);
   assert.deepEqual(ctx.$$('#studentServices [data-action]').map(node => node.dataset.action),
     ['homework', 'suggestion', 'question-bank']);
   assert.deepEqual(ctx.$$('#studentServices [data-view]').map(node => node.dataset.view), ['exams', 'exam-results', 'notice-board']);
@@ -191,7 +191,7 @@ const teacherHtml = read('teacher.html');
 test('the teacher bottom bar is exactly হোম / ক্লাস / শিক্ষার্থী / পরীক্ষা / আরও', () => {
   const nav = teacherHtml.slice(teacherHtml.indexOf('<nav class="admin-bottom"'), teacherHtml.indexOf('</nav>', teacherHtml.indexOf('<nav class="admin-bottom"')));
   assert.deepEqual([...nav.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['home', 'classes', 'students', 'exam', 'more']);
+    ['home', 'classes', 'students', 'online-exams', 'more']);
   assert.deepEqual([...nav.matchAll(/<span class="nav-label">([^<]+)<\/span>/g)].map(match => nfc(match[1])),
     ['হোম', 'ক্লাস', 'শিক্ষার্থী', 'পরীক্ষা', 'আরও'].map(nfc));
   for (const item of nav.split('<button').slice(1)) assert.match(item, /<svg/, 'every bottom-bar item keeps its icon');
@@ -417,7 +417,7 @@ test('Cash Counter হোম is the day’s own ledger: no dashboard tiles, one 
 
 /* -------------------------------- Admin ------------------------------------- */
 
-test('the Admin bottom bar has five shared seats; Data, Profile and Advice stay in More', () => {
+test('the Admin bottom bar has five shared seats; Content, Data, Profile and Advice stay in More', () => {
   const html = read('admin.html');
   const nav = html.slice(html.indexOf('<nav class="admin-bottom"'), html.indexOf('</nav>', html.indexOf('<nav class="admin-bottom"')));
   assert.deepEqual([...nav.matchAll(/data-admin-view="([a-z-]+)"/g)].map(match => match[1]),
@@ -428,7 +428,7 @@ test('the Admin bottom bar has five shared seats; Data, Profile and Advice stay 
     assert.ok(nav.includes(`data-admin-view="${seat}"`), `${seat} keeps a seat`);
   assert.doesNotMatch(nav, /data-admin-view="students"/, 'student management is not an Admin seat');
   const more = html.slice(html.indexOf('id="adminMoreMenu"'), html.indexOf('</nav>', html.indexOf('id="adminMoreMenu"')));
-  assert.deepEqual([...more.matchAll(/data-admin-view="([a-z-]+)"/g)].map(match => match[1]), ['data', 'profile', 'advice']);
+  assert.deepEqual([...more.matchAll(/data-admin-view="([a-z-]+)"/g)].map(match => match[1]), ['data', 'content', 'profile', 'advice']);
 });
 
 test('Admin সিস্টেম and ডেটা are hubs over the screens that already own the work', () => {

@@ -283,7 +283,7 @@ test('nobody at all may run a report without signing in', () => {
 test('a complete exam report carries the whole exam, not just the result', async () => {
   const { blocks } = await build('exam.complete', ADMIN, { examId: 'EXM-1' });
   const info = Object.fromEntries(kvOf(blocks));
-  assert.equal(info['Exam ID'], 'EXM-1');
+  assert.equal(info['পরীক্ষা আইডি'], 'EXM-1');
   assert.equal(info['পরীক্ষার নাম'], 'অর্ধবার্ষিক পরীক্ষা');
   assert.equal(info['বিষয়'], 'পদার্থবিজ্ঞান');
   assert.equal(info['শ্রেণি'], CLASS_A);
@@ -447,8 +447,8 @@ test('a notice report for a student carries the notices meant for them', async (
 
 test('a custom range must run forward', () => {
   const definition = report('fee.custom');
-  assert.match(catalog.validateFilters(definition, { period: 'custom', from: '2026-09-30', to: '2026-09-01' }), /From Date/);
-  assert.match(catalog.validateFilters(definition, { period: 'custom', from: '2026-09-01' }), /To Date/);
+  assert.match(catalog.validateFilters(definition, { period: 'custom', from: '2026-09-30', to: '2026-09-01' }), /শুরুর তারিখ/);
+  assert.match(catalog.validateFilters(definition, { period: 'custom', from: '2026-09-01' }), /শেষ তারিখ/);
   assert.equal(catalog.validateFilters(definition, { period: 'custom', from: '2026-09-01', to: '2026-09-30' }), '');
 });
 

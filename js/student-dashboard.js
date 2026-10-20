@@ -218,7 +218,7 @@ export function calculateStudentHomeStats({
     : RunningChapter
       ? { kind: 'chapter', title: RunningChapter.chapter.title, meta: `${RunningChapter.course.subject} · চলমান অধ্যায়`, percent: Math.max(15, termProgressPercent ?? 0), complete: false }
       : (homework.length > 0 || allChapters.length > 0)
-        ? { kind: 'complete', title: 'সব বাড়ির কাজ সম্পন্ন!', meta: 'দারুণ কাজ—এবার ফলাফল ও নতুন কাজ দেখে নাও।', percent: 100, complete: true }
+        ? { kind: 'complete', title: 'সব বাড়ির কাজ সম্পন্ন!', meta: 'দারুণ কাজ — এবার ফলাফল ও নতুন কাজ দেখে নাও।', percent: 100, complete: true }
         : { kind: 'empty', title: 'এখনও কোনো কাজ প্রকাশ হয়নি', meta: 'শিক্ষকের দেওয়া কাজ ও উপকরণ এখানে দেখা যাবে।', percent: 0, complete: false };
 
   return {

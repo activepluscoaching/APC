@@ -62,7 +62,7 @@ function filtersFor(definition,input,now) {
 function contactColumns(include) {return include?['মোবাইল (মাস্ক)','অভিভাবক (মাস্ক)']:[];}
 function contacts(student,include) {if(!include)return [];const fields=counterContacts(student);return [fields.mobileMasked,fields.guardianMobileMasked];}
 function transactionTable(rows,students,includeMobile) {
- return table('লেনদেনের তালিকা',['তারিখ','Transaction ID','রসিদ','Student ID','শিক্ষার্থী','ফি / মাস','টাকা','মাধ্যম','অবস্থা',...contactColumns(includeMobile)],rows.map(tx=>[
+ return table('লেনদেনের তালিকা',['তারিখ','লেনদেন আইডি','রসিদ','শিক্ষার্থীর আইডি','শিক্ষার্থী','ফি / মাস','টাকা','মাধ্যম','অবস্থা',...contactColumns(includeMobile)],rows.map(tx=>[
   tx.date || formatDate(txTime(tx)),tx.transactionNo || tx.id,tx.receiptNo || '—',tx.studentId,tx.studentName || students.get(tx.studentId)?.name || '—',
   `${tx.feeType || '—'} / ${tx.month || '—'}`,money(tx.amount),tx.method || '—',status(tx),...contacts(students.get(tx.studentId),includeMobile)
  ]));
@@ -112,7 +112,7 @@ export async function buildCounterPaymentReport(reportId,input={}) {
   const collection=definition.mode==='due-collection';
   result.period=filters.billingMonth;
   result.summary=[['শিক্ষার্থী',num(balances.length)],['নির্ধারিত ফি',money(balances.reduce((s,row)=>s+row.fee,0))],['পরিশোধিত',money(balances.reduce((s,row)=>s+row.paid,0))],['বকেয়া',money(balances.reduce((s,row)=>s+row.due,0))]];
-  const columns=['Student ID','শিক্ষার্থী','ইউনিক রোল',...(collection?['শুরুর বকেয়া','বকেয়া থেকে আদায়','অবশিষ্ট বকেয়া']:['নির্ধারিত ফি','পরিশোধিত','বকেয়া','অবস্থা']),...contactColumns(filters.includeMobile)];
+  const columns=['শিক্ষার্থীর আইডি','শিক্ষার্থী','ইউনিক রোল',...(collection?['শুরুর বকেয়া','বকেয়া থেকে আদায়','অবশিষ্ট বকেয়া']:['নির্ধারিত ফি','পরিশোধিত','বকেয়া','অবস্থা']),...contactColumns(filters.includeMobile)];
   result.tables.push(table(definition.title,columns,balances.map(row=>[row.student.id,row.student.name || row.student.nameEn || '—',rollOf(row.student),...(collection?[money(row.opening),money(row.collected),money(row.closing)]:[money(row.fee),money(row.paid),money(row.due),row.due<=0?'পরিশোধিত':row.paid>0?'আংশিক পরিশোধ':'অপরিশোধিত']),...contacts(row.student,filters.includeMobile)])));
   if(unknown)result.notes.push(`${num(unknown)} জনের মাসিক ফি নির্ধারিত নেই; কোনো অনুমানভিত্তিক বকেয়া গণনা করা হয়নি।`);
  } else {
@@ -120,7 +120,7 @@ export async function buildCounterPaymentReport(reportId,input={}) {
   result.tables.push(transactionTable(rows,students,filters.includeMobile));
   if(definition.mode==='student') {
    const student=students.get(filters.studentId);
-   result.notes.push(`Student ID: ${filters.studentId}${student?` · ${student.name || student.nameEn || '—'}`:''}`);
+   result.notes.push(`শিক্ষার্থীর আইডি: ${filters.studentId}${student?` · ${student.name || student.nameEn || '—'}`:''}`);
   }
  }
  if(!result.tables.some(item=>item.rows.length))result.notes.push('এই ফিল্টারে কোনো পেমেন্টের তথ্য পাওয়া যায়নি।');

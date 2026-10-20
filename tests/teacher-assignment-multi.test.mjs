@@ -106,8 +106,8 @@ test('the picker offers the Admin-enabled subjects plus whatever the record alre
 test('only a Manager session may change assignments', async () => {
   ctx.window.localStorage.removeItem(STAFF_ACCOUNTS.manager.sessionKey);
   ctx.window.sessionStorage.clear();
-  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subjects: ['গণিত'] }), /Manager/);
-  await assert.rejects(deleteTeacherAssignment('TAS-LEGACY'), /Manager/);
+  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subjects: ['গণিত'] }), /ম্যানেজার/);
+  await assert.rejects(deleteTeacherAssignment('TAS-LEGACY'), /ম্যানেজার/);
   seedStaffSession(ctx.window, 'manager');
   assert.ok(rows().length >= 1, 'nothing was dropped by the refused calls');
 });

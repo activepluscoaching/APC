@@ -10,6 +10,8 @@ import {
 import { notificationByKey, markRead } from './notification-store.js';
 
 const READ_PREFIX = NOTICE_BOARD_READ_PREFIX;
+
+const toBn = value => String(value).replace(/[0-9]/g, digit => '০১২৩৪৫৬৭৮৯'[digit]);
 const MAX_READ_KEYS = 600;
 const text = value => String(value ?? '').trim();
 const esc = value => String(value ?? '')
@@ -69,8 +71,22 @@ function boardItems(viewerOverride = null) {
 
   let broadcast = null;
   try { broadcast = broadcastItem(loadAppConfig()); } catch { broadcast = null; }
-  const items = [...published];
-  if (broadcast) items.push({ ...broadcast, revision: broadcast.key });
+  /* One board row per source record and per key: a duplicated notice id or a
+     broadcast that repeats a notice key must never paint twice. Newer source
+     rows win so an edited notice replaces its stale copy. */
+  const bySource = new Map();
+  for (const item of published) {
+    const sourceTag = item.sourceId ? `${item.source}:${item.sourceId}` : item.key;
+    const kept = bySource.get(sourceTag);
+    if (!kept || (Number(item.at) || 0) > (Number(kept.at) || 0)) bySource.set(sourceTag, item);
+  }
+  const items = [];
+  const keys = new Set();
+  const push = item => {
+    if (item && item.key && !keys.has(item.key)) { keys.add(item.key); items.push(item); }
+  };
+  bySource.forEach(push);
+  if (broadcast) push({ ...broadcast, revision: broadcast.key });
   return items.sort((left, right) => {
     const severity = Number(right.category === 'urgent') - Number(left.category === 'urgent');
     return severity || (Number(right.at) || 0) - (Number(left.at) || 0);
@@ -89,8 +105,15 @@ function itemIsRead(item, studentId, receipts) {
 function whenText(item) {
   const stamp = Number(item?.at) || Date.parse(item?.updatedAt || item?.createdAt || '') || 0;
   if (!stamp) return 'সাম্প্রতিক';
-  try { return new Date(stamp).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }); }
-  catch { return new Date(stamp).toLocaleString(); }
+  /* বাংলা তারিখ + সময়ের পর্ব, কখনো AM/PM নয়। */
+  try {
+    const date = new Date(stamp);
+    const day = date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+    const hour = date.getHours();
+    const phase = hour < 5 ? 'রাত' : hour < 12 ? 'সকাল' : hour < 15 ? 'দুপুর' : hour < 18 ? 'বিকাল' : hour < 20 ? 'সন্ধ্যা' : 'রাত';
+    const clock = toBn(`${hour % 12 || 12}:${String(date.getMinutes()).padStart(2, '0')}`);
+    return `${day}, ${phase} ${clock}`;
+  } catch { return new Date(stamp).toISOString().slice(0, 10); }
 }
 
 function categoryFor(item) {
@@ -109,7 +132,7 @@ function cardMarkup(item, read) {
     '<h2>' + esc(title) + '</h2>' +
     (body ? '<p>' + esc(body.length > 160 ? body.slice(0, 157) + '…' : body) + '</p>' : '') +
     '<div class="notice-board-card-foot"><time>' + esc(whenText(item)) + '</time>' +
-      '<button type="button" class="notice-board-open" data-notice-board-open="' + key + '" aria-controls="noticeBoardDetail">Notice খুলুন</button></div>' +
+      '<button type="button" class="notice-board-open" data-notice-board-open="' + key + '" aria-controls="noticeBoardDetail">নোটিশ খুলুন</button></div>' +
   '</article>';
 }
 
@@ -125,11 +148,11 @@ function paintDetail(item, studentId, receipts) {
   root.querySelector('#noticeBoardDetailBody').textContent = text(item.body);
   const button = root.querySelector('#noticeBoardReadButton');
   button.dataset.noticeBoardRead = item.key;
-  button.textContent = read ? 'পড়া হয়েছে ✓' : 'Read ✓';
+  button.textContent = 'পড়া হয়েছে ✓';
   button.disabled = read;
   root.querySelector('#noticeBoardReadStatus').textContent = read
-    ? 'এই notice পড়া হিসেবে সংরক্ষিত।'
-    : 'Notice পড়া শেষ হলে Read ✓ চাপো।';
+    ? 'এই নোটিশ পড়া হিসেবে সংরক্ষিত হয়েছে ✓'
+    : 'পড়া শেষ হলে «পড়া হয়েছে ✓» চাপুন।';
   detail.hidden = false;
 }
 
@@ -139,7 +162,7 @@ function updateTileBadge(count) {
   if (!badge) return;
   badge.hidden = count === 0;
   badge.textContent = count > 9 ? '৯+' : String(count).replace(/\d/g, digit => '০১২৩৪৫৬৭৮৯'[Number(digit)]);
-  if (tile) tile.setAttribute('aria-label', `Notice Board${count ? ` — ${count}টি অপঠিত` : ''}`);
+  if (tile) tile.setAttribute('aria-label', `নোটিশ বোর্ড${count ? ` — ${toBn(count)}টি অপঠিত` : ''}`);
 }
 
 /** Home preview: the three newest notices this student may see. It is the
@@ -156,7 +179,7 @@ function paintHomeNotices() {
   const receipts = readReceipts(viewer.studentId);
   const items = boardItems(viewer).slice(0, 3);
   if (!items.length) {
-    mount.innerHTML = '<p class="notice-board-empty">এখনো কোনো notice প্রকাশিত হয়নি।</p>';
+    mount.innerHTML = '<p class="notice-board-empty">এখনো কোনো নোটিশ প্রকাশিত হয়নি।</p>';
     return;
   }
   mount.innerHTML = items.map(item => {
@@ -184,8 +207,8 @@ function paint() {
   const visible = selectedCategory === 'all' ? items : items.filter(item => item.category === selectedCategory);
   const summary = root.querySelector('#noticeBoardSummary');
   summary.textContent = unreadItems.length
-    ? `${unreadItems.length}টি notice এখনো পড়া হয়নি${items.length > unreadItems.length ? ` · মোট ${items.length}টি` : ''}`
-    : items.length ? 'সব notice পড়া হয়েছে ✓' : 'এখনো কোনো notice প্রকাশিত হয়নি।';
+    ? `${toBn(unreadItems.length)}টি নোটিশ এখনো পড়া হয়নি${items.length > unreadItems.length ? ` · মোট ${toBn(items.length)}টি` : ''}`
+    : items.length ? 'সব নোটিশ পড়া হয়েছে ✓' : 'এখনো কোনো নোটিশ প্রকাশিত হয়নি।';
   updateTileBadge(unreadItems.length);
 
   root.querySelectorAll('[data-notice-board-category]').forEach(tab => {
@@ -206,15 +229,17 @@ function paint() {
 
   const list = root.querySelector('#noticeBoardList');
   if (!items.length) {
-    list.innerHTML = '<div class="notice-board-empty"><strong>Notice Board খালি</strong><p>নতুন notice প্রকাশ হলে এখানে দেখা যাবে।</p></div>';
+    list.innerHTML = '<div class="notice-board-empty"><strong>এখনো কোনো নোটিশ নেই</strong><p>নতুন নোটিশ প্রকাশ হলে এখানে দেখা যাবে।</p></div>';
   } else if (!visible.length) {
     const category = NOTICE_CATEGORIES.find(item => item.id === selectedCategory);
-    list.innerHTML = '<div class="notice-board-empty"><strong>' + esc(category?.label || 'এই বিভাগ') + ' notice নেই</strong><p>অন্য বিভাগ বেছে দেখতে পারো।</p></div>';
+    list.innerHTML = '<div class="notice-board-empty"><strong>' + esc(category?.label || 'এই বিভাগ') + ' বিভাগে নোটিশ নেই</strong><p>অন্য বিভাগ বেছে দেখতে পারো।</p></div>';
   } else {
     list.innerHTML = visible.map(item => cardMarkup(item, itemIsRead(item, viewer.studentId, receipts))).join('');
   }
 
   const selected = items.find(item => item.key === selectedKey);
+  if (list) list.hidden = Boolean(selected);
+  document.body.classList.toggle('notice-board-detail-open', Boolean(selected));
   if (selected) paintDetail(selected, viewer.studentId, receipts);
   else {
     selectedKey = '';
@@ -237,6 +262,15 @@ function persistRead(item, studentId) {
   } catch { return false; }
 }
 
+function closeDetail() {
+  const previous = selectedKey;
+  if (!previous) return;
+  selectedKey = '';
+  paint();
+  [...root.querySelectorAll('[data-notice-board-open]')]
+    .find(button => button.dataset.noticeBoardOpen === previous)?.focus?.();
+}
+
 function openItem(keyOrId) {
   const items = boardItems();
   const item = items.find(entry => entry.key === keyOrId || entry.sourceId === keyOrId);
@@ -245,6 +279,7 @@ function openItem(keyOrId) {
   paint();
   const detail = root.querySelector('#noticeBoardDetail');
   detail?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  root.querySelector('#noticeBoardDetail [data-notice-board-close]')?.focus?.();
   return true;
 }
 
@@ -269,11 +304,7 @@ export function initStudentNoticeBoard({ getStudent: getter } = {}) {
       return;
     }
     if (event.target.closest('[data-notice-board-close]')) {
-      const previous = selectedKey;
-      selectedKey = '';
-      paint();
-      [...root.querySelectorAll('[data-notice-board-open]')]
-        .find(button => button.dataset.noticeBoardOpen === previous)?.focus?.();
+      closeDetail();
       return;
     }
     const readButton = event.target.closest('[data-notice-board-read]');
@@ -287,14 +318,24 @@ export function initStudentNoticeBoard({ getStudent: getter } = {}) {
       window.dispatchEvent(new CustomEvent('apc-notifications-updated', { detail: { noticeRead: item.key } }));
       paint();
       paintHomeNotices();
-      if (!saved) root.querySelector('#noticeBoardReadStatus').textContent = 'এই ডিভাইসে Read state সংরক্ষণ হয়নি; এই সেশনে চিহ্নটি দেখা যাবে।';
+      if (!saved) root.querySelector('#noticeBoardReadStatus').textContent = 'এই ডিভাইসে পঠিত চিহ্ন সংরক্ষণ হয়নি; এই সেশনে চিহ্নটি দেখা যাবে।';
       return;
     }
     const openButton = event.target.closest('[data-notice-board-open]');
-    if (openButton) openItem(openButton.dataset.noticeBoardOpen);
+    if (openButton) { openItem(openButton.dataset.noticeBoardOpen); return; }
+    const card = event.target.closest('[data-notice-card]');
+    if (card && card.closest('#noticeBoardList')) openItem(card.dataset.noticeCard);
   });
 
   window.addEventListener('apc-notice-open', event => openItem(String(event.detail?.key || event.detail?.id || '')));
+  document.addEventListener('click', event => {
+    if (!document.body.classList.contains('notice-board-detail-open')) return;
+    if (event.target?.closest?.('#noticeBoardDetail, [data-notice-board-open], [data-notice-board-close], [data-notice-board-read], [data-notice-board-category], [data-notice-card], [data-notice-home-open], #homeNoticeList')) return;
+    closeDetail();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeDetail();
+  });
   window.addEventListener('storage', event => {
     if (!event.key || event.key === KEYS.notices || event.key === KEYS.settings || event.key.startsWith(READ_PREFIX)) paint();
   });

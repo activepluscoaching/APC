@@ -11,7 +11,7 @@ export function buildDemoExams(now = Date.now(), batch = 'initial') {
     ['completed', 'mcq', 'সম্পন্ন MCQ — ফলাফল ও উত্তরপত্র', -26 * hour, -25 * hour, 'published'],
     ['written', 'written', 'লিখিত — প্রশ্নপত্র ও ক্লাসের নম্বর', -26 * hour, -25 * hour, 'published'],
     ['short', 'short', 'সংক্ষিপ্ত উত্তর — ক্লাস মূল্যায়ন', -26 * hour, -25 * hour, 'published'],
-    ['pending', 'mcq', 'Admin অনুমোদনের অপেক্ষায়', 4 * hour, 5 * hour, 'pending'],
+    ['pending', 'mcq', 'অ্যাডমিন অনুমোদনের অপেক্ষায়', 4 * hour, 5 * hour, 'pending'],
     ['draft', 'short', 'সম্পাদনার জন্য খসড়া', 6 * hour, 7 * hour, 'draft'],
     ['rejected', 'written', 'সংশোধনের জন্য ফেরত', 8 * hour, 9 * hour, 'rejected']
   ];

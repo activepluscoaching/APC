@@ -202,7 +202,7 @@ test('chapter MCQ practice filters the shared bank and records a personal chapte
   assert.doesNotMatch(text, /Q-CHAPTER-FUTURE|Q-CHAPTER-OTHER|Q-CHAPTER-INACTIVE|Q-CHAPTER-OTHER-SUBJECT/);
   ctx2click($2('#studentPracticeWorkspace [data-practice-action="start-chapter"]'));
   await uiCtx.waitFor(() => $$2('#studentPracticeWorkspace .exam-question').length === 2);
-  assert.match(workspace().textContent, /অধ্যায় ১ — বাস্তব সংখ্যা — MCQ Practice/);
+  assert.match(workspace().textContent, /অধ্যায় ১ — বাস্তব সংখ্যা — MCQ অনুশীলন/);
   ctx2click($2('#studentPracticeWorkspace [data-practice-action="confirm"]'));
   ctx2click($2('#studentPracticeWorkspace [data-practice-action="finish"]'));
   await uiCtx.waitFor(() => Boolean($2('#studentPracticeWorkspace .exam-summary')));

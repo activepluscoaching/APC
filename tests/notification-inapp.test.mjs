@@ -92,7 +92,7 @@ test('student notices appear only on the Notice Board, not as in-app cards or in
 
   ctx.click(ctx.$('#notificationButton'));
   assert.equal(inbox().hidden, false);
-  assert.match(ctx.$('#noticeListStudent').textContent, /আলাদা Notice Board/);
+  assert.match(ctx.$('#noticeListStudent').textContent, /আলাদা নোটিশ বোর্ড/);
   assert.doesNotMatch(ctx.$('#noticeListStudent').textContent, /কাল ক্লাস বন্ধ|পুরোনো নোটিশ/);
   closeInbox();
 });

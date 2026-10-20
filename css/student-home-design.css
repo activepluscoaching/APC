@@ -41,7 +41,7 @@ html[data-theme="dark"] body.student-reference #homeView.active {
   --student-home-progress-track: rgb(255 255 255 / 28%);
 }
 
-body.student-reference:has(#homeView.active) #studentHeader {
+body.student-reference:has(.view.active) #studentHeader {
   background: var(--color-surface);
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
@@ -49,9 +49,9 @@ body.student-reference:has(#homeView.active) #studentHeader {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-body.student-reference:has(#homeView.active) #studentHeader .app-brand-institute { color: var(--color-text); }
-body.student-reference:has(#homeView.active) #studentHeader .app-brand-slogan { color: var(--color-text-secondary); }
-body.student-reference:has(#homeView.active) #studentHeader .app-topbar-icon {
+body.student-reference:has(.view.active) #studentHeader .app-brand-institute { color: var(--color-text); }
+body.student-reference:has(.view.active) #studentHeader .app-brand-slogan { color: var(--color-text-secondary); }
+body.student-reference:has(.view.active) #studentHeader .app-topbar-icon {
   color: var(--color-primary);
   background: var(--color-surface-muted);
   border-color: var(--color-border);
@@ -814,6 +814,23 @@ body.student-reference .bottom-nav .bottom-link.active > span:not(.nav-chip) {
   color: #5549b3;
 }
 
+/* Interface match: home is the reference, so every student subview card
+   (পড়াশোনা, নোটিশ বোর্ড, বাড়ির কাজ, আরও, রুটিন, পরীক্ষা) wears the same
+   20px radius and shared soft lift as the home cards. */
+body.student-reference .learning-card,
+body.student-reference .routine-card,
+body.student-reference .result-card,
+body.student-reference .course-card,
+body.student-reference .teaching-board,
+body.student-reference .profile-card,
+body.student-reference .exam-card,
+body.student-reference .challenge-card,
+body.student-reference .notice-board-card,
+body.student-reference .notice-board-detail {
+  border-radius: 20px;
+  box-shadow: var(--pay-shadow);
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.student-reference #homeView #studentServices .pay-tile,
   body.student-reference #homeView #studentServices .pay-tile-icon { transition: none; }
@@ -826,3 +843,9 @@ body.student-reference .bottom-nav .bottom-link.active > span:not(.nav-chip) {
   body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card,
   body.student-reference #homeView #studentServices .pay-tile { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Zero-count badges stay quiet so a new student reads "nothing yet", not
+   "nothing, ever"; counts return to full weight the moment they register. */
+.student-reference #studySections .learning-filter-count.is-zero,
+.student-reference #examTabs .learning-filter-count.is-zero,
+.student-reference #classHub .class-hub-count.is-zero { opacity: .45; }

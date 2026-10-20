@@ -25,7 +25,8 @@ for (const width of [320, 390, 1024]) {
     await expect(page.locator('#studentIdCardPreview')).toContainText('AP-1024');
     await page.locator('#studentIdCardFlip').click();
     await expect(page.locator('[data-id-card-side="back"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#studentIdCardPreview')).toContainText('স্ক্যান করে Student ID দেখুন');
+    await expect(page.locator('#studentIdCardPreview')).toContainText('ব্যবহারের শর্ত');
+    await expect(page.locator('#studentIdCardPreview')).toContainText('AP-1024');
     const download = page.waitForEvent('download');
     await page.locator('#studentIdCardDownload').click();
     expect((await download).suggestedFilename()).toBe('student-id-AP-1024-back.svg');

@@ -36,6 +36,10 @@ export function initStudentTeaching({ getStudent }) {
         <span class="learning-brief">${brief}</span>
         <span class="learning-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
       </button>
+      <div class="learning-card-quick">
+        ${!link ? `<button type="button" data-quick-pdf="${esc(a.id)}">PDF ডাউনলোড</button>` : `<a class="teaching-resource" data-material="${esc(a.id)}" href="${esc(link)}" target="_blank" rel="noopener noreferrer">উপকরণ ডাউনলোড</a>`}
+        ${canComplete ? `<button type="button" data-quick-complete="${esc(a.id)}">কাজ সম্পন্ন জানাও</button>` : ''}
+      </div>
       <div class="learning-card-details" id="learning-details-${esc(a.id)}" hidden>
       ${a.date || a.room || a.totalMarks ? `<div class="learning-meta">
         ${a.date ? `<div><small>${a.type === 'homework' ? 'জমার শেষ সময়' : a.type === 'routine' ? 'ক্লাসের সময়' : 'নির্ধারিত তারিখ'}</small><strong>${esc(displayDate(a.date))}</strong>${a.time ? `<span>${num(a.time)}${a.duration ? ' • ' + num(a.duration) + ' মিনিট' : ''}</span>` : ''}</div>` : ''}
@@ -48,7 +52,7 @@ export function initStudentTeaching({ getStudent }) {
       ${progress?.comment ? `<p class="learning-teacher-comment" data-teacher-comment><strong>শিক্ষকের মন্তব্য:</strong> ${esc(progress.comment)}</p>` : ''}
       <div class="learning-teacher"><span aria-hidden="true">${esc(Array.from(a.teacherName || 'শ')[0])}</span><small>শিক্ষক • ${esc(a.teacherName)}</small></div>
       ${link || material || canComplete ? `<div class="learning-card-actions">
-        ${link ? `<a class="teaching-resource" data-material="${esc(a.id)}" href="${esc(link)}" target="_blank" rel="noopener noreferrer">সহায়ক উপকরণ খুলুন <svg class="resource-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>` : material ? `<a class="teaching-resource" href="#material" data-material="${esc(a.id)}">উপকরণ PDF ডাউনলোড করুন</a>` : ''}
+        ${link ? `<a class="teaching-resource" data-material="${esc(a.id)}" href="${esc(link)}" target="_blank" rel="noopener noreferrer">সহায়ক উপকরণ খুলুন <svg class="resource-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></a>` : material ? `<a class="teaching-resource" href="#material" data-material="${esc(a.id)}">PDF ডাউনলোড</a>` : ''}
         ${canComplete ? `<div class="teaching-homework-submission"><label class="sr-only" for="hw-ans-${esc(a.id)}">সংক্ষিপ্ত লিখিত উত্তর</label><textarea id="hw-ans-${esc(a.id)}" class="homework-answer-input" data-homework-answer="${esc(a.id)}" rows="2" maxlength="500" placeholder="সংক্ষিপ্ত লিখিত উত্তর লেখো (ঐচ্ছিক, সর্বোচ্চ ৫০০ অক্ষর)">${esc(progress?.answer || '')}</textarea></div><div class="teaching-actions"><button class="primary" type="button" data-complete-homework="${esc(a.id)}" ${pending.has(a.id) ? 'disabled' : ''}>${pending.has(a.id) ? 'সংরক্ষণ হচ্ছে…' : 'কাজ সম্পন্ন হয়েছে জানাও'}</button></div><small class="learning-action-note">এটি শুধু সম্পন্ন হওয়ার খবর ও সংক্ষিপ্ত উত্তর; ফাইল জমা নয়।</small>` : ''}
       </div>` : ''}
       </div>
@@ -138,6 +142,28 @@ export function initStudentTeaching({ getStudent }) {
     const details = document.getElementById(toggle.getAttribute('aria-controls'));
     if (details) details.hidden = open;
   });
+  document.addEventListener('click', event => {
+    const done = event.target.closest('[data-quick-complete]');
+    if (done) {
+      const card = done.closest('.learning-card');
+      const toggle = card?.querySelector('.learning-card-toggle');
+      if (toggle) {
+        if (toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
+        card.querySelector('[data-homework-answer]')?.focus?.();
+      }
+      return;
+    }
+    const pdf = event.target.closest('[data-quick-pdf]');
+    if (!pdf) return;
+    const activity = db.activities.find(a => a.id === pdf.dataset.quickPdf);
+    if (!activity) return;
+    if (!text(activity.details)) { showFeedback('বিস্তারিত নেই — PDF তৈরি করা যাবে না'); return; }
+    if (pdf.disabled) return;
+    pdf.disabled = true;
+    activitySheetPDF(activity)
+      .then(() => showFeedback('PDF সেভ হয়েছে'), () => showFeedback('PDF তৈরি হয়নি। আবার চেষ্টা করো।'))
+      .finally(() => { pdf.disabled = false; });
+  });
   $('#learningList').addEventListener('click', async event => {
     const button = event.target.closest('[data-complete-homework]'); if (!button) return;
     const id = button.dataset.completeHomework; if (pending.has(id)) return;
@@ -196,14 +222,14 @@ export function initStudentTeaching({ getStudent }) {
         const response = await fetch(resource.url);
         if (!response.ok) throw new Error('load');
         downloadBlob(await response.blob(), fileNameOf(resource.url));
-      } else await activitySheetPDF(resource.material);
+      } else { await activitySheetPDF(resource.material); showFeedback('PDF সেভ হয়েছে'); }
       status.textContent = 'ডাউনলোড শুরু হয়েছে — ডিভাইসের ডাউনলোড ফোল্ডারে পাওয়া যাবে।';
-    } catch {
+    } catch (error) {
       status.classList.add('is-error');
       if (resource.url) {
         status.textContent = 'সরাসরি ডাউনলোড সম্ভব হয়নি — উপকরণটি নতুন ট্যাবে খুলছি।';
         window.open(resource.url, '_blank', 'noopener,noreferrer');
-      } else status.textContent = 'PDF তৈরি হয়নি। আবার চেষ্টা করো।';
+      } else status.textContent = error?.message || 'PDF তৈরি হয়নি। আবার চেষ্টা করো।';
     } finally { button.disabled = false; }
   });
 

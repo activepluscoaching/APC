@@ -16,6 +16,7 @@ import { iconMarkup } from './icons.js';
 import { classByName, listClasses, subjectsForClass } from './academics.js';
 import { assignedClasses, subjectsForTeacherClass, listTeacherAssignments, isTeacherAssignedSubject } from './teacher-assignments.js';
 import { loadRoster } from './office-data.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 import {
   COURSE_TYPES, archiveCourseRecord, listCourseContentForStaff,
   saveCourseRecord, setContentPublished, typeLabel, typeOf
@@ -118,7 +119,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
         ${canManage ? `<button class="mini-btn" type="button" data-course-edit="${esc(record.id)}">সম্পাদনা</button>
           <button class="mini-btn ${published ? 'reject' : 'approve'}" type="button" data-course-publish="${esc(record.id)}" data-next="${published ? 'off' : 'on'}">${published ? 'প্রকাশ বাতিল' : 'প্রকাশ করুন'}</button>
           ${archived ? '' : `<button class="mini-btn reject" type="button" data-course-archive="${esc(record.id)}">সংরক্ষণাগারে নিন</button>`}`
-          : '<span class="form-note">অন্য শিক্ষকের প্রকাশিত কনটেন্ট — শুধু Manager সম্পাদনা করতে পারবেন।</span>'}
+          : '<span class="form-note">অন্য শিক্ষকের প্রকাশিত কনটেন্ট — শুধু ম্যানেজার সম্পাদনা করতে পারবেন।</span>'}
       </div>
     </article>`;
   }
@@ -157,10 +158,10 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     root.innerHTML = `
       <div class="course-manage">
         <form class="course-manage-form admin-card" data-course-form>
-          <header class="admin-card-head"><div><p class="eyebrow">Learning library</p>
+          <header class="admin-card-head"><div><p class="eyebrow">শেখার লাইব্রেরি</p>
             <h2>${record ? 'কনটেন্ট সম্পাদনা' : 'নতুন কনটেন্ট'}</h2></div>
             ${record ? '<button class="mini-btn" type="button" data-course-cancel>নতুন কিছু লিখুন</button>' : ''}</header>
-          ${classes.length ? '' : '<p class="admin-empty">আপনার জন্য এখনো কোনো ক্লাস বরাদ্দ হয়নি — Manager থেকে ক্লাস ও বিষয় নিন।</p>'}
+          ${classes.length ? '' : '<p class="admin-empty">আপনার জন্য এখনো কোনো ক্লাস বরাদ্দ হয়নি — ম্যানেজার থেকে ক্লাস ও বিষয় নিন।</p>'}
           <label>ক্লাস<select name="className"${classes.length ? '' : ' disabled'}>${classes.map(item => `<option value="${esc(item.name)}"${item.name === className ? ' selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>
           <label>বিষয়<select name="subject"${subjects.length ? '' : ' disabled'}>${subjects.map(name => `<option value="${esc(name)}"${name === pickedSubject ? ' selected' : ''}>${esc(name)}</option>`).join('')}</select></label>
           <label>Batch / Group<select name="group"${scopes.length ? '' : ' disabled'}>${scopes.map(item => `<option value="${esc(item.value)}"${item.value === pickedGroup ? ' selected' : ''}>${esc(item.label)}</option>`).join('')}</select></label>
@@ -171,7 +172,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
           </select></label>
           <label>শিরোনাম<input name="title" maxlength="160" required value="${esc(record?.title || '')}"></label>
           <label>সংক্ষিপ্ত বর্ণনা<input name="description" maxlength="600" value="${esc(record?.description || '')}"></label>
-          <label>মূল লেখা<textarea name="content" rows="5" maxlength="8000">${esc(record?.content || '')}</textarea></label>
+          <div class="course-rich-field"><span class="course-rich-label">লেকচার শিট / মূল লেখা</span><div class="course-rich-toolbar" role="toolbar" aria-label="লেখার ফরম্যাট"><button type="button" data-rich-command="bold" aria-label="মোটা লেখা"><strong>B</strong></button><button type="button" data-rich-command="italic" aria-label="তির্যক লেখা"><em>I</em></button><button type="button" data-rich-command="insertUnorderedList">• তালিকা</button><button type="button" data-rich-command="insertOrderedList">১. তালিকা</button><button type="button" data-rich-command="formatBlock" data-rich-value="h2">শিরোনাম</button><button type="button" data-rich-command="removeFormat">ফরম্যাট পরিষ্কার</button></div><div class="course-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-rich-editor>${record?.richContent ? sanitizeRichHtml(record.richContent) : esc(record?.content || '').replace(/\n/g, '<br>')}</div><textarea name="content" hidden>${esc(record?.content || '')}</textarea><input type="hidden" name="richContent" value="${esc(record?.richContent || '')}"><small class="form-note">Word/Google Docs থেকে কপি করে এখানে পেস্ট করুন। ফরম্যাট রাখা হবে; নিরাপদ নয় এমন কোড বাদ যাবে।</small></div>
           <label>সংযুক্তি লিংক (ভিডিও/PDF)<input name="attachmentUrl" maxlength="1000" inputmode="url" value="${esc(record?.attachmentUrl || '')}"></label>
           <label class="course-manage-publish"><input type="checkbox" name="published"${record?.published === true ? ' checked' : ''}> শিক্ষার্থীদের জন্য প্রকাশ করুন</label>
           <button class="admin-btn primary" type="submit"${classes.length && subjects.length ? '' : ' disabled'}>${record ? 'পরিবর্তন সংরক্ষণ করুন' : 'সংরক্ষণ করুন'}</button>
@@ -191,6 +192,25 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     if (isError) toast(message, true);
   }
 
+  root.addEventListener('input', event => {
+    const editor = event.target.closest('[data-rich-editor]');
+    if (!editor) return;
+    const form = editor.closest('[data-course-form]');
+    if (!form) return;
+    form.elements.content.value = editor.innerText || editor.textContent || '';
+    form.elements.richContent.value = editor.innerHTML;
+  });
+
+  root.addEventListener('click', event => {
+    const button = event.target.closest('[data-rich-command]');
+    if (!button) return;
+    const editor = root.querySelector('[data-rich-editor]');
+    if (!editor) return;
+    editor.focus();
+    document.execCommand(button.dataset.richCommand, false, button.dataset.richValue || null);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
   root.addEventListener('change', event => {
     if (event.target.name === 'className') { pickedClass = classByName(event.target.value)?.id || ''; pickedSubject = ''; pickedGroup = ''; editing = null; paint(); return; }
     if (event.target.name === 'subject') { pickedSubject = event.target.value; pickedGroup = ''; editing = null; paint(); return; }
@@ -209,7 +229,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     const subject = subjectsForClass(className).find(item => item.name === subjectName);
     if (!academic || !subject) { say('আগে ক্লাস ও বিষয় নির্বাচন করুন।', true); return; }
     if (role === 'teacher' && !subjectOptions(className).includes(subjectName)) {
-      say('এই ক্লাস বা বিষয় আপনার জন্য বরাদ্দ নয় — Manager-এর সঙ্গে কথা বলুন।', true);
+      say('এই ক্লাস বা বিষয় আপনার জন্য বরাদ্দ নয় — ম্যানেজারের সঙ্গে কথা বলুন।', true);
       return;
     }
     try {
@@ -223,6 +243,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
         title: String(data.get('title') || ''),
         description: String(data.get('description') || ''),
         content: String(data.get('content') || ''),
+        richContent: String(data.get('richContent') || ''),
         attachmentUrl: String(data.get('attachmentUrl') || ''),
         thumbnail: '',
         published: data.get('published') === 'on',
@@ -231,7 +252,11 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
       }, { actor, role });
       editing = null;
       say(`${saved.id} সংরক্ষিত হয়েছে।`);
-      toast('কনটেন্ট সংরক্ষিত হয়েছে।');
+      const isPublished = data.get('published') === 'on';
+      const contentType = String(data.get('type') || 'lesson');
+      toast(isPublished && ['note', 'lesson'].includes(contentType)
+        ? 'লেকচার শিট প্রকাশিত — উপকরণে শিক্ষার্থীরা পড়তে পারবে'
+        : isPublished ? 'কনটেন্ট প্রকাশিত হয়েছে।' : 'কনটেন্ট খসড়া হিসেবে সংরক্ষিত হয়েছে।');
       paint();
       announce();
     } catch (error) {

@@ -1,5 +1,6 @@
 /* Student-facing notices have their own categories and explicit Read ✓ receipts. */
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { loadPage } from './jsdom-harness.mjs';
 import { KEYS } from '../js/database.js';
@@ -54,7 +55,7 @@ test('the Notice Board filters and opens notices separately from the bell, then 
 
   ctx.click(ctx.$('#notificationButton'));
   assert.doesNotMatch(ctx.$('#noticeModal').textContent, /Notice NB-U|জরুরি সার্ভার ঘোষণা/);
-  assert.match(ctx.$('#noticeModal').textContent, /আলাদা Notice Board/);
+  assert.match(ctx.$('#noticeModal').textContent, /আলাদা নোটিশ বোর্ড/);
   ctx.click(ctx.$('#noticeModal .modal-close'));
 
   const tapped = noticeItem({ id: 'NB-U', title: 'জরুরি ঘোষণা', body: 'বিস্তারিত NB-U', createdAt: '2026-10-04T10:00:00.000Z' });
@@ -78,7 +79,7 @@ test('the Notice Board filters and opens notices separately from the bell, then 
   assert.equal(ctx.$('#noticeBoardDetailBody').textContent, '<img src=x onerror=alert(1)> আজই দেখে নাও।');
   assert.equal(ctx.$$('#noticeBoardDetail img').length, 0, 'notice content is rendered as text, not markup');
   const readButton = ctx.$('#noticeBoardReadButton');
-  assert.equal(readButton.textContent, 'Read ✓');
+  assert.equal(readButton.textContent, 'পড়া হয়েছে ✓');
   ctx.click(readButton);
   assert.equal(ctx.$('#noticeBoardReadButton').textContent, 'পড়া হয়েছে ✓');
   assert.equal(ctx.$('#noticeBoardReadButton').disabled, true);
@@ -90,4 +91,64 @@ test('the Notice Board filters and opens notices separately from the bell, then 
 
   currentStudent = { ...student, id: 'NB-OTHER-STUDENT' };
   assert.equal(board.refresh().unread, 6, 'Read ✓ belongs to this student, not another account on the device');
+});
+
+test('notice detail is a single view and one notice id never paints twice', async t => {
+  const ctx = await loadPage('student.html', { seed: {
+    [KEYS.account]: JSON.stringify({ username: 'raisa', status: 'active', student }),
+    [KEYS.notices]: JSON.stringify([
+      notice('NB-1', 'academic', '2026-10-04T10:00:00.000Z', { title: 'প্রথম নোটিশ', body: 'পূর্ণ বিস্তারিত বডি।' }),
+      notice('NB-1', 'academic', '2026-10-04T09:00:00.000Z', { title: 'পুরনো কপি', body: 'ডুপ্লিকেট সোর্স।' }),
+      notice('NB-2', 'exam', '2026-10-03T10:00:00.000Z', { title: 'আরেকটি নোটিশ', body: 'বডি দুই।' })
+    ])
+  } });
+  t.after(() => ctx.window.close());
+  ctx.$('#appShell').hidden = false;
+  const { initStudentNoticeBoard } = await import('../js/student-notice-board.js?notice-board-single-view-test');
+  const board = initStudentNoticeBoard({ getStudent: () => student });
+  await ctx.flush();
+
+  /* 5) one board row per notice id — the newer source row wins */
+  assert.deepEqual(board.refresh(), { total: 2, unread: 2 }, 'a duplicated notice id collapses into one row');
+  assert.equal(ctx.$$('#noticeBoardList .notice-board-card').length, 2);
+  assert.match(ctx.$('#noticeBoardList').textContent, /প্রথম নোটিশ/);
+  assert.doesNotMatch(ctx.$('#noticeBoardList').textContent, /পুরনো কপি/);
+
+  /* 1) tapping the card body opens only the full notice */
+  ctx.click(ctx.$$('#noticeBoardList .notice-board-card')[0]);
+  assert.equal(ctx.$('#noticeBoardDetail').hidden, false);
+  assert.match(ctx.$('#noticeBoardDetail').textContent, /পূর্ণ বিস্তারিত বডি।/);
+  assert.equal(ctx.$('#noticeBoardList').hidden, true, 'the list leaves the screen while the detail is open');
+  assert.equal(ctx.window.document.body.classList.contains('notice-board-detail-open'), true);
+  const css = readFileSync(new URL('../css/notice-board.css', import.meta.url), 'utf8');
+  assert.match(css, /\.notice-board-detail:not\(\[hidden\]\)\{[^}]*position:fixed/, 'the open detail is a fixed modal sheet');
+  assert.match(css, /\.notice-board-list\[hidden\]\{display:none/, 'a hidden list can never show through');
+
+  /* 2) backdrop click closes back to the plain list */
+  ctx.click(ctx.window.document.body);
+  assert.equal(ctx.$('#noticeBoardDetail').hidden, true);
+  assert.equal(ctx.$('#noticeBoardList').hidden, false);
+  assert.equal(ctx.window.document.body.classList.contains('notice-board-detail-open'), false);
+
+  /* 2b) × closes too */
+  ctx.click(ctx.$$('#noticeBoardList .notice-board-card')[0]);
+  assert.equal(ctx.$('#noticeBoardDetail').hidden, false);
+  ctx.click(ctx.$('#noticeBoardDetail [data-notice-board-close]'));
+  assert.equal(ctx.$('#noticeBoardDetail').hidden, true);
+  assert.equal(ctx.$('#noticeBoardList').hidden, false);
+
+  /* 3) «পড়া হয়েছে ✓» marks read and drops the unread count */
+  ctx.click(ctx.$$('#noticeBoardList .notice-board-card')[0]);
+  assert.equal(board.refresh().unread, 2);
+  assert.equal(ctx.$('#noticeBoardReadButton').disabled, false);
+  ctx.click(ctx.$('#noticeBoardReadButton'));
+  assert.equal(board.refresh().unread, 1);
+  assert.equal(ctx.$('#noticeBoardReadButton').disabled, true);
+  assert.equal(ctx.$('#noticeBoardReadButton').textContent, 'পড়া হয়েছে ✓');
+
+  /* 4) no English board labels anywhere */
+  const boardText = ctx.$('#notice-boardView').textContent;
+  assert.doesNotMatch(boardText, /Notice Board|Notice খুলুন|Read ✓|Academic|Class|Fee|Exam/);
+  const source = readFileSync(new URL('../js/student-notice-board.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /'Notice Board'|'Notice খুলুন'|'Read ✓'|'Academic'|'Class'|'Fee'|'Exam'/);
 });

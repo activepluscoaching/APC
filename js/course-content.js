@@ -23,6 +23,7 @@ import { KEYS, readRaw, writeRaw, listDocuments } from './database.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { classById, listClasses, subjectsForClass } from './academics.js';
 import { isTeacherAssignedSubject } from './teacher-assignments.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 
 export const COURSE_CONTENT_KEY = KEYS.courseContent;
 export const COURSE_VERSION = 1;
@@ -204,6 +205,7 @@ function clean(patch, { records, id, actor }) {
   if (title.length > 160) throw new Error('শিরোনাম সর্বোচ্চ ১৬০ অক্ষর।');
   const description = text(patch.description);
   const content = text(patch.content);
+  const richContent = sanitizeRichHtml(patch.richContent || '');
   if (description.length > 600) throw new Error('সংক্ষিপ্ত বর্ণনা সর্বোচ্চ ৬০০ অক্ষর।');
   if (content.length > 8000) throw new Error('মূল লেখা সর্বোচ্চ ৮০০০ অক্ষর।');
   const link = text(patch.attachmentUrl);
@@ -223,6 +225,7 @@ function clean(patch, { records, id, actor }) {
     type,
     description,
     content,
+    richContent,
     attachmentUrl: link,
     thumbnail,
     createdBy: text(patch.createdBy) || actor || '',
@@ -238,7 +241,7 @@ function clean(patch, { records, id, actor }) {
  * permission boundary. */
 async function requireCourseWriter(role, classId, subjectId, group = '') {
   if (!['teacher', 'manager'].includes(role) || !(await hasStaffSession(role))) {
-    throw Object.assign(new Error('সক্রিয় Teacher বা Manager session ছাড়া course content বদলানো যাবে না।'), { code: 'ACCESS_DENIED' });
+    throw Object.assign(new Error('সক্রিয় শিক্ষক বা ম্যানেজার সেশন ছাড়া কোনটেন্ট বদলানো যাবে না।'), { code: 'ACCESS_DENIED' });
   }
   const account = await readStaffAccount(role);
   if (!account || ['disabled', 'inactive', 'rejected'].includes(account.status) || account.accountStatus === 'disabled') {
@@ -253,7 +256,7 @@ async function requireCourseWriter(role, classId, subjectId, group = '') {
     throw new Error('এই শ্রেণির জন্য roster-এ থাকা batch/group নির্বাচন করুন।');
   }
   if (role === 'teacher' && !isTeacherAssignedSubject(account.username, classRecord.name, subject.name, group)) {
-    throw new Error('এই class/batch/subject আপনার Manager assignment-এ নেই।');
+    throw new Error('এই ক্লাস/ব্যাচ/বিষয় আপনার ম্যানেজার অ্যাসাইনমেন্টে নেই।');
   }
   return String(account.fullName || account.username || role).trim();
 }

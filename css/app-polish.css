@@ -201,6 +201,9 @@
   .teacher-progress-bar>span { display:block;height:100%;background:var(--color-primary); }
   .exam-tag { display:inline-block;background:var(--color-surface-muted);color:var(--color-primary);font-size:12px;padding:4px 10px;border-radius:24px;margin:0 6px 12px 0; }
   .exam-form { padding:20px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:14px; }
+.exam-quick-step[hidden], [data-quick-wizard] [hidden] { display:none!important; }
+.exam-quick-wizard { display:grid; gap:12px; margin-block-end:16px; }
+.exam-quick-step { margin:0; }
   .exam-form details { padding:12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:10px;margin-block:16px; }
   summary { cursor:pointer;line-height:1.8; }
   .exam-option { display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--color-border);border-radius:10px; }
@@ -373,3 +376,31 @@ html[data-theme="dark"] .rc-pdf-preview { background: var(--color-bg); }
 #gradeAuditPanel { padding:12px 16px; margin:12px 0; border:1px solid #a0adab; border-radius:10px; }
 #gradeAuditPanel summary { cursor:pointer; min-height:48px; display:flex; align-items:center; color:#073b2c; font-weight:700; }
 #gradeAuditList p { border-top:1px solid #a0adab; padding:12px 0; overflow-wrap:anywhere; }
+
+/* Authorized Admin-only staff identity card, with isolated print/PDF output. */
+.staff-id-card-area { margin-block:18px; }
+.staff-id-card-print-root[hidden] { display:none !important; }
+.staff-id-card-print { width:min(100%,360px); margin:14px auto; padding:22px; border:1px solid #dce9e1; border-radius:20px; background:linear-gradient(160deg,#fff 0%,#f3faf5 100%); color:#173c2c; box-shadow:0 12px 30px rgba(20,67,46,.10); }
+.staff-id-card-print header { display:flex; align-items:center; gap:12px; }
+.staff-id-card-print header img { object-fit:contain; }
+.staff-id-card-print header div { display:grid; gap:4px; }
+.staff-id-card-print header strong { font-size:14px; }
+.staff-id-card-print header small { color:#63776d; }
+.staff-id-card-person { display:flex; align-items:center; gap:14px; margin:24px 0 18px; }
+.staff-id-card-avatar { width:64px; height:64px; display:grid; place-items:center; border-radius:50%; background:#e4f2eb; color:#39745c; font-size:22px; font-weight:800; }
+.staff-id-card-person h3 { margin:0; font-size:20px; overflow-wrap:anywhere; }
+.staff-id-card-person p { margin:5px 0 0; color:#63776d; }
+.staff-id-card-number { padding:14px; border-radius:14px; background:#eaf5ee; display:grid; gap:6px; }
+.staff-id-card-number small { color:#597366; }
+.staff-id-card-number strong { color:#126244; font-size:24px; letter-spacing:.04em; overflow-wrap:anywhere; }
+.staff-id-card-status { margin:12px 0 0; color:#63776d; font-size:13px; }
+@media print {
+  body.staff-card-printing * { visibility:hidden !important; }
+  body.staff-card-printing #staffModalBackdrop,
+  body.staff-card-printing #staffModalBackdrop .staff-id-card-print-root,
+  body.staff-card-printing #staffModalBackdrop .staff-id-card-print-root * { visibility:visible !important; }
+  body.staff-card-printing #staffModalBackdrop { display:block !important; position:static !important; background:white !important; overflow:visible !important; }
+  body.staff-card-printing #staffModalBackdrop .staff-id-card-print-root { display:block !important; position:absolute !important; inset:0 !important; padding:0 !important; margin:0 !important; }
+  body.staff-card-printing #staffModalBackdrop .staff-id-card-print { width:70mm !important; min-height:105mm !important; margin:0 auto !important; box-shadow:none !important; }
+  body.staff-card-printing #staffModalBackdrop [data-staff-card-print] { display:none !important; }
+}

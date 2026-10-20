@@ -57,7 +57,10 @@ export function initStudentHubs({ getStudent } = {}) {
   let attendanceRequest = 0;
   const count = (key, value) => {
     const node = document.querySelector(`[data-class-count="${key}"]`);
-    if (node) node.textContent = bn(value);
+    if (node) {
+      node.textContent = bn(value);
+      node.classList.toggle('is-zero', !value);
+    }
   };
   async function paintAttendance(me) {
     const request = ++attendanceRequest;

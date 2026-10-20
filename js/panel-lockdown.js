@@ -270,7 +270,13 @@ export function watchOwnPanelSession(role, { intervalMs = 60000 } = {}) {
       if (await hasStaffSession(role)) return;
     } catch { /* an unreadable store counts as signed out */ }
     stop();
-    showPanelLock({ role, reason: `${PANEL_LABELS[role] || 'এই প্যানেল'}র সেশন আর নেই — নিরাপত্তার জন্য কন্টেন্ট বন্ধ করা হয়েছে।` });
+    /* `role` here is a role name (admin/manager/…), never a page file — the
+       label must be resolved through PANEL_BY_ROLE first, and the genitive is
+       "…প্যানেলের", not "…প্যানেলর". Re-login is genuinely required now, so
+       the copy says exactly that instead of leaving the reason ambiguous. */
+    const page = PANEL_BY_ROLE[role] || (PANEL_PAGES.includes(role) ? role : '');
+    const label = PANEL_LABELS[page] || 'এই প্যানেল';
+    showPanelLock({ role: page || role, reason: `${label}ের সেশন আর নেই — নিরাপত্তার জন্য কন্টেন্ট বন্ধ করা হয়েছে। আবার লগইন করলেই প্যানেলটি খুলবে।` });
   };
   const timer = window.setInterval(check, intervalMs);
   const onVisible = () => { if (document.visibilityState === 'visible') void check(); };

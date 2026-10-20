@@ -43,12 +43,13 @@ export function audienceMatches(notice, viewer) {
 
 export const NOTICE_BOARD_READ_PREFIX = 'activePlus.noticeBoard.read.v1:';
 
+const row = (id, icon, bn) => Object.freeze({ id, label: `${icon} ${bn}`, shortLabel: bn, icon });
 export const NOTICE_CATEGORIES = Object.freeze([
-  Object.freeze({ id: 'urgent', label: '🔴 জরুরি', shortLabel: 'জরুরি', icon: '🔴' }),
-  Object.freeze({ id: 'academic', label: '📚 Academic', shortLabel: 'Academic', icon: '📚' }),
-  Object.freeze({ id: 'class', label: '🏫 Class', shortLabel: 'Class', icon: '🏫' }),
-  Object.freeze({ id: 'fee', label: '💰 Fee', shortLabel: 'Fee', icon: '💰' }),
-  Object.freeze({ id: 'exam', label: '📝 Exam', shortLabel: 'Exam', icon: '📝' })
+  row('urgent', '🔴', 'জরুরি'),
+  row('academic', '📚', 'একাডেমিক'),
+  row('class', '🏫', 'ক্লাস'),
+  row('fee', '💰', 'ফি'),
+  row('exam', '📝', 'পরীক্ষা')
 ]);
 const NOTICE_CATEGORY_IDS = new Set(NOTICE_CATEGORIES.map(category => category.id));
 const NOTICE_CATEGORY_ALIASES = Object.freeze({

@@ -3,6 +3,8 @@ import { loadAccount } from './storage.js';
 import { $, $$, scrollToTop, toBanglaNumber } from './ui.js';
 import { isStudentBirthday } from './notification-rules.js';
 
+export const shownId = s => (s?.id || '').length > 16 ? (s.studentMobile || s.mobile || '—') : (s?.id || '—');
+
 export function renderStudent(student) {
   const fullName = String(student.name || student.nameBn || 'শিক্ষার্থী').trim() || 'শিক্ষার্থী';
   const firstName = fullName.split(/\s+/)[0] || 'শিক্ষার্থী';
@@ -13,12 +15,12 @@ export function renderStudent(student) {
   $('#studentHeaderMeta') && ($('#studentHeaderMeta').textContent = meta);
   $('#avatarInitial') && ($('#avatarInitial').textContent = initial);
   $('#moreStudentName') && ($('#moreStudentName').textContent = fullName);
-  $('#moreStudentId') && ($('#moreStudentId').textContent = student.id || '—');
+  $('#moreStudentId') && ($('#moreStudentId').textContent = shownId(student));
   $('#moreAvatar') && ($('#moreAvatar').textContent = initial);
   $('#profileAvatar') && ($('#profileAvatar').textContent = initial);
   $('#profileName') && ($('#profileName').textContent = fullName);
   $('#profileMeta') && ($('#profileMeta').textContent = [student.className, student.group, student.roll ? `রোল ${toBanglaNumber(student.roll)}` : ''].filter(Boolean).join(' · ') || meta);
-  $('#studentId') && ($('#studentId').textContent = student.id);
+  $('#studentId') && ($('#studentId').textContent = shownId(student));
   const usernameChip = $('#profileUsername');
   if (usernameChip) usernameChip.textContent = student.username || loadAccount()?.username || '—';
   $('#profileInstitution') && ($('#profileInstitution').textContent = student.institution || '—');

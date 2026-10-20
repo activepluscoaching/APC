@@ -5,7 +5,7 @@
    letters the student sees in the app), and the footer carries the page number.
    The answer key keeps its own pages after the question pages. */
 import { toBanglaNumber as bn } from './ui.js';
-import { EXAM_TYPES, totalMarks, classExamDate, examCodeOf, examDurationMinutes, examDateOf, examStageLabel } from './exam-data.js';
+import { totalMarks, examCodeOf, examDateOf } from './exam-data.js';
 import { BRAND_NAME, BRAND_TAGLINE, brandLogoLargeSrc, loadWatermark, drawWatermark } from './brand.js';
 let assets;
 export async function loadAssets() {
@@ -93,22 +93,6 @@ export async function downloadExamPDF(exam, { solutions = false, attempt = null,
   /* The printed code is the paper's permanent identity: it appears on every
      page footer, so a printed sheet can always be traced back to one record. */
   const code = examCodeOf(exam);
-  const identity = [
-    ['পরীক্ষার কোড', code],
-    ['শ্রেণি', exam.className || 'সব শ্রেণি'],
-    ['বিষয়', `${exam.subject}${exam.subjectCode ? ` (${exam.subjectCode})` : ''}`],
-    ['পরীক্ষার ধরন', EXAM_TYPES[exam.type] || exam.type],
-    ['অধ্যায়', exam.chapterName || '—'],
-    ['Batch', exam.batchName || exam.group || '—'],
-    ['পরীক্ষার তারিখ', examDateShortLabel(exam)],
-    ['সময়', `${timeOf(exam.startAt)} – ${timeOf(exam.endAt)}`],
-    ['সময়কাল', `${bn(examDurationMinutes(exam))} মিনিট`],
-    ['মোট প্রশ্ন', bn((exam.questions || []).length)],
-    ['পূর্ণমান', bn(totalMarks(exam))],
-    ['পাস নম্বর', bn(Number(exam.passingMarks) || Math.round(totalMarks(exam) * (Number(exam.passPercent) || 33) / 100))],
-    ['প্রতি ভুলে কাটা', exam.type === 'mcq' ? bn(Number(exam.negativeMarks ?? exam.negative) || 0) : 'প্রযোজ্য নয়'],
-    ['অবস্থা', examStageLabel(exam)]
-  ];
   const ctx = canvas.getContext('2d'), pages = [];
   const W = canvas.width, LEFT = 62, RIGHT = W - 62, CONTENT_W = RIGHT - LEFT;
   const FOOT_Y = 1690, BOTTOM = 1652;
@@ -262,35 +246,15 @@ export async function downloadExamPDF(exam, { solutions = false, attempt = null,
     y += 10;
   };
 
-  /* The paper's own identity card: every field a printed sheet must carry so
-     the exam can be traced without the app (code, class, subject + subject
-     code, type, chapter, date, duration, question count and marks). */
-  const drawIdentity = async () => {
-    const rowH = 34, labelW = 250, colW = (CONTENT_W - labelW) / 2;
-    await drawParagraph(`পরীক্ষার নাম: ${exam.title}`, { bold: true, color: '#143b30' });
-    for (let index = 0; index < identity.length; index += 2) {
-      if (y + rowH > BOTTOM) { await finishPage(); y = beginPage({ part: partSolutions ? 'উত্তরপত্র' : 'প্রশ্নপত্র' }); }
-      for (let column = 0; column < 2; column++) {
-        const row = identity[index + column];
-        if (!row) continue;
-        const x = LEFT + column * (colW + 10);
-        ctx.fillStyle = '#f2f7f3'; ctx.fillRect(x, y - 24, colW, rowH - 4);
-        ctx.fillStyle = '#596960'; ctx.font = '20px ExamBangla';
-        ctx.fillText(String(row[0]), x + 10, y);
-        ctx.fillStyle = '#143b30'; ctx.font = '700 20px ExamBangla';
-        ctx.fillText(String(row[1]).slice(0, 40), x + labelW - 30, y);
-      }
-      y += rowH;
-    }
-    y += 8;
-  };
+  /* The paper opens on the brand header (beginPage) + the exam title and one
+     scope line — the identity summary table that used to sit here is removed
+     (owner decision 2026-10-20). The footer still carries the paper's code and
+     the page number, so a printed sheet stays traceable. */
   const drawHead = async () => {
-    await drawIdentity();
-    if (exam.type !== 'mcq') await drawParagraph(`পরের দিন ক্লাসে পরীক্ষা: ${classExamDate(exam.startAt)}। খাতায় উত্তর লিখবে; অনলাইনে লিখিত উত্তর জমা নয়।`);
-    else await drawParagraph(`সর্বনিম্ন মোট নম্বর ০। প্রথম প্রবেশের সীমা ${bn(exam.lateMinutes)} মিনিট।`);
-    if (attempt) await drawParagraph(`শিক্ষার্থী: ${attempt.name} • চেষ্টা: ${bn(attempt.number)} • প্রাপ্ত নম্বর: ${attempt.score === undefined ? 'জমা অপেক্ষমাণ' : bn(attempt.score)}`);
-    if (exam.instructions) await drawParagraph(exam.instructions);
+    await drawParagraph(exam.title, { bold: true, color: '#143b30' });
+    await drawParagraph(`${exam.className || 'সব শ্রেণি'} • ${exam.subject}${exam.subjectCode ? ` (${exam.subjectCode})` : ''}`, { size: 20, color: '#596960' });
   };
+
 
   const questions = attempt?.order?.length ? attempt.order.map(item => exam.questions.find(q => q.id === item.id)) : exam.questions;
   const optionsFor = q => {

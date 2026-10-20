@@ -147,7 +147,7 @@ test('draft → review → approved → published → completed → archived →
   assert.equal(exam0.durationMinutes, 60);
   assert.equal(isStudentVisibleExam(exam0), false, 'a draft is staff-only');
 
-  await assert.rejects(repo.publish(id, TEACHER_ACTOR), /Manager/, 'a teacher never publishes a paper');
+  await assert.rejects(repo.publish(id, TEACHER_ACTOR), /ম্যানেজার/, 'a teacher never publishes a paper');
   db = await repo.approve(id, MANAGER_ACTOR);
   assert.equal(find(db, id).status, 'approved');
   assert.equal(isStudentVisibleExam(find(db, id)), false, 'an approved paper is still not student-visible');
@@ -181,14 +181,14 @@ test('a teacher cannot approve, publish, unpublish, archive or delete a publishe
   setup();
   const id = await publishVia();
   for (const [call, pattern] of [
-    [() => repo.approve(id, TEACHER_ACTOR), /Manager/],
-    [() => repo.publish(id, TEACHER_ACTOR), /Manager/],
-    [() => repo.unpublish(id, TEACHER_ACTOR), /Manager/],
-    [() => repo.archive(id, TEACHER_ACTOR), /Manager/],
-    [() => repo.complete(id, TEACHER_ACTOR), /Manager/],
-    [() => repo.review(id, 'reject', { note: 'x' }, ADMIN_ACTOR), /Manager/]
+    [() => repo.approve(id, TEACHER_ACTOR), /ম্যানেজার/],
+    [() => repo.publish(id, TEACHER_ACTOR), /ম্যানেজার/],
+    [() => repo.unpublish(id, TEACHER_ACTOR), /ম্যানেজার/],
+    [() => repo.archive(id, TEACHER_ACTOR), /ম্যানেজার/],
+    [() => repo.complete(id, TEACHER_ACTOR), /ম্যানেজার/],
+    [() => repo.review(id, 'reject', { note: 'x' }, ADMIN_ACTOR), /ম্যানেজার/]
   ]) await assert.rejects(call, pattern);
-  await assert.rejects(repo.deleteExam(id, TEACHER_ACTOR), /Unpublish|Archive/);
+  await assert.rejects(repo.deleteExam(id, TEACHER_ACTOR), /প্রকাশনা বাতিল|আর্কাইভ/);
 });
 
 test('the Manager authors, edits, duplicates, publishes and retires a paper of their own', async () => {
@@ -215,7 +215,7 @@ test('the Manager authors, edits, duplicates, publishes and retires a paper of t
   await repo.requestApproval(id, MANAGER_ACTOR);
   await repo.approve(id, MANAGER_ACTOR);
   db = await repo.publish(id, MANAGER_ACTOR);
-  await assert.rejects(repo.deleteExam(id, MANAGER_ACTOR), /Unpublish|Archive/);
+  await assert.rejects(repo.deleteExam(id, MANAGER_ACTOR), /প্রকাশনা বাতিল|আর্কাইভ/);
   db = await repo.archive(id, MANAGER_ACTOR);
   assert.equal(find(db, id).status, 'archived');
   db = await repo.deleteExam(id, MANAGER_ACTOR);
@@ -230,7 +230,7 @@ test('a paper somebody answered can be unpublished and archived, but never delet
   const db1 = await repo.startAttempt(id, one);
   const attempt = db1.attempts.find(item => item.examId === id && item.studentId === one.id);
   await repo.saveAnswer(attempt.id, one.id, 'q1', 'A');
-  await assert.rejects(repo.unpublish(id, MANAGER_ACTOR), /Unpublish করা যাবে না/, 'a paper in flight cannot be pulled');
+  await assert.rejects(repo.unpublish(id, MANAGER_ACTOR), /প্রকাশনা বাতিল করা যাবে না/, 'a paper in flight cannot be pulled');
   await repo.finishAttempt(attempt.id, one.id);
   /* Pretend the Manager already released these results: republishing must not
      take that back. */
@@ -346,7 +346,7 @@ test('moving the exam to another date re-files the record under the new day', as
   assert.equal(exam.durationMinutes, 30);
   assert.equal(exam.questions[0].context.examDate, exam.examDate, 'the questions move with their exam');
   assert.equal(groupExamsByDate([exam])[0].date, exam.examDate);
-  await assert.rejects(repo.reschedule(id, { startAt: nextDay + 86400000 * 2, endAt: nextDay + 86400000 * 2 + 3600000 }, TEACHER_ACTOR), /Manager/);
+  await assert.rejects(repo.reschedule(id, { startAt: nextDay + 86400000 * 2, endAt: nextDay + 86400000 * 2 + 3600000 }, TEACHER_ACTOR), /ম্যানেজার/);
   /* A class paper is sat the next class day — the date-wise record says so. */
   db = await repo.saveDraft(fields({ type: 'written', template: examTemplate('written'), startAt: start, endAt: end }));
   const written = db.exams.find(item => item.type === 'written');

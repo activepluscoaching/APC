@@ -1,3 +1,4 @@
+// v379: cross-device notification read receipts; preserve them in the synced settings collection.
 // v378: Student Home reference-match shortcut sizing, violet active tab, and Dhaka-clock greeting/art.
 // v376: staggered Student icon motion, time-of-day greetings, and eased truthful progress.
 // v373: motion-aware, offline hero-card illustrations for the current Student Home layout.
@@ -126,7 +127,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 378;
+const CACHE_VERSION = 379;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -370,6 +371,7 @@ const APP_SHELL = [
   './js/student-study-sections.js',
   './js/student-more.js',
   './js/course-editor.js',
+  './js/rich-sanitize.js',
   './js/daily-quote.js',
   './js/hero-cards.js' + '?v=379',
   './assets/daily-quotes.json',
@@ -421,6 +423,9 @@ const APP_SHELL = [
   './js/main.js',
   './js/panel-route.js',
   './js/admin.js',
+  './js/admin-content.js',
+  './js/staff-self-edit.js',
+  './js/staff-role-names.js',
   './js/factory-reset.js',
   './js/manager.js',
   './js/payment.js',

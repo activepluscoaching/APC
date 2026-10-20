@@ -49,6 +49,7 @@ import {
   staffRoleLabel
 } from './staff-directory.js';
 import { initStaffManagement, renderStaff } from './staff-management.js';
+import { initAdminContent, refreshAdminContentRecords } from './admin-content.js';
 import { ROLE_CAPABILITIES } from './admin-permissions.js';
 import { runMigrations } from './storage/migration.js';
 
@@ -123,6 +124,8 @@ async function enterPanel() {
   // Staff Management is wired once; it re-reads the directory on every render
   // and calls back so the dashboard, reports and security stay in sync.
   initStaffManagement({ onChanged: onStaffChanged });
+  // Content review (নোটিশ/পাঠসামগ্রী) binds its confirm+delete handlers once.
+  initAdminContent({ toast: message => toast(message) });
   await refreshStaffSnapshot();
   renderAll();
   // The Reports Module re-reads who is signed in and what they may see.
@@ -354,7 +357,7 @@ function renderStudents() {
           </article>`;
       }).join('')
     : state.query.trim()
-      ? `<div class="admin-empty-search"><p>🔍 "${escapeHtml(state.query.trim())}" দিয়ে কোনো শিক্ষার্থী পাওয়া যায়নি</p><small>Student ID, নাম, পিতার নাম, শ্রেণি বা মোবাইল নম্বর দিয়ে খুঁজে দেখুন।</small></div>`
+      ? `<div class="admin-empty-search"><p>🔍 "${escapeHtml(state.query.trim())}" দিয়ে কোনো শিক্ষার্থী পাওয়া যায়নি</p><small>শিক্ষার্থীর আইডি, নাম, পিতার নাম, শ্রেণি বা মোবাইল নম্বর দিয়ে খুঁজে দেখুন।</small></div>`
       : '<p class="admin-empty">এই ফিল্টারে কোনো শিক্ষার্থী নেই। সার্চ বা ফিল্টার বদলে দেখুন।</p>';
 }
 function findStudent(id) {
@@ -688,7 +691,7 @@ const ROLE_ORDER = Object.freeze(['admin', 'manager', 'teacher', 'payment', 'stu
 const ROLE_SUMMARY = Object.freeze({
   admin: 'System Control, স্টাফ ম্যানেজমেন্ট, অনুমতি, সিকিউরিটি, ডেটা, ব্যাকআপ, রিপোর্ট ও সেটিংস',
   manager: 'দৈনন্দিন অপারেশন: শিক্ষার্থী অনুমোদন, নোটিশ, রুটিন, পরীক্ষা প্রকাশ, হিসাব পর্যালোচনা',
-  teacher: 'ক্লাস, বাড়ির কাজ, উপস্থিতি, সাজেশন ও পরীক্ষা — Teacher প্যানেল',
+  teacher: 'ক্লাস, বাড়ির কাজ, উপস্থিতি, সাজেশন ও পরীক্ষা — শিক্ষক প্যানেল',
   payment: 'ফি গ্রহণ ও ক্যাশ কাউন্টার এন্ট্রি — Payment রিসিভ প্যানেল',
   student: 'নিজের প্রোফাইল, রুটিন, কোর্স, ফলাফল ও নোটিশ — শিক্ষার্থী অ্যাপ'
 });
@@ -714,7 +717,7 @@ const CAPABILITY_LABELS = Object.freeze({
   'app.manage': 'শিক্ষার্থী অ্যাপ কন্ট্রোল',
   'exams.view': 'পরীক্ষা দেখা',
   'exams.publish': 'পরীক্ষা প্রকাশ/প্রত্যাখ্যান',
-  'teaching.panel': 'Teacher প্যানেল',
+  'teaching.panel': 'শিক্ষক প্যানেল',
   'payment.panel': 'Payment প্যানেল'
 });
 
@@ -734,7 +737,7 @@ function renderRoles() {
     const capabilities = ROLE_CAPABILITIES[role] || [];
     const staffRole = role === 'payment' ? 'cash-counter' : role;
     const meta = STAFF_ROLE_META[staffRole];
-    const label = meta ? `${meta.labelBn} (${meta.label})` : role === 'student' ? 'শিক্ষার্থী (Student)' : role;
+    const label = meta ? meta.labelBn : role === 'student' ? 'শিক্ষার্থী' : role;
     const chips = Object.keys(CAPABILITY_LABELS).map(capability => `
       <li class="${capabilities.includes(capability) ? '' : 'is-denied'}">${escapeHtml(CAPABILITY_LABELS[capability])}</li>`).join('');
     const staffCount = role === 'student' ? state.students.length : (counts[staffRole] ?? 0);
@@ -750,7 +753,7 @@ function renderRoles() {
         <div class="role-head">
           <span class="role-icon" aria-hidden="true"></span>
           <div><h3>${escapeHtml(ROLE_SUMMARY[role] || '')}</h3>
-          <small>${capabilities.length ? `${bn(capabilities.length)}টি অনুমতি • Admin এই রোলের কাজ নিজের প্যানেলে আনে না` : 'Admin প্যানেলে কোনো অনুমতি নেই'}</small></div>
+          <small>${capabilities.length ? `${bn(capabilities.length)}টি অনুমতি • অ্যাডমিন এই রোলের কাজ নিজের প্যানেলে আনে না` : 'অ্যাডমিন প্যানেলে কোনো অনুমতি নেই'}</small></div>
         </div>
         <ul class="role-cap-list">${chips}</ul>
       </article>`;
@@ -854,7 +857,7 @@ function clearSelectedCollection() {
   button?.addEventListener('click', async () => {
     if (!access.has(CAPABILITIES.DATA_MANAGE)) {
       closeModal();
-      toast('এই কাজটি শুধু Admin করতে পারবেন।');
+      toast('এই কাজটি শুধু অ্যাডমিন করতে পারবেন।');
       return;
     }
     if (key === STAFF_DIRECTORY_KEY) {
@@ -888,7 +891,7 @@ let factoryResetRunning = false;
 
 function openFactoryReset() {
   if (!access.has(CAPABILITIES.DATA_MANAGE)) {
-    toast('এই কাজটি শুধু Admin করতে পারবেন।');
+    toast('এই কাজটি শুধু অ্যাডমিন করতে পারবেন।');
     return;
   }
   openModal('ডেটা', 'সম্পূর্ণ ডাটাবেজ রিসেট করবেন?', `
@@ -970,7 +973,7 @@ function backupFileName() {
 
 async function exportBackup() {
   if (!access.has(CAPABILITIES.BACKUP_MANAGE)) {
-    toast('ব্যাকআপ শুধু Admin নিতে পারবেন।');
+    toast('ব্যাকআপ শুধু অ্যাডমিন নিতে পারবেন।');
     return;
   }
   const payload = { kind: 'active-plus-backup', version: 1, createdAt: new Date().toISOString(), data: {} };
@@ -1000,7 +1003,7 @@ async function restoreBackup(file) {
   const status = $('#backupStatus');
   if (!file) return;
   if (!access.has(CAPABILITIES.BACKUP_MANAGE)) {
-    if (status) status.textContent = 'রিস্টোর শুধু Admin করতে পারবেন।';
+    if (status) status.textContent = 'রিস্টোর শুধু অ্যাডমিন করতে পারবেন।';
     return;
   }
   let payload;
@@ -1048,12 +1051,12 @@ async function renderSecurity() {
   const protectedStaff = state.staff.filter(staff => staff.protected);
   const rows = [
     ['সিস্টেম মালিক', escapeHtml(owner?.fullName || '—')],
-    ['Owner Username', escapeHtml(owner?.username || '—')],
+    ['মালিকের ইউজারনেম', escapeHtml(owner?.username || '—')],
     ['মালিকের স্টাফ আইডি', ownerStaff ? `<span class="staff-id-badge">${escapeHtml(ownerStaff.staffId)}</span>` : '—'],
     ['স্ট্যাটাস', '<span class="badge badge-approved">সুরক্ষিত • মুছে বা নিষ্ক্রিয় করা যায় না</span>'],
-    ['Session নীতি', `${bn(STAFF_SESSION_RULES.rememberDays.admin)} দিন (এই ডিভাইসে বাঁধা টোকেন) • ট্যাব-সেশন ট্যাব বন্ধ হলে শেষ`],
-    ['Password নীতি', `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর • PBKDF2 হ্যাশ • কখনো প্লেইন-টেক্সট নয়`],
-    ['স্টাফ ম্যানেজমেন্ট', 'শুধু Admin • বাটন লুকানোই নয়, প্রতিটি পরিবর্তনে Admin সেশন যাচাই হয়'],
+    ['সেশন নীতি', `${bn(STAFF_SESSION_RULES.rememberDays.admin)} দিন (এই ডিভাইসে বাঁধা টোকেন) • ট্যাব-সেশন ট্যাব বন্ধ হলে শেষ`],
+    ['পাসওয়ার্ড নীতি', `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর • PBKDF2 হ্যাশ • কখনো প্লেইন-টেক্সট নয়`],
+    ['স্টাফ ম্যানেজমেন্ট', 'শুধু অ্যাডমিন • বাটন লুকানোই নয়, প্রতিটি পরিবর্তনে অ্যাডমিন সেশন যাচাই হয়'],
     ['শিক্ষার্থী আইডি বনাম স্টাফ আইডি', escapeHtml(STAFF_DIRECTORY_RULES.studentIdNote)]
   ];
   host.innerHTML = `
@@ -1069,7 +1072,7 @@ async function renderSecurity() {
     </article>
     <article class="admin-card">
       <header class="admin-card-head">
-        <div><p class="eyebrow">Password Health</p><h2>পাসওয়ার্ড বদল বাকি</h2></div>
+        <div><p class="eyebrow">পাসওয়ার্ড সুরক্ষা</p><h2>পাসওয়ার্ড বদল বাকি</h2></div>
         <span class="badge ${passwordDue.length ? 'badge-pending' : 'badge-approved'}">${bn(passwordDue.length)} জন</span>
       </header>
       ${passwordDue.length ? `
@@ -1084,7 +1087,7 @@ async function renderSecurity() {
             </div>`).join('')}
         </div>`
       : '<p class="admin-empty">সব অ্যাকাউন্টের পাসওয়ার্ড হালনাগাদ — বকেয়া কিছু নেই।</p>'}
-      <p class="finance-hint">Admin রিসেট করলে নতুন পাসওয়ার্ড সাময়িক থাকে: সংশ্লিষ্ট স্টাফ প্রথম লগইনে তা বদলাতে বাধ্য থাকে। পাসওয়ার্ড কখনো দেখানো হয় না।</p>
+      <p class="finance-hint">অ্যাডমিন রিসেট করলে নতুন পাসওয়ার্ড সাময়িক থাকে: সংশ্লিষ্ট স্টাফ প্রথম লগইনে তা বদলাতে বাধ্য থাকে। পাসওয়ার্ড কখনো দেখানো হয় না।</p>
     </article>
     <article class="admin-card">
       <header class="admin-card-head">
@@ -1103,10 +1106,10 @@ async function renderSecurity() {
     </article>
     <article class="admin-card">
       <header class="admin-card-head">
-        <div><p class="eyebrow">Role Boundary</p><h2>দৈনন্দিন কাজের মালিকানা</h2></div>
+        <div><p class="eyebrow">ভূমিকার সীমা</p><h2>দৈনন্দিন কাজের মালিকানা</h2></div>
       </header>
       <div class="security-list">
-        <div class="security-row"><div><dt>ফি গ্রহণ / ক্যাশ কাউন্টার</dt><dd>Cash Counter (payment.html) — Admin শুধু পর্যবেক্ষণ করে</dd></div></div>
+        <div class="security-row"><div><dt>ফি গ্রহণ / ক্যাশ কাউন্টার</dt><dd>ক্যাশ কাউন্টার (payment.html) — অ্যাডমিন শুধু পর্যবেক্ষণ করে</dd></div></div>
         <div class="security-row"><div><dt>শিক্ষার্থী অনুমোদন, নোটিশ, রুটিন, পরীক্ষা প্রকাশ</dt><dd>Manager (manager.html)</dd></div></div>
         <div class="security-row"><div><dt>ক্লাস, বাড়ির কাজ, উপস্থিতি</dt><dd>Teacher (teacher.html)</dd></div></div>
       </div>
@@ -1274,6 +1277,7 @@ const VIEW_REFRESHERS = {
      clicked before is still showing" — the reported dead end). */
   profile: () => { resetSettingsHub('[data-settings-hub="admin"]'); renderAdminProfile(); },
   staff: () => { void renderStaff(); },
+  content: () => { void refreshAdminContentRecords(); },
   reports: () => refreshReports($('#adminReports'))
 };
 
@@ -1578,15 +1582,17 @@ async function initAdminEntry() {
     await enterPanel();
     watchOwnPanelSession('admin');
   } catch (error) {
-    /* Never leave admin.html blank when a stored session/account or optional
-       panel initializer is corrupted. Clear only the invalid Admin session;
-       application data is untouched. */
+    /* A transient failure (a slow cloud read, an optional initializer that
+       threw) must NOT cost the Admin their session — the lock card offers a
+       reload and the session survives it, so no unnecessary re-login. Only a
+       genuinely missing/corrupt session or account record is cleared above. */
     console.error('[Active Plus] Admin panel startup failed:', error);
-    await lockPanel({ role: 'admin.html', clear: 'admin', reason: 'প্যানেল চালু করা যায়নি — লগইন পেজ থেকে আবার চেষ্টা করুন।' });
+    await lockPanel({ role: 'admin.html', reason: 'প্যানেল চালু করা যায়নি — আগে "আবার চেষ্টা করুন" চাপুন; সেশন রাখা আছে। তবু না হলে লগইন পেজ থেকে আবার প্রবেশ করুন।' });
   }
 }
 void initAdminEntry().catch(error => {
+  /* Same rule as above: keep the session on an unexpected error so a reload
+     can retry without forcing the Admin to sign in again. */
   console.error('[Active Plus] Admin entry failed:', error);
-  clearStaffSession('admin');
-  void lockPanel({ role: 'admin.html', reason: 'প্যানেল চালু করা যায়নি — লগইন পেজ থেকে আবার চেষ্টা করুন।' });
+  void lockPanel({ role: 'admin.html', reason: 'প্যানেল চালু করা যায়নি — আগে "আবার চেষ্টা করুন" চাপুন; সেশন রাখা আছে। তবু না হলে লগইন পেজ থেকে আবার প্রবেশ করুন।' });
 });

@@ -127,6 +127,11 @@ export const VIEW_CAPABILITIES = Object.freeze({
   reports: CAPABILITIES.REPORTS_VIEW,
   system: CAPABILITIES.SETTINGS_MANAGE,
   data: CAPABILITIES.DATA_MANAGE,
+  /* Content oversight (owner requirement 2026-10-19): the Admin may VIEW and
+     DELETE published notices/homework/suggestions for moderation. Composing
+     stays in the Teacher/Manager panels — this is read+delete, gated by the
+     same data governance capability as the rest of the record controls. */
+  content: CAPABILITIES.DATA_MANAGE,
   migration: CAPABILITIES.SECURITY_MANAGE,
   backup: CAPABILITIES.BACKUP_MANAGE,
   audit: CAPABILITIES.BACKUP_MANAGE,
@@ -166,6 +171,7 @@ export const ADMIN_DATA_NAV = Object.freeze([
 /** More hub destinations keep their stable route names and original gates. */
 export const ADMIN_MORE_NAV = Object.freeze([
   { view: 'data', label: 'ডেটা ও ব্যাকআপ', hint: 'রেকর্ড, স্টোরেজ, ব্যাকআপ ও অডিট', icon: 'data', capability: CAPABILITIES.DATA_MANAGE, order: 1 },
+  { view: 'content', label: 'নোটিশ ও কনটেন্ট', hint: 'প্রকাশিত নোটিশ/কাজ দেখুন ও মুছুন', icon: 'bell', capability: CAPABILITIES.DATA_MANAGE, order: 1 },
   { view: 'profile', label: 'আমার অ্যাকাউন্ট', hint: 'পরিচয়, পাসওয়ার্ড ও পছন্দ', icon: 'profile', capability: CAPABILITIES.PROFILE_VIEW, order: 2 },
   { view: 'advice', label: 'দৈনিক পরামর্শ', hint: 'পরামর্শ যোগ, সম্পাদনা ও পিন', icon: 'book', capability: CAPABILITIES.ADVICE_MANAGE, order: 3 }
 ]);
@@ -173,7 +179,7 @@ export const ADMIN_MORE_NAV = Object.freeze([
 /** Which seat lights up for a view that lives inside a hub. */
 export const VIEW_SEAT = Object.freeze({
   roles: 'system', security: 'system', settings: 'system', academics: 'system', migration: 'system',
-  data: 'more', backup: 'more', audit: 'more', profile: 'more', advice: 'more',
+  data: 'more', backup: 'more', audit: 'more', profile: 'more', advice: 'more', content: 'more',
   students: 'dashboard'
 });
 

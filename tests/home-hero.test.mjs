@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadPage } from './jsdom-harness.mjs';
 import { JSDOM } from 'jsdom';
-import { initHomeHero, HERO_AUTOPLAY_MS, HERO_FIRST_DELAY_MS, HERO_TRANSITION_MS } from '../js/home-hero.js';
+import { initHomeHero, HERO_AUTOPLAY_MS, HERO_FIRST_DELAY_MS, HERO_TRANSITION_MS, pickHeroMessage } from '../js/home-hero.js';
 import { STUDENT_HOME_HERO_SLIDES } from '../js/student-home-hero-entry.js';
 import {
   initStudentDailyHero, studentDailyHeroIndex, studentDailyQuoteForDate
@@ -109,6 +109,9 @@ test('Student-specific hero presents the four approved messages and versioned lo
   const ctx = await loadPage('student.html'); contexts.push(ctx);
   const mount = ctx.$('[data-student-home-hero]');
   const carousel = initHomeHero(mount, { slides: STUDENT_HOME_HERO_SLIDES });
+  assert.equal(mount.querySelector('.pay-portal-kicker')?.textContent, 'আজকের পড়ার অনুপ্রেরণা');
+  assert.doesNotMatch(mount.querySelector('.pay-portal-kicker')?.textContent || '', /অনুপ্রেরনা/u,
+    'the daily-reading inspiration label uses the correct ণ spelling');
   const expected = [
     ['own-pace', 'নিজের ছন্দে', 'অন্যের সঙ্গে নয়, গতকালের নিজের সঙ্গে প্রতিযোগিতা করো।', 'hero-own-pace.webp'],
     ['daily-goal', 'আজকের লক্ষ্য', 'আজ অন্তত ২০ মিনিট মনোযোগ দিয়ে পড়ার চেষ্টা করো।', 'hero-daily-goal.webp'],
@@ -123,7 +126,10 @@ test('Student-specific hero presents the four approved messages and versioned lo
   expected.forEach(([id, title, description, imageName], index) => {
     const slide = ctx.$(`[data-hero-id="${id}"]`);
     assert.equal(slide.querySelector('[data-hero-title]').textContent, title);
-    assert.equal(slide.querySelector('[data-hero-description]').textContent, description);
+    const spec = STUDENT_HOME_HERO_SLIDES.find(item => item.id === id);
+    assert.equal(spec.description, description, 'the approved message stays list head');
+    assert.equal(slide.querySelector('[data-hero-description]').textContent, pickHeroMessage(spec),
+      'the render is the date-stable pick from this card\'s message list');
     const image = slide.querySelector('img');
     assert.ok(image.alt.trim(), `${id} has meaningful alternative text`);
     assert.equal(image.getAttribute('src'), `assets/student-home-hero/${imageName}?v=379`);

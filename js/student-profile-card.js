@@ -36,8 +36,7 @@ export function studentIdCardSVG(student, photo = '', side = 'front') {
   const name = student?.nameBn || student?.name || 'শিক্ষার্থী';
   const classLine = [student?.className, student?.group].filter(Boolean).join(' · ') || 'শ্রেণি নির্ধারিত হয়নি';
   const idSource = String(student?.roll || student?.registrationNo || student?.id || '001').replace(/[^a-zA-Z0-9]/g, '');
-  const classCode = String(student?.className || 'ST').replace(/[^a-zA-Z0-9]/g, '').slice(0, 3) || 'ST';
-  const idCode = 'APC-' + classCode + '-' + idSource.slice(-3).padStart(3, '0');
+  const idCode = String(student?.id || idSource || '—').slice(0, 32);
   const session = String(student?.session || student?.academicYear || new Date().getFullYear());
   const row = (label, value, y) => '<text x="458" y="' + y + '" font-size="21" fill="#425466">' + esc(label) + '</text><text x="820" y="' + y + '" text-anchor="end" font-size="22" font-weight="650" fill="#172b25">' + esc(value || '—') + '</text><path d="M458 ' + (y + 12) + 'H820" stroke="#dfe8e3" stroke-width="1.5"/>';
   /* A downloaded SVG is rendered from a blob URL, where relative image paths

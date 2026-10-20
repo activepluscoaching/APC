@@ -95,9 +95,12 @@ test('only that class can start the published exam', async () => {
   write(db);
   await repo.requestApproval(id);
   await repo.review(id, 'publish', {}, MANAGER_ACTOR);
-  db.exams[0].startAt = Date.now() - 60000;
-  db.exams[0].endAt = Date.now() + 3600000;
-  write(db);
+  // Re-read after review(): the earlier `db` object predates publication.
+  // Writing that stale snapshot would silently change the exam back to its old status.
+  const publishedDb = JSON.parse(ctx.window.localStorage.getItem(EXAM_KEY));
+  publishedDb.exams[0].startAt = Date.now() - 60000;
+  publishedDb.exams[0].endAt = Date.now() + 3600000;
+  write(publishedDb);
 
   seedStudentSession(honours);
   await assert.rejects(() => repo.startAttempt(id, honours), /শ্রেণি\/ব্যাচের জন্য নয়/);

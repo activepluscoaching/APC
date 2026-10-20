@@ -19,12 +19,7 @@ import { initNavigation } from './navigation.js';
 import { initFixedShell } from './fixed-shell.js';
 import { loadStudentFeatures } from './student-features.js';
 
-/* This composition root serves two pages since the student panel moved out
-   of the login page (owner decision 2026-10-14, like every other portal):
-   index.html carries only #authScreen, student.html only #appShell. The
-   wiring below branches on which surface the page actually has — a verified
-   student session is handed to student.html, and student.html hands
-   everyone else back to the login door. */
+/* Composition root for login and student shells. */
 const ON_AUTH_PAGE = Boolean($('#authScreen'));
 const ON_APP_PAGE = Boolean($('#appShell'));
 const STUDENT_PANEL_URL = 'student.html';
@@ -66,9 +61,7 @@ function maintenanceBannerMarkup(cfg) {
     `;
 }
 
-/* Paints or clears the notice from the live config. Safe to call at any time:
-   the admin can switch maintenance off from another tab or another device, and
-   this device must drop the banner without waiting for a reload. */
+/* Paint the current maintenance notice. */
 function applyMaintenanceMode(cfg = loadAppConfig()) {
   const { on } = maintenanceState(cfg);
   if (!on) {
@@ -152,10 +145,7 @@ function applyAppConfig(cfg) {
 
 applyAppConfig(appConfig);
 
-/* The flag is a setting, not a build-time constant: another tab on this device
-   and the cloud sync both write it after this module has booted. Repaint on
-   every settings write so an "off" from the admin clears the notice at once
-   instead of surviving until the next reload. */
+/* Re-read the maintenance flag when settings change. */
 window.addEventListener('storage', event => {
   if (!event || event.key === null || event.key === STORAGE_KEYS.appConfig) applyMaintenanceMode();
 });
@@ -165,12 +155,7 @@ const state = {
   student: loadStudent(),
   account: loadAccount()
 };
-/* --- the signed-in feature surface -------------------------------------
-   The exam engine, the report builders, the Learning Hub and friends arrive
-   as one lazy chunk (js/student-features.js) instead of 47 static imports, so
-   the login screen no longer waits for them. Until the chunk resolves these
-   handles are harmless no-ops: nothing on the auth screen touches them, and
-   bootStudentFeatures() repaints whatever is on screen the moment they land. */
+/* Signed-in features load on demand. */
 const featureHandles = {};
 const noticeBoard = { refresh: (...args) => featureHandles.noticeBoard?.refresh?.(...args) };
 const refreshExams = Object.assign(
@@ -188,10 +173,7 @@ const refreshStudySections = (...args) => featureHandles.refreshStudySections?.(
 const refreshFee = (...args) => featureHandles.refreshFee?.(...args);
 const refreshStudentSections = () => { void refreshStudySections(); void refreshFee(); };
 const refreshDashboard = (...args) => featureHandles.refreshDashboard?.(...args);
-/* The Learning Hub (Class → Subject → Chapter → Content) reads the same exams,
-   questions, practice history and results the existing learning modules own —
-   it never keeps a second copy. Chapter MCQ practice and model tests route to
-   those modules rather than starting parallel workflows. */
+/* Learning Hub uses the shared course, question, and exam stores. */
 const refreshCourses = Object.assign(
   (...args) => featureHandles.refreshCourses?.(...args),
   { paint: (...args) => featureHandles.refreshCourses?.paint?.(...args) }
@@ -216,12 +198,7 @@ function refreshSignedInSurface() {
   refreshReports($('#studentReports'));
 }
 
-/** Wires the chunk's modules exactly the way the static imports used to.
-    Each module boots in isolation: one init throwing must never strand the
-    ones after it (a dead routine hub frozen on "ক্লাস রুটিন লোড হচ্ছে…" is
-    what a student reads as "routine load failed"). Every featureHandles
-    consumer above is an optional-chained proxy, so a missing handle is a
-    missing card — not a broken app. */
+/* Wire lazily loaded student feature modules. */
 function initStudentFeatureSurface(f) {
   const boot = (name, init) => {
     try { return init(); }
@@ -278,10 +255,7 @@ function initStudentFeatureSurface(f) {
 
 let studentFeaturesFlight = null;
 let studentFeaturesRetries = 0;
-/* A flaky first fetch must not strand the signed-in surface on its
-   "লোড হচ্ছে…" placeholders — a student who opens ক্লাস রুটিন while the chunk
-   is missing reads that as "routine failed to load". Retry twice on a short
-   backoff, then say so out loud instead of failing silently. */
+/* Recover from failed optional feature loads. */
 const STUDENT_FEATURES_RETRY_DELAYS = Object.freeze([1200, 4000]);
 function bootStudentFeatures() {
   studentFeaturesFlight ??= loadStudentFeatures()

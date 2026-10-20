@@ -15,6 +15,7 @@ import { setView } from './shell.js';
 import { classByName, subjectsForClass, listChapters } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
 import { sanitizeRichHtml } from './rich-sanitize.js';
+import { teachingRepository, publishedForStudent, watchTeachingData } from './teaching-data.js';
 import { courseRepository, courseProgress, watchCourses, COURSES_KEY } from './course-data.js';
 import { listQuestionsForStudent, questionRowsFromPastExams, QUESTION_TYPES } from './question-bank.js';
 import { examRepository as examRepo, examMatchesStudent, isStudentVisibleExam, watchExams, examResults, totalMarks, gradeFor } from './exam-data.js';
@@ -452,7 +453,6 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
         || ['mcq', 'pdf'].includes(courseTypeOf(record)));
       let activitySuggestions = [];
       try {
-        const { teachingRepository, publishedForStudent } = await import('./teaching-data.js');
         const db = await teachingRepository.listForStudent(student().id);
         activitySuggestions = publishedForStudent(db?.activities || [], student())
           .filter(activity => activity.type === 'suggestion')
@@ -476,6 +476,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
       const seen = new Set(courseSuggestions.map(record => String(record.id)));
       suggestionRecords = [...courseSuggestions, ...activitySuggestions.filter(record => !seen.has(String(record.id)))];
 
+      materialRecords = rows.filter(record => ['note', 'pdf', 'lesson', 'video', 'previous_question', 'model_test'].includes(courseTypeOf(record)));
       suggestionReady = true; suggestionError = '';
       materialReady = true; materialError = '';
     } catch {
@@ -549,6 +550,9 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
   watchExams(() => {
     if (section === 'bank' || section === 'results') void loadBank().then(() => { if (section === 'results') renderStudyResults(); });
   });
+  watchTeachingData(() => {
+    if (section === 'suggestion' || section === 'hub') void loadShelves();
+  });
   $('#studySuggestionFilters')?.addEventListener('click', event => {
     const button = event.target.closest('[data-suggestion-filter]');
     if (!button) return;
@@ -582,6 +586,10 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
   });
 
   section = 'hub';
+  /* Paint the synchronous, student-scoped course snapshot immediately. The
+     question bank and shelves can finish loading afterward without making a
+     published course briefly appear missing on a slow phone. */
+  paintCounts();
   void refresh();
   const api = () => refresh();
   api.open = open;

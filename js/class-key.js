@@ -51,14 +51,14 @@ function cleanText(value) {
 
 function rawClassValue(input) {
   if (input && typeof input === 'object') {
-    return input.classId ?? input.className ?? input.class ?? input.targetClass ?? '';
+    return input.classId || input.className || input.class || input.targetClass || '';
   }
   return input ?? '';
 }
 
 function rawSectionValue(input) {
   if (input && typeof input === 'object') {
-    return input.sectionId ?? input.group ?? input.section ?? input.batch ?? input.targetGroup ?? input.targetSection ?? '';
+    return input.sectionId || input.group || input.section || input.batch || input.targetGroup || input.targetSection || '';
   }
   return input ?? '';
 }

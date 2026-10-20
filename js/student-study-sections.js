@@ -582,6 +582,10 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
   });
 
   section = 'hub';
+  /* Paint the synchronous, student-scoped course snapshot immediately. The
+     question bank and shelves can finish loading afterward without making a
+     published course briefly appear missing on a slow phone. */
+  paintCounts();
   void refresh();
   const api = () => refresh();
   api.open = open;

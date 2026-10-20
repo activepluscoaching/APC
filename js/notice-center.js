@@ -297,7 +297,7 @@ export function mountNoticeCenter(api) {
 
     if (!feed.length) {
       listBox.innerHTML = separatesBoard()
-        ? emptyState('নতুন নোটিফিকেশন নেই', 'স্কুলের notice-গুলো আলাদা Notice Board-এ থাকে।')
+        ? emptyState('নতুন নোটিফিকেশন নেই', 'স্কুলের নোটিশগুলো আলাদা নোটিশ বোর্ডে থাকে।')
         : emptyState('সব নোটিফিকেশন দেখা হয়েছে', 'নতুন কোনো নোটিফিকেশন নেই।');
       return { unread, total: 0 };
     }

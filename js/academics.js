@@ -450,12 +450,12 @@ export function listChaptersForSubject(subjectName) {
 async function requireAdmin() {
   try {
     const { hasStaffSession, readStaffAccount } = await import('./staff-auth.js');
-    if (!(await hasStaffSession('admin'))) fail('শুধু Admin academic structure বদলাতে পারবেন।');
+    if (!(await hasStaffSession('admin'))) fail('শুধু অ্যাডমিন একাডেমিক স্ট্রাকচার বদলাতে পারবেন।');
     const account = await readStaffAccount('admin');
-    if (!account || ['disabled', 'inactive', 'rejected'].includes(account.status)) fail('সক্রিয় Admin account ছাড়া এই কাজ করা যাবে না।');
+    if (!account || ['disabled', 'inactive', 'rejected'].includes(account.status)) fail('সক্রিয় অ্যাডমিন অ্যাকাউন্ট ছাড়া এই কাজ করা যাবে না।');
   } catch (error) {
     if (error instanceof Error && /Admin/.test(error.message)) throw error;
-    fail('শুধু Admin academic structure বদলাতে পারবেন।');
+    fail('শুধু অ্যাডমিন একাডেমিক স্ট্রাকচার বদলাতে পারবেন।');
   }
 }
 

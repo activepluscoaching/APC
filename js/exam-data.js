@@ -671,9 +671,9 @@ function examById(db, id) { const e = db.exams.find(e => e.id === id); if (!e) f
 const effectiveTeacherId = actor => (actor?.id && actor.id !== DEMO_TEACHER.id ? actor.id : currentTeacherId());
 function teacherOwns(exam, actor) {
   const expectedId = effectiveTeacherId(actor);
-  if (actor?.role !== 'teacher' || !isOwnTeacherRecord(exam?.teacherId, expectedId) || !isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || '') || !isTeacherAllowedSubject(teachingScopeUsername(), exam.className, exam.subject, exam.group || '')) fail('শুধু দায়িত্বপ্রাপ্ত শিক্ষক এবং Manager-assigned class এই কাজ করতে পারবেন।');
+  if (actor?.role !== 'teacher' || !isOwnTeacherRecord(exam?.teacherId, expectedId) || !isTeacherAssigned(teachingScopeUsername(), exam.className, exam.group || '') || !isTeacherAllowedSubject(teachingScopeUsername(), exam.className, exam.subject, exam.group || '')) fail('শুধু দায়িত্বপ্রাপ্ত শিক্ষক এবং ম্যানেজার-নির্ধারিত ক্লাস এই কাজ করতে পারবেন।');
 }
-function requireManager(actor) { if (actor?.role !== 'manager') fail('শুধু Manager পরীক্ষা অনুমোদন করতে পারবেন।'); }
+ function requireManager(actor) { if (actor?.role !== 'manager') fail('শুধু ম্যানেজার পরীক্ষা অনুমোদন করতে পারবেন।'); }
 async function requireRoleSession(role) {
   if (!(await hasStaffSession(role))) fail(`সক্রিয় ${role === 'teacher' ? 'Teacher' : 'Manager'} session ছাড়া এই কাজ করা যাবে না।`);
   // The signed-in teacher is the active identity's record, not a role account.
@@ -691,13 +691,13 @@ function assertCanEditPaper(exam, db, actor) {
   if (!EDITABLE_STATUSES.includes(exam.status)) fail('প্রকাশিত/সম্পন্ন/আর্কাইভ করা পরীক্ষার প্রশ্ন বদলানো যাবে না।');
   if (db.attempts.some(a => a.examId === exam.id)) fail('উত্তর বা ফলাফল থাকা পরীক্ষার প্রশ্ন বদলানো যাবে না।');
   if (actor?.role === 'teacher') teacherOwns(exam, actor);
-  else if (actor?.role !== 'manager') fail('শিক্ষক বা Manager প্রশ্ন বদলাতে পারবেন।');
+  else if (actor?.role !== 'manager') fail('শিক্ষক বা ম্যানেজার প্রশ্ন বদলাতে পারবেন।');
 }
 const examHasOpenAttempts = (db, id) => db.attempts.some(a => a.examId === id && ['active', 'queued'].includes(a.status));
 function examSnapshot(db, actor) { return actor?.role === 'teacher' ? teacherExamSnapshot(db, actor) : db; }
 /** Who is asking: a Teacher writes their own papers, a Manager every paper. */
 async function paperActor(actor) {
-  if (actor?.role !== 'teacher' && actor?.role !== 'manager') fail('শিক্ষক বা Manager প্রশ্ন তৈরি ও সম্পাদনা করতে পারবেন।');
+  if (actor?.role !== 'teacher' && actor?.role !== 'manager') fail('শিক্ষক বা ম্যানেজার প্রশ্ন তৈরি ও সম্পাদনা করতে পারবেন।');
   await requireRoleSession(actor.role);
   const account = actor.role === 'teacher' ? await currentTeacherProfile() : await readStaffAccount(actor.role);
   const name = String(account?.fullName || account?.username || '').trim();
@@ -1018,7 +1018,7 @@ export const examRepository = {
     const fields = validateExam(input);
     if (actor.role === 'teacher') {
       const username = String((await currentTeacherProfile())?.username || 'teacher.apc');
-      if (!isTeacherAssigned(username, fields.className, fields.group)) fail('এই class/batch-এর জন্য Manager assignment নেই।');
+      if (!isTeacherAssigned(username, fields.className, fields.group)) fail('এই ক্লাস/ব্যাচের জন্য ম্যানেজার অ্যাসাইনমেন্ট নেই।');
       /* Subject-level scope: the teacher must hold the subject in that class.
          A legacy assignment whose subjects are not part of the Admin structure
          (or an exam that already carried this subject) keeps working — the
@@ -1027,7 +1027,7 @@ export const examRepository = {
       const academic = assignedSubjects.filter(name => isSubjectEnabled(fields.className, name));
       const sameAsStored = input.id && read().exams.some(exam => exam.id === input.id && exam.subject === fields.subject);
       if (!sameAsStored && academic.length && !academic.some(name => String(name).toLowerCase() === String(fields.subject).toLowerCase())) {
-        fail(`এই ক্লাসে আপনার “${fields.subject}” বিষয়ের বরাদ্দ নেই। Manager প্রথমে বিষয়টি বরাদ্দ করুন।`);
+         fail(`এই ক্লাসে আপনার “${fields.subject}” বিষয়ের বরাদ্দ নেই। ম্যানেজার প্রথমে বিষয়টি বরাদ্দ করুন।`);
       }
     }
     const db = await mutate(db => {
@@ -1127,8 +1127,8 @@ export const examRepository = {
     const name = await managerActor(actor);
     return mutate(db => {
       const exam = examById(db, id);
-      if (exam.status !== 'published') fail('শুধু প্রকাশিত পরীক্ষা Unpublish করা যাবে।');
-      if (examHasOpenAttempts(db, id)) fail('চলমান বা জমা অপেক্ষমাণ উত্তর থাকা অবস্থায় Unpublish করা যাবে না।');
+      if (exam.status !== 'published') fail('শুধু প্রকাশিত পরীক্ষার প্রকাশনা বাতিল করা যাবে।');
+      if (examHasOpenAttempts(db, id)) fail('চলমান বা জমা অপেক্ষমাণ উত্তর থাকা অবস্থায় প্রকাশনা বাতিল করা যাবে না।');
       exam.status = 'approved'; exam.unpublishedAt = nowEpoch(); exam.unpublishedBy = name;
       exam.updatedAt = nowEpoch(); exam.updatedBy = name;
     });
@@ -1199,7 +1199,7 @@ export const examRepository = {
       const source = examById(db, id);
       if (actor.role === 'teacher') {
         if (source.teacherId && !isOwnTeacherRecord(source.teacherId, effectiveTeacherId(actor))) fail('অন্য শিক্ষকের পরীক্ষা Duplicate করা যাবে না।');
-        if (!isTeacherAssigned(username, String(options.className ?? source.className ?? ''), String(options.group ?? source.group ?? ''))) fail('এই class/batch-এর জন্য Manager assignment নেই।');
+         if (!isTeacherAssigned(username, String(options.className ?? source.className ?? ''), String(options.group ?? source.group ?? ''))) fail('এই ক্লাস/ব্যাচের জন্য ম্যানেজার অ্যাসাইনমেন্ট নেই।');
       }
       const now = nowEpoch();
       const requestedStart = Number(options.startAt);
@@ -1248,7 +1248,7 @@ export const examRepository = {
       if (actor.role === 'teacher') teacherOwns(exam, actor);
       /* Answered papers are never removed, whatever their workflow status. */
       if (db.attempts.some(a => a.examId === id)) fail('উত্তর বা ফলাফল থাকা পরীক্ষা মুছে ফেলা যাবে না।');
-      if (!DELETABLE_STATUSES.includes(exam.status)) fail('প্রকাশিত পরীক্ষা সরাসরি মুছবে না — আগে Unpublish বা Archive করুন।');
+      if (!DELETABLE_STATUSES.includes(exam.status)) fail('প্রকাশিত পরীক্ষা সরাসরি মুছবে না — আগে প্রকাশনা বাতিল বা আর্কাইভ করুন।');
       db.exams = db.exams.filter(item => item.id !== id);
     });
   },
@@ -1386,11 +1386,11 @@ export const examRepository = {
     await requireRoleSession(actor.role);
     const db = await mutate(db => {
       const e = examById(db, examId); if (actor.role === 'teacher') teacherOwns(e, actor); const person = eligibleParticipant(e, student);
-      if (!examMatchesStudent(e, person) || !e.participants.some(item => item.id === person.id)) fail('শিক্ষার্থী এই পরীক্ষার assigned class/batch roster-এ নেই।');
-      if (e.resultsPublished && actor.role === 'teacher') fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
+       if (!examMatchesStudent(e, person) || !e.participants.some(item => item.id === person.id)) fail('শিক্ষার্থী এই পরীক্ষার নির্ধারিত ক্লাস/ব্যাচ তালিকায় নেই।');
+       if (e.resultsPublished && actor.role === 'teacher') fail('ম্যানেজার ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
       if (!isLiveExam(e) || e.type === 'mcq' || nowEpoch() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে উপস্থিতি দেওয়া যাবে।');
       const prior = db.attempts.find(a => a.examId === e.id && a.studentId === person.id);
-      if (prior) fail('নম্বর আছে; আগে Manager-এর সাথে নম্বর সংশোধন করুন।');
+       if (prior) fail('নম্বর আছে; আগে ম্যানেজারের সাথে নম্বর সংশোধন করুন।');
       const before = (e.absentIds || []).includes(person.id) ? { absent: true, at: (db.auditLog || []).find(row => row.examId === e.id && row.studentId === person.id)?.at || e.updatedAt || e.startAt } : null;
       const note = gradeEditPolicy({ actor, previous: before, reason, now: nowEpoch() });
       if (before) return; // unchanged entries are not edits
@@ -1405,7 +1405,7 @@ export const examRepository = {
     const db = await mutate(db => {
       const e = examById(db, examId); if (actor.role === 'teacher') teacherOwns(e, actor); const person = eligibleParticipant(e, student);
       if (!examMatchesStudent(e, person) || !e.participants.some(item => item.id === person.id)) fail('শিক্ষার্থী এই পরীক্ষার assigned class/batch roster-এ নেই।');
-      if (e.resultsPublished && actor.role === 'teacher') fail('Manager ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
+       if (e.resultsPublished && actor.role === 'teacher') fail('ম্যানেজার ফলাফল প্রকাশ করেছেন; নম্বর আর পরিবর্তন করা যাবে না।');
       if (!isLiveExam(e) || e.type === 'mcq' || nowEpoch() < new Date(`${classExamDate(e.startAt)}T00:00:00+06:00`).getTime()) fail('ক্লাসে পরীক্ষার দিন থেকে নম্বর দেওয়া যাবে।');
       if (e.questions.some(q => !Object.hasOwn(questionScores, q.id) || !['string', 'number'].includes(typeof questionScores[q.id]) || !String(questionScores[q.id]).trim() || !Number.isFinite(Number(questionScores[q.id])) || round(Number(questionScores[q.id])) !== Number(questionScores[q.id]) || Number(questionScores[q.id]) < 0 || Number(questionScores[q.id]) > q.marks)) fail('প্রতিটি প্রশ্নের নম্বর শূন্য থেকে পূর্ণমানের মধ্যে দিন।');
       const score = round(e.questions.reduce((sum, q) => sum + Number(questionScores[q.id]), 0));

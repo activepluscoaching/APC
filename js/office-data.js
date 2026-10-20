@@ -82,7 +82,7 @@ export function saveRoster(students) {
 /** Manager-only operational edits. Identifiers and approval state are copied
  * from the stored row, never accepted from the form. */
 export async function updateStudentOperationalInfo(studentId, patch = {}) {
-  if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু Manager শিক্ষার্থীর operational তথ্য বদলাতে পারবেন।'), { code: 'ACCESS_DENIED' });
+  if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু ম্যানেজার শিক্ষার্থীর কার্যকরী তথ্য বদলাতে পারবেন।'), { code: 'ACCESS_DENIED' });
   const reviewer = await readStaffAccount('manager');
   if (!reviewer || ['disabled', 'inactive', 'rejected'].includes(reviewer.status) || reviewer.accountStatus === 'disabled') {
     throw Object.assign(new Error('সক্রিয় Manager profile ছাড়া এই কাজ করা যাবে না।'), { code: 'ACCESS_DENIED' });
@@ -167,7 +167,7 @@ export async function syncAccountStatus(studentId, status) {
     roster row is the record; the device account of that same student follows
     the roster exactly as it does for an approval, so the student app locks. */
 export async function setStudentStatus(studentId, status) {
-  if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু Manager শিক্ষার্থীর অবস্থা বদলাতে পারবেন।'), { code: 'ACCESS_DENIED' });
+  if (!(await hasStaffSession('manager'))) throw Object.assign(new Error('শুধু ম্যানেজার শিক্ষার্থীর অবস্থা বদলাতে পারবেন।'), { code: 'ACCESS_DENIED' });
   const reviewer = await readStaffAccount('manager');
   if (!reviewer || ['disabled', 'inactive', 'rejected'].includes(reviewer.status) || reviewer.accountStatus === 'disabled') {
     throw Object.assign(new Error('সক্রিয় Manager profile ছাড়া এই কাজ করা যাবে না।'), { code: 'ACCESS_DENIED' });

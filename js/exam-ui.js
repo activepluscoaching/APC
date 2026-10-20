@@ -17,7 +17,7 @@ export function resultMarkup(db, e, includeRoster = false, { pdf = false } = {})
   const rows = examResults(db, e), mean = firstAttemptMean(db, e.id);
   const absent = e.participants.filter(s => !db.attempts.some(a => a.examId === e.id && a.studentId === s.id));
   const pending = db.attempts.filter(a => a.examId === e.id && a.status !== 'submitted');
-  return `<div class="exam-summary"><h3>${esc(e.subject)} — ফলাফল</h3><p class="exam-note">প্রতি শিক্ষার্থী একটি চেষ্টা; পুরোনো রেকর্ডে একাধিক চেষ্টা থাকলে সেরা নম্বর দিয়ে মেধাক্রম।</p><dl><div><dt>প্রকাশিত ফলাফল</dt><dd>${num(rows.length)}</dd></div><div><dt>প্রথম প্রচেষ্টার গড়</dt><dd>${mean === null ? '—' : num(mean.toFixed(2))}</dd></div></dl>${nowEpoch() < e.endAt ? '<p class="exam-note">পরীক্ষা চলছে—গড় ও মেধাক্রম বদলাতে পারে।</p>' : ''}</div>
+  return `<div class="exam-summary"><h3>${esc(e.subject)} — ফলাফল</h3><p class="exam-note">প্রতি শিক্ষার্থী একটি চেষ্টা; পুরোনো রেকর্ডে একাধিক চেষ্টা থাকলে সেরা নম্বর দিয়ে মেধাক্রম।</p><dl><div><dt>প্রকাশিত ফলাফল</dt><dd>${num(rows.length)}</dd></div><div><dt>প্রথম প্রচেষ্টার গড়</dt><dd>${mean === null ? '—' : num(mean.toFixed(2))}</dd></div></dl>${nowEpoch() < e.endAt ? '<p class="exam-note">পরীক্ষা চলছে — গড় ও মেধাক্রম বদলাতে পারে।</p>' : ''}</div>
     <div class="exam-results">${rows.map(a => `<article class="exam-card"><span class="exam-tag">মেধাক্রম ${num(a.rank)}</span><h3>${esc(a.name)}</h3><small>${esc(a.className)} • চেষ্টা ${num(a.number)}</small><p><strong>${num(a.score)} / ${num(totalMarks(e))}</strong> • গ্রেড ${esc(a.grade)}</p>${e.type === 'mcq' ? `<small>সঠিক ${num(a.correct)} • ভুল ${num(a.wrong)} • অনুত্তরিত ${num(a.unanswered)}</small>` : ''}${pdf ? `<div class="exam-actions"><button type="button" data-exam-action="student-pdf" data-id="${esc(e.id)}" data-attempt="${esc(a.id)}">এই শিক্ষার্থীর উত্তরপত্র PDF</button></div>` : ''}</article>`).join('') || '<p class="exam-note">এখনও কোনো ফলাফল প্রকাশ হয়নি।</p>'}</div>
     ${includeRoster ? `<h3>অংশগ্রহণ / জমার অবস্থা</h3><p class="exam-note">অংশ নিয়েছে ${num(new Set(db.attempts.filter(a => a.examId === e.id).map(a => a.studentId)).size)} জন • জমা অপেক্ষমাণ ${num(new Set(pending.map(a => a.studentId)).size)} জন</p><div class="exam-results">${absent.map(s => `<article class="exam-card"><strong>${esc(s.name)}</strong><p>${esc(s.className)} • ${e.type === 'mcq' ? (nowEpoch() >= e.endAt ? 'অনুপস্থিত' : 'এখনও অংশ নেয়নি') : (e.absentIds || []).includes(s.id) ? 'অনুপস্থিত' : 'নম্বর/উপস্থিতি নথিভুক্ত হয়নি'}</p></article>`).join('')}</div>` : ''}`;
 }
@@ -111,7 +111,7 @@ export function examRecord(exam, { heading = true } = {}) {
   const date = examDateOf(exam);
   const rows = [
     ['পরীক্ষার কোড', `<strong>${esc(examCodeOf(exam))}</strong>`],
-    ['Exam ID', esc(exam.id)],
+    ['পরীক্ষা আইডি', esc(exam.id)],
     ['পরীক্ষার তারিখ', `${esc(examDateShort(date))} — ${esc(examDateLabel(date))}`],
     ['বিষয়', `${esc(exam.subject)}${exam.subjectCode ? ` (${esc(exam.subjectCode)})` : ''}`],
     ['অধ্যায়', esc(exam.chapterName || '—')],

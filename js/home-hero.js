@@ -1,6 +1,6 @@
 /* Shared hero carousel implementation. Each slide keeps its illustration,
    heading and message together so autoplay/manual navigation cannot desync. */
-import { quoteDateKey } from './daily-quote.js';
+import { quoteDateKey, quoteDayNumber } from './daily-quote.js';
 
 export const HERO_FIRST_DELAY_MS = 5000;
 export const HERO_AUTOPLAY_MS = 5000;
@@ -153,12 +153,24 @@ function createSlide(documentRef, spec, index, slideCount) {
   const copy = createElement(documentRef, 'div', 'hero-slide__copy');
   const title = createElement(documentRef, 'h2', '', spec.title);
   title.dataset.heroTitle = '';
-  const description = createElement(documentRef, 'p', 'hero-slide__description', spec.description);
+  const description = createElement(documentRef, 'p', 'hero-slide__description', pickHeroMessage(spec));
   description.dataset.heroDescription = '';
   copy.append(title, description);
   slide.append(picture, copy);
   image.addEventListener('error', () => slide.classList.add('has-art-fallback'), { once: true });
   return slide;
+}
+
+/**
+ * Date-stable daily message for a hero card (spec: per-card Bengali lists,
+ * cycled by local date — never random per load, never network-dependent).
+ * Cards without a `messages` list keep their single static description.
+ */
+export function pickHeroMessage(spec, at = Date.now()) {
+  const list = Array.isArray(spec?.messages) && spec.messages.length ? spec.messages : [spec?.description].filter(Boolean);
+  if (!list.length) return '';
+  const day = quoteDayNumber(quoteDateKey(at));
+  return list[((day % list.length) + list.length) % list.length] ?? spec?.description ?? '';
 }
 
 /** Mounts the shared carousel into an existing hero hook. */
@@ -201,6 +213,18 @@ export function initHomeHero(rootOrSelector, options = {}) {
     dateNodes.forEach(node => {
       node.textContent = label;
       if (node.tagName === 'TIME') node.dateTime = key;
+    });
+    updateMessages(now);
+  }
+
+  /* Re-point every card's message at the current local day (idempotent inside
+     a day — the pick is date-derived, so refreshes can never flip a message). */
+  function updateMessages(now = new Date()) {
+    const stamp = now.getTime();
+    slides.forEach((slide, slot) => {
+      const node = slide.querySelector('[data-hero-description]');
+      const spec = slideSpecs[slot];
+      if (node && spec) node.textContent = pickHeroMessage(spec, stamp);
     });
   }
 

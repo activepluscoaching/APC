@@ -87,6 +87,37 @@ test('the hub offers প্রশ্ন সংরক্ষণ করুন and t
   assert.equal(bank()[0].chapterName, '');
 });
 
+test('the quick MCQ wizard filters assigned question-bank rows and adds selected MCQs to its paste template', async () => {
+  ctx.click($('[data-teacher-view="online-exams"]'));
+  await ctx.waitFor(() => Boolean($('.teacher-cta')));
+  ctx.click($('.teacher-cta'));
+  await ctx.waitFor(() => Boolean($('#teacherExamWorkspace [data-quick-wizard]')));
+  const form = $('#teacherExamWorkspace [data-exam-form]');
+  ctx.type(form.elements.title, 'ব্যাংক থেকে দ্রুত পরীক্ষা');
+  form.elements.className.value = 'দশম শ্রেণি';
+  form.elements.className.dispatchEvent(new ctx.window.Event('change', { bubbles: true }));
+  await new Promise(resolve => setTimeout(resolve, 30));
+  form.elements.subject.value = 'গণিত';
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  ctx.click($('#teacherExamWorkspace [data-quick-method="bank"]'));
+  await ctx.waitFor(() => Boolean($('#teacherExamWorkspace [data-quick-bank-id]')));
+  assert.equal($$('#teacherExamWorkspace [data-quick-bank-id]').length, 1,
+    'the picker lists only the matching assigned class and subject');
+  $('#teacherExamWorkspace [data-quick-bank-id]').checked = true;
+  ctx.click($('#teacherExamWorkspace [data-quick-bank-add]'));
+  assert.match(form.elements.template.value, /প্রশ্ন: বাংলাদেশের রাজধানী কোনটি/u);
+  assert.match(form.elements.template.value, /উত্তর: A/u);
+  assert.equal($('#teacherExamWorkspace [data-quick-bank-id]').disabled, true,
+    'the same bank question cannot be added twice in this wizard');
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  assert.equal($('#teacherExamWorkspace [data-quick-step="2"]').hidden, false,
+    'selected bank questions pass validation and move to the final step');
+  ctx.click($('#teacherExamWorkspace [data-exam-action="list"]'));
+  await ctx.waitFor(() => Boolean($('#teacherExamWorkspace [data-exam-action="bank"]')));
+  ctx.click($('#teacherExamWorkspace [data-exam-action="bank"]'));
+  await ctx.waitFor(() => Boolean($('[data-bank-filters]')));
+});
+
 test('the shelf search, filters and paging never render more than one page', async () => {
   for (let index = 0; index < 3; index++) {
     ctx.click($('[data-exam-action="bank-new"]'));

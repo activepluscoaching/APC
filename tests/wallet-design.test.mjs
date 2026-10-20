@@ -68,7 +68,7 @@ test('student, manager and teacher have real, named service shortcuts', () => {
   const expectedCount = { manager: 9, teacher: 0 };
   const studentCards = [
     ['homework', 'বাড়ির কাজ'], ['exams', 'পরীক্ষা'], ['suggestion', 'সাজেশন'],
-    ['question-bank', 'প্রশ্নব্যাংক'], ['exam-results', 'ফলাফল'], ['notice-board', 'Notice Board']
+    ['question-bank', 'প্রশ্নব্যাংক'], ['exam-results', 'ফলাফল'], ['notice-board', 'নোটিশ বোর্ড']
   ];
   const studentTiles = [...doc('student').querySelectorAll('#studentServices .pay-tile')];
   assert.equal(studentTiles.length, studentCards.length);
@@ -126,7 +126,7 @@ test('secondary screens have accessible home/back controls and staff hub rows ha
   }
   /* Admin: a screen inside a hub returns to that hub; the rest go home. */
   const adminBacks = [...doc('admin').querySelectorAll('.pay-back')].map(button => button.getAttribute('data-admin-view'));
-  assert.deepEqual(adminBacks, ['dashboard', 'dashboard', 'system', 'system', 'dashboard', 'dashboard', 'more', 'data', 'data', 'system', 'system', 'system', 'more', 'more']);
+  assert.deepEqual(adminBacks, ['dashboard', 'dashboard', 'system', 'system', 'dashboard', 'dashboard', 'more', 'data', 'data', 'system', 'system', 'system', 'more', 'more', 'more']);
   for (const name of ['admin', 'manager', 'teacher']) {
     for (const row of doc(name).querySelectorAll('.admin-more-item')) {
       assert.ok(row.querySelector('.admin-more-icon, .admin-more-copy'), name + ' hub row has no icon slot');

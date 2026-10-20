@@ -46,7 +46,7 @@ const questions = (list, options = {}) => ({ type: 'questions', questions: list,
 /* ---------- shared column sets ---------- */
 
 const STUDENT_COLUMNS = () => ([
-  { label: 'Student ID', width: 1.1 },
+  { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
   { label: 'নাম', width: 1.7 },
   { label: 'শ্রেণি', width: 1.2 },
   { label: 'বিভাগ', width: 1.1 },
@@ -69,7 +69,7 @@ const studentRow = student => ([
 const TX_COLUMNS = () => ([
   { label: 'তারিখ', width: 1.1 },
   { label: 'রসিদ নং', width: 1.4 },
-  { label: 'Student ID', width: 1.1 },
+  { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
   { label: 'শিক্ষার্থী', width: 1.5 },
   { label: 'শ্রেণি', width: 1 },
   { label: 'বিভাগ', width: 1 },
@@ -105,7 +105,7 @@ const ATTENDANCE_COLUMNS = () => ([
   { label: 'তারিখ', width: 1.1 },
   { label: 'বিষয়', width: 1.4 },
   { label: 'শিক্ষার্থী', width: 1.6 },
-  { label: 'Student ID', width: 1.1 },
+  { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
   { label: 'শ্রেণি', width: 1.1 },
   { label: 'বিভাগ', width: 1 },
   { label: 'অবস্থা', width: 1 }
@@ -113,7 +113,7 @@ const ATTENDANCE_COLUMNS = () => ([
 
 const RESULT_COLUMNS = () => ([
   { label: 'র‍্যাংক', width: 0.7 },
-  { label: 'Student ID', width: 1.1 },
+  { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
   { label: 'শিক্ষার্থী', width: 1.6 },
   { label: 'শ্রেণি', width: 1.1 },
   { label: 'বিভাগ', width: 1 },
@@ -232,7 +232,7 @@ function examInfoBlock(exam) {
   const total = totalMarks(exam);
   return kv([
     ['পরীক্ষার নাম', exam.title],
-    ['Exam ID', exam.id],
+    ['পরীক্ষা আইডি', exam.id],
     ['বিষয়', exam.subject || '—'],
     ['শ্রেণি', exam.className || 'সব শ্রেণি'],
     ['বিভাগ / ব্যাচ', exam.group || 'সব'],
@@ -305,7 +305,7 @@ const studentList = ({ title, subtitle, filter }) => ({
 const studentProfile = {
   id: 'student.profile',
   category: 'student',
-  title: 'Student Profile Report',
+  title: 'শিক্ষার্থী প্রোফাইল রিপোর্ট',
   subtitle: 'একজন শিক্ষার্থীর পূর্ণ প্রোফাইল — পরিচয়, ফি, উপস্থিতি ও ফলাফল',
   roles: ['admin', 'manager', 'student'],
   filters: ['student'],
@@ -343,7 +343,7 @@ const studentProfile = {
       scopeLines: [`শিক্ষার্থী: ${student.name} (${student.id})`],
       blocks: [
         kv([
-          ['Student ID', student.id],
+          ['শিক্ষার্থীর আইডি', student.id],
           ['নাম', student.name],
           ['নাম (ইংরেজি)', student.nameEn || '—'],
           ['পিতার নাম', student.fatherName || '—'],
@@ -385,7 +385,7 @@ const studentProfile = {
 const studentClassWise = {
   id: 'student.class-wise',
   category: 'student',
-  title: 'Class-wise Student Report',
+  title: 'শ্রেণিভিত্তিক শিক্ষার্থী রিপোর্ট',
   subtitle: 'নির্বাচিত শ্রেণির শিক্ষার্থী — যোগাযোগ, ফি ও একাডেমিক সারাংশ',
   roles: ['admin', 'manager'],
   filters: ['class', 'batch', 'status'],
@@ -413,7 +413,7 @@ const studentClassWise = {
           { label: 'শ্রেণি', value: ctx.filters.className && ctx.filters.className !== 'all' ? ctx.filters.className : 'সব' }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'বিভাগ', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'বিভাগ', width: 1.1 },
           { label: 'মোবাইল', width: 1.2 }, { label: 'স্ট্যাটাস', width: 0.9 },
           { label: 'মাসিক ফি', width: 1 }, { label: 'পরিশোধিত', width: 1 }, { label: 'বকেয়া', width: 1, emphasis: true }
         ], rows, 'শ্রেণিভিত্তিক তালিকা')
@@ -425,7 +425,7 @@ const studentClassWise = {
 const studentBatchWise = {
   id: 'student.batch-wise',
   category: 'student',
-  title: 'Batch-wise Student Report',
+  title: 'ব্যাচভিত্তিক শিক্ষার্থী রিপোর্ট',
   subtitle: 'বিভাগ / ব্যাচ অনুযায়ী শিক্ষার্থীর তালিকা',
   roles: ['admin', 'manager'],
   filters: ['class', 'batch', 'status'],
@@ -454,7 +454,7 @@ const studentBatchWise = {
 const studentStatusReport = {
   id: 'student.status',
   category: 'student',
-  title: 'Student Status Report',
+  title: 'শিক্ষার্থীর অবস্থা রিপোর্ট',
   subtitle: 'অবস্থা অনুযায়ী শিক্ষার্থীর সারাংশ ও তালিকা',
   roles: ['admin', 'manager'],
   filters: ['class', 'batch'],
@@ -524,7 +524,7 @@ const collectionReport = ({ id, title, subtitle, period, roles }) => ({
 const feeStudentWise = {
   id: 'fee.student-wise',
   category: 'fee',
-  title: 'Student-wise Payment Report',
+  title: 'শিক্ষার্থীভিত্তিক পেমেন্ট রিপোর্ট',
   subtitle: 'নির্বাচিত শিক্ষার্থীর সব পেমেন্ট ও বকেয়া',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'student'],
@@ -539,7 +539,7 @@ const feeStudentWise = {
     const blocks = [];
     if (student) {
       blocks.push(kv([
-        ['Student ID', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
+        ['শিক্ষার্থীর আইডি', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
         ['বিভাগ', student.group || 'সাধারণ'], ['মাসিক বেতন', money(monthlyFeeOf(student))],
         ['চলতি মাসে পরিশোধ', money(summary.paid)], ['বকেয়া', money(summary.due)]
       ], 3));
@@ -602,7 +602,7 @@ const feeByGroup = ({ id, title, groupBy, roles }) => ({
 const feeDueList = {
   id: 'fee.due-list',
   category: 'fee',
-  title: 'Due List Report',
+  title: 'বকেয়া তালিকা রিপোর্ট',
   subtitle: 'নির্বাচিত মাসের বকেয়া তালিকা',
   roles: ['admin', 'manager'],
   filters: ['class', 'batch', 'student'],
@@ -633,7 +633,7 @@ const feeDueList = {
           { label: 'গড় বকেয়া', value: money(rows.length ? total / rows.length : 0) }
         ], 4),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'মোবাইল', width: 1.2 },
           { label: 'মাসিক ফি', width: 1 }, { label: 'পরিশোধিত', width: 1 }, { label: 'বকেয়া', width: 1, emphasis: true }
         ], rows, 'বকেয়া তালিকা')
@@ -645,7 +645,7 @@ const feeDueList = {
 const feeDueCollection = {
   id: 'fee.due-collection',
   category: 'fee',
-  title: 'Due Collection Report',
+  title: 'বকেয়া আদায় রিপোর্ট',
   subtitle: 'নির্বাচিত সময়ে বকেয়া থেকে আদায়কৃত পরিমাণ',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'class', 'batch'],
@@ -678,7 +678,7 @@ const feeDueCollection = {
           { label: 'অবশিষ্ট বকেয়া', value: money(rows.reduce((sum, row) => sum + Number(String(row[6]).replace(/[^\d]/g, '')) || 0, 0)) }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'মাসের বকেয়া', width: 1.1 },
           { label: 'আদায়', width: 1.1, emphasis: true }, { label: 'অবশিষ্ট', width: 1.1 }
         ], rows, 'বকেয়া আদায়ের তালিকা')
@@ -690,7 +690,7 @@ const feeDueCollection = {
 const feeTransactions = {
   id: 'fee.transactions',
   category: 'fee',
-  title: 'Payment Transaction Report',
+  title: 'পেমেন্ট লেনদেন রিপোর্ট',
   subtitle: 'নির্বাচিত সময়ের সব লেনদেন — অনুমোদনের অবস্থাসহ',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'class', 'batch', 'student', 'approvalStatus', 'counter'],
@@ -717,7 +717,7 @@ const feeTransactions = {
 const feeReceipts = {
   id: 'fee.receipts',
   category: 'fee',
-  title: 'Receipt Report',
+  title: 'রসিদ রিপোর্ট',
   subtitle: 'রসিদ নম্বর অনুযায়ী ইস্যুকৃত সব রসিদ',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'class', 'student'],
@@ -734,7 +734,7 @@ const feeReceipts = {
           { label: 'মোট পরিমাণ', value: money(sumAmount(rows)) }
         ], 4),
         table([
-          { label: 'রসিদ নং', width: 1.8 }, { label: 'তারিখ', width: 1.1 }, { label: 'Student ID', width: 1.1 },
+          { label: 'রসিদ নং', width: 1.8 }, { label: 'তারিখ', width: 1.1 }, { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
           { label: 'শিক্ষার্থী', width: 1.6 }, { label: 'ফি ও মাস', width: 1.4 },
           { label: 'পরিমাণ', width: 1, align: 'right', emphasis: true }, { label: 'মাধ্যম', width: 1 }, { label: 'আদায়কারী', width: 1.2 }
         ], rows.map(tx => {
@@ -753,7 +753,7 @@ const feeReceipts = {
 const feePaymentStatus = {
   id: 'fee.payment-status',
   category: 'fee',
-  title: 'Payment Status Report',
+  title: 'পেমেন্ট অবস্থা রিপোর্ট',
   subtitle: 'চলতি মাসে কে পরিশোধ করেছে, কে বকেয়া আছে',
   roles: ['admin', 'manager', 'cash'],
   filters: ['class', 'batch', 'paymentStatus'],
@@ -780,7 +780,7 @@ const feePaymentStatus = {
           { label: 'মোট বকেয়া', value: money(rows.reduce((sum, entry) => sum + entry.summary.due, 0)) }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'মাসিক ফি', width: 1 }, { label: 'পরিশোধিত', width: 1 },
           { label: 'বকেয়া', width: 1, emphasis: true }, { label: 'অবস্থা', width: 1 }
         ], rows.map(({ student, summary, state }) => [
@@ -799,13 +799,13 @@ const feePaymentStatus = {
 
 const CASH_COLUMNS = () => ([
   { label: 'তারিখ', width: 1.1 },
-  { label: 'Transaction ID', width: 1.5 },
+  { label: 'লেনদেন আইডি', width: 1.5 },
   { label: 'রসিদ', width: 1.4 },
   { label: 'শিক্ষার্থী', width: 1.6 },
   { label: 'পরিমাণ', width: 1, align: 'right', emphasis: true },
   { label: 'মাধ্যম', width: 1 },
   { label: 'ক্যাশ কাউন্টার', width: 1.3 },
-  { label: 'Manager অনুমোদন', width: 1.3 },
+  { label: 'ম্যানেজার অনুমোদন', width: 1.3 },
   { label: 'চূড়ান্ত অবস্থা', width: 1.2 }
 ]);
 
@@ -852,7 +852,7 @@ const cashCollection = ({ id, title, subtitle, period }) => ({
 const cashHistory = {
   id: 'cash.history',
   category: 'cash',
-  title: 'Transaction History',
+  title: 'লেনদেনের ইতিহাস',
   subtitle: 'ক্যাশ কাউন্টারের সম্পূর্ণ লেনদেন ইতিহাস',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'counter', 'approvalStatus'],
@@ -900,7 +900,7 @@ const cashByStatus = ({ id, title, subtitle, status }) => ({
 const cashClosing = {
   id: 'cash.closing',
   category: 'cash',
-  title: 'Cash Closing Report',
+  title: 'ক্যাশ ক্লোজিং রিপোর্ট',
   subtitle: 'নির্বাচিত দিনের কাউন্টার বন্ধের হিসাব — মাধ্যমভিত্তিক সংগ্রহ',
   roles: ['admin', 'manager', 'cash'],
   filters: ['period', 'counter'],
@@ -937,7 +937,7 @@ const cashClosing = {
 const cashOwnHistory = {
   id: 'cash.own-history',
   category: 'cash',
-  title: 'Own Transaction History',
+  title: 'নিজের লেনদেনের ইতিহাস',
   subtitle: 'নিজের কাউন্টার থেকে গৃহীত লেনদেন',
   roles: ['cash'],
   filters: ['period'],
@@ -969,7 +969,7 @@ const cashOwnHistory = {
 const academicClass = {
   id: 'academic.class',
   category: 'academic',
-  title: 'Class Report',
+  title: 'ক্লাস রিপোর্ট',
   subtitle: 'নির্বাচিত শ্রেণির ক্লাস, উপস্থিতি, কাজ ও ফলাফলের সারাংশ',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['class', 'batch'],
@@ -1007,7 +1007,7 @@ const academicClass = {
 const academicBatch = {
   id: 'academic.batch',
   category: 'academic',
-  title: 'Batch Report',
+  title: 'ব্যাচ রিপোর্ট',
   subtitle: 'বিভাগ / ব্যাচ অনুযায়ী একাডেমিক সারাংশ',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['class', 'batch'],
@@ -1031,7 +1031,7 @@ const academicBatch = {
 const academicTeacherWise = {
   id: 'academic.teacher-wise',
   category: 'academic',
-  title: 'Teacher-wise Academic Report',
+  title: 'শিক্ষকভিত্তিক একাডেমিক রিপোর্ট',
   subtitle: 'শিক্ষক অনুযায়ী ক্লাস, বাড়ির কাজ ও মূল্যায়ন',
   roles: ['admin', 'manager'],
   filters: ['period', 'teacher', 'class', 'subject'],
@@ -1076,7 +1076,7 @@ const academicTeacherWise = {
 const academicAttendance = {
   id: 'academic.attendance',
   category: 'academic',
-  title: 'Attendance Report',
+  title: 'উপস্থিতি রিপোর্ট',
   subtitle: 'ক্লাস সেশনভিত্তিক উপস্থিতি ও অনুপস্থিতির তালিকা',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch', 'subject', 'student'],
@@ -1118,7 +1118,7 @@ const academicAttendance = {
 const academicAttendanceSummary = {
   id: 'academic.attendance-summary',
   category: 'academic',
-  title: 'Student Attendance Summary',
+  title: 'শিক্ষার্থীর উপস্থিতি সারাংশ',
   subtitle: 'প্রতি শিক্ষার্থীর উপস্থিতির সারাংশ',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch'],
@@ -1154,7 +1154,7 @@ const academicAttendanceSummary = {
           { label: 'অনুপস্থিত', value: num(totalAbsent) }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'মোট সেশন', width: 1, align: 'right' },
           { label: 'উপস্থিত', width: 0.9, align: 'right' }, { label: 'দেরিতে', width: 0.9, align: 'right' },
           { label: 'অনুপস্থিত', width: 1, align: 'right' }, { label: 'উপস্থিতির হার', width: 1.2, align: 'right', emphasis: true }
@@ -1167,7 +1167,7 @@ const academicAttendanceSummary = {
 const academicAssignment = {
   id: 'academic.assignment',
   category: 'academic',
-  title: 'Assignment Report',
+  title: 'বাড়ির কাজের রিপোর্ট',
   subtitle: 'দেওয়া বাড়ির কাজের তালিকা ও অগ্রগতি',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch', 'subject', 'teacher'],
@@ -1204,7 +1204,7 @@ const academicAssignment = {
 const academicSuggestion = {
   id: 'academic.suggestion',
   category: 'academic',
-  title: 'Suggestion Report',
+  title: 'সাজেশন রিপোর্ট',
   subtitle: 'দেওয়া সাজেশনের তালিকা, অধ্যায় ও শ্রেণি',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch', 'subject', 'teacher'],
@@ -1237,7 +1237,7 @@ const academicSuggestion = {
 const academicAssignmentSubmission = {
   id: 'academic.assignment-submission',
   category: 'academic',
-  title: 'Assignment Submission Report',
+  title: 'বাড়ির কাজ জমা রিপোর্ট',
   subtitle: 'কে জমা দিয়েছে, কে দেয়নি — কাজভিত্তিক বিস্তারিত',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch', 'subject', 'student'],
@@ -1270,7 +1270,7 @@ const academicAssignmentSubmission = {
         ]),
         table([
           { label: 'তারিখ', width: 1 }, { label: 'কাজ', width: 1.8 }, { label: 'বিষয়', width: 1.1 },
-          { label: 'শিক্ষার্থী', width: 1.6 }, { label: 'Student ID', width: 1.1 },
+          { label: 'শিক্ষার্থী', width: 1.6 }, { label: 'শিক্ষার্থীর আইডি', width: 1.1 },
           { label: 'শ্রেণি', width: 1 }, { label: 'অবস্থা', width: 1.1 }
         ], rows, 'জমার বিস্তারিত')
       ]
@@ -1281,7 +1281,7 @@ const academicAssignmentSubmission = {
 const academicPerformance = {
   id: 'academic.performance',
   category: 'academic',
-  title: 'Academic Performance Report',
+  title: 'একাডেমিক ফলাফল রিপোর্ট',
   subtitle: 'উপস্থিতি, কাজ জমা ও ফলাফল — এক নজরে',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch'],
@@ -1330,7 +1330,7 @@ const academicPerformance = {
           { label: 'মূল্যায়ন', value: num(exams.length) }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'উপস্থিতি', width: 1, align: 'right' },
           { label: 'কাজ জমা', width: 1, align: 'right' }, { label: 'পরীক্ষা', width: 0.9, align: 'right' },
           { label: 'গড় ফলাফল', width: 1.1, align: 'right', emphasis: true }
@@ -1345,8 +1345,8 @@ const academicPerformance = {
 const teacherMyClass = {
   id: 'teacher.my-class',
   category: 'academic',
-  title: 'My Class Report',
-  subtitle: 'আমার assignment-এর শ্রেণিসমূহ — ক্লাস, উপস্থিতি ও কাজ',
+  title: 'আমার ক্লাস রিপোর্ট',
+  subtitle: 'আমার অ্যাসাইনমেন্টের শ্রেণিসমূহ — ক্লাস, উপস্থিতি ও কাজ',
   roles: ['teacher'],
   filters: ['class', 'batch'],
   async build(ctx) {
@@ -1356,7 +1356,7 @@ const teacherMyClass = {
     const blocks = [
       kv([
         ['আমার নাম', ctx.actor?.name || '—'],
-        ['Username', ctx.actor?.username || '—'],
+        ['ইউজারনেম', ctx.actor?.username || '—'],
         ['Assignment', classes.map(item => `${item.className}${item.group ? ` (${item.group})` : ''}`).join(', ') || '—'],
         ['বিষয়সমূহ', (ctx.scope?.subjects || []).join(', ') || '—']
       ], 2),
@@ -1384,8 +1384,8 @@ const teacherMyClass = {
 const teacherMyBatch = {
   id: 'teacher.my-batch',
   category: 'academic',
-  title: 'My Batch Report',
-  subtitle: 'আমার assignment-এর ব্যাচভিত্তিক শিক্ষার্থী ও অগ্রগতি',
+  title: 'আমার ব্যাচ রিপোর্ট',
+  subtitle: 'আমার অ্যাসাইনমেন্টের ব্যাচভিত্তিক শিক্ষার্থী ও অগ্রগতি',
   roles: ['teacher'],
   filters: ['class', 'batch'],
   async build(ctx) {
@@ -1401,7 +1401,7 @@ const teacherMyBatch = {
     for (const [batch, list] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'bn'))) {
       blocks.push(heading(`বিভাগ: ${batch} • ${num(list.length)} জন`));
       blocks.push(table([
-        { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.8 }, { label: 'শ্রেণি', width: 1.2 },
+        { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.8 }, { label: 'শ্রেণি', width: 1.2 },
         { label: 'মোবাইল', width: 1.2 }, { label: 'স্ট্যাটাস', width: 1 }
       ], list.map(student => [
         dash(student.id), dash(student.name), dash(student.className),
@@ -1418,8 +1418,8 @@ const teacherMyBatch = {
 const teacherStudentAcademic = {
   id: 'teacher.student-academic',
   category: 'academic',
-  title: 'Student Academic Report',
-  subtitle: 'আমার scope-এর একজন শিক্ষার্থীর একাডেমিক চিত্র',
+  title: 'শিক্ষার্থীর একাডেমিক রিপোর্ট',
+  subtitle: 'আমার স্কোপের একজন শিক্ষার্থীর একাডেমিক চিত্র',
   roles: ['teacher'],
   filters: ['student', 'class', 'batch'],
   requiresStudent: true,
@@ -1445,7 +1445,7 @@ const teacherStudentAcademic = {
       scopeLines: [`শিক্ষার্থী: ${student.name} (${student.id})`],
       blocks: [
         kv([
-          ['Student ID', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
+          ['শিক্ষার্থীর আইডি', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
           ['বিভাগ', student.group || 'সাধারণ'], ['স্ট্যাটাস', studentStatusLabel[student.status] || student.status]
         ], 3),
         tiles([
@@ -1482,7 +1482,7 @@ const teacherAcademicNotice = {
   id: 'teacher.academic-notice',
   category: 'academic',
   title: 'সাজেশন রিপোর্ট',
-  subtitle: 'আমার scope-এ প্রকাশিত সাজেশন',
+  subtitle: 'আমার স্কোপে প্রকাশিত সাজেশন',
   roles: ['teacher'],
   filters: ['period', 'class', 'batch', 'subject'],
   period: 'activity',
@@ -1510,7 +1510,7 @@ const teacherAcademicNotice = {
    ========================================================================== */
 
 const EXAM_LIST_COLUMNS = () => ([
-  { label: 'Exam ID', width: 1.3 },
+  { label: 'পরীক্ষা আইডি', width: 1.3 },
   { label: 'পরীক্ষার নাম', width: 2 },
   { label: 'বিষয়', width: 1.2 },
   { label: 'শ্রেণি', width: 1.1 },
@@ -1560,7 +1560,7 @@ const examList = ({ id, title, subtitle, pick }) => ({
 const examParticipation = {
   id: 'exam.participation',
   category: 'exam',
-  title: 'Examination Participation Report',
+  title: 'পরীক্ষায় অংশগ্রহণ রিপোর্ট',
   subtitle: 'কে পরীক্ষায় অংশ নিয়েছে, কে অনুপস্থিত ছিল',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam', 'class', 'batch'],
@@ -1587,7 +1587,7 @@ const examParticipation = {
           { label: 'অংশগ্রহণের হার', value: participants.length ? percent(attempts.length / participants.length * 100) : '—' }
         ]),
         table([
-          { label: 'Student ID', width: 1.2 }, { label: 'নাম', width: 2 }, { label: 'শ্রেণি', width: 1.2 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.2 }, { label: 'নাম', width: 2 }, { label: 'শ্রেণি', width: 1.2 },
           { label: 'বিভাগ', width: 1.1 }, { label: 'অবস্থা', width: 1.3 }, { label: 'তালিকাভুক্ত অনুপস্থিত', width: 1.4 }
         ], rows, 'অংশগ্রহণ')
       ]
@@ -1598,7 +1598,7 @@ const examParticipation = {
 const examSummary = {
   id: 'exam.summary',
   category: 'exam',
-  title: 'Examination Summary Report',
+  title: 'পরীক্ষার সারাংশ রিপোর্ট',
   subtitle: 'পরীক্ষার সারাংশ — গড়, সর্বোচ্চ, সর্বনিম্ন ও পাসের হার',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam', 'class', 'batch'],
@@ -1640,7 +1640,7 @@ const examSummary = {
 const examQuestionPaper = {
   id: 'exam.question-paper',
   category: 'exam',
-  title: 'Question Paper Report',
+  title: 'প্রশ্নপত্র রিপোর্ট',
   subtitle: 'সম্পূর্ণ প্রশ্নপত্র — সব প্রশ্ন ও সব অপশন',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam'],
@@ -1664,7 +1664,7 @@ const examQuestionPaper = {
 const examAnswerKey = {
   id: 'exam.answer-key',
   category: 'exam',
-  title: 'Answer Key Report',
+  title: 'সঠিক উত্তর রিপোর্ট',
   subtitle: 'প্রতিটি প্রশ্নের সঠিক উত্তর ও ব্যাখ্যা',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam'],
@@ -1690,7 +1690,7 @@ const examAnswerKey = {
 const examMarksSheet = {
   id: 'exam.marks-sheet',
   category: 'exam',
-  title: 'Marks Sheet',
+  title: 'নম্বরপত্র',
   subtitle: 'প্রশ্নভিত্তিক নম্বরপত্র',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam', 'class', 'batch'],
@@ -1715,7 +1715,7 @@ const examMarksSheet = {
       blocks: [
         examInfoBlock(exam),
         table([
-          { label: 'র‍্যাংক', width: 0.7 }, { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 },
+          { label: 'র‍্যাংক', width: 0.7 }, { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 },
           { label: 'শ্রেণি', width: 1.1 }, { label: 'বিভাগ', width: 1 },
           { label: 'উত্তর', width: 0.8, align: 'right' }, { label: 'সঠিক', width: 0.8, align: 'right' },
           { label: 'ভুল', width: 0.8, align: 'right' }, { label: 'অনুত্তরিত', width: 1, align: 'right' },
@@ -1770,7 +1770,7 @@ const examByGroup = ({ id, title, subtitle, groupBy }) => ({
         ];
       });
       blocks.push(table([
-        { label: 'Student ID', width: 1.2 }, { label: 'নাম', width: 1.8 }, { label: 'শ্রেণি', width: 1.1 },
+        { label: 'শিক্ষার্থীর আইডি', width: 1.2 }, { label: 'নাম', width: 1.8 }, { label: 'শ্রেণি', width: 1.1 },
         { label: 'বিভাগ', width: 1 }, { label: 'পরীক্ষা', width: 0.9, align: 'right' },
         { label: 'প্রাপ্ত নম্বর', width: 1.1, align: 'right' }, { label: 'মোট নম্বর', width: 1.1, align: 'right' },
         { label: 'গড় শতাংশ', width: 1.1, align: 'right', emphasis: true }, { label: 'উত্তীর্ণ', width: 0.9, align: 'right' }
@@ -1806,7 +1806,7 @@ const examByGroup = ({ id, title, subtitle, groupBy }) => ({
 const examComplete = {
   id: 'exam.complete',
   category: 'exam',
-  title: 'Complete Examination Report',
+  title: 'পূর্ণ পরীক্ষা রিপোর্ট',
   subtitle: 'পরীক্ষার পূর্ণ তথ্য + সম্পূর্ণ প্রশ্নপত্র + সঠিক উত্তর',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam'],
@@ -1834,7 +1834,7 @@ const examComplete = {
 const examCompleteStudent = {
   id: 'exam.complete-student',
   category: 'exam',
-  title: 'Student-wise Complete Exam Report',
+  title: 'শিক্ষার্থীভিত্তিক পূর্ণ পরীক্ষা রিপোর্ট',
   subtitle: 'শিক্ষার্থীর তথ্য + পূর্ণ প্রশ্নপত্র + প্রশ্নভিত্তিক ফলাফল',
   roles: ['admin', 'manager', 'teacher', 'student'],
   filters: ['exam', 'student'],
@@ -1855,7 +1855,7 @@ const examCompleteStudent = {
       blocks: [
         heading('শিক্ষার্থীর তথ্য'),
         kv([
-          ['Student ID', student.id], ['নাম', student.name],
+          ['শিক্ষার্থীর আইডি', student.id], ['নাম', student.name],
           ['শ্রেণি', student.className || attempt?.className || '—'],
           ['বিভাগ', student.group || attempt?.group || '—']
         ], 4),
@@ -1893,7 +1893,7 @@ const examCompleteStudent = {
 const examCombined = {
   id: 'exam.combined',
   category: 'exam',
-  title: 'Complete Examination + Student Result',
+  title: 'পূর্ণ পরীক্ষা + শিক্ষার্থীর ফলাফল',
   subtitle: 'একই রিপোর্টে পূর্ণ প্রশ্নপত্র ও শিক্ষার্থীর ফলাফল',
   roles: ['admin', 'manager', 'teacher', 'student'],
   filters: ['exam', 'student'],
@@ -1934,7 +1934,7 @@ const examCombined = {
 const resultSummary = {
   id: 'result.summary',
   category: 'result',
-  title: 'Result Report',
+  title: 'ফলাফল রিপোর্ট',
   subtitle: 'নির্বাচিত পরীক্ষার ফলাফল — র‍্যাংকসহ',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['exam', 'class', 'batch', 'resultStatus'],
@@ -1976,7 +1976,7 @@ const resultSummary = {
 const resultMarks = {
   id: 'result.marks',
   category: 'result',
-  title: 'Marks Report',
+  title: 'নম্বর রিপোর্ট',
   subtitle: 'কাজ / মূল্যায়নভিত্তিক নম্বর',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['period', 'class', 'batch', 'subject', 'student'],
@@ -2009,7 +2009,7 @@ const resultMarks = {
         ], 4),
         table([
           { label: 'তারিখ', width: 1 }, { label: 'মূল্যায়ন', width: 1.8 }, { label: 'বিষয়', width: 1.1 },
-          { label: 'শিক্ষার্থী', width: 1.6 }, { label: 'Student ID', width: 1.1 }, { label: 'শ্রেণি', width: 1 },
+          { label: 'শিক্ষার্থী', width: 1.6 }, { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'শ্রেণি', width: 1 },
           { label: 'বিভাগ', width: 1 }, { label: 'প্রাপ্ত', width: 0.8, align: 'right' },
           { label: 'মোট', width: 0.8, align: 'right' }, { label: 'শতাংশ', width: 0.9, align: 'right' }, { label: 'গ্রেড', width: 0.7 }
         ], rows, 'নম্বরের তালিকা')
@@ -2021,7 +2021,7 @@ const resultMarks = {
 const resultPerformance = {
   id: 'result.performance',
   category: 'result',
-  title: 'Academic Performance Report',
+  title: 'একাডেমিক ফলাফল রিপোর্ট',
   subtitle: 'শিক্ষার্থীভিত্তিক সামগ্রিক ফলাফল',
   roles: ['admin', 'manager', 'teacher'],
   filters: ['class', 'batch'],
@@ -2050,7 +2050,7 @@ const resultPerformance = {
           { label: 'মূল্যায়নযোগ্য', value: num(rows.filter(row => row[4] !== '০').length) }
         ]),
         table([
-          { label: 'Student ID', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
+          { label: 'শিক্ষার্থীর আইডি', width: 1.1 }, { label: 'নাম', width: 1.7 }, { label: 'শ্রেণি', width: 1.1 },
           { label: 'বিভাগ', width: 1 }, { label: 'পরীক্ষা', width: 0.9, align: 'right' },
           { label: 'উত্তীর্ণ', width: 0.9, align: 'right' }, { label: 'অনুত্তীর্ণ', width: 1, align: 'right' },
           { label: 'গড়', width: 1, align: 'right', emphasis: true }, { label: 'গ্রেড', width: 0.8 }
@@ -2073,7 +2073,7 @@ const NOTICE_COLUMNS = () => ([
   { label: 'তারিখ', width: 1.1 },
   { label: 'শিরোনাম', width: 1.8 },
   { label: 'বিবরণ', width: 2.8 },
-  { label: 'Audience', width: 1.2 },
+  { label: 'অডিয়েন্স', width: 1.2 },
   { label: 'প্রকাশক', width: 1.1 },
   { label: 'অবস্থা', width: 1 }
 ]);
@@ -2104,7 +2104,7 @@ const noticeReport = ({ id, title, subtitle, filter, allTime = false }) => ({
         tiles([
           { label: 'নোটিশ', value: num(list.length) },
           { label: 'প্রকাশিত', value: num(list.filter(item => (item.status || 'published') === 'published').length) },
-          { label: 'Audience', value: num(new Set(list.map(item => item.audience || 'সব শিক্ষার্থী')).size) },
+          { label: 'অডিয়েন্স', value: num(new Set(list.map(item => item.audience || 'সব শিক্ষার্থী')).size) },
           { label: 'সর্বশেষ', value: list.length ? dash(list[0].date || '—') : '—' }
         ]),
         table(NOTICE_COLUMNS(), list.map(noticeRow), 'নোটিশ তালিকা')
@@ -2117,8 +2117,8 @@ const noticeReport = ({ id, title, subtitle, filter, allTime = false }) => ({
 const noticeByAudience = {
   id: 'notice.audience-wise',
   category: 'notice',
-  title: 'Class / Batch-wise Notice',
-  subtitle: 'কোন নোটিশ কার জন্য — audience অনুযায়ী',
+  title: 'শ্রেণি / ব্যাচভিত্তিক নোটিশ',
+  subtitle: 'কোন নোটিশ কার জন্য — লক্ষ্যভুক্ত অনুযায়ী',
   roles: ['admin', 'manager', 'teacher', 'student'],
   filters: [],
   period: 'notice',
@@ -2132,7 +2132,7 @@ const noticeByAudience = {
     }
     const blocks = [tiles([
       { label: 'নোটিশ', value: num(list.length) },
-      { label: 'Audience গ্রুপ', value: num(groups.size) }
+      { label: 'অডিয়েন্স গ্রুপ', value: num(groups.size) }
     ], 4)];
     for (const [audience, items] of [...groups.entries()].sort((a, b) => b[1].length - a[1].length)) {
       blocks.push(heading(`Audience: ${audience} • ${num(items.length)} টি`));
@@ -2151,14 +2151,14 @@ const noticeByAudience = {
    ========================================================================== */
 
 const STAFF_COLUMNS = () => ([
-  { label: 'Staff ID', width: 1.2 },
+  { label: 'স্টাফ আইডি', width: 1.2 },
   { label: 'নাম', width: 1.6 },
   { label: 'রোল', width: 1.1 },
   { label: 'মোবাইল', width: 1.2 },
-  { label: 'Username', width: 1.5 },
+  { label: 'ইউজারনেম', width: 1.5 },
   { label: 'স্ট্যাটাস', width: 1 },
   { label: 'যোগদান', width: 1.1 },
-  { label: 'Assignment', width: 1.5 }
+  { label: 'বাড়ির কাজ', width: 1.5 }
 ]);
 
 const staffRow = record => ([
@@ -2199,7 +2199,7 @@ const staffReport = ({ id, title, subtitle, roleFilter }) => ({
 const staffStatus = {
   id: 'staff.status',
   category: 'staff',
-  title: 'Staff Status Report',
+  title: 'স্টাফ অবস্থা রিপোর্ট',
   subtitle: 'স্ট্যাটাস অনুযায়ী স্টাফের সারাংশ',
   roles: ['admin'],
   staffOnly: true,
@@ -2233,7 +2233,7 @@ const staffStatus = {
 const staffTeacherAssignment = {
   id: 'staff.teacher-assignment',
   category: 'staff',
-  title: 'Teacher Assignment Report',
+  title: 'শিক্ষক অ্যাসাইনমেন্ট রিপোর্ট',
   subtitle: 'শিক্ষকের শ্রেণি, ব্যাচ ও বিষয় বণ্টন',
   roles: ['admin', 'manager'],
   filters: ['class', 'subject'],
@@ -2253,7 +2253,7 @@ const staffTeacherAssignment = {
           { label: 'বিষয়', value: num(new Set(list.map(item => item.subject)).size) }
         ]),
         table([
-          { label: 'শিক্ষক', width: 1.7 }, { label: 'Username', width: 1.4 },
+          { label: 'শিক্ষক', width: 1.7 }, { label: 'ইউজারনেম', width: 1.4 },
           { label: 'শ্রেণি', width: 1.2 }, { label: 'বিভাগ / ব্যাচ', width: 1.3 }, { label: 'বিষয়', width: 1.4 }
         ], list.map(item => [
           dash(item.teacherName), dash(item.teacherUsername), dash(item.className),
@@ -2267,7 +2267,7 @@ const staffTeacherAssignment = {
 const staffActivity = {
   id: 'staff.activity',
   category: 'staff',
-  title: 'Staff Activity Report',
+  title: 'স্টাফ কার্যক্রম রিপোর্ট',
   subtitle: 'শিক্ষকের ক্লাস, বাড়ির কাজ, নোটিশ ও মূল্যায়ন',
   roles: ['admin', 'manager'],
   filters: ['period', 'teacher', 'class', 'subject'],
@@ -2312,7 +2312,7 @@ const staffActivity = {
 const managementSummary = {
   id: 'management.summary',
   category: 'management',
-  title: 'Management Summary',
+  title: 'পরিচালনা সারাংশ',
   subtitle: 'প্রতিষ্ঠানের সামগ্রিক চিত্র — শিক্ষার্থী, ফি, উপস্থিতি, পরীক্ষা ও ফলাফল',
   roles: ['admin', 'manager'],
   filters: ['period'],
@@ -2410,7 +2410,7 @@ const myReport = ({ id, title, subtitle, build }) => ({
 
 const myPayment = myReport({
   id: 'mine.payment',
-  title: 'My Payment Report',
+  title: 'আমার পেমেন্ট রিপোর্ট',
   subtitle: 'আমার সব পেমেন্ট',
   async build(ctx) {
     const rows = transactionsFor(ctx);
@@ -2427,7 +2427,7 @@ const myPayment = myReport({
 
 const myDue = myReport({
   id: 'mine.due',
-  title: 'My Due Report',
+  title: 'আমার বকেয়া রিপোর্ট',
   subtitle: 'আমার বকেয়া',
   async build(ctx) {
     const month = monthLabelOf(Date.now());
@@ -2435,7 +2435,7 @@ const myDue = myReport({
     const summary = dueSummary(student, ctx.snapshot.transactions || [], month);
     return [
       kv([
-        ['Student ID', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
+        ['শিক্ষার্থীর আইডি', student.id], ['নাম', student.name], ['শ্রেণি', student.className],
         ['বিভাগ', student.group || 'সাধারণ'], ['মাস', month], ['মাসিক বেতন', money(summary.monthlyFee)],
         ['পরিশোধিত', money(summary.paid)], ['বকেয়া', money(summary.due)]
       ], 3),
@@ -2449,7 +2449,7 @@ const myDue = myReport({
 
 const myReceipt = myReport({
   id: 'mine.receipt',
-  title: 'My Receipt Report',
+  title: 'আমার রসিদ রিপোর্ট',
   subtitle: 'আমার সব রসিদ',
   async build(ctx) {
     const rows = transactionsFor(ctx);
@@ -2468,7 +2468,7 @@ const myReceipt = myReport({
 
 const myAttendance = myReport({
   id: 'mine.attendance',
-  title: 'My Attendance Report',
+  title: 'আমার উপস্থিতি রিপোর্ট',
   subtitle: 'আমার উপস্থিতি',
   async build(ctx) {
     const sessions = activitiesFor(ctx, ['routine']);
@@ -2495,7 +2495,7 @@ const myAttendance = myReport({
 
 const myAssignment = myReport({
   id: 'mine.assignment',
-  title: 'My Assignment Report',
+  title: 'আমার বাড়ির কাজের রিপোর্ট',
   subtitle: 'আমার বাড়ির কাজ ও জমার অবস্থা',
   async build(ctx) {
     const homework = activitiesFor(ctx, ['homework']);
@@ -2520,7 +2520,7 @@ const myAssignment = myReport({
 
 const myExamination = myReport({
   id: 'mine.examination',
-  title: 'My Examination Report',
+  title: 'আমার পরীক্ষার রিপোর্ট',
   subtitle: 'আমার পরীক্ষাসমূহ ও অংশগ্রহণ',
   async build(ctx) {
     const exams = examsFor(ctx, { publishedOnly: true });
@@ -2549,7 +2549,7 @@ const myExamination = myReport({
 
 const myMarks = myReport({
   id: 'mine.marks',
-  title: 'My Marks Report',
+  title: 'আমার নম্বর রিপোর্ট',
   subtitle: 'আমার নম্বরপত্র',
   async build(ctx) {
     const exams = examsFor(ctx, { publishedOnly: true });
@@ -2575,7 +2575,7 @@ const myMarks = myReport({
 
 const myResult = myReport({
   id: 'mine.result',
-  title: 'My Result Report',
+  title: 'আমার ফলাফল রিপোর্ট',
   subtitle: 'আমার ফলাফল — গ্রেড ও শতাংশসহ',
   async build(ctx) {
     const exams = examsFor(ctx, { publishedOnly: true });
@@ -2608,7 +2608,7 @@ const myResult = myReport({
 
 const myPerformance = myReport({
   id: 'mine.performance',
-  title: 'My Academic Performance Report',
+  title: 'আমার একাডেমিক ফলাফল রিপোর্ট',
   subtitle: 'উপস্থিতি, কাজ ও ফলাফল — আমার সামগ্রিক চিত্র',
   async build(ctx) {
     const sessions = activitiesFor(ctx, ['routine']);
@@ -2659,25 +2659,25 @@ const myPerformance = myReport({
 
 export const BUILDERS = Object.freeze([
   /* A. Student */
-  studentList({ filter: 'all', title: 'Student Master List', subtitle: 'সব শিক্ষার্থীর পূর্ণ তালিকা' }),
+  studentList({ filter: 'all', title: 'শিক্ষার্থী মাস্টার তালিকা', subtitle: 'সব শিক্ষার্থীর পূর্ণ তালিকা' }),
   studentProfile,
-  studentList({ filter: 'pending', title: 'New Registration Report', subtitle: 'নতুন আবেদন — অনুমোদনের অপেক্ষায়' }),
-  studentList({ filter: 'approved', title: 'Approved Registration Report', subtitle: 'অনুমোদিত শিক্ষার্থী' }),
-  studentList({ filter: 'rejected', title: 'Rejected Registration Report', subtitle: 'বাতিল করা আবেদন' }),
-  studentList({ filter: 'active', title: 'Active Student Report', subtitle: 'সক্রিয় শিক্ষার্থী' }),
-  studentList({ filter: 'inactive', title: 'Inactive Student Report', subtitle: 'নিষ্ক্রিয় / স্থগিত শিক্ষার্থী' }),
+  studentList({ filter: 'pending', title: 'নতুন নিবন্ধন রিপোর্ট', subtitle: 'নতুন আবেদন — অনুমোদনের অপেক্ষায়' }),
+  studentList({ filter: 'approved', title: 'অনুমোদিত নিবন্ধন রিপোর্ট', subtitle: 'অনুমোদিত শিক্ষার্থী' }),
+  studentList({ filter: 'rejected', title: 'প্রত্যাখ্যাত নিবন্ধন রিপোর্ট', subtitle: 'বাতিল করা আবেদন' }),
+  studentList({ filter: 'active', title: 'সক্রিয় শিক্ষার্থীর রিপোর্ট', subtitle: 'সক্রিয় শিক্ষার্থী' }),
+  studentList({ filter: 'inactive', title: 'নিষ্ক্রিয় শিক্ষার্থীর রিপোর্ট', subtitle: 'নিষ্ক্রিয় / স্থগিত শিক্ষার্থী' }),
   studentClassWise,
   studentBatchWise,
   studentStatusReport,
 
   /* B. Fee & Accounts */
-  collectionReport({ id: 'fee.daily', title: 'Daily Fee Collection', subtitle: 'নির্বাচিত দিনের ফি আদায়', period: 'daily' }),
-  collectionReport({ id: 'fee.weekly', title: 'Weekly Fee Collection', subtitle: 'নির্বাচিত সপ্তাহের ফি আদায়', period: 'weekly', roles: ['admin', 'manager'] }),
-  collectionReport({ id: 'fee.monthly', title: 'Monthly Fee Collection', subtitle: 'নির্বাচিত মাসের ফি আদায়', period: 'monthly', roles: ['admin', 'manager'] }),
-  collectionReport({ id: 'fee.custom', title: 'Custom Date Collection', subtitle: 'নির্দিষ্ট তারিখ সীমার ফি আদায়', period: 'custom', roles: ['admin', 'manager'] }),
+  collectionReport({ id: 'fee.daily', title: 'দৈনিক ফি আদায়', subtitle: 'নির্বাচিত দিনের ফি আদায়', period: 'daily' }),
+  collectionReport({ id: 'fee.weekly', title: 'সাপ্তাহিক ফি আদায়', subtitle: 'নির্বাচিত সপ্তাহের ফি আদায়', period: 'weekly', roles: ['admin', 'manager'] }),
+  collectionReport({ id: 'fee.monthly', title: 'মাসিক ফি আদায়', subtitle: 'নির্বাচিত মাসের ফি আদায়', period: 'monthly', roles: ['admin', 'manager'] }),
+  collectionReport({ id: 'fee.custom', title: 'নির্দিষ্ট তারিখের আদায়', subtitle: 'নির্দিষ্ট তারিখ সীমার ফি আদায়', period: 'custom', roles: ['admin', 'manager'] }),
   feeStudentWise,
-  feeByGroup({ id: 'fee.class-wise', title: 'Class-wise Payment Report', groupBy: 'class' }),
-  feeByGroup({ id: 'fee.batch-wise', title: 'Batch-wise Payment Report', groupBy: 'batch' }),
+  feeByGroup({ id: 'fee.class-wise', title: 'শ্রেণিভিত্তিক পেমেন্ট রিপোর্ট', groupBy: 'class' }),
+  feeByGroup({ id: 'fee.batch-wise', title: 'ব্যাচভিত্তিক পেমেন্ট রিপোর্ট', groupBy: 'batch' }),
   feeDueList,
   feeDueCollection,
   feeTransactions,
@@ -2685,12 +2685,12 @@ export const BUILDERS = Object.freeze([
   feePaymentStatus,
 
   /* C. Cash Counter */
-  cashCollection({ id: 'cash.daily-collection', title: 'Daily Cash Collection', subtitle: 'দিনের ক্যাশ সংগ্রহ', period: 'daily' }),
-  cashCollection({ id: 'cash.counter-wise', title: 'Cash Counter-wise Collection', subtitle: 'কাউন্টার অনুযায়ী সংগ্রহ', period: 'monthly' }),
+  cashCollection({ id: 'cash.daily-collection', title: 'দৈনিক ক্যাশ আদায়', subtitle: 'দিনের ক্যাশ সংগ্রহ', period: 'daily' }),
+  cashCollection({ id: 'cash.counter-wise', title: 'ক্যাশ কাউন্টারভিত্তিক আদায়', subtitle: 'কাউন্টার অনুযায়ী সংগ্রহ', period: 'monthly' }),
   cashHistory,
-  cashByStatus({ id: 'cash.pending', title: 'Pending Approval', subtitle: 'Manager অনুমোদনের অপেক্ষায় থাকা লেনদেন', status: 'pending' }),
-  cashByStatus({ id: 'cash.approved', title: 'Approved Transactions', subtitle: 'অনুমোদিত লেনদেন', status: 'approved' }),
-  cashByStatus({ id: 'cash.rejected', title: 'Rejected Transactions', subtitle: 'বাতিল করা লেনদেন', status: 'rejected' }),
+  cashByStatus({ id: 'cash.pending', title: 'অনুমোদনের অপেক্ষায়', subtitle: 'ম্যানেজার অনুমোদনের অপেক্ষায় থাকা লেনদেন', status: 'pending' }),
+  cashByStatus({ id: 'cash.approved', title: 'অনুমোদিত লেনদেন', subtitle: 'অনুমোদিত লেনদেন', status: 'approved' }),
+  cashByStatus({ id: 'cash.rejected', title: 'প্রত্যাখ্যাত লেনদেন', subtitle: 'বাতিল করা লেনদেন', status: 'rejected' }),
   cashClosing,
   cashOwnHistory,
 
@@ -2710,12 +2710,12 @@ export const BUILDERS = Object.freeze([
   teacherAcademicNotice,
 
   /* E. Examination */
-  examList({ id: 'exam.list', title: 'Examination List', subtitle: 'সব পরীক্ষার তালিকা', pick: () => true }),
-  examList({ id: 'exam.upcoming', title: 'Upcoming Examination', subtitle: 'আসন্ন পরীক্ষা', pick: isUpcomingExam }),
-  examList({ id: 'exam.completed', title: 'Completed Examination', subtitle: 'অনুষ্ঠিত পরীক্ষা', pick: isTakenExam }),
+  examList({ id: 'exam.list', title: 'পরীক্ষার তালিকা', subtitle: 'সব পরীক্ষার তালিকা', pick: () => true }),
+  examList({ id: 'exam.upcoming', title: 'আসন্ন পরীক্ষা', subtitle: 'আসন্ন পরীক্ষা', pick: isUpcomingExam }),
+  examList({ id: 'exam.completed', title: 'সম্পন্ন পরীক্ষা', subtitle: 'অনুষ্ঠিত পরীক্ষা', pick: isTakenExam }),
   examList({
     id: 'exam.taken',
-    title: 'Taken Examination',
+    title: 'দেওয়া পরীক্ষা',
     subtitle: 'যে পরীক্ষায় অন্তত একজন উত্তর জমা দিয়েছে',
     pick: (exam, ctx) => isTakenExam(exam) && submittedAttempts(ctx.snapshot.exams?.attempts || [], exam.id).length > 0
   }),
@@ -2724,10 +2724,10 @@ export const BUILDERS = Object.freeze([
   examQuestionPaper,
   examAnswerKey,
   examMarksSheet,
-  examByGroup({ id: 'exam.student-wise', title: 'Student-wise Examination Report', subtitle: 'শিক্ষার্থীভিত্তিক পরীক্ষার সারাংশ', groupBy: 'student' }),
-  examByGroup({ id: 'exam.class-wise', title: 'Class-wise Examination Report', subtitle: 'শ্রেণিভিত্তিক পরীক্ষার সারাংশ', groupBy: 'class' }),
-  examByGroup({ id: 'exam.batch-wise', title: 'Batch-wise Examination Report', subtitle: 'বিভাগভিত্তিক পরীক্ষার সারাংশ', groupBy: 'batch' }),
-  examByGroup({ id: 'exam.subject-wise', title: 'Subject-wise Examination Report', subtitle: 'বিষয়ভিত্তিক পরীক্ষার সারাংশ', groupBy: 'subject' }),
+  examByGroup({ id: 'exam.student-wise', title: 'শিক্ষার্থীভিত্তিক পরীক্ষা রিপোর্ট', subtitle: 'শিক্ষার্থীভিত্তিক পরীক্ষার সারাংশ', groupBy: 'student' }),
+  examByGroup({ id: 'exam.class-wise', title: 'শ্রেণিভিত্তিক পরীক্ষা রিপোর্ট', subtitle: 'শ্রেণিভিত্তিক পরীক্ষার সারাংশ', groupBy: 'class' }),
+  examByGroup({ id: 'exam.batch-wise', title: 'ব্যাচভিত্তিক পরীক্ষা রিপোর্ট', subtitle: 'বিভাগভিত্তিক পরীক্ষার সারাংশ', groupBy: 'batch' }),
+  examByGroup({ id: 'exam.subject-wise', title: 'বিষয়ভিত্তিক পরীক্ষা রিপোর্ট', subtitle: 'বিষয়ভিত্তিক পরীক্ষার সারাংশ', groupBy: 'subject' }),
   examComplete,
   examCompleteStudent,
   examCombined,
@@ -2738,15 +2738,15 @@ export const BUILDERS = Object.freeze([
   resultPerformance,
 
   /* G. Notice */
-  noticeReport({ id: 'notice.list', title: 'Notice List', subtitle: 'নির্বাচিত সময়ের সব নোটিশ', filter: 'all' }),
-  noticeReport({ id: 'notice.published', title: 'Published Notice', subtitle: 'প্রকাশিত নোটিশ', filter: 'published' }),
+  noticeReport({ id: 'notice.list', title: 'নোটিশ তালিকা', subtitle: 'নির্বাচিত সময়ের সব নোটিশ', filter: 'all' }),
+  noticeReport({ id: 'notice.published', title: 'প্রকাশিত নোটিশ', subtitle: 'প্রকাশিত নোটিশ', filter: 'published' }),
   noticeByAudience,
-  noticeReport({ id: 'notice.history', title: 'Notice History', subtitle: 'সব সময়ের নোটিশ', filter: 'all', allTime: true }),
+  noticeReport({ id: 'notice.history', title: 'নোটিশের ইতিহাস', subtitle: 'সব সময়ের নোটিশ', filter: 'all', allTime: true }),
 
   /* H. Staff (Admin only — the staff directory is Admin-owned) */
-  staffReport({ id: 'staff.managers', title: 'Manager List', subtitle: 'ম্যানেজারদের তালিকা', roleFilter: 'manager' }),
-  staffReport({ id: 'staff.teachers', title: 'Teacher List', subtitle: 'শিক্ষকদের তালিকা', roleFilter: 'teacher' }),
-  staffReport({ id: 'staff.cashiers', title: 'Cash Counter List', subtitle: 'ক্যাশ কাউন্টারের তালিকা', roleFilter: 'cash-counter' }),
+  staffReport({ id: 'staff.managers', title: 'ম্যানেজার তালিকা', subtitle: 'ম্যানেজারদের তালিকা', roleFilter: 'manager' }),
+  staffReport({ id: 'staff.teachers', title: 'শিক্ষক তালিকা', subtitle: 'শিক্ষকদের তালিকা', roleFilter: 'teacher' }),
+  staffReport({ id: 'staff.cashiers', title: 'ক্যাশ কাউন্টার তালিকা', subtitle: 'ক্যাশ কাউন্টারের তালিকা', roleFilter: 'cash-counter' }),
   staffStatus,
   staffTeacherAssignment,
   staffActivity,

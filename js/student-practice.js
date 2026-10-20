@@ -192,8 +192,8 @@ export function initStudentPractice({ getStudent, getAccount }) {
     const papers = practicePapers(student, now, practiceQuestionRows), pool = practicePool(student, now, practiceQuestionRows);
     const chapterPool = chapterContext ? chapterPracticePool(student, chapterContext, now, practiceQuestionRows) : [];
     const chapterCard = chapterContext ? `<section class="exam-card practice-card chapter-practice-card" aria-label="অধ্যায়ভিত্তিক MCQ অনুশীলন">
-      <div class="chapter-practice-heading"><div><small>${esc(chapterContext.className)} • ${esc(chapterContext.subject)}</small><h2 tabindex="-1" data-chapter-practice-heading>❓ ${esc(chapterContext.chapterName)} — MCQ Practice</h2></div>${button('clear-chapter', 'সব অনুশীলন দেখুন')}</div>
-      <p class="exam-note">শুধু এই অধ্যায়ের প্রকাশিত/অনুশীলনযোগ্য প্রশ্ন থেকে তৈরি হবে। এটি নিজস্ব অনুশীলন—আনুষ্ঠানিক ফলাফলে যুক্ত হবে না।</p>
+      <div class="chapter-practice-heading"><div><small>${esc(chapterContext.className)} • ${esc(chapterContext.subject)}</small><h2 tabindex="-1" data-chapter-practice-heading>❓ ${esc(chapterContext.chapterName)} — MCQ অনুশীলন</h2></div>${button('clear-chapter', 'সব অনুশীলন দেখুন')}</div>
+      <p class="exam-note">শুধু এই অধ্যায়ের প্রকাশিত/অনুশীলনযোগ্য প্রশ্ন থেকে তৈরি হবে। এটি নিজস্ব অনুশীলন — আনুষ্ঠানিক ফলাফলে যুক্ত হবে না।</p>
       <div class="exam-actions">${chapterPool.length ? button('start-chapter', `অনুশীলন শুরু করুন (${num(chapterPool.length)}টি প্রশ্ন)`, '', 'primary') : '<small>এই অধ্যায়ে এখনো অনুশীলনযোগ্য MCQ নেই।</small>'}</div>
     </section>` : '';
     let entry = storeFor(student);
@@ -377,7 +377,7 @@ export function initStudentPractice({ getStudent, getAccount }) {
       if (!chapterContext) { error('অধ্যায়ের অনুশীলন আর খোলা নেই। আবার চ্যাপ্টার থেকে শুরু করো।'); return; }
       const pool = shuffle(chapterPracticePool(student, chapterContext, Date.now(), practiceQuestionRows)).slice(0, RANDOM_SIZE);
       if (!pool.length) { error('এই অধ্যায়ে এখন অনুশীলনযোগ্য MCQ নেই।'); return; }
-      const title = `${chapterContext.chapterName} — MCQ Practice`;
+      const title = `${chapterContext.chapterName} — MCQ অনুশীলন`;
       const session = startSession(student, {
         kind: 'chapter', title, subject: chapterContext.subject,
         chapterId: chapterContext.chapterId, chapterName: chapterContext.chapterName,
@@ -418,7 +418,7 @@ export function initStudentPractice({ getStudent, getAccount }) {
         };
         const pool = shuffle(chapterPracticePool(student, chapterContext, Date.now(), practiceQuestionRows)).slice(0, RANDOM_SIZE);
         if (pool.length) active(startSession(student, {
-          kind: 'chapter', title: `${chapterContext.chapterName} — MCQ Practice`,
+          kind: 'chapter', title: `${chapterContext.chapterName} — MCQ অনুশীলন`,
           subject: chapterContext.subject, chapterId: chapterContext.chapterId, chapterName: chapterContext.chapterName,
           questions: pool, durationMinutes: pool.length * PRACTICE_MINUTES_PER_QUESTION
         }));

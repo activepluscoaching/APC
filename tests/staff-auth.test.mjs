@@ -309,7 +309,7 @@ test('a device that cannot create an Admin is never allowed to mint a second one
   });
   assert.equal(second.ok, false);
   assert.equal(second.code, 'ADMIN_EXISTS');
-  assert.match(second.error, /PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT/);
+  assert.match(second.error, /বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন/);
   assert.equal(await staffAccountRecordExists('admin'), false, 'nothing was written on this device');
   assert.equal(taken.claims, 0, 'the cloud was never even asked to claim');
 

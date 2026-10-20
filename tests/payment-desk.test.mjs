@@ -102,7 +102,7 @@ test('simple payment starts with an empty amount and one method select, never a 
  assert.equal($('[data-pay-panel="payment"]').hidden,false);
  assert.equal($('[data-pay-panel="students"]').hidden,true);
  assert.equal($('.admin-bottom [aria-current="page"]').dataset.paySection,'payment');
- assert.equal($('#payEntryStudent').textContent,`${person.name} · Student ID: ${person.id}`);
+ assert.equal($('#payEntryStudent').textContent,`${person.name} · শিক্ষার্থীর আইডি: ${person.id}`);
  assert.equal($('#payProfileCollect').hidden,true);
 });
 test('invalid amounts/forged methods do not write a payment',async()=>{

@@ -250,7 +250,7 @@ test('E2E: Manager sets routine -> Teacher takes attendance, gives homework & ex
     const refreshDash = initStudentDashboard({ getStudent: () => STUDENT_OWN, getAccount: () => ({ student: STUDENT_OWN }) });
     await refreshDash();
     const studyApi = initStudentStudySections({ getStudent: () => STUDENT_OWN });
-    studyApi.refresh();
+    await studyApi.refresh();
     const noticeApi = initStudentNoticeBoard({ getStudent: () => STUDENT_OWN });
     noticeApi.refresh();
 

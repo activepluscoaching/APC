@@ -146,7 +146,7 @@ test('a custom range offers From and To, and refuses a reversed range', async ()
   to.value = isoDay(30);
   generate();
   await ctx.waitFor(() => $('.rc-status')?.hidden === false, 10000);
-  assert.match($('.rc-status').textContent, /From Date/);
+  assert.match($('.rc-status').textContent, /শুরুর তারিখ/);
   assert.equal($('.rc-preview'), null, 'a refused range never reaches the preview');
 });
 
@@ -162,7 +162,7 @@ test('Generate builds a paged preview with a full-width download', async () => {
   assert.deepEqual(pages.map(page => Number(page.dataset.page)), pages.map((_, index) => index + 1));
 
   const button = $('.rc-download');
-  assert.match(button.textContent, /Download PDF/i);
+  assert.match(button.textContent, /PDF ডাউনলোড/i);
   assert.equal($('.rc-back'), button.parentElement.querySelector('.rc-back'), 'the preview can be stepped back from');
 });
 
@@ -185,7 +185,7 @@ test('the download asks the browser for a meaningfully named PDF', async () => {
   ctx.click($('.rc-download'));
   await ctx.waitFor(() => Boolean(lastDownload), 20000);
   const today = new Date().toISOString().slice(0, 10);
-  assert.match(lastDownload.name, new RegExp(`^ActivePlus_Student_Master_List_${today}\\.pdf$`));
+  assert.match(lastDownload.name, new RegExp(`^ActivePlus_শিক্ষার্থী_মাস্টার_তালিকা_${today}\\.pdf$`));
   assert.equal(lastDownload.href, 'blob:active-plus-report');
 });
 

@@ -91,7 +91,7 @@ function clearSelection() {
 function renderResults() {
   $('#paySearchResults').innerHTML=state.matches.map(student=>`
     <button class="fee-search-result" type="button" data-pay-student="${esc(student.id)}">
-      <span><strong>${esc(student.name)}</strong><small>Student ID: ${esc(student.id)}${student.uniqueRoll ? ` · ইউনিক রোল: ${esc(student.uniqueRoll)}` : ''}</small>${student.mobileMasked && student.mobileMasked !== '—' ? `<small>মোবাইল: ${esc(student.mobileMasked)}</small>` : ''}${student.guardianMobileMasked && student.guardianMobileMasked !== '—' ? `<small>অভিভাবক: ${esc(student.guardianMobileMasked)}</small>` : ''}</span>
+      <span><strong>${esc(student.name)}</strong><small>শিক্ষার্থীর আইডি: ${esc(student.id)}${student.uniqueRoll ? ` · ইউনিক রোল: ${esc(student.uniqueRoll)}` : ''}</small>${student.mobileMasked && student.mobileMasked !== '—' ? `<small>মোবাইল: ${esc(student.mobileMasked)}</small>` : ''}${student.guardianMobileMasked && student.guardianMobileMasked !== '—' ? `<small>অভিভাবক: ${esc(student.guardianMobileMasked)}</small>` : ''}</span>
     </button>`).join('');
 }
 async function findStudents() {
@@ -116,7 +116,7 @@ function selectStudent(id) {
   clearSelection(); state.selected=student;
   search.value=''; $('#paySearchClear').hidden=true;
   $('#paySearchResults').replaceChildren(); $('#paySearchStatus').textContent='';
-  $('#payQuickProfile').innerHTML=`<div><strong>${esc(student.name)}</strong><small>Student ID: ${esc(student.id)}${student.uniqueRoll ? ` · ইউনিক রোল: ${esc(student.uniqueRoll)}` : ''}</small>${student.mobileMasked && student.mobileMasked !== '—' ? `<small>মোবাইল: ${esc(student.mobileMasked)}</small>` : ''}${student.guardianMobileMasked && student.guardianMobileMasked !== '—' ? `<small>অভিভাবক: ${esc(student.guardianMobileMasked)}</small>` : ''}</div><button id="payProfileCollect" class="admin-btn primary" type="button" ${!state.ready?'disabled':''}>পেমেন্ট নিন</button>`;
+  $('#payQuickProfile').innerHTML=`<div><strong>${esc(student.name)}</strong><small>শিক্ষার্থীর আইডি: ${esc(student.id)}${student.uniqueRoll ? ` · ইউনিক রোল: ${esc(student.uniqueRoll)}` : ''}</small>${student.mobileMasked && student.mobileMasked !== '—' ? `<small>মোবাইল: ${esc(student.mobileMasked)}</small>` : ''}${student.guardianMobileMasked && student.guardianMobileMasked !== '—' ? `<small>অভিভাবক: ${esc(student.guardianMobileMasked)}</small>` : ''}</div><button id="payProfileCollect" class="admin-btn primary" type="button" ${!state.ready?'disabled':''}>পেমেন্ট নিন</button>`;
   $('#payProfileCard').hidden=false;
   $('#payProfileCard').scrollIntoView({block:'nearest',behavior:'smooth'});
 }
@@ -126,7 +126,7 @@ function openForm() {
   if(form.hidden) {
     form.reset(); $('#payStudent').value=state.selected.id;
     $('#paySaveError').hidden=true; form.hidden=false;
-    $('#payEntryStudent').textContent=`${state.selected.name} · Student ID: ${state.selected.id}`;
+    $('#payEntryStudent').textContent=`${state.selected.name} · শিক্ষার্থীর আইডি: ${state.selected.id}`;
     $('#payEntrySearch').hidden=true; $('#payProfileCollect').hidden=true;
   }
   showCounterView('payment');

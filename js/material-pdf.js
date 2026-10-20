@@ -9,6 +9,8 @@ import { loadWatermark, drawWatermark } from './brand.js';
 export const materialFileName = activity => `ActivePlus-material-${activity.type || 'work'}-${todayISO()}.pdf`;
 
 export async function activitySheetPDF(activity) {
+  const details = String(activity?.details || '').trim();
+  if (!details) throw new Error('বিস্তারিত নেই — PDF তৈরি করা যাবে না');
   const [font, logo] = await loadAssets(), canvas = document.createElement('canvas');
   const wm = await loadWatermark();
   canvas.width = 1240; canvas.height = 1754;
@@ -70,11 +72,6 @@ export async function activitySheetPDF(activity) {
   const render = async () => {
     y = beginPage();
     await line(activity.title || type.label, { bold: true, size: 30 });
-    await line(`${type.label} • বিষয়: ${activity.subject || '—'} • ${activity.className || '—'}${activity.group ? ` • ${activity.group}` : ''}`, { color: '#596960' });
-    if (activity.date) await line(`${activity.type === 'homework' ? 'জমার শেষ সময়' : activity.type === 'routine' ? 'ক্লাসের সময়' : 'নির্ধারিত তারিখ'}: ${displayDate(activity.date)}${activity.time ? ` • ${activity.time}` : ''}${activity.duration ? ` • ${activity.duration} মিনিট` : ''}`);
-    if (activity.room) await line(`স্থান: ${activity.room}`);
-    if (activity.totalMarks) await line(`পূর্ণমান: ${bn(activity.totalMarks)}`);
-    if (activity.teacherName) await line(`শিক্ষক: ${activity.teacherName}`, { color: '#596960' });
     y += 8;
     if ((activity.details || '').trim()) {
       await section('বিস্তারিত নির্দেশনা');

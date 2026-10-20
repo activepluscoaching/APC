@@ -36,10 +36,10 @@ test('Manager assignment controls persist class, batch/group and subject; reads 
 
 test('Teacher or logged-out callers cannot grant or revoke Manager assignments', async () => {
   setup('teacher');
-  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subject: 'গণিত' }), /শুধু Manager/);
-  await assert.rejects(deleteTeacherAssignment('anything'), /শুধু Manager/);
+  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subject: 'গণিত' }), /শুধু ম্যানেজার/);
+  await assert.rejects(deleteTeacherAssignment('anything'), /শুধু ম্যানেজার/);
   setup('teacher');
-  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subject: 'গণিত' }), /শুধু Manager/);
+  await assert.rejects(saveTeacherAssignment({ className: 'দশম শ্রেণি', subject: 'গণিত' }), /শুধু ম্যানেজার/);
 });
 
 test('corrupt assignment storage fails closed and remains untouched', async () => {

@@ -78,7 +78,7 @@ async function handleStaffLogin(role, typedId, pin) {
     return;
   }
   if (!result.ok) {
-    setAuthMessage(`${STAFF_LABEL[role]}র ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।`);
+    setAuthMessage(`${STAFF_LABEL[role]}ের ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।`);
     return;
   }
   if (role === 'teacher' && loadAppConfig().allowTeacherRegistration === false) {
@@ -222,7 +222,7 @@ async function handleLogin(event, state, onAuthenticated) {
   const attemptId = ++loginAttemptId;
 
   if ((!normalizeUsername(typedId) && !contactNumber(typedId)) || pin.length < 4) {
-    setAuthMessage('ইউজারনেম, মোবাইল নম্বর বা Student ID এবং ৪–৬ সংখ্যার পাসওয়ার্ড সঠিকভাবে দিন।');
+    setAuthMessage('ইউজারনেম, মোবাইল নম্বর বা শিক্ষার্থীর আইডি এবং ৪–৬ সংখ্যার পাসওয়ার্ড সঠিকভাবে দিন।');
     return;
   }
 
@@ -336,8 +336,8 @@ async function handleLogin(event, state, onAuthenticated) {
 
     if (onlineIdentities.cloudPasswordMismatch || onlineIdentities.ambiguous) {
       setAuthMessage(onlineIdentities.ambiguous
-        ? 'এই সংক্ষিপ্ত Student ID দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ Student ID লিখুন।'
-        : 'ইউজারনেম, মোবাইল নম্বর বা Student ID অথবা পাসওয়ার্ড সঠিক নয়।');
+        ? 'এই সংক্ষিপ্ত শিক্ষার্থীর আইডি দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ শিক্ষার্থীর আইডি লিখুন।'
+        : 'ইউজারনেম, মোবাইল নম্বর বা শিক্ষার্থীর আইডি অথবা পাসওয়ার্ড সঠিক নয়।');
       return;
     }
 
@@ -367,9 +367,9 @@ async function handleLogin(event, state, onAuthenticated) {
   // Genuinely different failures (a wrong password, an ambiguous short ID,
   // a cloud that could not be checked at all) keep their own messages.
   if (onlineIdentities.ambiguous) {
-    setAuthMessage('এই সংক্ষিপ্ত Student ID দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ Student ID লিখুন।');
+    setAuthMessage('এই সংক্ষিপ্ত শিক্ষার্থীর আইডি দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ শিক্ষার্থীর আইডি লিখুন।');
   } else if (onlineIdentities.cloudPasswordMismatch) {
-    setAuthMessage('ইউজারনেম, মোবাইল নম্বর বা Student ID অথবা পাসওয়ার্ড সঠিক নয়।');
+    setAuthMessage('ইউজারনেম, মোবাইল নম্বর বা শিক্ষার্থীর আইডি অথবা পাসওয়ার্ড সঠিক নয়।');
   } else if (onlineIdentities.attempted && !onlineIdentities.synced) {
     setAuthMessage(!LEGACY_CLOUD_ENABLED ? CLOUD_PAUSED_MESSAGE : 'ক্লাউড থেকে অ্যাকাউন্ট আনা যায়নি। ইন্টারনেট ও Firebase সিঙ্ক পরীক্ষা করে আবার লগইন করুন। আগে অ্যাকাউন্ট তৈরি করে থাকলে নতুন করে রেজিস্ট্রেশন করবেন না।');
   } else {

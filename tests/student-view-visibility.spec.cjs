@@ -38,4 +38,40 @@ test('bottom navigation and every Student route keep one view and the topbar vis
   await page.locator('#appShell').evaluate(shell => shell.classList.add('is-pending'));
   await expect(page.locator('#studentHeader')).toBeVisible();
   await expect(page.locator('#pendingScreen')).toBeVisible();
+  await page.locator('#appShell').evaluate(shell => shell.classList.remove('is-pending'));
+});
+
+test('rapid tab/hash interleaving never leaves two student views visible', async ({ page }) => {
+  await enterStudentApp(page);
+
+  // Fire navigation from three directions without waiting in between — nav
+  // clicks, hash writes and direct setView calls racing each other.
+  await page.evaluate(async () => {
+    const { setView } = await import('/js/shell.js');
+    const taps = ['courses', 'routine', 'exams', 'profile', 'home'];
+    const jobs = taps.map((view, index) => new Promise(resolve => {
+      window.setTimeout(() => {
+        const link = document.querySelector(`.bottom-nav [data-view="${view}"]`);
+        if (index % 2 === 0 && link) link.click();
+        else if (index % 2 === 1) window.location.hash = `#${view}`;
+        resolve();
+      }, index * 15);
+    }));
+    setView('exams', { history: 'keep' });
+    await Promise.all(jobs);
+    setView('home', { history: 'keep' });
+  });
+  await page.waitForTimeout(150);
+
+  await expect(page.locator('.view.active')).toHaveCount(1);
+  await expect(page.locator('.view:visible')).toHaveCount(1);
+  await expect(page.locator('.view[data-view-panel="home"]')).toBeVisible();
+
+  // One more pass over each bottom tab, checking after every single tap.
+  for (const view of ['home', 'courses', 'routine', 'exams', 'profile']) {
+    await page.locator(`.bottom-nav [data-view="${view}"]`).click();
+    await expect(page.locator('.view.active')).toHaveCount(1);
+    await expect(page.locator('.view:visible')).toHaveCount(1);
+    await expect(page.locator(`.view[data-view-panel="${view}"]`)).toBeVisible();
+  }
 });

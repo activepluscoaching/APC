@@ -14,7 +14,7 @@ import { toBanglaNumber as bn } from './ui.js';
 import { setView } from './shell.js';
 import { classByName, subjectsForClass, listChapters } from './academics.js';
 import { listCourseContent, typeOf as courseTypeOf } from './course-content.js';
-import { sanitizeRichHtml } from './sanitize.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 import { teachingRepository, publishedForStudent, watchTeachingData } from './teaching-data.js';
 import { courseRepository, courseProgress, watchCourses, COURSES_KEY } from './course-data.js';
 import { listQuestionsForStudent, questionRowsFromPastExams, QUESTION_TYPES } from './question-bank.js';
@@ -309,7 +309,10 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
     const counts = teaching?.activityCounts?.() || { homework: 0, suggestion: 0 };
     const set = (key, value) => {
       const badge = bar.querySelector(`[data-study-count="${key}"]`);
-      if (badge) badge.textContent = num(value);
+      if (badge) {
+        badge.textContent = num(value);
+        badge.classList.toggle('is-zero', !value);
+      }
     };
     const publishedCourses = courseRepository.readStudentCoursesSync(student());
     renderTodayStudy(publishedCourses);
@@ -472,6 +475,7 @@ export function initStudentStudySections({ getStudent, teaching = null } = {}) {
       }
       const seen = new Set(courseSuggestions.map(record => String(record.id)));
       suggestionRecords = [...courseSuggestions, ...activitySuggestions.filter(record => !seen.has(String(record.id)))];
+
       materialRecords = rows.filter(record => ['note', 'pdf', 'lesson', 'video', 'previous_question', 'model_test'].includes(courseTypeOf(record)));
       suggestionReady = true; suggestionError = '';
       materialReady = true; materialError = '';

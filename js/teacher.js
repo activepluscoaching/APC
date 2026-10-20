@@ -17,6 +17,7 @@ import { courseRepository, courseProgress, watchCourses } from './course-data.js
 import { classByName } from './academics.js';
 import { NOTICE_CATEGORIES } from './notification-rules.js';
 import { mountSettingsHub, resetSettingsHub } from './settings-hub.js';
+import { mountProfileSelfEdit } from './staff-self-edit.js';
 import { initFixedShell } from './fixed-shell.js';
 import { registerServiceWorker } from './service-worker.js';
 import { mountReports, refreshReports } from './reports.js';
@@ -138,7 +139,11 @@ function renderTypeCounts() {
 }
 function renderHome() {
   const hasAssignments = state.assignments.length > 0;
-  $('#teacherAssignmentNotice').hidden = hasAssignments;
+  /* "No class assigned" may only appear when the data actually came back
+     empty — never while a load is running or failed (the data-error card
+     owns those states), and never from a stale snapshot: the pickers, the
+     profile and every publish gate read the same assignment rows. */
+  $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
   $('#teacherToday').textContent = `${hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা'} · শিক্ষক প্যানেল`;
   /* শিক্ষক-নাম টপবারে এবং welcome hero-তে; textContent ব্যবহার করে account
@@ -325,7 +330,7 @@ function openRoutineSession(btn) {
       }
 
       return db;
-    }, 'ক্লাস সেশন ও উপস্থিতি সংরক্ষণ করা হয়েছে');
+    }, 'ক্লাস সেশন ও উপস্থিতি সংরক্ষণ করা হয়েছে — শিক্ষার্থীদের রিপোর্টে আপডেট দেখা যাবে।');
   });
 }
 function routineBlob(item) {
@@ -379,6 +384,7 @@ function renderTeacherProfile() {
   const account = state.teacher || {};
   const teacherId = String(account.staffId && account.kind !== 'system' ? account.staffId : currentTeacherId());
   host.innerHTML = `<div class="manager-profile-list"><div><small>নাম</small><strong>${esc(account.fullName || '—')}</strong></div><div><small>শিক্ষক আইডি</small><strong id="teacherProfileId">${esc(teacherId)}</strong></div><div><small>ইউজারনেম</small><strong>${esc(account.username || '—')}</strong></div><div><small>যোগাযোগ</small><strong>${esc(account.mobile || '—')}</strong></div><div><small>ভূমিকা</small><strong>শিক্ষক — একাডেমিক</strong></div><div><small>নির্ধারিত শ্রেণি/ব্যাচ</small><strong>${bn(state.assignments.length)}</strong></div></div>`;
+  host.insertAdjacentHTML('beforeend', '<div class="row-actions"><button class="admin-btn ghost" type="button" data-profile-edit>নিজের তথ্য সম্পাদনা</button></div>');
 }
 
 function renderCourseChapters() {
@@ -462,7 +468,6 @@ function render() { renderHome(); renderRecords(); renderStudents(); renderTeach
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
 const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'students', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
 function setView(view) {
-  if (view === 'exams') view = 'online-exams';
   if (!TEACHER_VIEWS.includes(view)) return;
   /* The nine routine pages are one screen now; their routes stay as aliases
      so old deep links and notifications keep landing on the right tab. */
@@ -488,7 +493,7 @@ function setView(view) {
   const bottomView = view === 'home' ? 'home'
     : view === 'students' ? 'students'
       : ['academic', 'classes', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
-        : ['exam', 'online-exams'].includes(view) ? 'exam' : 'more';
+        : ['exam', 'online-exams'].includes(view) ? 'online-exams' : 'more';
   $$('.admin-bottom [data-teacher-view]').forEach(el => {
     const active = el.dataset.teacherView === bottomView;
     el.classList.toggle('active', active);
@@ -499,7 +504,7 @@ function setView(view) {
   paintTeacherExam();
   $('#teacherMain').scrollTo({ top: 0, behavior: 'instant' }); render();
   // The open page lives in the URL, so a refresh lands back on it.
-  rememberRoute(view === 'exam' ? 'online-exams' : view);
+  rememberRoute(view);
 }
 async function reload() {
   try {
@@ -546,7 +551,7 @@ function closeModal() {
 function showEditor(type, old = null) {
   if (type === 'exam') return setView('online-exams');
   if (!state.ready || state.busy) return toast('আগে ডেটা লোড হতে দিন বা আবার চেষ্টা করুন।');
-  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: ['homework', 'suggestion'].includes(type) ? 'published' : 'draft', className: assignedClasses()[0] || '' };
+  const a = old || { type, date: todayISO(), time: '17:00', duration: 60, totalMarks: 100, status: type === 'homework' ? 'published' : 'draft', className: assignedClasses()[0] || '' };
   const timed = ['exam', 'routine'].includes(type);
   const field = (name, label, inputType = 'text', extra = '') => `<div><label for="activity-${name}">${label}</label><input id="activity-${name}" name="${name}" type="${inputType}" value="${esc(a[name] ?? '')}" ${extra}></div>`;
   openModal(`${old ? 'সম্পাদনা: ' : 'নতুন '}${ACTIVITY_TYPES[type].label}`, `<form id="teacherActivityForm" class="teacher-form">
@@ -570,7 +575,13 @@ function showEditor(type, old = null) {
     event.preventDefault(); const form = event.currentTarget;
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(new FormData(form));
-    save(form, () => teachingRepository.saveActivity({ ...values, type, id: old?.id, date: type === 'suggestion' ? a.date : values.date }), type === 'suggestion' ? (values.status === 'published' ? 'সাজেশন প্রকাশিত — শিক্ষার্থী অ্যাপে দেখা যাবে' : 'সাজেশন খসড়া হিসেবে সংরক্ষিত হয়েছে') : 'কাজটি সংরক্ষণ করা হয়েছে');
+    /* One check for every content type (homework/suggestion/attendance/exam):
+       the toast repeats the status the student panel will read — published
+       content says প্রকাশিত, a draft says it stays hidden from students. */
+    const message = values.status === 'published'
+      ? `${ACTIVITY_TYPES[type].label} প্রকাশিত হয়েছে — শিক্ষার্থীরা পড়াশোনাবিভাগে দেখতে পাবেন।`
+      : `${ACTIVITY_TYPES[type].label} খসড়া হিসেবে সংরক্ষিত হয়েছে — শিক্ষার্থীরা এখনো দেখবেন না।`;
+    save(form, () => teachingRepository.saveActivity({ ...values, type, id: old?.id, date: type === 'suggestion' ? a.date : values.date }), message);
   });
 }
 // Reuse the same fields, validation and saveActivity path. The simplified
@@ -767,7 +778,7 @@ function showProgress(a) {
           : el.value;
       }
     }
-    save(target, () => teachingRepository.saveProgress(a.id, entries), 'শিক্ষার্থীদের অগ্রগতি সংরক্ষণ করা হয়েছে');
+    save(target, () => teachingRepository.saveProgress(a.id, entries), 'শিক্ষার্থীদের অগ্রগতি সংরক্ষণ করা হয়েছে — শিক্ষার্থীদের অ্যাপেও আপডেট দেখা যাবে');
   });
 }
 
@@ -798,7 +809,7 @@ const ACADEMIC_SECTIONS = Object.freeze({
    workspace view — the CTA above opens it on its home (where the create
    buttons live), the chips pick a list, and marks stay on the records tab. */
 const EXAM_SCREENS = Object.freeze({
-  bank: 'bank', upcoming: 'upcoming', archive: 'archive', home: 'home'
+  bank: 'bank', upcoming: 'upcoming', archive: 'archive', home: 'home', 'new-mcq': 'new-mcq'
 });
 function paintTeacherExam() {
   const hub = $('#teacherExamHub');
@@ -902,7 +913,13 @@ function showNoticeEditor(old = null) {
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(new FormData(form));
-    save(form, () => saveNoticeRecord(values, old), old ? 'নোটিশ আপডেট হয়েছে' : 'নোটিশ প্রকাশ হয়েছে');
+    /* The toast must state the status the student board will actually show:
+       "প্রকাশিত" reaches the notice board, "খসড়া" stays teacher-only. */
+    const message = values.status === 'draft'
+      ? 'নোটিশ খসড়া হিসেবে সংরক্ষিত হয়েছে — শিক্ষার্থীরা এখনো দেখবেন না।'
+      : old ? 'নোটিশ আপডেট করা হয়েছে — শিক্ষার্থীদের নোটিশ বোর্ডে দেখা যাচ্ছে।'
+        : 'নোটিশ প্রকাশ হয়েছে — শিক্ষার্থীদের নোটিশ বোর্ডে চলে এসেছে।';
+    save(form, () => saveNoticeRecord(values, old), message);
   });
 }
 
@@ -963,13 +980,9 @@ async function showTeacherShell() {
   }
   $('#teacherShell').hidden = false;
   // A refresh (or a shared link) reopens the page that was open.
-  const rawWanted = routeName();
-  const wanted = rawWanted === 'exams' ? 'online-exams' : rawWanted;
+  const wanted = routeName();
   setView(TEACHER_VIEWS.includes(wanted) ? wanted : 'home');
-  onRouteChange(name => {
-    const canonical = name === 'exams' ? 'online-exams' : name;
-    if (TEACHER_VIEWS.includes(canonical) && canonical !== state.view) setView(canonical);
-  });
+  onRouteChange(name => { if (TEACHER_VIEWS.includes(name) && name !== state.view) setView(name); });
   const loaded = await reload();
   /* Settings → the shared five-group structure. The profile card, password row
      and theme switch keep their homes; the hub adds the notification group and
@@ -983,6 +996,20 @@ async function showTeacherShell() {
   // পড়াশোনা পরিচালনা করুন — content for the Teacher's own class+subject only.
   await mountCourseEditor();
   await mountReports($('#teacherReports'), { panel: 'teacher' });
+  mountProfileSelfEdit({
+    role: 'teacher',
+    card: '#teacherProfileCard',
+    current: () => state.teacher,
+    render: async () => {
+      try {
+        const { readStaffAccount } = await import('./staff-auth.js');
+        const account = await readStaffAccount('teacher');
+        if (account) state.teacher = { ...(state.teacher || {}), ...account };
+      } catch { /* keep the current card */ }
+      renderTeacherProfile();
+    },
+    toast: message => toast(message)
+  });
   watchOwnPanelSession('teacher');
   return loaded;
 }
@@ -1124,6 +1151,13 @@ window.addEventListener('teacher-assignments-updated', () => {
 window.addEventListener('apc-sync-updated', event => {
   const collection = event?.detail?.collection;
   if (!['teacherAssignments', 'staffDirectory', 'staffAccounts'].includes(collection)) return;
+  if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
+});
+/* The same edits made from another tab on this device (Admin Staff Management
+   or the Manager's assignment screen) arrive as raw storage events — reload the
+   scope so a new class/subject takes effect without a manual refresh. */
+window.addEventListener('storage', event => {
+  if (!['activePlus.manager.teacherAssignments.v1', 'activePlus.staffDirectory.v1'].includes(event.key)) return;
   if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
 });
 

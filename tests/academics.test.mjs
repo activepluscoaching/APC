@@ -149,9 +149,9 @@ test('the structure answers the questions every cascading picker asks', async ()
 test('only a signed-in Admin can change the structure', async () => {
   ctx.window.localStorage.removeItem(STAFF_ACCOUNTS.admin.sessionKey);
   ctx.window.sessionStorage.clear();
-  await assert.rejects(saveClass({ name: 'নতুন শ্রেণি' }), /Admin/);
-  await assert.rejects(saveSubject({ name: 'নতুন বিষয়' }), /Admin/);
-  await assert.rejects(setClassSubjectByName('নবম শ্রেণি', 'গণিত', false), /Admin/);
+  await assert.rejects(saveClass({ name: 'নতুন শ্রেণি' }), /অ্যাডমিন/);
+  await assert.rejects(saveSubject({ name: 'নতুন বিষয়' }), /অ্যাডমিন/);
+  await assert.rejects(setClassSubjectByName('নবম শ্রেণি', 'গণিত', false), /অ্যাডমিন/);
   assert.ok(loadAcademics().classes.length > 0);
   seedStaffSession(ctx.window, 'admin');
 });

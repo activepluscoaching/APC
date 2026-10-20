@@ -118,6 +118,20 @@ test('published with the student as participant: reminder and start reach the st
   assert.deepEqual(kinds(teacher), ['exam-approved'], 'the returned notice is replaced by "published"');
 });
 
+test('a read notification stays read when its owner signs in on a new device', async () => {
+  const userId = `student:${studentId}`;
+  const feed = [{
+    key: 'notice:OLD-READ', kind: 'notice', title: 'আগের নোটিশ', body: 'এটি আগেই পড়া হয়েছে।',
+    sourceId: 'OLD-READ', target: 'notice-board', at: Date.now()
+  }];
+  const recorded = await managerPhone.run('record-notification-read', { userId, feed, key: feed[0].key });
+  assert.equal(recorded.record.read, true);
+  const cloudReceipt = await studentPhone.run('wait-shared-notification-read', { receiptKey: recorded.receiptKey });
+  assert.equal(cloudReceipt.hasReceipt, true, 'the receipt reached the existing syncable settings path');
+  const afterLogin = await studentPhone.run('sync-notification-records', { userId, feed });
+  assert.equal(afterLogin.records[0].read, true, 'the new device hydrates the previous read state');
+});
+
 test('every read and write was allowed by the deployed database.rules.json', () => {
   assert.deepEqual(cloud.ruleViolations, []);
 });

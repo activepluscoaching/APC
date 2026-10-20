@@ -96,6 +96,25 @@ test('staff cards start collapsed and disclose details for one selected person a
   assert.equal(ctx.$$('#staffList .staff-card-details[hidden]').length, 4);
 });
 
+test('authorized Admin can open and print the staff card with only existing identity fields', async () => {
+  if (staffCard('STF-0002').querySelector('.staff-card-details').hidden) {
+    ctx.click(staffCard('STF-0002').querySelector('.staff-details-toggle'));
+  }
+  await ctx.waitFor(() => staffCard('STF-0002').querySelector('.staff-card-details').hidden === false);
+  ctx.click(staffCard('STF-0002').querySelector('[data-staff-action="view"]'));
+  await ctx.waitFor(() => Boolean(ctx.$('#staffModalBackdrop:not([hidden])')));
+  const toggle = ctx.$('#staffModalBackdrop [data-staff-card-toggle]');
+  assert.ok(toggle);
+  ctx.click(toggle);
+  const printCard = ctx.$('#staffModalBackdrop .staff-id-card-print');
+  assert.ok(printCard);
+  assert.equal(ctx.$('#staffModalBackdrop [data-staff-card-print]').textContent.trim(), 'প্রিন্ট / PDF');
+  assert.match(printCard.textContent, /STF-0002/);
+  assert.match(printCard.textContent, /ম্যানেজার/);
+  assert.doesNotMatch(printCard.textContent, /password|পাসওয়ার্ড|username/i);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+});
+
 test('the staff list supports stable name, Staff ID, role and status sorting', async () => {
   const control = ctx.$('#staffSort');
   assert.ok(control, 'visible sort control is mounted');
@@ -328,7 +347,7 @@ test('delete asks for confirmation and refuses when history is attached', async 
   await ctx.waitFor(() => ctx.$('#staffModalBody').textContent.includes('স্থায়ীভাবে মুছে ফেলতে চান'));
   assert.equal(ctx.$('#staffModalBackdrop').classList.contains('is-more-sheet'), false,
     'the confirmation dialog replaces the action sheet');
-  assert.match(ctx.$('#staffModalBody').textContent, /Cancel/);
+  assert.match(ctx.$('#staffModalBody').textContent, /বাতিল/);
   // History wins: the dialog offers deactivation instead of deletion.
   assert.match(ctx.$('#staffModalBody').textContent, /ইতিহাস/);
   assert.ok(ctx.$('#staffModalBody [data-staff-action="deactivate"]'));

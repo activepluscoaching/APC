@@ -13,7 +13,7 @@
 import { classByName, listChapters as listAcademicChapters, subjectsForClass } from './academics.js';
 import { KEYS, readRaw } from './database.js';
 import { iconMarkup } from './icons.js';
-import { sanitizeRichHtml } from './sanitize.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 import {
   COURSE_SECTIONS, COURSE_TYPES, listCourseContent, typeLabel, typeOf
 } from './course-content.js';
@@ -35,13 +35,13 @@ const DRAFT_KEY = 'activePlus.chapterPracticeDraft.v1';
 
 export const COURSE_CHAPTER_ACTIONS = Object.freeze([
   { key: 'read', label: '📖 অধ্যায় পড়ুন' },
-  { key: 'notes', label: '📝 Class Note' },
-  { key: 'materials', label: '📎 Teacher Material' },
-  { key: 'important', label: '⭐ Important Question' },
-  { key: 'mcq', label: '❓ MCQ Practice' },
-  { key: 'short', label: '✍️ Short Question' },
-  { key: 'written', label: '📝 Written Practice' },
-  { key: 'model-test', label: '🧪 Model Test' },
+  { key: 'notes', label: '📝 ক্লাস নোট' },
+  { key: 'materials', label: '📎 শিক্ষকের উপকরণ' },
+  { key: 'important', label: '⭐ গুরুত্বপূর্ণ প্রশ্ন' },
+  { key: 'mcq', label: '❓ MCQ অনুশীলন' },
+  { key: 'short', label: '✍️ সংক্ষিপ্ত প্রশ্ন' },
+  { key: 'written', label: '📝 লিখিত অনুশীলন' },
+  { key: 'model-test', label: '🧪 মডেল টেস্ট' },
   { key: 'results', label: '📊 আমার ফলাফল' }
 ]);
 
@@ -276,7 +276,7 @@ export function initCourseHub({ getStudent, onAction = () => {} } = {}) {
         : items.filter(item => ['video', 'pdf'].includes(typeOf(item)) || /^https?:\/\//i.test(item.attachmentUrl || ''));
       return shell(records.length
         ? '<div class="course-action-items">' + records.map(contentCard).join('') + '</div>'
-        : empty(action === 'notes' ? 'এই অধ্যায়ের কোনো Class Note এখনো প্রকাশিত হয়নি।' : 'এই অধ্যায়ের কোনো Teacher Material এখনো প্রকাশিত হয়নি।'));
+        : empty(action === 'notes' ? 'এই অধ্যায়ের কোনো ক্লাস নোট এখনো প্রকাশিত হয়নি।' : 'এই অধ্যায়ের কোনো শিক্ষকের উপকরণ এখনো প্রকাশিত হয়নি।'));
     }
 
     if (action === 'important') {
@@ -328,7 +328,7 @@ export function initCourseHub({ getStudent, onAction = () => {} } = {}) {
       const practiceMarkup = practice.length
         ? '<h4 class="course-result-group-title">MCQ অনুশীলনের ফলাফল</h4><div class="course-action-items">' + practice.map(session =>
             '<article class="course-item"><small class="course-item-type">' + esc(whenText(session.at) || 'অনুশীলন') + '</small>' +
-            '<h4>' + esc(session.title || 'MCQ Practice') + '</h4><p class="course-result-marks">প্রাপ্ত নম্বর: <strong>' + bn(session.score ?? 0) + '</strong> / ' + bn(session.total ?? '') + '</p></article>'
+            '<h4>' + esc(session.title || 'MCQ অনুশীলন') + '</h4><p class="course-result-marks">প্রাপ্ত নম্বর: <strong>' + bn(session.score ?? 0) + '</strong> / ' + bn(session.total ?? '') + '</p></article>'
           ).join('') + '</div>'
         : '';
       return shell(officialMarkup + practiceMarkup + (!official.length && !practice.length
@@ -451,7 +451,7 @@ export function initCourseHub({ getStudent, onAction = () => {} } = {}) {
       (list.length
         ? '<div class="course-subjects chip-row" role="tablist" aria-label="বিষয়">' + list.map(item =>
             '<button class="chip' + (item.id === subjectId ? ' active' : '') + '" type="button" role="tab" aria-selected="' + (item.id === subjectId ? 'true' : 'false') + '" data-course-subject="' + esc(item.id) + '">' + esc(item.name) + '</button>').join('') + '</div>'
-        : '<p class="admin-empty">Admin এখনো এই শ্রেণির কোনো বিষয় চালু করেননি।</p>') +
+        : '<p class="admin-empty">অ্যাডমিন এখনো এই শ্রেণির কোনো বিষয় চালু করেননি।</p>') +
       '<div class="course-section-filter"><p class="eyebrow">অধ্যায়ভিত্তিক শেখা</p>' +
         '<details class="course-section-details"><summary>সব কনটেন্ট বিভাগ</summary>' +
           '<div class="course-sections chip-row" role="tablist" aria-label="বিভাগ">' + COURSE_SECTIONS.map(entry =>

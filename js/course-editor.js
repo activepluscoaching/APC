@@ -16,7 +16,7 @@ import { iconMarkup } from './icons.js';
 import { classByName, listClasses, subjectsForClass } from './academics.js';
 import { assignedClasses, subjectsForTeacherClass, listTeacherAssignments, isTeacherAssignedSubject } from './teacher-assignments.js';
 import { loadRoster } from './office-data.js';
-import { sanitizeRichHtml } from './sanitize.js';
+import { sanitizeRichHtml } from './rich-sanitize.js';
 import {
   COURSE_TYPES, archiveCourseRecord, listCourseContentForStaff,
   saveCourseRecord, setContentPublished, typeLabel, typeOf
@@ -119,7 +119,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
         ${canManage ? `<button class="mini-btn" type="button" data-course-edit="${esc(record.id)}">সম্পাদনা</button>
           <button class="mini-btn ${published ? 'reject' : 'approve'}" type="button" data-course-publish="${esc(record.id)}" data-next="${published ? 'off' : 'on'}">${published ? 'প্রকাশ বাতিল' : 'প্রকাশ করুন'}</button>
           ${archived ? '' : `<button class="mini-btn reject" type="button" data-course-archive="${esc(record.id)}">সংরক্ষণাগারে নিন</button>`}`
-          : '<span class="form-note">অন্য শিক্ষকের প্রকাশিত কনটেন্ট — শুধু Manager সম্পাদনা করতে পারবেন।</span>'}
+          : '<span class="form-note">অন্য শিক্ষকের প্রকাশিত কনটেন্ট — শুধু ম্যানেজার সম্পাদনা করতে পারবেন।</span>'}
       </div>
     </article>`;
   }
@@ -158,10 +158,10 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     root.innerHTML = `
       <div class="course-manage">
         <form class="course-manage-form admin-card" data-course-form>
-          <header class="admin-card-head"><div><p class="eyebrow">Learning library</p>
+          <header class="admin-card-head"><div><p class="eyebrow">শেখার লাইব্রেরি</p>
             <h2>${record ? 'কনটেন্ট সম্পাদনা' : 'নতুন কনটেন্ট'}</h2></div>
             ${record ? '<button class="mini-btn" type="button" data-course-cancel>নতুন কিছু লিখুন</button>' : ''}</header>
-          ${classes.length ? '' : '<p class="admin-empty">আপনার জন্য এখনো কোনো ক্লাস বরাদ্দ হয়নি — Manager থেকে ক্লাস ও বিষয় নিন।</p>'}
+          ${classes.length ? '' : '<p class="admin-empty">আপনার জন্য এখনো কোনো ক্লাস বরাদ্দ হয়নি — ম্যানেজার থেকে ক্লাস ও বিষয় নিন।</p>'}
           <label>ক্লাস<select name="className"${classes.length ? '' : ' disabled'}>${classes.map(item => `<option value="${esc(item.name)}"${item.name === className ? ' selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>
           <label>বিষয়<select name="subject"${subjects.length ? '' : ' disabled'}>${subjects.map(name => `<option value="${esc(name)}"${name === pickedSubject ? ' selected' : ''}>${esc(name)}</option>`).join('')}</select></label>
           <label>Batch / Group<select name="group"${scopes.length ? '' : ' disabled'}>${scopes.map(item => `<option value="${esc(item.value)}"${item.value === pickedGroup ? ' selected' : ''}>${esc(item.label)}</option>`).join('')}</select></label>
@@ -229,7 +229,7 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     const subject = subjectsForClass(className).find(item => item.name === subjectName);
     if (!academic || !subject) { say('আগে ক্লাস ও বিষয় নির্বাচন করুন।', true); return; }
     if (role === 'teacher' && !subjectOptions(className).includes(subjectName)) {
-      say('এই ক্লাস বা বিষয় আপনার জন্য বরাদ্দ নয় — Manager-এর সঙ্গে কথা বলুন।', true);
+      say('এই ক্লাস বা বিষয় আপনার জন্য বরাদ্দ নয় — ম্যানেজারের সঙ্গে কথা বলুন।', true);
       return;
     }
     try {

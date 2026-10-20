@@ -215,7 +215,7 @@ test('3 — an invalid filter blocks Generate', async () => {
   from.value = isoDay(1);   // From is the later day
   to.value = isoDay(30);
   await generateAndWait(() => $('.rc-status')?.hidden === false);
-  assert.match(status(), /From Date/, 'a reversed range names the offending field');
+  assert.match(status(), /শুরুর তারিখ/, 'a reversed range names the offending field');
   assert.equal($('.rc-preview'), null, 'no preview is produced');
 
   // A report that requires a student refuses to run without one.
@@ -267,7 +267,7 @@ test('10 — the export carries the real rows and the filename convention', asyn
   lastDownload = null;
   ctx.click($('.rc-download'));
   await ctx.waitFor(() => Boolean(lastDownload), 30000);
-  assert.equal(lastDownload.name, `ActivePlus_Student_Master_List_${today}.pdf`);
+  assert.equal(lastDownload.name, `ActivePlus_শিক্ষার্থী_মাস্টার_তালিকা_${today}.pdf`);
   assert.equal(lastDownload.href, 'blob:active-plus-report', 'the download is the very blob the preview was given');
 });
 

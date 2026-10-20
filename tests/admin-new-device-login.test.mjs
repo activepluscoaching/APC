@@ -289,7 +289,7 @@ test('a second Admin cannot be claimed, even from a device with nothing stored',
   });
   assert.equal(attempt.ok, false, 'the direct data-layer call is refused');
   assert.equal(attempt.code, 'ADMIN_EXISTS');
-  assert.match(attempt.error, /PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT/);
+  assert.match(attempt.error, /বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন/);
   assert.equal(await readStaffAccount('admin'), null, 'nothing was written on this device');
   assert.equal(cloud.transactions.length, before, 'and the cloud was never asked to claim');
   assert.equal(cloud.values.get(STAFF_PATH).username, ADMIN_ID, 'the real Admin is untouched');

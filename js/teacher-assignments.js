@@ -17,6 +17,41 @@ import { normalizeClassId, normalizeSectionId } from './class-key.js';
 
 export const TEACHER_ASSIGNMENTS_KEY = 'activePlus.manager.teacherAssignments.v1';
 
+/* A plaintext mirror of the Staff Directory's ASSIGNMENT rows — no passwords,
+   no contacts, exactly the fields the teacherAssignments store already keeps
+   in the clear. The directory itself lives behind an AES-GCM envelope, which
+   the synchronous readers cannot open; every projection write and every async
+   merged read refreshes this mirror, so the sync publish gates answer from the
+   same rows the profile shows even when the main store is lagging or lost. */
+export const DIRECTORY_ASSIGNMENT_MIRROR_KEY = 'activePlus.manager.teacherAssignments.dirMirror.v1';
+
+function readMirrorRows(handle) {
+  try {
+    const raw = window.localStorage.getItem(DIRECTORY_ASSIGNMENT_MIRROR_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const rows = parsed?.byUser?.[handle];
+    if (!Array.isArray(rows)) return [];
+    return rows.filter(row => row && typeof row.className === 'string' && row.className.trim()
+      && typeof row.teacherUsername === 'string' && row.teacherUsername.toLowerCase() === handle)
+      .map(normalizeAssignment);
+  } catch { return []; }
+}
+
+function writeMirrorRows(handle, rows) {
+  const key = String(handle || '').trim().toLowerCase();
+  if (!key) return;
+  try {
+    const raw = window.localStorage.getItem(DIRECTORY_ASSIGNMENT_MIRROR_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    const byUser = parsed && typeof parsed === 'object' && parsed.byUser && typeof parsed.byUser === 'object'
+      ? parsed.byUser : {};
+    if (Array.isArray(rows) && rows.length) byUser[key] = rows;
+    else delete byUser[key];
+    window.localStorage.setItem(DIRECTORY_ASSIGNMENT_MIRROR_KEY, JSON.stringify({ v: 1, byUser }));
+  } catch { /* best effort — the primary store stays authoritative */ }
+}
+
 function fail(message) { throw new Error(message); }
 export const groupKey = value => normalizeSectionId(value);
 const subjectKey = value => String(value || '').normalize('NFC').trim().toLowerCase();
@@ -66,16 +101,86 @@ function writeAssignments(records) {
   window.dispatchEvent(new Event('teacher-assignments-updated'));
   return records;
 }
+const activeAccount = account => Boolean(account)
+  && !['disabled', 'inactive', 'rejected'].includes(account.status || '')
+  && account.accountStatus !== 'disabled';
+
 async function requireManagerSession() {
-  if (!(await hasStaffSession('manager'))) fail('শুধু Manager অ্যাসাইনমেন্ট পরিবর্তন করতে পারবেন।');
+  if (!(await hasStaffSession('manager'))) fail('শুধু ম্যানেজার অ্যাসাইনমেন্ট পরিবর্তন করতে পারবেন।');
   const manager = await readStaffAccount('manager');
-  if (!manager || ['disabled', 'inactive', 'rejected'].includes(manager.status) || manager.accountStatus === 'disabled') fail('সক্রিয় Manager profile ছাড়া assignment পরিবর্তন করা যাবে না।');
+  if (activeAccount(manager)) return;
+  /* Super Admin entry: the Admin's own session is the authority behind the
+     Manager panel (js/manager.js boots the same way), so a device that never
+     provisioned a Manager account must still be able to hand out classes —
+     "Admin/Manager assignment takes effect immediately" is the contract. */
+  if (await hasStaffSession('admin')) {
+    const admin = await readStaffAccount('admin');
+    if (activeAccount(admin)) return;
+  }
+  fail('সক্রিয় ম্যানেজার প্রোফাইল ছাড়া অ্যাসাইনমেন্ট পরিবর্তন করা যাবে না।');
+}
+
+/* ---------------------------------------------------------------------------
+   One shared source for every assignment read
+   ---------------------------------------------------------------------------
+
+   The panel UI (profile, class pickers) answers from effectiveTeacherAssignments
+   — the store MERGED with the Staff Directory record — while every publish gate
+   (teaching/course/exam repositories) used to read the store alone. A record
+   saved before the projection bridge existed, or a Super Admin browsing the
+   Teacher panel without a teacher sign-in to re-project, then produced the
+   reported split: the profile showed the classes and publishing answered
+   "Manager assignment নেই". The readers below merge the directory projection
+   in memory on every call, so profile, pickers and all gates answer from the
+   same rows at the same moment — with no write on the read path. */
+
+/** The directory record for this Login User ID, read synchronously (the same
+ *  local envelope js/teaching-data.js already reads). No cloud, no async. */
+function syncDirectoryRecordFor(username) {
+  const handle = String(username || '').trim().toLowerCase();
+  if (!handle) return null;
+  try {
+    const raw = window.localStorage.getItem('activePlus.staffDirectory.v1');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const records = Array.isArray(parsed?.records) ? parsed.records : [];
+    return records.find(entry => entry?.kind !== 'system'
+      && String(entry?.username || '').trim().toLowerCase() === handle) || null;
+  } catch { return null; }
+}
+
+/** Merge base rows with incoming (projection) rows: same class/batch unions the
+ *  subjects, a new class adds a row. Pure — never writes. */
+function mergeAssignmentRows(base, incoming) {
+  const merged = base.map(item => ({ ...item, subjects: [...item.subjects] }));
+  for (const row of incoming) {
+    const clash = merged.find(item =>
+      item.teacherUsername.toLowerCase() === row.teacherUsername.toLowerCase()
+      && item.className === row.className
+      && groupKey(item.group) === groupKey(row.group));
+    if (clash) {
+      clash.subjects = [...new Set([...clash.subjects, ...row.subjects])];
+      clash.subject = clash.subjects.join(', ');
+    } else {
+      merged.push({ ...row, subjects: [...row.subjects] });
+    }
+  }
+  return merged;
 }
 
 export function listTeacherAssignments(username) {
   const normalized = String(username || '').trim().toLowerCase();
   if (!normalized) return [];
-  return readAssignments().filter(item => item.teacherUsername.toLowerCase() === normalized).map(item => ({ ...item, subjects: [...item.subjects] }));
+  const stored = readAssignments().filter(item => item.teacherUsername.toLowerCase() === normalized);
+  let projected = [];
+  try {
+    const record = syncDirectoryRecordFor(normalized);
+    projected = record ? directoryAssignmentRows(record) : [];
+  } catch { projected = []; }
+  const mirrored = readMirrorRows(normalized);
+  if (mirrored.length) projected = mergeAssignmentRows(projected, mirrored);
+  if (!projected.length) return stored.map(item => ({ ...item, subjects: [...item.subjects] }));
+  return mergeAssignmentRows(stored, projected);
 }
 /** Every class this teacher takes, with the subjects of each class. */
 export function teacherScope(username) {
@@ -349,6 +454,9 @@ export function syncTeacherAssignmentFromDirectory(record = {}) {
       .map(item => ({ id: item.id, username: item.teacherUsername, className: item.className, group: item.group, subjects: [...item.subjects].sort() }))
   );
   if (fingerprint(records) !== fingerprint(merged)) writeAssignments(merged);
+  /* The mirror tracks the DIRECTORY side only: an empty list clears it, so a
+     withdrawn assignment never survives through a stale cache. */
+  writeMirrorRows(username, wanted);
   return wanted;
 }
 
@@ -376,6 +484,7 @@ export async function effectiveTeacherAssignments(username) {
     const record = await findDirectoryStaffByUsername(handle);
     projected = directoryAssignmentRows(record || {});
   } catch { projected = []; }
+  writeMirrorRows(handle, projected);
   const merged = rows.map(item => ({ ...item, subjects: [...item.subjects] }));
   for (const row of projected) {
     const clash = merged.find(item =>

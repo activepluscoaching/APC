@@ -1,5 +1,12 @@
 /* Student-only decorative art for the existing app cards.
    SVGs are local markup; this layer adds no network assets or page content. */
+:root {
+  --hc-gold: #FAC775;
+  --hc-live: #0F6E56;
+  --hc-deep: #085041;
+  --hc-on-solid: #fff;
+}
+
 @media screen {
   body.student-reference :is(
     .student-home-welcome,
@@ -90,10 +97,10 @@
     padding-right: 110px;
     background-color: var(--student-home-advice, #5549B3);
     background-image: none;
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #homeView #dailyQuoteCard:has(> .hc-art--advice) :is(.daily-quote-kicker, .daily-quote-date, .daily-quote-text, .daily-quote-author, .daily-advice-summary) {
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   /* Keep class/homework status out of the advice: the card is quote + date only. */
   body.student-reference #homeView #dailyQuoteCard .daily-advice-summary {
@@ -167,15 +174,15 @@
      running course; empty states keep their existing surface and wording. */
   body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) {
     padding-right: 104px;
-    background-color: var(--hc-subject, #0F6E56);
+    background-color: var(--hc-subject, var(--hc-live));
     background-image: none;
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) :is(h2, h3, p, small) {
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #coursesView .study-today-card:has(> .hc-art--study-today) progress {
-    accent-color: #FAC775;
+    accent-color: var(--hc-gold);
   }
   body.student-reference #coursesView .hc-art--study-today {
     top: 50%;
@@ -197,9 +204,9 @@
   body.student-reference #classUpcomingList .routine-item:has(> .hc-art--subject),
   body.student-reference #classRecordList .routine-item:has(> .hc-art--subject) {
     padding-right: 98px;
-    background-color: var(--hc-subject, #0F6E56);
+    background-color: var(--hc-subject, var(--hc-live));
     background-image: none;
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference :is(
     #routineList .routine-item,
@@ -213,7 +220,7 @@
     #classUpcomingList .routine-item,
     #classRecordList .routine-item
   ):has(> .hc-art--subject) :is(.routine-time, .routine-body strong) {
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference :is(
     #routineList .routine-item,
@@ -242,7 +249,7 @@
     #classRecordList .routine-item
   ):has(> .hc-art--subject) .routine-tag {
     background: rgb(255 255 255 / 18%);
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference :is(
     #routineList .hc-art--subject,
@@ -314,9 +321,9 @@
   }
 
   body.student-reference #examsView .exam-hub-live-card:has(> .hc-art--live-clock) {
-    background-color: #0F6E56;
+    background-color: var(--hc-live);
     background-image: none;
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #examsView .exam-hub-live-card:has(> .hc-art--live-clock) .exam-hub-live-copy {
     margin-right: 60px;
@@ -371,12 +378,12 @@
 
   body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) {
     padding-right: 62px;
-    background-color: #085041;
+    background-color: var(--hc-deep);
     background-image: none;
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) :is(small, strong) {
-    color: #fff;
+    color: var(--hc-on-solid);
   }
   body.student-reference #studentFeeMount .hc-art--fee-coin {
     top: 50%;

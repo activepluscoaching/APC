@@ -145,6 +145,6 @@ test('the download keeps the filename convention at scale', async () => {
   lastDownload = null;
   ctx.click($('.rc-download'));
   await ctx.waitFor(() => Boolean(lastDownload), 30000);
-  assert.equal(lastDownload.name, `ActivePlus_Student_Master_List_${today}.pdf`);
+  assert.equal(lastDownload.name, `ActivePlus_শিক্ষার্থী_মাস্টার_তালিকা_${today}.pdf`);
   assert.equal(lastDownload.href, 'blob:active-plus-report');
 });

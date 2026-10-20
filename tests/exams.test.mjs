@@ -58,8 +58,8 @@ test('MCQ marks are fixed at 1; written/short keep their own weights; malformed 
 test('teacher exam actions and participants are bounded to assigned class/batch', async () => {
   const env = setup();
   env.store.set(TEACHER_ASSIGNMENTS_KEY, JSON.stringify([{ id: 'TAS-SCI', teacherUsername: 'teacher.apc', teacherName: 'Test Teacher', className: 'দশম শ্রেণি', group: 'বিজ্ঞান বিভাগ', subject: 'গণিত' }]));
-  await assert.rejects(repo.saveDraft(fields({ group: '' })), /assignment নেই/);
-  await assert.rejects(repo.saveDraft(fields({ className: 'অনার্স ১ম বর্ষ', group: 'বাংলা' })), /assignment নেই/);
+  await assert.rejects(repo.saveDraft(fields({ group: '' })), /অ্যাসাইনমেন্ট নেই/);
+  await assert.rejects(repo.saveDraft(fields({ className: 'অনার্স ১ম বর্ষ', group: 'বাংলা' })), /অ্যাসাইনমেন্ট নেই/);
   let db = await repo.saveDraft(fields({ group: 'বিজ্ঞান' }));
   const id = db.exams[0].id;
   await repo.requestApproval(id);
@@ -68,7 +68,7 @@ test('teacher exam actions and participants are bounded to assigned class/batch'
   assert.ok(db.exams[0].participants.every(person => person.id === one.id || person.id === two.id));
   const teacherDb = await repo.list(TEACHER_ACTOR);
   assert.equal(teacherDb.exams.length, 1);
-  await assert.rejects(repo.saveDraft(fields({ id, group: 'মানবিক' })), /assignment নেই/);
+  await assert.rejects(repo.saveDraft(fields({ id, group: 'মানবিক' })), /অ্যাসাইনমেন্ট নেই/);
   await assert.rejects(repo.markWrittenAbsent(id, three));
 });
 
@@ -80,7 +80,7 @@ test('teacher drafts → submit → Manager rejection/edit/approval; no prematur
   await assert.rejects(repo.requestApproval(id, { role: 'teacher', id: 'OTHER' }));
   await repo.requestApproval(id);
   await assert.rejects(repo.review(id, 'publish', {}, TEACHER_ACTOR));
-  await assert.rejects(repo.review(id, 'publish', {}, ADMIN_ACTOR), /শুধু Manager/);
+  await assert.rejects(repo.review(id, 'publish', {}, ADMIN_ACTOR), /শুধু ম্যানেজার/);
   db = await repo.review(id, 'reject', { note: 'প্রশ্ন সংশোধন করুন' }, MANAGER_ACTOR); assert.equal(db.exams[0].status, 'rejected');
   db = await repo.saveDraft({ ...fields(), id }); assert.equal(db.exams[0].status, 'draft');
   await repo.requestApproval(id); db = await repo.review(id, 'publish', { negative: 1 }, MANAGER_ACTOR);

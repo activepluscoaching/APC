@@ -335,15 +335,51 @@ test('the grid doors open their own screens and the routine lives on one screen'
 });
 
 test('the exam seat lands on one CTA and four doors, not a nine-tile shelf', async () => {
-  assert.ok($('.teacher-cta'), 'একটি primary CTA');
+  assert.ok($('.teacher-cta'), 'দ্রুত MCQ-র প্রধান CTA');
   const chips = $$('#teacherExamHub .day-tab');
   assert.equal(chips.length, 4, 'চারটি বিভাগ-দরজা');
   assert.equal($$('#teacherExamHub .pay-tile').length, 0, 'the nine-tile shelf is gone');
   ctx.click($('.teacher-cta'));
   await settle();
   assert.equal($('#teacherOnlineExams').hidden, false);
-  assert.equal($('#teacherExamWorkspace').hidden, false, 'CTA opens the workspace home');
-  assert.ok($('#teacherExamWorkspace [data-exam-action="new-mcq"]'), 'create buttons live one tap in');
+  assert.equal($('#teacherExamWorkspace').hidden, false, 'CTA opens the existing exam workspace');
+  assert.ok($('#teacherExamWorkspace [data-exam-form]'), 'the quick MCQ CTA opens the existing MCQ form directly');
+  assert.equal($('#teacherExamWorkspace [name="lateMinutes"]').value, '5', 'fast mode uses the five-minute late-entry default');
+  const start = new Date($('#teacherExamWorkspace [name="startAt"]').value).getTime();
+  const end = new Date($('#teacherExamWorkspace [name="endAt"]').value).getTime();
+  assert.ok(end - start >= 19 * 60000 && end - start <= 21 * 60000, 'fast mode defaults to twenty minutes');
+  assert.equal($('#teacherExamWorkspace [data-quick-step="0"]').hidden, false, 'wizard starts at step one');
+  const form = $('#teacherExamWorkspace [data-exam-form]');
+  form.elements.title.value = 'দ্রুত পরীক্ষা';
+  form.elements.className.value = enabledClasses[0];
+  form.elements.className.dispatchEvent(new ctx.window.Event('change', { bubbles: true }));
+  await settle();
+  const subject = form.elements.namedItem('subject');
+  subject.value = [...subject.options].find(option => option.value)?.value || '';
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  assert.equal($('#teacherExamWorkspace [data-quick-step="1"]').hidden, false, 'valid identity opens step two');
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  assert.match($('#teacherExamWorkspace [data-quick-error]').textContent, /প্রশ্নের ফরম্যাট মিলেনি/u,
+    'invalid question format receives a Bengali message');
+  form.elements.template.value = 'প্রশ্ন: ২+২ কত?\nA: ৩\nB: ৪\nC: ৫\nD: ৬\nউত্তর: B';
+  form.elements.template.dispatchEvent(new ctx.window.Event('input', { bubbles: true }));
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  assert.equal($('#teacherExamWorkspace [data-quick-step="2"]').hidden, false, 'a valid question opens step three');
+  assert.equal(form.querySelector('button[type="submit"]').hidden, false, 'draft save appears only at the final step');
+  ctx.click($('#teacherExamWorkspace [data-quick-prev]'));
+  ctx.click($('#teacherExamWorkspace [data-quick-method="single"]'));
+  const method = $('#teacherExamWorkspace [data-quick-method-panel="single"]');
+  method.querySelector('[data-quick-one-text]').value = 'বাংলাদেশের রাজধানী কোনটি?';
+  method.querySelector('[data-quick-one-a]').value = 'ঢাকা';
+  method.querySelector('[data-quick-one-b]').value = 'চট্টগ্রাম';
+  method.querySelector('[data-quick-one-c]').value = 'রাজশাহী';
+  method.querySelector('[data-quick-one-d]').value = 'খুলনা';
+  method.querySelector('[data-quick-one-answer]').value = 'A';
+  ctx.click(method.querySelector('[data-quick-one-add]'));
+  assert.match(form.elements.template.value, /প্রশ্ন: বাংলাদেশের রাজধানী কোনটি/u,
+    'the one-at-a-time builder appends a valid question in the existing exam template format');
+  ctx.click($('#teacherExamWorkspace [data-quick-next]'));
+  assert.equal($('#teacherExamWorkspace [data-quick-step="2"]').hidden, false, 'questions from both entry modes validate');
 });
 
 after(() => ctx?.window.close());

@@ -27,7 +27,7 @@
     border:1px solid var(--color-border);border-radius:14px;padding:16px;background:var(--color-surface);
   }
   .tile-value,.admin-stat>strong,.dash-finance-tile strong,.pay-pulse-value { font-variant-numeric:tabular-nums;letter-spacing:-.025em; }
-  .bottom-nav,.admin-bottom { box-shadow:0 -4px 20px #22344c06;gap:4px; }
+  .bottom-nav,.admin-bottom { box-shadow:var(--pay-shadow);gap:4px; }
   .bottom-link,.admin-bottom-item { border-radius:12px; }
   .bottom-link.active .nav-chip,.admin-bottom-item.active .nav-chip { background:var(--color-surface-muted); }
   .auth-card { box-shadow:var(--shadow-dialog);border-radius:20px; }
@@ -201,6 +201,9 @@
   .teacher-progress-bar>span { display:block;height:100%;background:var(--color-primary); }
   .exam-tag { display:inline-block;background:var(--color-surface-muted);color:var(--color-primary);font-size:12px;padding:4px 10px;border-radius:24px;margin:0 6px 12px 0; }
   .exam-form { padding:20px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:14px; }
+.exam-quick-step[hidden], [data-quick-wizard] [hidden] { display:none!important; }
+.exam-quick-wizard { display:grid; gap:12px; margin-block-end:16px; }
+.exam-quick-step { margin:0; }
   .exam-form details { padding:12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:10px;margin-block:16px; }
   summary { cursor:pointer;line-height:1.8; }
   .exam-option { display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--color-border);border-radius:10px; }
@@ -305,43 +308,6 @@
   .teacher-header-name { max-width: 78px; padding: 5px 7px; font-size: 11px; }
 }
 
-/* ── AMOLED dark: component tuning ─────────────────────────────────────────
-   The palette lives in css/foundation.css and is shared by every portal; this
-   block only adjusts the pieces a pure-black canvas changes the meaning of —
-   surfaces that would otherwise glare, and the few separations that were done
-   with a shadow (invisible on black) instead of a border. Flat selectors only:
-   the app also runs in WebViews without CSS nesting. */
-html[data-theme="dark"] .app-topbar,
-html[data-theme="dark"] .bottom-nav,
-html[data-theme="dark"] .admin-bottom { background: var(--color-bg); }
-html[data-theme="dark"] .app-topbar-icon { background: var(--color-surface-muted); }
-/* A drop shadow has nothing to fall on here — the border does the work. */
-html[data-theme="dark"] .auth-card,
-html[data-theme="dark"] .pay-stickybar,
-html[data-theme="dark"] .admin-card,
-html[data-theme="dark"] .pay-card { box-shadow: none; }
-html[data-theme="dark"] .admin-modal,
-html[data-theme="dark"] .modal,
-html[data-theme="dark"] .staff-pw-card,
-html[data-theme="dark"] .student-record-modal { box-shadow: var(--shadow-dialog); }
-html[data-theme="dark"] .student-record-modal .admin-modal-close { background: var(--color-surface-muted); }
-/* Toasts invert to near-white in light mode; on black that is a flashlight, so
-   they become a raised surface with a border instead. */
-html[data-theme="dark"] .feedback-toast,
-html[data-theme="dark"] .pay-toast,
-html[data-theme="dark"] .apc-lock-notice {
-  background: var(--color-surface-muted); color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-html[data-theme="dark"] .apc-inapp-alert { box-shadow: 0 16px 40px #000; }
-/* The brand mark is theme-aware now: js/theme-logos.js swaps in the dark
-   artwork (light strokes, lifted green/red — assets/icons/logo-128-dark.png),
-   so both themes show the logo on their own background. No filter, no white
-   plate: this rule is gone on purpose (docs/LOGO-THEME-134.md). */
-/* Report/receipt preview keeps white paper on purpose (it mirrors the PDF);
-   only the gutters around it follow the theme. */
-html[data-theme="dark"] .rc-pdf-preview { background: var(--color-bg); }
-
 /* ── Teacher calm pass: one-tap home, one-screen routine ───────────────────
    Home launcher (মাস্টার প্রম্পট ২০২৬-১০): স্বাগতম-লাইন, বিদ্যমান স্ক্রিনগুলোর
    ওপর একটি ৩-কলাম আইকন গ্রিড, আজকের ক্লাস ও সর্বশেষ ৩টি কাজ। গ্রিডের কোনো
@@ -370,6 +336,61 @@ html[data-theme="dark"] .rc-pdf-preview { background: var(--color-bg); }
 .student-fee-actions button, [data-guardian-student], [data-manager-action="guardian-draft"], [data-manager-attendance] {
   min-height:48px; min-width:48px;
 }
-#gradeAuditPanel { padding:12px 16px; margin:12px 0; border:1px solid #a0adab; border-radius:10px; }
-#gradeAuditPanel summary { cursor:pointer; min-height:48px; display:flex; align-items:center; color:#073b2c; font-weight:700; }
+#gradeAuditPanel { padding:12px 16px; margin:12px 0; border:1px solid var(--color-border); border-radius:10px; }
+#gradeAuditPanel summary { cursor:pointer; min-height:48px; display:flex; align-items:center; color:var(--color-primary); font-weight:700; }
 #gradeAuditList p { border-top:1px solid #a0adab; padding:12px 0; overflow-wrap:anywhere; }
+
+/* Authorized Admin-only staff identity card, with isolated print/PDF output. */
+.staff-id-card-area { margin-block:18px; }
+.staff-id-card-print-root[hidden] { display:none !important; }
+.staff-id-card-print { width:min(100%,360px); margin:14px auto; padding:22px; border:1px solid var(--color-border); border-radius:20px; background:var(--color-surface); color:var(--color-text); box-shadow:var(--pay-shadow); }
+.staff-id-card-print header { display:flex; align-items:center; gap:12px; }
+.staff-id-card-print header img { object-fit:contain; }
+.staff-id-card-print header div { display:grid; gap:4px; }
+.staff-id-card-print header strong { font-size:14px; }
+.staff-id-card-print header small { color:var(--color-text-secondary); }
+.staff-id-card-person { display:flex; align-items:center; gap:14px; margin:24px 0 18px; }
+.staff-id-card-avatar { width:64px; height:64px; display:grid; place-items:center; border-radius:50%; background:var(--color-surface-muted); color:var(--color-primary); font-size:22px; font-weight:800; }
+.staff-id-card-person h3 { margin:0; font-size:20px; overflow-wrap:anywhere; }
+.staff-id-card-person p { margin:5px 0 0; color:var(--color-text-secondary); }
+.staff-id-card-number { padding:14px; border-radius:14px; background:var(--color-surface-muted); display:grid; gap:6px; }
+.staff-id-card-number small { color:var(--color-text-secondary); }
+.staff-id-card-number strong { color:var(--color-primary); font-size:24px; letter-spacing:.04em; overflow-wrap:anywhere; }
+.staff-id-card-status { margin:12px 0 0; color:var(--color-text-secondary); font-size:13px; }
+
+/* ── AMOLED dark: component tuning ─────────────────────────────────────────
+   The palette lives in css/foundation.css and is shared by every portal; this
+   block only adjusts the pieces a pure-black canvas changes the meaning of —
+   surfaces that would otherwise glare, and the few separations that were done
+   with a shadow (invisible on black) instead of a border. Flat selectors only:
+   the app also runs in WebViews without CSS nesting. */
+html[data-theme="dark"] .app-topbar,
+html[data-theme="dark"] .bottom-nav,
+html[data-theme="dark"] .admin-bottom { background: var(--color-bg); }
+html[data-theme="dark"] .app-topbar-icon { background: var(--color-surface-muted); }
+/* A drop shadow has nothing to fall on here — the border does the work. */
+html[data-theme="dark"] .auth-card,
+html[data-theme="dark"] .pay-stickybar,
+html[data-theme="dark"] .admin-card,
+html[data-theme="dark"] .pay-card { box-shadow: none; }
+html[data-theme="dark"] .admin-modal,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .staff-pw-card,
+html[data-theme="dark"] .student-record-modal { box-shadow: var(--shadow-dialog); }
+html[data-theme="dark"] .student-record-modal .admin-modal-close { background: var(--color-surface-muted); }
+/* Toasts invert to near-white in light mode; on black that is a flashlight, so
+   they become a raised surface with a border instead. */
+html[data-theme="dark"] .feedback-toast,
+html[data-theme="dark"] .pay-toast,
+html[data-theme="dark"] .apc-lock-notice {
+  background: var(--color-surface-muted); color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+html[data-theme="dark"] .apc-inapp-alert { box-shadow: var(--shadow-dialog); }
+/* The brand mark is theme-aware now: js/theme-logos.js swaps in the dark
+   artwork (light strokes, lifted green/red — assets/icons/logo-128-dark.png),
+   so both themes show the logo on their own background. No filter, no white
+   plate: this rule is gone on purpose (docs/LOGO-THEME-134.md). */
+/* Report/receipt preview keeps white paper on purpose (it mirrors the PDF);
+   only the gutters around it follow the theme. */
+html[data-theme="dark"] .rc-pdf-preview { background: var(--color-bg); }

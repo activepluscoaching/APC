@@ -43,6 +43,7 @@ import {
   flagStaffPasswordChange,
   normalizeStaffUsername,
   readStaffAccount,
+  updateStaffProfile,
   setStaffPassword,
   hasStaffSession
 } from './staff-auth.js';
@@ -51,6 +52,7 @@ import {
    assignment saved here is projected into that store so the two can never
    drift apart again. No cycle: teacher-assignments.js never imports this file
    statically. */
+import { staffRoleNameBn } from './staff-role-names.js';
 import { syncTeacherAssignmentFromDirectory, removeDirectoryAssignmentRows } from './teacher-assignments.js';
 
 /** Device-local storage key. Records live here as an encrypted envelope and
@@ -235,7 +237,7 @@ async function seedSystemRecords() {
       kind: 'system',
       role: staffRole,
       systemRole,
-      fullName: clean(account?.fullName || (systemRole === 'admin' ? 'সিস্টেম মালিক (এডমিন)' : `প্রাথমিক ${staffRole} অ্যাকাউন্ট`), 100),
+      fullName: clean(account?.fullName || (systemRole === 'admin' ? 'সিস্টেম মালিক (এডমিন)' : 'প্রাথমিক ' + staffRoleNameBn(staffRole) + ' অ্যাকাউন্ট'), 100),
       username: normalizeStaffUsername(account?.username || spec.username),
       mobile: clean(account?.mobile || ''),
       email: clean(account?.email || ''),
@@ -665,6 +667,21 @@ export async function updateStaff(staffId, patch = {}) {
     if (!wroteDirectory) {
       return { ok: false, error: 'স্টাফ তথ্য সংরক্ষণ করা যায়নি — স্টোরেজ পরীক্ষা করুন।', code: 'STORAGE' };
     }
+    /* Write-back (Issue 7): a rename on a SYSTEM record must reach the device
+       role account too — that account is what the person at the panel (and the
+       login form) reads, so «প্রাথমিক শিক্ষক অ্যাকাউন্ট» really becomes the new
+       name everywhere, not just in the Admin's list. Identity fields stay
+       locked inside updateStaffProfile. */
+    if (current.kind === 'system' && current.systemRole && current.systemRole !== 'admin') {
+      try {
+        const profilePatch = { fullName: updated.fullName };
+        if (updated.mobile) profilePatch.mobile = updated.mobile;
+        if (updated.email) profilePatch.email = updated.email;
+        await updateStaffProfile(current.systemRole, profilePatch);
+      } catch (mirrorError) {
+        console.warn('[Active Plus] system account profile mirror failed:', mirrorError?.message);
+      }
+    }
     return { ok: true, staff: publicStaff(updated) };
   });
 }
@@ -972,3 +989,42 @@ export const STAFF_DIRECTORY_RULES = Object.freeze({
 });
 
 export { isPasswordRecord, normalizeStaffUsername };
+
+
+/** Self-edit support (Issue 7): after a staff member updates their own device
+ *  account (updateStaffProfile), mirror the same display fields into their
+ *  Staff Directory record so the Admin's list and the teacherName on
+ *  student-facing records agree. Best effort — a directory miss/failure never
+ *  fails the self-edit itself. */
+export async function mirrorSelfProfileToDirectory(username, patch = {}) {
+  const handle = normalizeStaffUsername(username);
+  if (!handle) return { ok: true, mirrored: false, found: false };
+  try {
+    const directory = await readDirectory();
+    const records = Array.isArray(directory?.records) ? directory.records : [];
+    const index = records.findIndex(entry => entry && entry.kind !== 'system'
+      && normalizeStaffUsername(entry.username) === handle);
+    if (index < 0) return { ok: true, mirrored: false, found: false };
+    const current = records[index];
+    const next = { ...current, updatedAt: new Date().toISOString() };
+    let changed = false;
+    if (typeof patch.fullName === 'string' && patch.fullName.trim()
+      && patch.fullName.trim() !== current.fullName) {
+      next.fullName = clean(patch.fullName, 100);
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, 'mobile') && patch.mobile !== (current.mobile || '')) {
+      next.mobile = clean(patch.mobile, 20);
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, 'email') && patch.email !== (current.email || '')) {
+      next.email = clean(patch.email, 120);
+      changed = true;
+    }
+    if (!changed) return { ok: true, mirrored: false, found: true };
+    records[index] = next;
+    const saved = await writeDirectory({ ...directory, records, updatedAt: new Date().toISOString() });
+    if (saved) window.dispatchEvent(new Event('staff-directory-updated'));
+    return { ok: Boolean(saved), mirrored: Boolean(saved), found: true };
+  } catch { return { ok: true, mirrored: false, found: false }; }
+}

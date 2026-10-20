@@ -10,30 +10,39 @@ async function teacher(page) {
   await page.clock.setFixedTime(t0);
   // One login card for everyone: the session the fixture writes is the door.
   await enterPortal(page, 'teacher');
+  await page.clock.setFixedTime(t0);
+  await page.evaluate(() => sessionStorage.removeItem('activePlus.lastSeenClock.v1'));
   /* The exam workspace is one screen; the hub card is the documented door
      (ফলাফল seat keeps the marks records of the class tests). */
-  await page.locator('.admin-bottom [data-teacher-view=academic]').click();
-  await page.locator('#teacherAcademic [data-academic-section=exams]').click();
+  /* The teacher bottom-nav পরীক্ষা item opens the existing online-exam hub directly. */
+  await page.locator('.admin-bottom [data-teacher-view=online-exams]').click();
 }
 async function manager(context) {
   const page = await context.newPage(); await page.clock.setFixedTime(t0);
   // একাডেমিক is the one hub whose card opens the single examination workspace.
   await enterPortal(page, 'manager');
-  await page.locator('.admin-bottom [data-manager-view=academic]').click();
+  await page.clock.setFixedTime(t0);
+  await page.evaluate(() => sessionStorage.removeItem('activePlus.lastSeenClock.v1'));
+  await page.locator('.manager-bottom [data-manager-view=academic]').click();
   await page.locator('#managerAcademicMenu [data-academic-section=exams]').click();
+  await page.locator('#managerExamHub [data-manager-exam=upcoming]').click();
+  await page.locator('#managerExamWorkspace').waitFor({ state: 'visible' });
   return page;
 }
 async function student(context) {
   const page = await context.newPage(); await page.clock.setFixedTime(start);
   await enterStudentApp(page);
+  await page.clock.setFixedTime(start);
+  await page.evaluate(() => sessionStorage.removeItem('activePlus.lastSeenClock.v1'));
   await page.locator('.bottom-nav [data-view=exams]').click();
   return page;
 }
 async function createUI(page, type = 'mcq', title = 'সমন্বিত অনলাইন পরীক্ষা') {
+  await page.locator('#teacherOnlineExams [data-teacher-exam=home]').click();
   const root = page.locator('#teacherExamWorkspace'); await root.locator(`[data-exam-action=new-${type}]`).click();
   await root.locator('[name=title]').fill(title); await root.locator('[name=subject]').selectOption('গণিত');
   await root.locator('[name=className]').selectOption('দশম শ্রেণি'); // the demo student's class
-  await root.locator('[name=startAt]').fill('2026-10-01T10:00'); await root.locator('[name=endAt]').fill('2026-10-01T11:00');
+  await root.locator('[name=startAt]').fill('2026-10-01T16:00'); await root.locator('[name=endAt]').fill('2026-10-01T17:00');
   await root.locator('[name=template]').fill(type === 'mcq' ? template : 'প্রশ্ন: পরিবেশ রক্ষায় গাছের গুরুত্ব লেখো।\nনম্বর: ৫\n---\nপ্রশ্ন: পানি দূষণ রোধের তিনটি উপায় লেখো।\nনম্বর: ৩');
   await expect(root.locator('[data-parsed-preview]')).toContainText('২টি প্রশ্ন');
   await root.locator('[data-exam-form] [type=submit]').click(); await expect(root.locator('[data-managed-exam]')).toHaveCount(1);

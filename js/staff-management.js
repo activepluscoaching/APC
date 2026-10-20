@@ -652,7 +652,7 @@ async function openEdit(staffId) {
     [roleSelect, statusSelect, usernameInput].forEach(control => control?.setAttribute('disabled', 'disabled'));
     const note = document.createElement('p');
     note.className = 'staff-protected-note';
-    note.innerHTML = `${icon('shield', 'staff-inline-icon')} Current Admin → Protected: Role, Status ও Username লক করা আছে।`;
+    note.innerHTML = `${icon('shield', 'staff-inline-icon')} বর্তমান অ্যাডমিন → লক করা: ভূমিকা, স্ট্যাটাস ও ইউজারনেম।`;
     form.prepend(note);
   }
   wireForm(form, record);
@@ -848,6 +848,7 @@ async function openMoreSheet(staffId) {
    ------------------------------------------------------------------------ */
 
 async function openProfile(staffId) {
+  if (!(await canManageStaff())) { toastSafe('এই স্টাফ প্রোফাইল দেখার অনুমতি নেই।'); return; }
   const record = state.staff.find(item => item.staffId === staffId) || await findStaff(staffId);
   if (!record) {
     toastSafe('স্টাফ অ্যাকাউন্ট পাওয়া যায়নি।');
@@ -883,6 +884,18 @@ async function openProfile(staffId) {
     <dl class="detail-grid">
       ${rows.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}
     </dl>
+    <section class="staff-id-card-area" aria-label="স্টাফ ডিজিটাল আইডি কার্ড">
+      <button class="admin-btn ghost" type="button" data-staff-card-toggle aria-expanded="false">স্টাফ আইডি কার্ড দেখুন</button>
+      <div class="staff-id-card-print-root" hidden>
+        <article class="staff-id-card-print">
+          <header><img src="assets/icons/logo-128.png" alt="" width="48" height="48"><div><strong>Active Plus Coaching</strong><small>শিখতে থাকো, এগিয়ে যাও</small></div></header>
+          <div class="staff-id-card-person"><span class="staff-id-card-avatar" aria-hidden="true">${escapeHtml(initialsOf(record.fullName))}</span><div><h3>${escapeHtml(record.fullName || 'স্টাফ')}</h3><p>${escapeHtml(staffRoleLabel(record.role))}</p></div></div>
+          <div class="staff-id-card-number"><small>STAFF ID</small><strong>${escapeHtml(String(record.staffId || ''))}</strong></div>
+          <p class="staff-id-card-status">${escapeHtml(staffStatusLabel(record.status))}</p>
+        </article>
+        <button class="admin-btn primary" type="button" data-staff-card-print>প্রিন্ট / PDF</button>
+      </div>
+    </section>
     <div class="staff-activity">
       <p class="staff-form-section">কার্যক্রমের সারসংক্ষেপ</p>
       <div class="staff-activity-grid">
@@ -956,7 +969,7 @@ async function openDelete(staffId) {
     <p class="staff-confirm-copy">আপনি কি <strong>${escapeHtml(record.fullName)}</strong> (Staff ID: <strong>${escapeHtml(record.staffId)}</strong>) — এই Staff Account স্থায়ীভাবে মুছে ফেলতে চান?</p>
     ${activity.hasHistory ? `<p class="finance-error">এই স্টাফের সঙ্গে ${bn(activity.total)} টি রেকর্ড যুক্ত। ইতিহাস নষ্ট না করতে <strong>নিষ্ক্রিয় (Deactivate)</strong> করাই সঠিক পদ্ধতি।</p>` : ''}
     <div class="modal-actions">
-      <button class="admin-btn ghost" type="button" data-staff-modal="close">Cancel</button>
+      <button class="admin-btn ghost" type="button" data-staff-modal="close">বাতিল</button>
       ${activity.hasHistory
         ? `<button class="admin-btn primary" type="button" data-staff-action="deactivate" data-staff-id="${escapeHtml(record.staffId)}">নিষ্ক্রিয় করুন</button>`
         : `<button class="admin-btn danger" type="button" data-staff-action="confirm-delete" data-staff-id="${escapeHtml(record.staffId)}">${icon('trash', 'staff-inline-icon')}<span>Delete Staff</span></button>`}
@@ -1103,6 +1116,24 @@ export function initStaffManagement({ onChanged } = {}) {
     else if (staffAction === 'confirm-delete') await confirmDelete(staffId);
     else if (staffAction === 'deactivate') await changeStatus(staffId, 'inactive');
     else if (staffAction === 'status') await changeStatus(staffId, nextStatus || 'inactive');
+  });
+
+  document.addEventListener('click', event => {
+    const toggle = event.target.closest('[data-staff-card-toggle]');
+    if (toggle && toggle.closest('#staffModalBackdrop')) {
+      const panel = toggle.nextElementSibling;
+      const opening = Boolean(panel?.hidden);
+      if (panel) panel.hidden = !opening;
+      toggle.setAttribute('aria-expanded', String(opening));
+      return;
+    }
+    const print = event.target.closest('[data-staff-card-print]');
+    if (print && print.closest('#staffModalBackdrop')) {
+      document.body.classList.add('staff-card-printing');
+      const cleanup = () => document.body.classList.remove('staff-card-printing');
+      window.addEventListener('afterprint', cleanup, { once: true });
+      window.setTimeout(() => window.print(), 60);
+    }
   });
 
   document.addEventListener('keydown', event => {

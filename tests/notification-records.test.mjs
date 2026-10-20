@@ -68,6 +68,49 @@ test('syncing twice writes nothing new, and two users never share a record', asy
   assert.equal(unreadCount('student:AP-2'), 2);
 });
 
+test('read receipts cross to a fresh device through the existing syncable settings collection', async () => {
+  await loadPage('student.html');
+  const owner = 'student:AP-1';
+  const feed = [item('notice:N1'), item('broadcast:শীতকালীন ছুটির ঘোষণা')];
+  syncNotifications({ userId: owner, feed, now: DAY });
+  markRead(owner, ['notice:N1', 'broadcast:শীতকালীন ছুটির ঘোষণা'], DAY + 5000);
+  const syncedSettings = localStorage.getItem(KEYS.settings);
+  assert.ok(syncedSettings, 'read receipts are recorded in the already-synced settings collection');
+  assert.doesNotMatch(syncedSettings, /শীতকালীন ছুটির ঘোষণা|notice:N1/u,
+    'the synced receipt keys do not disclose notice text or raw record IDs');
+
+  // A new device has settings from sync, but no local notification history.
+  await loadPage('student.html', { seed: { [KEYS.settings]: syncedSettings } });
+  const created = syncNotifications({ userId: owner, feed, now: DAY + 6000 });
+  assert.equal(created.created, 2);
+  assert.equal(notificationByKey(owner, 'notice:N1').read, true);
+  assert.equal(notificationByKey(owner, 'broadcast:শীতকালীন ছুটির ঘোষণা').read, true);
+  assert.equal(unreadCount(owner), 0, 'previously read notifications stay read on a fresh device');
+  syncNotifications({ userId: 'student:AP-2', feed, now: DAY + 6000 });
+  assert.equal(unreadCount('student:AP-2'), 2, 'another account does not inherit the first user’s receipts');
+
+  const { saveAppConfig } = await import('../js/storage.js');
+  saveAppConfig({ maintenanceMode: true }); // models a stale Admin settings form
+  const savedSettings = JSON.parse(localStorage.getItem(KEYS.settings));
+  assert.ok(Object.keys(savedSettings).some(key => key.startsWith('__apcNotificationSeenV1_')),
+    'saving ordinary app settings cannot erase cross-device read receipts');
+});
+
+test('marking a notification unread also crosses devices without exposing its key', async () => {
+  await loadPage('student.html');
+  const owner = 'student:AP-1';
+  const key = 'notice:N-UNREAD';
+  const feed = [item(key)];
+  syncNotifications({ userId: owner, feed, now: DAY });
+  markRead(owner, [key], DAY + 1000);
+  markUnread(owner, [key]);
+  const syncedSettings = localStorage.getItem(KEYS.settings);
+  await loadPage('student.html', { seed: { [KEYS.settings]: syncedSettings } });
+  syncNotifications({ userId: owner, feed, now: DAY + 2000 });
+  assert.equal(notificationByKey(owner, key).read, false);
+  assert.equal(unreadCount(owner), 1);
+});
+
 test('only read===false is unread; read, unread and delivered stamps follow the actions', async () => {
   await loadPage('student.html');
   const feed = [item('notice:A'), item('notice:B'), item('notice:C', DAY + 1000)];

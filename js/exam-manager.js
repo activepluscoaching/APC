@@ -76,7 +76,7 @@ export function initExamManager(container, role) {
         ${button('bank', '📚 প্রশ্ন সংরক্ষণ করুন')}
       </div>
       <div class="exam-actions" aria-label="পরীক্ষা তৈরি করুন">
-        ${Object.entries(EXAM_TYPES).map(([type, label]) => button('new-' + type, type === 'mcq' ? '⚡ দ্রুত MCQ পরীক্ষা' : `পরীক্ষা তৈরি করুন — ${label}`, '', 'primary')).join('')}
+        ${Object.entries(EXAM_TYPES).map(([type, label]) => button('new-' + type, `পরীক্ষা তৈরি করুন — ${label}`, '', 'primary')).join('')}
       </div>
       ${countersMarkup(exams)}
     </section>`;
@@ -434,13 +434,13 @@ export function initExamManager(container, role) {
     if (!options.length) return '<p class="exam-note">এই ক্লাসের জন্য Admin কোনো বিষয় চালু করেননি — Admin → ক্লাসের বিষয় ঠিক করুন থেকে চালু করুন।</p>';
     return `<select name="subject" required>${options.map(name => `<option value="${esc(name)}" ${name === value ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select>`;
   }
-  function editor(type, e = null) {
+  function editor(type, e = null, quick = false) {
     view = 'edit'; selected = e?.id || null; openQuestion = null;
     const nextDay = parseDhakaDateTime(`${dhakaKey(nowEpoch() + 86400000)}T18:00`);
+    const quickStart = nowEpoch();
     const localTime = dhakaDateTimeInput;
     const classNames = roleClasses();
-    const quickStart = nowEpoch() + 5 * 60000;
-    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: type === 'mcq' ? quickStart : nextDay, endAt: type === 'mcq' ? quickStart + 20 * 60000 : nextDay + 3600000, lateMinutes: type === 'mcq' ? 5 : 10, negative: 0, passPercent: 33, template: '', instructions: '' };
+    const data = e || { type, title: '', subject: '', className: classNames[0] || '', group: '', chapterName: '', topic: '', questionOrder: 'shuffle', optionOrder: 'shuffle', startAt: quick && type === 'mcq' ? quickStart : nextDay, endAt: quick && type === 'mcq' ? quickStart + 20 * 60000 : nextDay + 3600000, lateMinutes: quick && type === 'mcq' ? 5 : 10, negative: 0, passPercent: 33, template: '', instructions: '' };
     const classOptions2 = value => `<option value="">শ্রেণি নির্বাচন করুন</option>${classNames.map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('')}`;
     const field = (name, label, kind = 'text', extra = '') => `<label>${label}<input name="${name}" type="${kind}" value="${esc(['startAt', 'endAt'].includes(name) ? localTime(data[name]) : data[name])}" ${extra}></label>`;
     content.innerHTML = `${back()}<h2>${e ? 'সম্পাদনা' : 'নতুন পরীক্ষা'} — ${EXAM_TYPES[type]}${e ? ` <small>(${esc(shortExamId(e.id))})</small>` : ''}</h2>
@@ -453,7 +453,6 @@ export function initExamManager(container, role) {
       ${field('title', 'পরীক্ষার নাম *', 'text', 'required maxlength="150"')}
       <label>কোন শ্রেণির জন্য *<select name="className" required>${classOptions2(data.className)}</select></label>
       <label>কোন বিষয়ের পরীক্ষা *<span data-exam-subject-slot>${subjectSelectMarkup(data.className, data.subject)}</span></label>
-      ${type === 'mcq' ? `<label class="exam-quick-duration">সময়কাল *<select data-quick-duration><option value="15">১৫ মিনিট</option><option value="20" selected>২০ মিনিট</option><option value="30">৩০ মিনিট</option></select><small class="exam-note">শুরুর সময় থেকে নির্বাচিত সময় অনুযায়ী শেষ সময় স্বয়ংক্রিয়ভাবে বসবে।</small></label>` : ''}
       <label>অধ্যায়<input name="chapterName" maxlength="120" list="examChapters" value="${esc(data.chapterName || '')}" placeholder="যেমন: অধ্যায় ১ — বীজগণিত"><datalist id="examChapters" data-exam-chapters>${(data.className && data.subject ? listChapters(data.className, data.subject) : []).map(item => `<option value="${esc(item.name)}"></option>`).join('')}</datalist><small class="exam-note">এখানে লিখলে অধ্যায়টি Academic Setup-এও যুক্ত হবে, তাই পরের পরীক্ষায় তালিকায় পাবেন।</small></label>
       <label>টপিক / অংশ<input name="topic" maxlength="120" value="${esc(data.topic || '')}" placeholder="যেমন: বহুপদী সমীকরণ"></label>
       <label>প্রশ্নের ক্রম<select name="questionOrder"><option value="shuffle" ${data.questionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.questionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
@@ -476,21 +475,181 @@ export function initExamManager(container, role) {
       </section>
 
       <label>টেমপ্লেট অনুযায়ী প্রশ্ন পেস্ট করুন *<textarea name="template" data-question-source rows="12" required maxlength="150000" placeholder="${type === 'mcq' ? 'প্রশ্ন: …\nA: …\nB: …\nC: …\nD: …\nউত্তর: A' : 'প্রশ্ন: …\nনম্বর: …'}">${esc(data.template)}</textarea><small class="exam-note">${type === 'mcq' ? 'MCQ-তে প্রতি প্রশ্নের নম্বর ১ নির্ধারিত — “নম্বর:” লাইন লিখতে হবে না। মোট নম্বর = প্রশ্ন সংখ্যা।' : 'প্রতি প্রশ্নের নম্বর আলাদা করে লিখুন।'}</small></label>
-      ${type === 'mcq' ? `<details class="exam-card" data-manual-mcq><summary>একটি করে MCQ লিখুন</summary>
-        <div class="exam-form-grid">
-          <label>প্রশ্ন *<textarea data-manual-question rows="2" maxlength="1200"></textarea></label>
-          <label>বিকল্প A *<input data-manual-option="A" maxlength="500"></label>
-          <label>বিকল্প B *<input data-manual-option="B" maxlength="500"></label>
-          <label>বিকল্প C *<input data-manual-option="C" maxlength="500"></label>
-          <label>বিকল্প D *<input data-manual-option="D" maxlength="500"></label>
-          <label>সঠিক উত্তর<select data-manual-answer><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></label>
-        </div>
-        <button type="button" data-exam-action="add-manual-mcq">প্রশ্নের তালিকায় যোগ করুন</button>
-        <p class="exam-note">যোগ করলে প্রশ্নটি উপরের প্রশ্নের ঘরে যুক্ত হবে। তারপরও খসড়া সংরক্ষণ করুন।</p>
-      </details>` : ''}
       <div class="exam-preview" data-parsed-preview aria-live="polite"></div>
       <button type="submit" class="primary">খসড়া সংরক্ষণ করুন</button>
     </form>`;
+    if (quick && type === 'mcq') {
+      const form = $('[data-exam-form]');
+      const steps = [
+        { title: 'ধাপ ১ — পরীক্ষার নাম, শ্রেণি ও বিষয়', names: ['title', 'className', 'subject'] },
+        { title: 'ধাপ ২ — সময় ও প্রশ্ন যোগ', names: ['startAt', 'endAt'], selectors: ['[data-duration-readout]', '.exam-template-panel', '[name="template"]', '[data-parsed-preview]'] },
+        { title: 'ধাপ ৩ — আরও অপশন ও খসড়া সংরক্ষণ', names: ['chapterName', 'topic', 'questionOrder', 'optionOrder', 'group', 'lateMinutes', 'negative', 'passPercent', 'instructions'] }
+      ];
+      const wizard = document.createElement('div');
+      wizard.className = 'exam-quick-wizard';
+      wizard.dataset.quickWizard = '';
+      const progress = document.createElement('p');
+      progress.className = 'exam-note';
+      progress.setAttribute('aria-live', 'polite');
+      progress.dataset.quickProgress = '';
+      const alert = document.createElement('p');
+      alert.className = 'exam-note';
+      alert.setAttribute('role', 'alert');
+      alert.dataset.quickError = '';
+      wizard.append(progress, alert);
+      const panels = steps.map((step, index) => {
+        const panel = document.createElement('section');
+        panel.className = 'exam-card exam-quick-step';
+        panel.dataset.quickStep = String(index);
+        const heading = document.createElement('h3');
+        heading.textContent = step.title;
+        panel.append(heading);
+        wizard.append(panel);
+        return panel;
+      });
+      const stepIndexFor = node => {
+        if (node.matches('[data-duration-readout], .exam-template-panel, [name="template"], [data-parsed-preview]')) return 1;
+        const control = node.matches('label') ? node.querySelector('input, select, textarea') : null;
+        const name = control?.name || '';
+        if (['title', 'className', 'subject'].includes(name)) return 0;
+        if (['startAt', 'endAt', 'template'].includes(name)) return 1;
+        return 2;
+      };
+      for (const child of [...form.children]) panels[stepIndexFor(child)].append(child);
+      const nav = document.createElement('div');
+      nav.className = 'exam-actions';
+      nav.innerHTML = '<button type="button" data-quick-prev>আগের ধাপ</button><button type="button" class="primary" data-quick-next>পরের ধাপ</button>';
+      wizard.append(nav);
+      form.prepend(wizard);
+      let currentStep = 0;
+      const showStep = index => {
+        currentStep = Math.max(0, Math.min(steps.length - 1, index));
+        panels.forEach((panel, slot) => { panel.hidden = slot !== currentStep; });
+        progress.textContent = `ধাপ ${num(currentStep + 1)} / ${num(steps.length)}`;
+        nav.querySelector('[data-quick-prev]').hidden = currentStep === 0;
+        nav.querySelector('[data-quick-next]').hidden = currentStep === steps.length - 1;
+        const save = form.querySelector('button[type="submit"]');
+        if (save) save.hidden = currentStep !== steps.length - 1;
+        alert.textContent = '';
+      };
+      const methodPicker = document.createElement('section');
+      methodPicker.className = 'exam-card exam-quick-question-methods';
+      methodPicker.innerHTML = `<h4>প্রশ্ন যোগের পদ্ধতি</h4>
+        <div class="exam-actions" role="group" aria-label="প্রশ্ন যোগের পদ্ধতি">
+          <button type="button" data-quick-method="paste" aria-pressed="true">পেস্ট</button>
+          <button type="button" data-quick-method="bank" aria-pressed="false">ব্যাংক থেকে</button>
+          <button type="button" data-quick-method="single" aria-pressed="false">একটা করে</button>
+        </div>
+        <section data-quick-method-panel="paste"><p class="exam-note">একাধিক প্রশ্ন টেমপ্লেট অনুযায়ী পেস্ট করুন। প্রশ্ন আলাদা করতে --- দিন।</p></section>
+        <section data-quick-method-panel="bank" hidden><label>প্রশ্ন খুঁজুন<input type="search" data-quick-bank-query placeholder="প্রশ্নের শব্দ লিখুন"></label>
+          <label>অধ্যায়<select data-quick-bank-chapter><option value="">সব অধ্যায়</option></select></label>
+          <div data-quick-bank-list></div>
+          <button type="button" class="primary" data-quick-bank-add>নির্বাচিত প্রশ্ন পরীক্ষায় যোগ করুন</button>
+        </section>
+        <section data-quick-method-panel="single" hidden><label>প্রশ্নের লেখা *<textarea data-quick-one-text rows="2" maxlength="1200"></textarea></label>
+          <label>অপশন A *<input data-quick-one-a maxlength="500"></label><label>অপশন B *<input data-quick-one-b maxlength="500"></label>
+          <label>অপশন C *<input data-quick-one-c maxlength="500"></label><label>অপশন D *<input data-quick-one-d maxlength="500"></label>
+          <label>সঠিক উত্তর *<select data-quick-one-answer><option value="">উত্তর নির্বাচন করুন</option><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+          <button type="button" class="primary" data-quick-one-add>প্রশ্ন যোগ করুন</button>
+        </section>`;
+      panels[1].append(methodPicker);
+      let quickMethod = 'paste';
+      const addedBankIds = new Set();
+      const quickTemplate = row => `প্রশ্ন: ${row.text}\n${row.options.map(option => `${option.id}: ${option.text}`).join('\n')}\nউত্তর: ${row.answer}`;
+      const appendQuickTemplates = blocks => {
+        const current = String(form.elements.template.value || '').trim();
+        form.elements.template.value = current ? `${current}\n---\n${blocks.join('\n---\n')}` : blocks.join('\n---\n');
+        form.elements.template.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      const quickBankRows = () => {
+        const className = String(form.elements.className.value || '').trim();
+        const subject = String(form.elements.subject.value || '').trim();
+        const { rows } = searchQuestions({
+          records: bankRowsForRole(), className, subject, type: 'mcq', active: true,
+          chapterName: methodPicker.querySelector('[data-quick-bank-chapter]').value,
+          query: methodPicker.querySelector('[data-quick-bank-query]').value, limit: 100
+        });
+        return rows;
+      };
+      const paintQuickBank = () => {
+        const all = bankRowsForRole().filter(row => row.type === 'mcq' && row.active
+          && row.className === form.elements.className.value && row.subject === form.elements.subject.value);
+        const chapter = methodPicker.querySelector('[data-quick-bank-chapter]');
+        const selectedChapter = chapter.value;
+        const chapters = [...new Set(all.map(row => row.chapterName).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'bn'));
+        chapter.innerHTML = `<option value="">সব অধ্যায়</option>${chapters.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('')}`;
+        if (chapters.includes(selectedChapter)) chapter.value = selectedChapter;
+        const rows = quickBankRows();
+        methodPicker.querySelector('[data-quick-bank-list]').innerHTML = rows.length
+          ? rows.map(row => `<label class="exam-quick-bank-row"><input type="checkbox" data-quick-bank-id="${esc(row.id)}" ${addedBankIds.has(row.id) ? 'disabled' : ''}><span><strong>${esc(row.chapterName || 'অধ্যায় নির্ধারিত নয়')}</strong><br>${esc(row.text)}</span></label>`).join('')
+          : '<p class="exam-note">আগে একটি MCQ সেভ করুন অথবা পেস্ট করুন।</p>';
+      };
+      methodPicker.querySelectorAll('[data-quick-method]').forEach(button => button.addEventListener('click', () => {
+        quickMethod = button.dataset.quickMethod;
+        methodPicker.querySelectorAll('[data-quick-method]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+        methodPicker.querySelectorAll('[data-quick-method-panel]').forEach(panel => { panel.hidden = panel.dataset.quickMethodPanel !== quickMethod; });
+        if (quickMethod === 'bank') paintQuickBank();
+      }));
+      methodPicker.querySelector('[data-quick-bank-query]').addEventListener('input', paintQuickBank);
+      methodPicker.querySelector('[data-quick-bank-chapter]').addEventListener('change', paintQuickBank);
+      methodPicker.querySelector('[data-quick-bank-add]').addEventListener('click', () => {
+        const ids = [...methodPicker.querySelectorAll('[data-quick-bank-id]:checked')].map(input => input.dataset.quickBankId);
+        const rows = ids.map(id => quickBankRows().find(row => row.id === id)).filter(Boolean);
+        if (!rows.length) { alert.textContent = 'পরীক্ষায় যোগ করার জন্য অন্তত একটি প্রশ্ন নির্বাচন করুন।'; return; }
+        const remaining = 100 - (String(form.elements.template.value).match(/^\s*প্রশ্ন\s*:/gm) || []).length;
+        if (rows.length > remaining) { alert.textContent = 'একটি পরীক্ষায় সর্বোচ্চ ১০০টি প্রশ্ন যোগ করা যাবে।'; return; }
+        appendQuickTemplates(rows.map(quickTemplate));
+        ids.forEach(id => addedBankIds.add(id));
+        alert.textContent = `${num(rows.length)}টি প্রশ্ন পেস্টের তালিকায় যোগ হয়েছে।`;
+        paintQuickBank();
+      });
+      methodPicker.querySelector('[data-quick-one-add]').addEventListener('click', () => {
+        const value = selector => methodPicker.querySelector(selector).value.trim();
+        const question = value('[data-quick-one-text]');
+        const options = ['a', 'b', 'c', 'd'].map(letter => value(`[data-quick-one-${letter}]`));
+        const answer = value('[data-quick-one-answer]');
+        if (!question || options.some(option => !option) || !answer) {
+          alert.textContent = 'প্রশ্ন, চারটি অপশন ও সঠিক উত্তর পূরণ করুন।'; return;
+        }
+        const count = (String(form.elements.template.value).match(/^\s*প্রশ্ন\s*:/gm) || []).length;
+        if (count >= 100) { alert.textContent = 'একটি পরীক্ষায় সর্বোচ্চ ১০০টি প্রশ্ন যোগ করা যাবে।'; return; }
+        appendQuickTemplates([`প্রশ্ন: ${question}\nA: ${options[0]}\nB: ${options[1]}\nC: ${options[2]}\nD: ${options[3]}\nউত্তর: ${answer}`]);
+        methodPicker.querySelectorAll('[data-quick-one-text], [data-quick-one-a], [data-quick-one-b], [data-quick-one-c], [data-quick-one-d]').forEach(input => { input.value = ''; });
+        methodPicker.querySelector('[data-quick-one-answer]').value = '';
+        alert.textContent = 'প্রশ্ন যোগ হয়েছে। আরেকটি যোগ করুন অথবা পরের ধাপে যান।';
+      });
+      form.elements.className.addEventListener('change', () => { if (quickMethod === 'bank') paintQuickBank(); });
+      form.elements.subject.addEventListener('change', () => { if (quickMethod === 'bank') paintQuickBank(); });
+      nav.querySelector('[data-quick-prev]').addEventListener('click', () => showStep(currentStep - 1));
+      nav.querySelector('[data-quick-next]').addEventListener('click', () => {
+        const step = steps[currentStep];
+        const missing = step.names.find(name => {
+          const control = form.elements.namedItem(name);
+          return control && !String(control.value || '').trim();
+        });
+        if (missing) {
+          alert.textContent = currentStep === 0
+            ? 'পরীক্ষার নাম, শ্রেণি ও বিষয় পূরণ করুন।'
+            : 'শুরুর ও শেষের সময় এবং অন্তত একটি সঠিক প্রশ্ন যোগ করুন।';
+          form.elements.namedItem(missing)?.focus();
+          return;
+        }
+        if (currentStep === 1) {
+          const start = parseDhakaDateTime(form.elements.startAt.value);
+          const end = parseDhakaDateTime(form.elements.endAt.value);
+          try {
+            const parsed = parseQuestions(form.elements.template.value, 'mcq');
+            if (!parsed.length || !(end > start)) throw new Error('invalid');
+          } catch {
+            alert.textContent = 'প্রশ্নের ফরম্যাট মিলেনি। উদাহরণ দেখে আবার পেস্ট করুন।';
+            form.elements.template.focus();
+            return;
+          }
+        }
+        showStep(currentStep + 1);
+      });
+      showStep(0);
+    }
     function refreshIdentity() {
       const startAt = new Date($('[name=startAt]').value).getTime(), endAt = new Date($('[name=endAt]').value).getTime();
       const readout = $('[data-duration-readout]');
@@ -530,23 +689,6 @@ export function initExamManager(container, role) {
     $('[name=className]').addEventListener('change', repaintSubjects);
     $('[name=subject]')?.addEventListener('change', repaintChapters);
     $('[name=template]').addEventListener('input', preview);
-    $('[data-exam-action="add-manual-mcq"]')?.addEventListener('click', () => {
-      const question = $('[data-manual-question]')?.value.trim() || '';
-      const options = ['A', 'B', 'C', 'D'].map(key => [key, $(`[data-manual-option="${key}"]`)?.value.trim() || '']);
-      if (!question || options.some(([, value]) => !value)) {
-        showFeedback('প্রশ্ন এবং A, B, C, D—চারটি বিকল্প পূরণ করুন।');
-        return;
-      }
-      const answer = $('[data-manual-answer]')?.value || 'A';
-      const block = [`প্রশ্ন: ${question}`, ...options.map(([key, value]) => `${key}: ${value}`), `উত্তর: ${answer}`].join('\n');
-      const source = $('[name=template]');
-      source.value = source.value.trim() ? `${source.value.trim()}\n---\n${block}` : block;
-      source.dispatchEvent(new Event('input', { bubbles: true }));
-      $('[data-manual-question]').value = '';
-      options.forEach(([key]) => { const input = $(`[data-manual-option="${key}"]`); if (input) input.value = ''; });
-      $('[data-manual-question]').focus();
-      showFeedback('প্রশ্ন তালিকায় যোগ হয়েছে। খসড়া সংরক্ষণ করুন।');
-    });
     $('[name=startAt]')?.addEventListener('change', refreshIdentity);
     $('[name=endAt]')?.addEventListener('change', refreshIdentity);
     refreshIdentity(); preview();
@@ -647,18 +789,6 @@ export function initExamManager(container, role) {
 
   root.addEventListener('change', event => {
     if (busy) return;
-    const quickForm = event.target.closest('[data-exam-form]');
-    if (quickForm && ['startAt', 'data-quick-duration'].includes(event.target.name || (event.target.matches('[data-quick-duration]') ? 'data-quick-duration' : ''))) {
-      const start = parseDhakaDateTime(quickForm.elements.startAt?.value);
-      const duration = Number(quickForm.querySelector('[data-quick-duration]')?.value || 20);
-      if (start && Number.isFinite(start) && quickForm.elements.endAt && [15, 20, 30].includes(duration)) {
-        quickForm.elements.endAt.value = localTime(start + duration * 60000);
-        quickForm.elements.endAt.dispatchEvent(new Event('input', { bubbles: true }));
-        const readout = quickForm.querySelector('[data-duration-readout]');
-        if (readout) readout.textContent = `সময়কাল: ${num(duration)} মিনিট`;
-      }
-      return;
-    }
     if (event.target.closest('[data-exam-filters]')) { readFilterForm(); applyFilters(); return; }
     if (event.target.closest('[data-bank-filters]')) {
       bankFilters = { ...bankFilters, ...Object.fromEntries(new FormData(event.target.closest('[data-bank-filters]'))) };
@@ -826,7 +956,7 @@ export function initExamManager(container, role) {
       const target = String(screen || '').trim();
       if (target.startsWith('new-')) {
         const type = target.slice(4);
-        if (Object.hasOwn(EXAM_TYPES, type)) { editor(type); scrollTop(); return; }
+        if (Object.hasOwn(EXAM_TYPES, type)) { editor(type, null, target === 'new-mcq'); scrollTop(); return; }
       }
       view = { bank: 'bank', exams: 'home', archive: 'archive', upcoming: 'upcoming' }[target] || 'home';
       selected = null; openQuestion = null;

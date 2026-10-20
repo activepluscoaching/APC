@@ -439,13 +439,13 @@ test('a second Admin can never be created — a fresh device is sent to Login in
     const direct = await intruder.run('try-create-admin', { fullName: 'Fake Admin', password: 'Fake-1234' });
     assert.equal(direct.ok, false, 'a direct data-layer call is refused too');
     assert.equal(direct.code, 'ADMIN_EXISTS');
-    assert.match(direct.error, /PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT/);
+    assert.match(direct.error, /বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন/);
     assert.equal(direct.account, null, 'still nothing is written on this device');
 
     const ui = await intruder.run('create-first-admin', { fullName: 'Fake Admin', password: 'Fake-1234' });
     assert.equal(ui.blocked, true, 'the login page never offers the creation form');
     assert.equal(ui.account, null);
-    assert.match(String(ui.message || ''), /PLEASE LOGIN WITH EXISTING ADMIN ACCOUNT/,
+    assert.match(String(ui.message || ''), /বিদ্যমান অ্যাডমিন অ্যাকাউন্ট দিয়ে লগইন করুন/,
       'the blocked attempt is answered with "please log in"');
 
     /* The cloud keeps the real Admin and the real role credentials. */

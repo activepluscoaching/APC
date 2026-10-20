@@ -1326,9 +1326,10 @@ export const examRepository = {
     const actual = await authenticatedStudent(student?.id);
     const db = await mutate(db => {
       const e = examById(db, examId), now = nowEpoch();
-      if (e.type !== 'mcq' || !isLiveExam(e) || now < e.startAt || now >= e.endAt) fail('এখন পরীক্ষা শুরু করা যাবে না।');
+      if (e.type !== 'mcq' || !isLiveExam(e)) fail('এখন পরীক্ষা শুরু করা যাবে না।');
       const person = { id: actual.id, name: actual.name || actual.nameBn || '', className: actual.className || '', group: actual.group || '' };
       if (!examMatchesStudent(e, person)) fail('এই পরীক্ষা তোমার শ্রেণি/ব্যাচের জন্য নয়।');
+      if (now < e.startAt || now >= e.endAt) fail('এখন পরীক্ষা শুরু করা যাবে না।');
       /* Participant snapshots are retained for history. A currently approved
          student who has moved into this class/batch can join a live paper; the
          authenticated account, not a caller-supplied profile, decides scope. */

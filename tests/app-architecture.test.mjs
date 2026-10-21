@@ -188,17 +188,23 @@ test('the retired results route has no leftover button anywhere in the app', () 
 
 const teacherHtml = read('teacher.html');
 
-test('the teacher bottom bar is exactly হোম / ক্লাস / শিক্ষার্থী / পরীক্ষা / আরও', () => {
+test('the teacher bottom bar is exactly হোম / ক্লাস / পরীক্ষা / আরও (শিক্ষার্থী তালিকা সম্পূর্ণ বাদ)', () => {
+  /* মালিক-আদেশ ২০২৬-১০-২১: শিক্ষক প্যানেল থেকে শিক্ষার্থীর তালিকা (স্ক্রিন ও নিচের
+     ন্যাভ-সিট) সম্পূর্ণ সরানো হয়েছে; শিক্ষার্থী-ডেটা উপস্থিতি/হোমওয়ার্ক/ক্লাস
+     কর্মপ্রবাহে অক্ষত, শুধু তালিকা সারফেস ও তার সিট নেই। */
   const nav = teacherHtml.slice(teacherHtml.indexOf('<nav class="admin-bottom"'), teacherHtml.indexOf('</nav>', teacherHtml.indexOf('<nav class="admin-bottom"')));
   assert.deepEqual([...nav.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['home', 'classes', 'students', 'online-exams', 'more']);
+    ['home', 'classes', 'online-exams', 'more']);
   assert.deepEqual([...nav.matchAll(/<span class="nav-label">([^<]+)<\/span>/g)].map(match => nfc(match[1])),
-    ['হোম', 'ক্লাস', 'শিক্ষার্থী', 'পরীক্ষা', 'আরও'].map(nfc));
+    ['হোম', 'ক্লাস', 'পরীক্ষা', 'আরও'].map(nfc));
+  assert.equal(nav.includes('data-teacher-view="students"'), false, 'the students seat is gone');
   for (const item of nav.split('<button').slice(1)) assert.match(item, /<svg/, 'every bottom-bar item keeps its icon');
+  assert.equal(teacherHtml.includes('id="teacherStudents"'), false, 'the student list screen no longer exists');
+  assert.equal(/data-teacher-view="students"/.test(teacherHtml), false, 'no students route remains in the teacher panel');
 });
 
 test('একাডেমিক is one hub whose six cards open the screens that already own the work', () => {
-  const hub = teacherHtml.slice(teacherHtml.indexOf('id="teacherAcademic"'), teacherHtml.indexOf('id="teacherStudents"'));
+  const hub = teacherHtml.slice(teacherHtml.indexOf('id="teacherAcademic"'), teacherHtml.indexOf('id="teacherOnlineExams"'));
   assert.deepEqual([...hub.matchAll(/data-academic-count="([a-z]+)"/g)].map(match => match[1]),
     ['homework', 'suggestion', 'bank', 'materials', 'exams', 'notice']);
   /* Nothing is rebuilt for the hub: each card points at an existing screen. */
@@ -293,10 +299,11 @@ test('teacher রুটিন is read-only: the Manager owns the schedule, the t
 });
 
 test('teacher আরও holds only secondary settings — academic work and primary seats move out', () => {
-  const more = teacherHtml.slice(teacherHtml.indexOf('id="teacherMore"'), teacherHtml.indexOf('id="teacherStudents"'));
+  const more = teacherHtml.slice(teacherHtml.indexOf('id="teacherMore"'), teacherHtml.indexOf('id="teacherOnlineExams"'));
   /* ২০২৬-১০-২০ de-duplication: the back button (home) plus ONE labelled group,
-     রিপোর্ট ও সেটিংস. Academic doors live in the কাজ দিন hub and Home; students
-     and classes are bottom-dock seats — none of them is repeated in আরও. */
+     রিপোর্ট ও সেটিংস. Academic doors live in the কাজ দিন hub and Home; the ক্লাস
+     seat is a bottom-dock seat. The student list was removed from the panel
+     entirely on 2026-10-21 — none of these is repeated in আরও. */
   assert.deepEqual([...more.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
     ['home', 'reports', 'profile']);
   assert.match(more, new RegExp(nfc('রিপোর্ট ও সেটিংস')), 'the single remaining group heading');

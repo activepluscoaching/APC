@@ -249,13 +249,17 @@ test('a long list pages instead of scrolling forever', async () => {
   assert.ok(cards('#teacherRecordList').length < 18);
 });
 
-test('the student roster still needs a search before listing anyone', () => {
-  ctx.click($('[data-teacher-view="students"]'));
-  assert.equal($('#teacherStudents').hidden, false);
-  assert.equal(cards('#teacherStudentList').length, 0);
-  ctx.type($('#teacherStudentSearch'), 'AP-1024');
-  assert.equal(cards('#teacherStudentList').length, 1);
-  assert.match($('#teacherStudentCount').textContent, /১ জন অনুমোদিত শিক্ষার্থী/);
+test('the student roster surface is fully removed while student data keeps feeding other workflows', () => {
+  /* মালিক-আদেশ ২০২৬-১০-২১: শিক্ষার্থীর তালিকা স্ক্রিন, তার সার্চ/ক্লাস ফিল্টার এবং
+     নিচের ন্যাভ-সিট সম্পূর্ণ বাদ। শিক্ষার্থী-ডেটা মুছে যায়নি — উপস্থিতি/হোমওয়ার্ক
+     রিভিউ/ক্লাস-কার্ড এখনও state.students ব্যবহার করে (নিচের উপস্থিতি টেস্টে প্রমাণিত)। */
+  assert.equal($('#teacherStudents'), null, 'the student list screen is gone');
+  assert.equal($('#teacherStudentSearch'), null);
+  assert.equal($('#teacherStudentClass'), null);
+  assert.equal($('#teacherStudentList'), null);
+  assert.equal($$('.admin-bottom [data-teacher-view="students"]').length, 0, 'no students nav seat');
+  assert.equal($$('[data-student-detail], [data-guardian-student]').length, 0, 'list-only actions are gone');
+  assert.equal($$('.admin-bottom-item').length, 4, 'four bottom seats remain');
 });
 
 test('attendance marking from the উপস্থিতি ক্লাস tab clears its pending line when all present is saved', async () => {

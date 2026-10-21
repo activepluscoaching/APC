@@ -37,7 +37,7 @@
 | প্যানেল | পাঁচটি bottom tab | More hub-এ রাখা |
 | --- | --- | --- |
 | Student | হোম · পড়াশোনা · রুটিন · পরীক্ষা · আরও | প্রোফাইল, রিপোর্ট, নোটিফিকেশন, ফি, সেটিংস, সহায়তা |
-| Teacher | হোম · ক্লাস · শিক্ষার্থী · পরীক্ষা · আরও | রিপোর্ট ও প্রোফাইল/সেটিংস |
+| Teacher | হোম · ক্লাস · পরীক্ষা · আরও | রিপোর্ট ও প্রোফাইল/সেটিংস |
 | Manager | হোম · শিক্ষার্থী · একাডেমিক · হিসাব · আরও | রিপোর্ট, দৈনিক পরামর্শ, প্রোফাইল, সেটিংস |
 | Cash Counter | হোম · শিক্ষার্থী · পেমেন্ট · রিপোর্ট · আরও | নিজের সেশন/প্রোফাইল |
 | Admin | হোম · স্টাফ · রিপোর্ট · সিস্টেম · আরও | ডেটা, প্রোফাইল, দৈনিক পরামর্শ |
@@ -50,7 +50,7 @@
 - `results` = নিজের ফলাফল (একটি আলাদা nav আইটেম)।
 - `notice-board` = Notice Board (বিভাগভিত্তিক), `reports` = নিজের রিপোর্ট PDF, `notification-settings`, `profile` = প্রোফাইল+সেটিংস+লগআউট।
 
-**Teacher (`js/teacher.js` TEACHER_VIEWS):** `home`, `more`, `students`, `online-exams`, `courses`, `classes`, `routine-view`, `reports`, `profile` + activity views (`exam`, `homework`, `suggestion`, `routine`) — বাড়ির কাজ/সাজেশন/নোটিশ আলাদা আলাদা view কিন্তু bottom bar-এ কেবল হোম/শিক্ষার্থী/উপস্থিতি/পরীক্ষা/আরও.
+**Teacher (`js/teacher.js` TEACHER_VIEWS):** `home`, `more`, `online-exams`, `courses`, `classes`, `routine-view`, `reports`, `profile` + activity views (`exam`, `homework`, `suggestion`, `routine`) — বাড়ির কাজ/সাজেশন/নোটিশ আলাদা আলাদা view; bottom bar-এ কেবল হোম/ক্লাস/পরীক্ষা/আরও (শিক্ষার্থীর তালিকা স্ক্রিন ও তার সিট ২০২৬-১০-২১-এ সম্পূর্ণ বাদ; শিক্ষার্থী-ডেটা উপস্থিতি/হোমওয়ার্ক/ক্লাস কর্মপ্রবাহে অক্ষত)।
 
 **Manager (`js/manager.js` MANAGER_VIEWS, ১৫টি):** `dashboard`, `students`, `approvals`, `classes`, `teachers`, `finance`, `cash-counter`, `notices`, `routine`, `exams`, `courses`, `results`, `reports`, `profile`, `more`.
 
@@ -96,7 +96,7 @@
 `🏠 হোম` · `📚 পড়াশোনা` · `🗓 রুটিন` · `📝 পরীক্ষা` · `👤 আরও`
 
 ### Teacher
-`🏠 হোম` · `👥 ক্লাস` · `👨‍🎓 শিক্ষার্থী` · `📝 পরীক্ষা` · `👤 আরও`
+`🏠 হোম` · `👥 ক্লাস` · `📝 পরীক্ষা` · `👤 আরও`
 
 ### Manager
 `🏠 হোম` · `👨‍🎓 শিক্ষার্থী` · `📚 একাডেমিক` · `💰 হিসাব` · `👤 আরও`
@@ -387,14 +387,13 @@ Preview → PDF**, আর Generate-এর আগে preview খোলে না:
 
 ### Phase 2 — Teacher panel (এই রিলিজে যা হয়েছে)
 
-Teacher panel-এ একই পাঁচ-seat shell: **হোম · ক্লাস · শিক্ষার্থী · পরীক্ষা · আরও**। বিদ্যমান view-গুলো role
+Teacher panel-এ চার-seat shell: **হোম · ক্লাস · পরীক্ষা · আরও** (শিক্ষার্থীর তালিকা সিট ২০২৬-১০-২১-এ সম্পূর্ণ বাদ)। বিদ্যমান view-গুলো role
 permission ও route বজায় রেখে map করা; সব একাডেমিক workflow আগের মতোই উপলভ্য:
 
 | Seat | কী থাকে | কোথা থেকে খোলে |
 | --- | --- | --- |
 | 🏠 হোম | AI দিন/রাত সিন-সহ Welcome hero (শুভেচ্ছা স্ট্রিপ · স্বাগতম শিরোনাম; নাম একবারই; ভূমিকা/আইডি প্রোফাইল স্ক্রিনে), আজকের ক্লাস, চারটি ফুল-ওয়াইড হিরো অ্যাকশন কার্ড (হোমওয়ার্ক/সাজেশন ফর্ম · দ্রুত MCQ · শুধু-পঠন রুটিন) ও তিনটি সেকেন্ডারি চিপ (উপকরণ · নোটিশ বোর্ড · নম্বর এন্ট্রি); কোনো KPI সারাংশ বা সাম্প্রতিক-কাজ ফিড নেই (তৈরি-কর্ম "কাজ দিন" হাবেও, কার্যক্রম রেকর্ডস ট্যাবে) | `#teacherHome` |
-| 📚 ক্লাস | নিজের ক্লাস ও একাডেমিক কাজের hub | `#teacherClasses` / `#teacherAcademic` |
-| 👨‍🎓 শিক্ষার্থী | অনুমোদিত scope-এ শিক্ষার্থী তালিকা | `#teacherStudents` |
+| 📚 ক্লাস | নিজের ক্লাস ও একাডেমিক কাজের hub (ক্লাস-কার্ডে অনুমোদিত শিক্ষার্থী-সংখ্যা অক্ষত) | `#teacherClasses` / `#teacherAcademic` |
 | 📝 পরীক্ষা | নম্বর/ফলাফল ও অনলাইন পরীক্ষার workspace | `#teacherRecords` / `#teacherOnlineExams` |
 | 👤 আরও | রিপোর্ট · আমার ক্লাস · প্রোফাইল/সেটিংস | `#teacherMore` |
 

@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=388"></script>
-  <script src="js/app-entry.js?v=388" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=388"></script>
-  <script src="js/topbar-connectivity.js?v=388" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=388"></script>
-  <script src="js/appearance-boot.js?v=388"></script>
-  <script src="js/theme-logos.js?v=388"></script>
+  <script src="js/sanitize-url.js?v=389"></script>
+  <script src="js/app-entry.js?v=389" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=389"></script>
+  <script src="js/topbar-connectivity.js?v=389" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=389"></script>
+  <script src="js/appearance-boot.js?v=389"></script>
+  <script src="js/theme-logos.js?v=389"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=388">
-  <link rel="stylesheet" href="css/ui-layout.css?v=388">
-  <link rel="stylesheet" href="css/ui-components.css?v=388">
-  <link rel="stylesheet" href="css/ui-forms.css?v=388">
-  <link rel="stylesheet" href="css/ui-features.css?v=388">
-  <link rel="stylesheet" href="css/notice-board.css?v=388">
-  <link rel="stylesheet" href="css/ui-status.css?v=388">
-  <link rel="stylesheet" href="css/ui-auth.css?v=388">
-  <link rel="stylesheet" href="css/app-polish.css?v=388">
-  <link rel="stylesheet" href="css/student-record.css?v=388">
-  <link rel="stylesheet" href="css/exam-archive.css?v=388">
-  <link rel="stylesheet" href="css/academics.css?v=388">
-  <link rel="stylesheet" href="css/notifications.css?v=388">
-  <link rel="stylesheet" href="css/course-hub.css?v=388">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=388">
+  <link rel="stylesheet" href="css/foundation.css?v=389">
+  <link rel="stylesheet" href="css/ui-layout.css?v=389">
+  <link rel="stylesheet" href="css/ui-components.css?v=389">
+  <link rel="stylesheet" href="css/ui-forms.css?v=389">
+  <link rel="stylesheet" href="css/ui-features.css?v=389">
+  <link rel="stylesheet" href="css/notice-board.css?v=389">
+  <link rel="stylesheet" href="css/ui-status.css?v=389">
+  <link rel="stylesheet" href="css/ui-auth.css?v=389">
+  <link rel="stylesheet" href="css/app-polish.css?v=389">
+  <link rel="stylesheet" href="css/student-record.css?v=389">
+  <link rel="stylesheet" href="css/exam-archive.css?v=389">
+  <link rel="stylesheet" href="css/academics.css?v=389">
+  <link rel="stylesheet" href="css/notifications.css?v=389">
+  <link rel="stylesheet" href="css/course-hub.css?v=389">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=389">
   <!-- Teacher panel redesign (2026-10-20, v2): presentation-only layer scoped to
        .teacher-reference — the body class teacher.html alone carries — so nothing
        here reaches student/admin/manager/payment. Markup, routes, element IDs and
@@ -838,15 +838,6 @@
   color: var(--color-danger);
   border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
 }
-.teacher-reference .student-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--glass-accent-soft);
-  color: var(--color-primary);
-  font-weight: 750;
-}
-
 /* 07 ── RECORDS SCREEN ── */
 .teacher-reference #teacherOnlineExamHint {
   border-color: color-mix(in srgb, var(--tone-blue) 32%, var(--glass-border));
@@ -858,8 +849,7 @@
   border-color: color-mix(in srgb, var(--tone-blue) 38%, var(--color-border));
 }
 .teacher-reference #teacherRecordCount,
-.teacher-reference #teacherNoticeCount,
-.teacher-reference #teacherStudentCount {
+.teacher-reference #teacherNoticeCount {
   font-size: 12px;
   font-weight: 650;
   color: var(--color-text-secondary);
@@ -973,11 +963,6 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
-/* 10 ── STUDENTS ── */
-.teacher-reference #teacherStudentList .teaching-card { display: block; }
-.teacher-reference #teacherStudentList .student-avatar { margin-bottom: 8px; }
-.teacher-reference #teacherStudentList .teaching-actions { margin-top: 10px; }
 
 /* 11 ── ROUTINE (read-only, nine tabs) ── */
 .teacher-reference #teacherRoutineViewList .exam-card {
@@ -1497,8 +1482,8 @@ body.teacher-reference {
   .teacher-reference .teacher-type-tabs .pay-tile { font-size: 10.5px; }
 }
   </style>
-  <script type="module" src="js/ui-accessibility.js?v=388"></script>
-  <script src="js/launch-screen.js?v=388" defer></script>
+  <script type="module" src="js/ui-accessibility.js?v=389"></script>
+  <script src="js/launch-screen.js?v=389" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -1610,11 +1595,6 @@ body.teacher-reference {
         </div>
         <p class="teacher-local-note">এই প্যানেল শুধু একাডেমিক কাজের জন্য। অর্থব্যবস্থাপনা ও অ্যাপ সেটিংস এডমিন প্যানেলে থাকবে; ভর্তি অনুমোদন ম্যানেজার প্যানেলে হবে।</p>
       </section>
-      <section id="teacherStudents" class="teacher-view" aria-labelledby="teacherStudentsTitle" hidden>
-        <div class="page-intro"><button class="pay-back" type="button" data-teacher-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><h1 id="teacherStudentsTitle">শিক্ষার্থী তালিকা</h1></div>
-        <div class="teacher-toolbar"><label for="teacherStudentSearch">নাম, শিক্ষার্থী আইডি বা মোবাইল</label><input id="teacherStudentSearch" type="search" placeholder="নাম / শিক্ষার্থী আইডি / মোবাইল দিয়ে খুঁজুন…"><label for="teacherStudentClass">শ্রেণি</label><select id="teacherStudentClass"><option value="all">সব শ্রেণি</option></select></div>
-        <p id="teacherStudentCount" class="finance-hint" role="status"></p><div id="teacherStudentList" class="teacher-record-list"></div>
-      </section>
       <section id="teacherOnlineExams" class="teacher-view" aria-labelledby="teacherOnlineExamsTitle" hidden><div class="page-intro"><button class="pay-back" type="button" data-teacher-view="academic" aria-label="একাডেমিকে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><h1 id="teacherOnlineExamsTitle">পরীক্ষা</h1></div><button class="teacher-cta" type="button" data-teacher-exam="new-mcq">⚡ দ্রুত MCQ পরীক্ষা</button><button class="mini-btn" type="button" data-teacher-exam="home">+ অন্য ধরনের পরীক্ষা তৈরি করুন</button>
         <p class="teacher-local-note">শিক্ষক পরীক্ষা ও প্রশ্ন তৈরি করে খসড়া সংরক্ষণ করেন; অনুমোদন ও প্রকাশ করেন Manager। অনুমোদনের আগে শিক্ষার্থীরা পরীক্ষা দেখতে পাবে না — বিদ্যমান অনুমোদন-প্রবাহ অক্ষুণ্ণ।</p>
         <nav class="chip-row teacher-exam-chips" id="teacherExamHub" role="group" aria-label="পরীক্ষা বিভাগ">
@@ -1668,7 +1648,6 @@ body.teacher-reference {
     <nav class="admin-bottom" aria-label="শিক্ষক নেভিগেশন">
   <button class="admin-bottom-item active" aria-current="page" type="button" data-teacher-view="home"><span class="nav-chip"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">হোম</span></button>
   <button class="admin-bottom-item" type="button" data-teacher-view="classes"><span class="nav-chip"><i class="nav-dot" id="navDot-routine" hidden></i><i class="nav-dot" id="navDot-academic" hidden></i><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">ক্লাস</span></button>
-  <button class="admin-bottom-item" type="button" data-teacher-view="students"><span class="nav-chip"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">শিক্ষার্থী</span></button>
   <button class="admin-bottom-item" type="button" data-teacher-view="online-exams"><span class="nav-chip"><i class="nav-dot" id="navDot-exam" hidden></i><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="result" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/result.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">পরীক্ষা</span></button>
   <button class="admin-bottom-item" type="button" data-teacher-view="more"><span class="nav-chip"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="more" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/more.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">আরও</span></button>
 </nav>
@@ -1677,7 +1656,7 @@ body.teacher-reference {
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=388"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=388"></script>
+  <script type="module" src="js/theme-entry.js?v=389"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=389"></script>
 </body>
 </html>

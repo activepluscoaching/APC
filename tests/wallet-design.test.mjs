@@ -110,7 +110,7 @@ test('secondary screens have accessible home/back controls and staff hub rows ha
     assert.ok(['home', 'profile', 'my-profile', 'courses', 'exams', 'routine', 'classes'].includes(parent), 'back ' + parent);
   }
   for (const [name, attribute, target, min] of [
-    ['manager', 'data-manager-view', 'dashboard', 14], ['teacher', 'data-teacher-view', 'home', 11]
+    ['manager', 'data-manager-view', 'dashboard', 14], ['teacher', 'data-teacher-view', 'home', 10]
   ]) {
     const document = doc(name);
     const backs = [...document.querySelectorAll('.pay-back')];

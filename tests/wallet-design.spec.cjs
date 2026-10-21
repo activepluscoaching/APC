@@ -28,7 +28,7 @@ const homeShortcuts = {
   manager: '.manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > button[data-manager-view]',
   teacher: '#teacherHome [data-teacher-view="routine-view"], #teacherHome .teacher-action-secondary [data-teacher-view="courses"]'
 };
-const navCount = { student: 5, admin: 6, manager: 6, teacher: 5, payment: 5 };
+const navCount = { student: 5, admin: 6, manager: 6, teacher: 4, payment: 5 };
 const shell = { student: '#appShell', admin: '#adminShell', manager: '#managerShell', teacher: '#teacherShell', payment: '#payShell' };
 
 for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for (const role of ['student', 'admin', 'manager', 'teacher', 'payment']) {

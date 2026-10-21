@@ -209,14 +209,6 @@ test('write failure keeps entered work and does not falsely save; corrupt storag
   expect(await page.evaluate(key => localStorage.getItem(key), KEY)).toBe('{broken');
 });
 
-test('student roster needs query, matches Bengali mobile/ID, excludes pending and empty results', async ({ page }) => {
-  await enter(page); await page.locator('.admin-bottom [data-teacher-view=students]').click();
-  await expect(page.locator('#teacherStudentList .teaching-card')).toHaveCount(0);
-  await page.locator('#teacherStudentSearch').fill('০১৭০০০০০০০০'); await expect(page.locator('#teacherStudentList')).toContainText('রাইসা ইসলাম');
-  await page.locator('[data-student-detail]').click(); await expect(page.locator('#teacherModalBody')).toContainText('এখনও কোনো নম্বর'); await page.keyboard.press('Escape');
-  await page.locator('#teacherStudentSearch').fill('999999999');   // no such roll in the roster await expect(page.locator('#teacherStudentList')).toHaveText('কোনো শিক্ষার্থী পাওয়া যায়নি');
-  await page.locator('#teacherStudentSearch').fill(''); await expect(page.locator('#teacherStudentList .teaching-card')).toHaveCount(0);
-});
 
 for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }, { width: 600, height: 700 }, { width: 743, height: 700 }, { width: 844, height: 390 }, { width: 1280, height: 800 }]) {
   test(`teacher home header and three-column grid stay responsive (${viewport.width}px)`, async ({ page }) => {
@@ -272,7 +264,7 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
       return topbarName === null && bell.width > 0 && singleFullWidth && document.documentElement.scrollWidth <= innerWidth;
     });
     expect(responsiveHeader).toBe(true);
-    await expect(page.locator('.admin-bottom-item')).toHaveCount(5);
+    await expect(page.locator('.admin-bottom-item')).toHaveCount(4);
     // The clean home no longer hosts a recent-work feed.
     await expect(page.locator('#teacherRecent')).toHaveCount(0);
     await page.locator('#teacherMain').evaluate(el => { el.scrollTop = el.scrollHeight; });
@@ -340,7 +332,7 @@ test('one device, one panel: no cross-panel link and the other panel locks itsel
   await admin.close();
 });
 
-test('profile class changes immediately re-scope the student feed and teacher roster', async ({ page, context }) => {
+test('profile class changes immediately re-scope the student feed', async ({ page, context }) => {
   await enter(page); await seed(page, [{ title: 'দশমের কাজ' }, { title: 'নবমের কাজ', className: 'নবম শ্রেণি' }]);
   const student = await studentPage(context, page, { group: 'বিজ্ঞান বিভাগ' });
   await student.locator('#studySections [data-study-section=suggestion]').click();
@@ -352,9 +344,9 @@ test('profile class changes immediately re-scope the student feed and teacher ro
   await expect(student.locator('#learningList')).toContainText('নবমের কাজ'); await expect(student.locator('#learningList')).not.toContainText('দশমের কাজ');
   await syncStudentProfileRow(student, page, 'AP-1024');
   await page.reload();
+  // ২০২৬-১০-২১: শিক্ষার্থীর তালিকা প্যানেল থেকে বাদ; প্রোফাইল পরিবর্তনের ক্রস-ডিভাইস
+  // প্রভাব শিক্ষার্থী-ফিডেই যাচাই হয় (উপরে), শিক্ষক প্যানেল শুধু ঠিকমতো লোড হয়।
   await expect(page.locator('#teacherShell')).toBeVisible();
-  await page.locator('.admin-bottom [data-teacher-view=students]').click();
-  await page.locator('#teacherStudentSearch').fill('AP-1024'); await expect(page.locator('#teacherStudentList')).toContainText('নবম শ্রেণি');
 });
 
 test('concurrent teacher tabs preserve both saves and immediately refresh each other', async ({ page, context }) => {

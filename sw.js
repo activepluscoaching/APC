@@ -1,3 +1,5 @@
+// v389: Teacher panel — remove the student list screen and its bottom-nav seat entirely (surface
+// removal only; student data still drives attendance, homework review and class cards); pin refresh.
 // v388: Teacher home — replace the 3×2 pay-tile grid with mobile-first full-width hero action
 // cards (homework, suggestion, one-tap quick MCQ, read-only routine) plus secondary chips; pin refresh.
 // v387: Teacher home — remove the non-actionable daily-work prompt card ("আপনার আজকের কাজগুলো…")
@@ -145,7 +147,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 388;
+const CACHE_VERSION = 389;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',

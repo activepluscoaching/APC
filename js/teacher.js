@@ -156,14 +156,11 @@ function renderHome() {
       }, 220);
     }
   }
-  /* শিক্ষক-পরিচিতি শুধু welcome hero কার্ডে (শিরোনাম, আইডি ব্যাজ, অ্যাভাটার);
-     টপবারে নামের পুনরাবৃত্তি নেই। textContent ব্যবহারে account profile-এর
-     নাম নিরাপদে দেখানো হয়। */
+  /* শিক্ষকের নাম হিরো কার্ডে শুধু শিরোনাম ও অ্যাভাটার-অক্ষরে; টপবারে নামের
+     পুনরাবৃত্তি নেই। ভূমিকা ও শিক্ষক আইডি এখন শুধু "আমার প্রোফাইল" স্ক্রিনে
+     (renderTeacherProfile) — হিরোর পরিচিতি সাব-কার্ডটি মালিক-নির্দেশে বাদ। */
   const name = String(state.teacher?.fullName || '').trim();
-  const teacherId = String(state.teacher?.staffId && state.teacher?.kind !== 'system' ? state.teacher.staffId : currentTeacherId());
   $('#teacherHomeTitle').textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম';
-  const idBadge = $('#teacherIdentityBadge');
-  if (idBadge) { idBadge.textContent = `শিক্ষক আইডি: ${teacherId}`; idBadge.dataset.teacherId = teacherId; }
   if ($('#teacherHomeInitial')) $('#teacherHomeInitial').textContent = name.charAt(0) || 'শি';
   /* মালিকের নির্দেশ (২০২৬-১০-২১): হোম থেকে "আজকের সারাংশ" KPI সারফেস বাদ।
      একই সংখ্যাগুলো এখনও কর্মক্ষেত্রেই হিসাব হয় (পেন্ডিং নেভি ডট renderTypeCounts-এ,

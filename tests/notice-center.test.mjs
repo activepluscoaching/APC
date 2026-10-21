@@ -92,10 +92,13 @@ test('every panel shares the APC topbar; teacher identity lives only on its hero
       const teacherName = actions.querySelector('.teacher-header-name');
       assert.equal(teacherName, null, `${page.file}: no identity-name slot belongs in the shared topbar`);
       if (page.file === 'teacher.html') {
-        // The teacher's identity still shows exactly once — on the home hero card.
+        // The teacher's name still greets from the home hero title; the role/id
+        // sub-card was removed from the hero (it lives on "আমার প্রোফাইল"), and
+        // no identity slot is allowed back in the shared topbar.
         const heroTitle = document.querySelector('#teacherHomeTitle');
         const heroBadge = document.querySelector('#teacherIdentityBadge');
-        assert.ok(heroTitle && heroBadge, 'teacher identity stays on the welcome hero card, not the topbar');
+        assert.ok(heroTitle, 'the welcome hero title still carries the teacher name');
+        assert.equal(heroBadge, null, 'the role/id sub-card no longer appears on the hero');
       }
       const bell = actions.querySelector('#notificationButton');
       assert.ok(bell, `${page.file}: the notification bell is missing`);

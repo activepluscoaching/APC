@@ -57,8 +57,9 @@ test('an empty home reports honestly: no classes today, and stays clean', () => 
 
 test('the welcome hero shows the teacher name from the staff profile, never the topbar', async () => {
   /* A provisioned test account starts without a display name — the hero still
-     greets politely; once the profile carries a name, the hero title, avatar
-     initial and id badge update after the next data event. The name must never
+     greets politely; once the profile carries a name, the hero title and avatar
+     initial update after the next data event. The role/id sub-card no longer
+     lives on the hero (it stays on "আমার প্রোফাইল"), and the name must never
      appear a second time in the shared topbar. */
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম', 'no name on the account yet — a plain welcome');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the topbar has no name slot even before a name exists');
@@ -68,7 +69,7 @@ test('the welcome hero shows the teacher name from the staff profile, never the 
   await ctx.waitFor(() => $('#teacherHomeTitle').textContent === 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeInitial').textContent, 'প', 'the hero avatar uses the name initial');
-  assert.match($('#teacherIdentityBadge').textContent, /শিক্ষক আইডি:/, 'the hero keeps the id badge');
+  assert.equal($('#teacherIdentityBadge'), null, 'the role/id sub-card was removed from the hero by owner request');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the name stays out of the topbar');
   assert.match($('#teacherHome').textContent, /আপনার আজকের কাজগুলো দেখে নিন।/);
 });

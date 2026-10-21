@@ -110,31 +110,45 @@ function renderHub(root, menuSelector, panelView, catalogue, access, onNavigate)
 function renderFeatureGrid(container, entries, onNavigate) {
   if (!container) return [];
   container.replaceChildren();
+  const subs = {
+    students: 'নতুন আবেদন দেখুন ও অনুমোদন দিন',
+    staff: 'স্টাফ অ্যাকাউন্ট ও ভূমিকা',
+    reports: 'রিপোর্ট ও সারাংশ',
+    settings: 'অ্যাপ ও সিস্টেম সেটিংস',
+    security: 'সুরক্ষা ও অ্যাক্সেস',
+    data: 'ডেটা ও ব্যাকআপ',
+    backup: 'ব্যাকআপ এক্সপোর্ট'
+  };
   const tiles = entries.map((entry, index) => {
     const tile = document.createElement('button');
     tile.type = 'button';
-    tile.className = 'pay-tile admin-feature-tile';
+    tile.className = 'admin-action-card';
     tile.dataset.adminView = entry.view;
     if (entry.capability) tile.dataset.adminCap = entry.capability;
     if (entry.action) tile.dataset.adminAction = entry.action;
-    // Staggered entrance, cheap and transform-only.
+    if (entry.studentScope) tile.dataset.studentScope = entry.studentScope;
     tile.style.setProperty('--tile-index', String(index));
 
-    const iconWrap = document.createElement('span');
-    iconWrap.className = 'pay-tile-icon admin-feature-icon';
-    iconWrap.append(iconElement(ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-feature-icon-svg apc-icon-svg'));
+    const body = document.createElement('span');
+    body.className = 'admin-action-body';
+    const title = document.createElement('span');
+    title.className = 'admin-action-title';
+    title.textContent = entry.label;
+    const sub = document.createElement('span');
+    sub.className = 'admin-action-sub';
+    sub.textContent = entry.sub || subs[entry.view] || 'বিস্তারিত দেখুন';
+    body.append(title, sub);
 
-    const label = document.createElement('span');
-    label.className = 'pay-tile-label admin-feature-label';
-    label.textContent = entry.label;
+    const art = document.createElement('span');
+    art.className = 'admin-action-art';
+    art.setAttribute('aria-hidden', 'true');
+    art.append(iconElement(ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon || 'dashboard', 'admin-action-art-svg apc-icon-svg'));
 
-    tile.append(iconWrap, label);
+    tile.append(body, art);
     tile.addEventListener('click', () => onNavigate(entry.view, tile));
     container.append(tile);
     return tile;
   });
-  // An odd last tile spans the row so the grid never ends with a hole.
-  if (tiles.length % 2 === 1) tiles.at(-1)?.classList.add('is-wide');
   container.hidden = tiles.length === 0;
   return tiles;
 }
@@ -163,7 +177,11 @@ export function initAdminPanelShell({ access, onNavigate } = {}) {
   const tiles = renderFeatureGrid(document.querySelector('#adminFeatureGrid'), tileEntries, navigate);
 
   // System overview title uses the same icon language as the navigation.
-  paintIcon(document.querySelector('.admin-hero-icon'), 'dashboard', 'admin-hero-icon-svg apc-icon-svg');
+  // Keep initial letter if present; only paint when empty.
+  const heroIcon = document.querySelector('.admin-hero-icon');
+  if (heroIcon && !heroIcon.querySelector('#adminHomeInitial') && !heroIcon.textContent.trim()) {
+    paintIcon(heroIcon, 'dashboard', 'admin-hero-icon-svg apc-icon-svg');
+  }
 
   // Hero summary tiles, in document order (see admin.html).
   const heroIcons = ['students', 'staff', 'data', 'security'];

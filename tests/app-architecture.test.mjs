@@ -214,25 +214,45 @@ test('একাডেমিক is one hub whose six cards open the screens that 
   assert.match(read('js/exam-manager.js'), /return \{\s*open\(screen = ''\)/, 'the workspace exposes a deep link');
 });
 
-test('teacher Home is the launcher: welcome, one 3-column grid over existing screens, today + recent', () => {
+test('teacher Home is the launcher: welcome, one 3-column grid over existing screens, today, no work feed', () => {
   /* মাস্টার প্রম্পট ২০২৬-১০: Home = স্বাগতম + একটি ৩-কলাম আইকন গ্রিড +
-     আজকের ক্লাস (Manager routine) + সর্বশেষ ৩টি কাজ। বাড়ির কাজ টাইলটি
-     এক ট্যাপে বিদ্যমান create form খোলে; অন্য টাইলগুলো বিদ্যমান স্ক্রিনে যায়। */
+     আজকের ক্লাস (Manager routine)। প্রতিটি হোম টাইল একটি বিদ্যমান স্ক্রিন
+     খোলে; সব তৈরি-কর্ম এক জায়গায় — কাজ দিন হাবে।
+     ২০২৬-১০-২০: ক্লাস উপস্থিতির দরজা হোম থেকে সরে ক্লাস হাবের
+     routine-view সাবমেনুতে গেছে; ফিচারটি বাদ যায়নি, শুধু স্থান বদলেছে।
+     ২০২৬-১০-২১: হোমপেজ ক্লিন — "সাম্প্রতিক কাজ" ফিড সরানো হয়েছে; সব কার্যক্রম
+     তার নিজস্ব রেকর্ডস ট্যাবে অক্ষত, শুধু হোম সারফেস থেকে বাদ। */
   const home = teacherHtml.slice(teacherHtml.indexOf('id="teacherHome"'), teacherHtml.indexOf('id="teacherRecords"'));
   assert.match(home, /teacher-home-grid/);
   const gridStart = home.indexOf('class="teacher-home-grid');
   const gridEnd = home.indexOf('</nav>', gridStart);
   const grid = home.slice(gridStart, gridEnd);
   assert.deepEqual([...grid.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['routine-view', 'homework', 'notice', 'online-exams', 'exam', 'courses'],
+    ['academic', 'homework', 'suggestion', 'notice', 'online-exams', 'exam'],
     'every grid tile routes to an existing screen');
   assert.equal((grid.match(/class="teacher-home-tile pay-tile"/g) || []).length, 6,
     'teacher destinations use the same pay-tile components as the other portals');
-  assert.equal((home.match(/data-new-activity=/g) || []).length, 1, 'exactly one home tile is the one-tap homework entry');
-  assert.match(home, /data-teacher-view="homework"[^>]*data-new-activity="homework"/, 'the homework tile opens its existing create form directly');
+  /* Attendance keeps exactly one door: the ক্লাস hub submenu, never Home. */
+  assert.equal((home.match(/data-teacher-view="routine-view"/g) || []).length, 0,
+    'class attendance has no door on the home screen');
+  assert.equal((teacherHtml.match(/data-teacher-view="routine-view"/g) || []).length, 1,
+    'routine/attendance stays reachable from exactly one place — the ক্লাস submenu');
+  /* ২০২৬-১০-২০: Home tiles open SCREENS only; every create action lives in the
+     কাজ দিন academic hub, so Home carries no form-opening shortcut or pill row. */
+  assert.equal((home.match(/data-new-activity=|data-new-notice/g) || []).length, 0,
+    'no home tile opens a form directly — creation is centred in the hub');
+  assert.equal(home.includes('teacher-home-extra'), false, 'the duplicate soft-pill row is gone');
   assert.equal(home.includes('teacherQuickActions'), false, 'home must not duplicate the create-tile shelf');
   assert.match(home, /id="teacherTodayClasses"/, 'আজকের ক্লাস from the Manager routine');
-  assert.match(home, /id="teacherRecent"/, 'সাম্প্রতিক কাজ — the latest three');
+  /* The home screen stays clean: no recent-work feed and no KPI summary strip.
+     Every activity remains reachable on its own records tab (and the routine
+     screen), so these are surface removals, not data/feature losses. */
+  assert.equal(home.includes('id="teacherRecent"'), false, 'no recent-work feed on the clean home screen');
+  assert.equal(home.includes('teacher-summary-section'), false, 'the আজকের সারাংশ KPI strip left the home screen');
+  for (const gone of ['teacherHomeStudentTotal', 'teacherHomePendingTotal', 'teacherHomeUpcomingTotal']) {
+    assert.equal(teacherHtml.includes(gone), false, `${gone} summary card is gone`);
+  }
+  assert.equal(teacherHtml.includes('teacherHeaderName'), false, 'the teacher name is not repeated in the topbar (hero card only)');
   const hub = teacherHtml.slice(teacherHtml.indexOf('id="teacherAcademic"'), teacherHtml.indexOf('id="teacherNotice"'));
   assert.match(hub, /data-new-activity="homework"/);
   assert.match(hub, /data-new-activity="suggestion"/);
@@ -249,18 +269,38 @@ test('teacher রুটিন is read-only: the Manager owns the schedule, the t
   assert.doesNotMatch(source, /saveRoutine\s*\(/, 'the teacher module never writes the office routine');
 });
 
-test('teacher আরও keeps only what the new navigation does not own', () => {
+test('teacher আরও holds only secondary settings — academic work and primary seats move out', () => {
   const more = teacherHtml.slice(teacherHtml.indexOf('id="teacherMore"'), teacherHtml.indexOf('id="teacherStudents"'));
+  /* ২০২৬-১০-২০ de-duplication: the back button (home) plus ONE labelled group,
+     রিপোর্ট ও সেটিংস. Academic doors live in the কাজ দিন hub and Home; students
+     and classes are bottom-dock seats — none of them is repeated in আরও. */
   assert.deepEqual([...more.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['home', 'students', 'classes', 'reports', 'profile']);
-  for (const academic of ['homework', 'suggestion', 'online-exams', 'courses', 'routine']) {
-    assert.equal(new RegExp(`data-teacher-view="${academic}"`).test(more), false, `${academic} is duplicated in আরও`);
+    ['home', 'reports', 'profile']);
+  assert.match(more, new RegExp(nfc('রিপোর্ট ও সেটিংস')), 'the single remaining group heading');
+  for (const removed of ['academic', 'homework', 'suggestion', 'notice', 'exam', 'students', 'classes']) {
+    assert.doesNotMatch(more, new RegExp(`data-teacher-view="${removed}"`), `${removed} is no longer duplicated in আরও`);
   }
+  /* The removed course/chapters shortcut leaves no dead markup; courses stays
+     reachable through the academic hub's canonical courses door. */
+  assert.equal(teacherHtml.includes('data-course-chapters-open'), false);
+  const hub = teacherHtml.slice(teacherHtml.indexOf('id="teacherAcademic"'), teacherHtml.indexOf('id="teacherNotice"'));
+  assert.match(hub, /data-teacher-view="courses"/, 'courses/chapters stay reachable from the কাজ দিন hub');
   /* The class-test marks lane stays reachable from the ফলাফল seat. */
   assert.match(teacherHtml, /data-teacher-view="exam"/);
   const source = read('js/teacher.js');
   assert.match(source, /ACADEMIC_SECTIONS/, 'the hub routes through one table');
   assert.match(nfc(source), /classOptions/, 'the notice composer reuses the assignment picker');
+});
+
+test('teacher ক্লাস hub groups the class list, read-only routine and academic work doors', () => {
+  const classes = teacherHtml.slice(teacherHtml.indexOf('id="teacherClasses"'), teacherHtml.indexOf('id="teacherRoutine"'));
+  /* The existing rendered list and its loader stay exactly where the
+     teacher-assigned-classes tests read them. */
+  assert.match(classes, /id="teacherClassList"/);
+  /* Submenu doors reuse existing routes instead of duplicating screens. */
+  assert.deepEqual([...classes.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
+    ['home', 'routine-view', 'academic']);
+  assert.match(nfc(classes), /ক্লাস ও বিষয়/);
 });
 
 test('a teacher notice is class/batch-scoped and stays a notice, never a notification', async () => {

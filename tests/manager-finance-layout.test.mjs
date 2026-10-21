@@ -45,7 +45,9 @@ test('shared topbar and staff home heroes use the shared green brand surface', (
   assert.match(css, /\.admin-hero \{[\s\S]*?background: var\(--pay-hero-gradient\)/);
   assert.match(css, /\.manager-kpi-grid > \.admin-stat-tile \{[^}]*background: color-mix\(in srgb, var\(--tone/);
   assert.match(css, /\.manager-kpi-grid \.tile-value \{ color: var\(--color-text\); \}/);
-  assert.match(css, /\.teacher-summary \{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  // ২০২৬-১০-২১: the teacher "আজকের সারাংশ" KPI strip left the home screen, so its
+  // shared .teacher-summary grid rule was removed with it; manager/admin KPI
+  // surfaces above stay covered.
 });
 
 test('Manager finance is a four-segment compact workspace, with the approval preview in collection', () => {

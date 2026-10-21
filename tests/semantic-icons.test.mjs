@@ -52,6 +52,15 @@ test('icon refresh preserves control routes, IDs and action attributes from appr
    for(const control of controls(old))assert.ok(currentRoutes.has(JSON.stringify(control)),`${page} keeps existing route/control ${JSON.stringify(control)}`);
    const adviceRoute=page==='manager'?'data-manager-view':'data-admin-view';
    assert.ok(now.some(control=>control[adviceRoute]==='advice'),'daily advice remains reachable from More');
+  }else if(page==='teacher'){
+   /* 2026-10-20 navigation restructure: the five-seat main navigation, every
+      view, ID and existing control stay untouched; the grouped ক্লাস hub and
+      the three labelled আরও menus only add shortcuts whose attribute
+      signatures already exist as canonical routes. Assert preservation of the
+      approved set (subset, the same additive rule Manager/Admin use) rather
+      than forbidding any additional door to an existing screen. */
+   const currentRoutes=new Set(now.map(control=>JSON.stringify(control)));
+   for(const control of controls(old))assert.ok(currentRoutes.has(JSON.stringify(control)),`teacher keeps existing route/control ${JSON.stringify(control)}`);
   }else assert.deepEqual(now,controls(old),page);
  }
 });

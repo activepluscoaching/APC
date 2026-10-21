@@ -29,7 +29,7 @@ async function enter(page) {
 async function goAcademic(page) {
   await page.locator('.admin-bottom [data-teacher-view=home]').click();
   await expect(page.locator('#teacherHome')).toBeVisible();
-  await page.locator('#teacherHome .teacher-home-extra [data-teacher-view=academic]').click();
+  await page.locator('#teacherHome .teacher-home-tile[data-teacher-view=academic]').click();
   await expect(page.locator('#teacherAcademic')).toBeVisible();
 }
 async function create(page, type, title, overrides = {}) {
@@ -93,10 +93,15 @@ async function seed(page, activities) {
   }, activities);
 }
 
-test('one tap from the Teacher home opens the existing homework assignment form', async ({ page }) => {
+test('the Teacher home homework tile opens the homework screen, whose create button opens the form', async ({ page }) => {
   await enter(page);
   await expect(page.locator('#teacherClassFilter option').first()).toHaveText('সব নির্ধারিত শ্রেণি');
+  // Home tiles are screen doors; no form pops directly over the launcher.
   await page.locator('#teacherHome .teacher-home-tile[data-teacher-view=homework]').click();
+  await expect(page.locator('#teacherRecords')).toBeVisible();
+  await expect(page.locator('#teacherModalBackdrop')).toBeHidden();
+  // The reused assignment form opens from the in-screen create action.
+  await page.locator('#teacherNewActivity').click();
   await expect(page.locator('#teacherModalBackdrop')).toBeVisible();
   await expect(page.locator('#teacherModalTitle')).toContainText('নতুন');
   await expect(page.locator('#teacherModalTitle')).toContainText('কাজ');
@@ -206,7 +211,7 @@ test('write failure keeps entered work and does not falsely save; corrupt storag
 });
 
 test('student roster needs query, matches Bengali mobile/ID, excludes pending and empty results', async ({ page }) => {
-  await enter(page); await page.locator('.admin-bottom [data-teacher-view=more]').click(); await page.locator('#teacherMore [data-teacher-view=students]').click();
+  await enter(page); await page.locator('.admin-bottom [data-teacher-view=students]').click();
   await expect(page.locator('#teacherStudentList .teaching-card')).toHaveCount(0);
   await page.locator('#teacherStudentSearch').fill('০১৭০০০০০০০০'); await expect(page.locator('#teacherStudentList')).toContainText('রাইসা ইসলাম');
   await page.locator('[data-student-detail]').click(); await expect(page.locator('#teacherModalBody')).toContainText('এখনও কোনো নম্বর'); await page.keyboard.press('Escape');
@@ -227,8 +232,10 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
         await updateStaffProfile('teacher', { fullName });
         window.dispatchEvent(new CustomEvent('teaching-data-updated'));
       }, fullName);
-      await expect(page.locator('#teacherHeaderName')).toBeVisible();
-      await expect(page.locator('#teacherHeaderName')).toHaveText(fullName);
+      // The name lives only on the welcome hero now — the shared topbar must
+      // never carry a duplicate identity slot.
+      await expect(page.locator('#teacherHeaderName')).toHaveCount(0);
+      await expect(page.locator('.app-topbar .teacher-header-name')).toHaveCount(0);
       await expect(page.locator('#teacherHomeTitle')).toHaveText(`স্বাগতম, ${fullName}`);
       const welcomeFits = await page.evaluate(() => {
         const title = document.querySelector('#teacherHomeTitle');
@@ -257,15 +264,15 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
       expect(welcomeFits.documentWidth, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.viewportWidth);
     }
     const responsiveHeader = await page.evaluate(() => {
-      const name = document.querySelector('#teacherHeaderName').getBoundingClientRect();
+      const topbarName = document.querySelector('.teacher-header-name');
       const bell = document.querySelector('#notificationButton').getBoundingClientRect();
       const columns = getComputedStyle(document.querySelector('.teacher-home-grid')).gridTemplateColumns.trim().split(/\s+/).length;
-      return name.right <= bell.left && columns === 3 && document.documentElement.scrollWidth <= innerWidth;
+      return topbarName === null && bell.width > 0 && columns === 3 && document.documentElement.scrollWidth <= innerWidth;
     });
     expect(responsiveHeader).toBe(true);
     await expect(page.locator('.admin-bottom-item')).toHaveCount(5);
-    await seed(page, Array.from({ length: 6 }, (_, i) => ({ title: `সাজেশন ${i}` })));
-    await expect(page.locator('#teacherRecent .teaching-card')).toHaveCount(3);
+    // The clean home no longer hosts a recent-work feed.
+    await expect(page.locator('#teacherRecent')).toHaveCount(0);
     await page.locator('#teacherMain').evaluate(el => { el.scrollTop = el.scrollHeight; });
     const layout = await page.evaluate(() => {
       const top = document.querySelector('.app-topbar').getBoundingClientRect(), foot = document.querySelector('.admin-bottom').getBoundingClientRect(), main = document.querySelector('#teacherMain').getBoundingClientRect();
@@ -344,13 +351,18 @@ test('profile class changes immediately re-scope the student feed and teacher ro
   await syncStudentProfileRow(student, page, 'AP-1024');
   await page.reload();
   await expect(page.locator('#teacherShell')).toBeVisible();
-  await page.locator('.admin-bottom [data-teacher-view=more]').click(); await page.locator('#teacherMore [data-teacher-view=students]').click();
+  await page.locator('.admin-bottom [data-teacher-view=students]').click();
   await page.locator('#teacherStudentSearch').fill('AP-1024'); await expect(page.locator('#teacherStudentList')).toContainText('নবম শ্রেণি');
 });
 
 test('concurrent teacher tabs preserve both saves and immediately refresh each other', async ({ page, context }) => {
   await enter(page); const other = await context.newPage(); await enter(other);
   await Promise.all([seed(page, [{ title: 'প্রথম ট্যাবের কাজ' }]), seed(other, [{ title: 'দ্বিতীয় ট্যাবের কাজ' }])]);
-  await expect(page.locator('#teacherRecent .teaching-card')).toHaveCount(2); await expect(other.locator('#teacherRecent .teaching-card')).toHaveCount(2);
+  // The home work feed is gone, so cross-tab refresh is verified on the
+  // suggestion records surface both tabs own — each must list both saves.
+  for (const p of [page, other]) {
+    await p.locator('#teacherHome .teacher-home-tile[data-teacher-view=suggestion]').click();
+    await expect(p.locator('#teacherRecordList .teaching-card')).toHaveCount(2);
+  }
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).activities.length, KEY)).toBe(2);
 });

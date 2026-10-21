@@ -1,5 +1,5 @@
-/* Teacher panel on the real teacher.html (jsdom): the redesigned home
-   (welcome + 3-column launcher grid + আজকের ক্লাস + সর্বশেষ ৩টি কাজ), bulk
+/* Teacher panel on the real teacher.html (jsdom): the redesigned clean home
+   (welcome hero + 3-column launcher grid + আজকের ক্লাস, no work feed), bulk
    marking, grouping and paging. The Playwright spec covers CRUD end to end;
    this file covers the management layer added on top of it. */
 import test, { before, after } from 'node:test';
@@ -29,8 +29,9 @@ let ctx;
 const $ = sel => ctx.$(sel);
 const $$ = sel => ctx.$$(sel);
 const cards = sel => $$(`${sel} .teaching-card`);
-const recentTitles = () => $$('#teacherRecent .teaching-card h3').map(el => el.textContent);
-const homeCard = title => $$('#teacherRecent .teaching-card').find(c => c.querySelector('h3')?.textContent === title);
+/* Find an activity card inside a records tab (the home work feed was removed
+   on 2026-10-21; every activity now lives on its own records screen). */
+const recordCard = title => $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3')?.textContent === title);
 
 before(async () => {
   ctx = await loadPage('teacher.html', {
@@ -47,49 +48,65 @@ before(async () => {
   assert.equal($('#teacherShell').hidden, false, 'the panel must open');
 });
 
-test('an empty home reports honestly: no classes today, no work yet', () => {
+test('an empty home reports honestly: no classes today, and stays clean', () => {
   assert.match($('#teacherTodayClasses').textContent, /আজ কোনো নির্ধারিত ক্লাস নেই/);
-  assert.match($('#teacherRecent').textContent, /এখনও কোনো academic কাজ যোগ করা হয়নি/);
+  assert.equal($('#teacherRecent'), null, 'the home carries no recent-work feed');
   assert.equal($('#teacherTodayClassCount').textContent, '০টি ক্লাস');
   assert.equal($('#navDot-academic').hidden, true, 'nothing pending anywhere yet');
 });
 
-test('the header and welcome hero show the teacher name from the staff profile', async () => {
-  /* A provisioned test account starts without a display name — the home must
-     still greet politely and keep the header slot hidden; once the profile
-     carries a name, both places update after the next data event. */
+test('the welcome hero shows the teacher name from the staff profile, never the topbar', async () => {
+  /* A provisioned test account starts without a display name — the hero still
+     greets politely; once the profile carries a name, the hero title, avatar
+     initial and id badge update after the next data event. The name must never
+     appear a second time in the shared topbar. */
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম', 'no name on the account yet — a plain welcome');
-  assert.equal($('#teacherHeaderName').hidden, true, 'do not show a blank header name');
+  assert.equal($('.app-topbar .teacher-header-name'), null, 'the topbar has no name slot even before a name exists');
   const updated = await updateStaffProfile('teacher', { fullName: 'পরীক্ষা শিক্ষক' });
   assert.equal(updated.ok, true);
   ctx.window.dispatchEvent(new ctx.window.CustomEvent('teaching-data-updated'));
   await ctx.waitFor(() => $('#teacherHomeTitle').textContent === 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম, পরীক্ষা শিক্ষক');
-  assert.equal($('#teacherHeaderName').hidden, false);
-  assert.equal($('#teacherHeaderName').textContent, 'পরীক্ষা শিক্ষক');
+  assert.equal($('#teacherHomeInitial').textContent, 'প', 'the hero avatar uses the name initial');
+  assert.match($('#teacherIdentityBadge').textContent, /শিক্ষক আইডি:/, 'the hero keeps the id badge');
+  assert.equal($('.app-topbar .teacher-header-name'), null, 'the name stays out of the topbar');
   assert.match($('#teacherHome').textContent, /আপনার আজকের কাজগুলো দেখে নিন।/);
 });
 
-test('home is welcome + one 3-column grid over existing screens + today + recent', () => {
+test('home is welcome + one 3-column grid over existing screens + today, with no work feed', () => {
   const tiles = $$('#teacherHome .teacher-home-tile');
-  assert.equal(tiles.length, 6, 'ছয়টি ফিচার-টাইল');
+  // ২০২৬-১০-২০: উপস্থিতি/রুটিন টাইল হোম থেকে সরে ক্লাস হাব সাবমেনুতে গেছে।
+  // "কাজ দিন" একাডেমিক হাব এখন হোমের প্রথম স্বতন্ত্র ফিচার-টাইল।
+  assert.equal(tiles.length, 6, 'ছয়টি ফিচার-টাইল — ক্লাস উপস্থিতি হোমে থাকবে না');
   assert.ok($('.teacher-home-grid'), 'the grid container exists');
   assert.deepEqual(tiles.map(t => t.dataset.teacherView),
-    ['routine-view', 'homework', 'notice', 'online-exams', 'exam', 'courses'],
+    ['academic', 'homework', 'suggestion', 'notice', 'online-exams', 'exam'],
     'প্রতিটি টাইল একটি বিদ্যমান স্ক্রিনে যায়');
-  const oneTapHomework = $$('#teacherHome [data-new-activity="homework"]');
-  assert.equal(oneTapHomework.length, 1, 'এক ট্যাপের বাড়ির কাজ entry');
-  assert.equal(oneTapHomework[0], tiles[1], 'one-tap action is the existing homework tile, not a duplicate button');
+  assert.equal($('#teacherHome [data-teacher-view="routine-view"]'), null,
+    'হোম পেজে ক্লাস উপস্থিতির কোনো দরজা থাকবে না');
+  const workHub = $('#teacherHome .teacher-home-tile[data-teacher-view="academic"]');
+  assert.ok(workHub, '"কাজ দিন" হাবের স্বতন্ত্র হোম টাইল আছে');
+  assert.equal(workHub.querySelector('.pay-tile-label').textContent.trim(), 'কাজ দিন');
+  /* Home tiles are screen doors, never form doors — every create action now
+     lives inside the কাজ দিন academic hub. */
+  assert.equal($$('#teacherHome [data-new-activity], #teacherHome [data-new-notice]').length, 0,
+    'হোম টাইল সরাসরি কোনো ফর্ম খোলে না');
+  assert.equal($$('.teacher-home-extra').length, 0, 'ডুপ্লিকেট পিল-সারি সরানো হয়েছে');
   assert.ok($('#teacherTodayClasses'), 'আজকের ক্লাস section');
-  assert.ok($('#teacherRecent'), 'সাম্প্রতিক কাজ section');
+  assert.equal($('#teacherRecent'), null, 'হোম ক্লিন — কোনো সাম্প্রতিক-কাজ ফিড নেই');
 });
 
-test('one tap on the home homework tile opens the existing assignment form directly', async () => {
+test('the home homework tile opens the homework screen; its create button opens the form', async () => {
   const tile = $('#teacherHome .teacher-home-tile[data-teacher-view="homework"]');
-  assert.equal(tile.dataset.newActivity, 'homework');
+  assert.equal(tile.dataset.newActivity, undefined, 'the tile is a screen door, not a form door');
   ctx.click(tile);
-  assert.equal($('#teacherRecords').hidden, false, 'the existing homework records screen owns the form');
-  assert.equal($('#teacherModalBackdrop').hidden, false, 'one tap opens the existing form immediately');
+  await settle();
+  assert.equal($('#teacherRecords').hidden, false, 'the homework records screen opens');
+  assert.equal($('#teacherModalBackdrop').hidden, true, 'no form pops over the home screen');
+  /* The create action stays one tap inside the screen it owns. */
+  ctx.click($('#teacherNewActivity'));
+  await settle();
+  assert.equal($('#teacherModalBackdrop').hidden, false, 'the in-screen create button opens the reused form');
   assert.equal(nfc($('#teacherModalTitle').textContent), nfc('নতুন বাড়ির কাজ'));
   assert.ok($('#activity-title'), 'the normal assignment form is reused');
   ctx.click($('#teacherModalClose'));
@@ -100,41 +117,58 @@ test('one tap on the home homework tile opens the existing assignment form direc
   assert.equal($('#teacherHome').hidden, false, 'Home navigation returns to the launcher');
 });
 
-test('recent work shows the latest three with name, class and status', async () => {
+test('the clean home has no work feed, while every activity stays reachable on its records tab', async () => {
   await teachingRepository.saveActivity({ type: 'routine', title: 'অতিরিক্ত ক্লাস', subject: 'গণিত', className: 'দশম শ্রেণি', date: shift(-1), time: '17:00', duration: 60, status: 'published', details: 'অনুশীলনী' });
   await teachingRepository.saveActivity({ type: 'homework', title: 'আজকের কাজ', subject: 'গণিত', className: 'দশম শ্রেণি', date: todayISO(), time: '20:00', status: 'published', details: 'অনুশীলনী ১' });
   await teachingRepository.saveActivity({ type: 'suggestion', title: 'খসড়া নোটিশ', subject: 'গণিত', className: 'দশম শ্রেণি', status: 'draft', details: 'নোট' });
   await settle();
-  assert.deepEqual(recentTitles().sort(), ['অতিরিক্ত ক্লাস', 'আজকের কাজ', 'খসড়া নোটিশ'].sort(), 'সর্বশেষ ৩টি কাজ');
-  const draft = homeCard('খসড়া নোটিশ');
+  /* Home no longer renders any recent-work surface — the feed was removed, not
+     the data. Pending counters and tab badges still reflect the same rows. */
+  assert.equal($('#teacherRecent'), null, 'হোমপেজে কোনো সাম্প্রতিক-কাজ ফিড নেই');
+  assert.equal($('#navDot-routine').textContent, '১', 'pending attendance still counts on its class seat');
+  assert.equal($('#tabCount-homework').textContent, '১');
+  // Academic work is reachable on its own records tab, with status + class line.
+  ctx.click($('[data-type-tab="suggestion"]'));
+  await settle();
+  const draft = recordCard('খসড়া নোটিশ');
+  assert.ok(draft, 'খসড়া সাজেশন তার রেকর্ডস ট্যাবে অক্ষত থাকে');
   assert.match(draft.querySelector('.teaching-status').textContent, /খসড়া/, 'status chip');
   assert.match(draft.querySelector('small').textContent, /দশম শ্রেণি/, 'class line');
-  assert.equal(homeCard('আজকের কাজ').querySelector('.teaching-status').textContent, 'প্রকাশিত');
-  assert.equal($('#navDot-routine').textContent, '১', 'pending attendance still counts on its seat');
-  assert.equal($('#tabCount-homework').textContent, '১');
+  ctx.click($('[data-type-tab="homework"]'));
+  await settle();
+  assert.equal(recordCard('আজকের কাজ').querySelector('.teaching-status').textContent, 'প্রকাশিত');
+  // Attendance never had a home surface to lose: it stays on the routine tab.
+  ctx.click($('[data-type-tab="routine"]'));
+  await settle();
+  assert.ok(recordCard('অতিরিক্ত ক্লাস'), 'উপস্থিতি ক্লাস রেকর্ডস ট্যাবে অক্ষত থাকে');
+  ctx.click($('.admin-bottom [data-teacher-view="home"]'));
+  await settle();
+  assert.equal($('#teacherHome').hidden, false);
 });
 
 test('future-dated work is not pending, and the records card shows its progress', async () => {
   await teachingRepository.saveActivity({ type: 'homework', title: 'পরের সপ্তাহের কাজ', subject: 'রসায়ন', className: 'দশম শ্রেণি', date: shift(7), time: '10:00', status: 'published', details: 'দ্বিতীয় অধ্যায়' });
   await settle();
-  const card = homeCard('পরের সপ্তাহের কাজ');
-  assert.ok(card, 'the newest work is one of the three on home');
-  assert.equal(card.querySelector('.teaching-progress-line'), null, 'a future deadline is not flagged pending');
+  assert.equal($('#teacherRecent'), null, 'home no longer hosts a work feed');
   ctx.click($('[data-type-tab="homework"]'));
   await settle();
-  const record = $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3').textContent === 'পরের সপ্তাহের কাজ');
+  const record = recordCard('পরের সপ্তাহের কাজ');
+  assert.ok(record, 'the future-dated work is reachable on the homework records tab');
   assert.equal(record.querySelector('.teaching-progress-line').textContent, 'অগ্রগতি ০/২ জন');
-  assert.equal(record.querySelector('.teaching-progress-line').classList.contains('idle'), true);
+  assert.equal(record.querySelector('.teaching-progress-line').classList.contains('idle'), true, 'a future deadline is idle, not flagged pending');
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
 });
 
-test('a home card opens the marking sheet and bulk fill marks the whole class', async () => {
+test('the উপস্থিতি ক্লাস tab opens the marking sheet and bulk fill marks the whole class', async () => {
   await teachingRepository.saveActivity({ type: 'routine', title: 'গতকালের ক্লাস', subject: 'গণিত', className: 'দশম শ্রেণি', date: shift(-1), time: '11:00', duration: 60, status: 'published', details: 'অনুশীলনী' });
   await settle();
-  const card = homeCard('গতকালের ক্লাস');
+  assert.equal($('#teacherRecent'), null, 'হোমে কাজ-ফিড নেই — উপস্থিতি শুধু রুটিন ট্যাবে আসে');
   assert.equal($('#navDot-routine').textContent, '২', 'দুটি উপস্থিতি বাকি');
-  ctx.click(card.querySelector('.teaching-actions .primary'));
+  ctx.click($('[data-type-tab="routine"]'));
+  await settle();
+  const recordCard = $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3')?.textContent === 'গতকালের ক্লাস');
+  ctx.click(recordCard.querySelector('.teaching-actions .primary'));
   assert.equal($('#teacherModalBackdrop').hidden, false);
   const fields = $$('[data-progress-id]');
   assert.equal(fields.length, 2, 'দশম শ্রেণি has two approved students');
@@ -148,14 +182,13 @@ test('a home card opens the marking sheet and bulk fill marks the whole class', 
   ctx.submit($('#teacherProgressForm'));
   await settle();
   assert.equal($('#teacherModalBackdrop').hidden, true);
-  assert.equal(homeCard('গতকালের ক্লাস').querySelector('.teaching-progress-line'), null, 'the home card drops its pending line');
   assert.equal($('#navDot-routine').textContent, '১', 'one attendance record is still open');
-  ctx.click($('[data-type-tab="routine"]'));
-  await settle();
-  const record = $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3')?.textContent === 'গতকালের ক্লাস');
-  assert.match(record.querySelector('.teaching-progress-line').textContent, /২\/২ জন • সব নথিভুক্ত/);
+  const marked = $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3')?.textContent === 'গতকালের ক্লাস');
+  assert.equal(marked.querySelector('.teaching-progress-line.pending'), null, 'the record card drops its pending line');
+  assert.match(marked.querySelector('.teaching-progress-line').textContent, /২\/২ জন • সব নথিভুক্ত/);
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
+  assert.equal($('#teacherRecent'), null, 'নথিভুক্তির পরেও হোমে কোনো কাজ-ফিড ফেরে না');
 });
 
 test('"শুধু বাকিরা" filters assignment evaluation rows and bulk fill respects the filter', async () => {
@@ -215,17 +248,20 @@ test('the student roster still needs a search before listing anyone', () => {
   assert.match($('#teacherStudentCount').textContent, /১ জন অনুমোদিত শিক্ষার্থী/);
 });
 
-test('attendance marks clear the home card\u2019s pending line when all present is saved', async () => {
+test('attendance marking from the উপস্থিতি ক্লাস tab clears its pending line when all present is saved', async () => {
   await teachingRepository.saveActivity({ type: 'routine', title: 'আজকের গণিত ক্লাস', subject: 'গণিত', className: 'দশম শ্রেণি', date: todayISO(), time: '09:00', duration: 60, status: 'published', details: 'অনুশীলনী' });
   await settle();
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
-  const card = homeCard('আজকের গণিত ক্লাস');
-  assert.match(card.querySelector('.teaching-progress-line').textContent, /উপস্থিতি বাকি/);
-  ctx.click(card.querySelector('.teaching-actions .primary'));
+  assert.equal($('#teacherRecent'), null, 'হোমপেজে কখনো কাজ-ফিড থাকবে না — উপস্থিতি রুটিন ট্যাবেই');
+  ctx.click($('[data-type-tab="routine"]'));
+  await settle();
+  const findRoutineCard = () => $$('#teacherRecordList .teaching-card').find(c => c.querySelector('h3')?.textContent === 'আজকের গণিত ক্লাস');
+  assert.match(findRoutineCard().querySelector('.teaching-progress-line').textContent, /উপস্থিতি বাকি/);
+  ctx.click(findRoutineCard().querySelector('.teaching-actions .primary'));
   const allPresent = $$('.teacher-quick-fill [data-quick-fill]').find(b => b.textContent === 'সবাই উপস্থিত');
   ctx.click(allPresent); ctx.submit($('#teacherProgressForm')); await settle();
-  assert.equal(homeCard('আজকের গণিত ক্লাস').querySelector('.teaching-progress-line'), null);
+  assert.equal(findRoutineCard().querySelector('.teaching-progress-line.pending'), null);
   assert.equal($('#navDot-routine').textContent, '১', 'only the older open record remains');
 });
 
@@ -313,7 +349,12 @@ test('Teacher Settings re-entry clears a previously open group and keeps one act
 });
 
 test('the grid doors open their own screens and the routine lives on one screen', async () => {
-  ctx.click($('#teacherHome [data-teacher-view="routine-view"]'));
+  /* ২০২৬-১০-২০: routine/attendance no longer has a home tile — its only door
+     is the ক্লাস hub submenu (read-only routine with attendance sessions). */
+  ctx.click($('.admin-bottom [data-teacher-view="classes"]'));
+  await settle();
+  assert.equal($('#teacherClasses').hidden, false);
+  ctx.click($('#teacherClasses .teacher-submenu [data-teacher-view="routine-view"]'));
   await settle();
   assert.equal($('#teacherRoutine').hidden, false, 'উপস্থিতি door opens the routine screen');
   const tabs = $$('.teacher-routine-tabs [data-routine-tab]');
@@ -323,15 +364,27 @@ test('the grid doors open their own screens and the routine lives on one screen'
   await settle();
   assert.equal($('.teacher-routine-tabs [data-routine-tab="exam"]').getAttribute('aria-selected'), 'true');
   assert.equal($('.teacher-routine-tabs [data-routine-tab="today"]').getAttribute('aria-selected'), 'false');
+  ctx.click($('.admin-bottom [data-teacher-view="home"]'));
+  await settle();
   ctx.click($('#teacherHome [data-teacher-view="homework"]'));
   await settle();
   assert.equal($('#teacherRecords').hidden, false, 'বাড়ির কাজ door opens the records screen');
-  ctx.click($('#teacherHome [data-teacher-view="courses"]'));
+  ctx.click($('.admin-bottom [data-teacher-view="home"]'));
+  await settle();
+  /* উপকরণ now lives under the কাজ দিন hub instead of a home tile. */
+  ctx.click($('#teacherHome .teacher-home-tile[data-teacher-view="academic"]'));
+  await settle();
+  ctx.click($('#teacherAcademic [data-teacher-view="courses"]'));
   await settle();
   assert.equal($('#teacherCourses').hidden, false, 'উপকরণ door opens its own screen');
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
   assert.equal($('#teacherHome').hidden, false, 'bottom nav brings the teacher back home');
+  /* The new suggestion home tile opens the suggestion records screen. */
+  ctx.click($('#teacherHome .teacher-home-tile[data-teacher-view="suggestion"]'));
+  await settle();
+  assert.equal($('#teacherRecords').hidden, false);
+  assert.equal($('[data-type-tab="suggestion"]').getAttribute('aria-selected'), 'true');
 });
 
 test('the exam seat lands on one CTA and four doors, not a nine-tile shelf', async () => {

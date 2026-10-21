@@ -40,14 +40,14 @@ function shellBar(document, exitId) {
     .find(bar => bar.querySelector(`#${exitId}`));
 }
 
-/** The shared shell is identical; teacher alone has the requested identity slot. */
+/** The shared shell is identical across every panel. */
 function normalised(bar) {
   // ids, titles and data-actions differ per panel by necessity (that is how
-  // the shell wires them); teacher's visible name is the sole content addition.
-  // Remove that identity slot before comparing the common APC brand/bell/sign-out.
-  const shared = bar.cloneNode(true);
-  shared.querySelector('.teacher-header-name')?.remove();
-  return shared.outerHTML
+  // the shell wires them); strip those volatile attributes before comparing
+  // the common APC brand/bell/sign-out structure. The teacher name used to be
+  // an extra topbar slot but left the bar on 2026-10-21 (it now lives only on
+  // the welcome hero card), so nothing needs removing first.
+  return bar.outerHTML
     .replace(/<strong class="app-brand-name">[\s\S]*?<\/strong>/, '')
     .replace(/\s(?:id|title|data-action)="[^"]*"/g, '');
 }
@@ -69,7 +69,7 @@ test('the login page keeps its brand-only card (no topbar, no bell, no sign-out)
   assert.equal(auth.querySelectorAll('#notificationButton, .app-topbar-exit').length, 0, 'bell or sign-out on the login screen');
 });
 
-test('every panel shares the APC topbar; teacher also shows the teacher identity', () => {
+test('every panel shares the APC topbar; teacher identity lives only on its hero card', () => {
   const shapes = new Map();
   for (const page of PAGES) {
     const document = markup(page.file);
@@ -87,14 +87,15 @@ test('every panel shares the APC topbar; teacher also shows the teacher identity
       assert.equal(bars.length, 1, `${page.file} paints an unexpected number of topbars`);
       const actions = bar.querySelector('.app-topbar-actions');
       assert.ok(actions, `${page.file}: the action cluster is missing`);
+      // ২০২৬-১০-২১: the teacher name left the topbar — it duplicated the welcome
+      // hero card. Every panel's topbar is now strictly brand + bell + sign-out.
       const teacherName = actions.querySelector('.teacher-header-name');
+      assert.equal(teacherName, null, `${page.file}: no identity-name slot belongs in the shared topbar`);
       if (page.file === 'teacher.html') {
-        assert.ok(teacherName, 'teacher topbar needs the teacher name slot');
-        assert.equal(teacherName.id, 'teacherHeaderName');
-        assert.equal(teacherName.nextElementSibling, actions.querySelector('#notificationButton'), 'teacher name belongs before the existing bell');
-        assert.equal(teacherName.hidden, true, 'an unpopulated profile does not show a blank name');
-      } else {
-        assert.equal(teacherName, null, `${page.file}: teacher identity must not leak into another panel`);
+        // The teacher's identity still shows exactly once — on the home hero card.
+        const heroTitle = document.querySelector('#teacherHomeTitle');
+        const heroBadge = document.querySelector('#teacherIdentityBadge');
+        assert.ok(heroTitle && heroBadge, 'teacher identity stays on the welcome hero card, not the topbar');
       }
       const bell = actions.querySelector('#notificationButton');
       assert.ok(bell, `${page.file}: the notification bell is missing`);
@@ -105,9 +106,9 @@ test('every panel shares the APC topbar; teacher also shows the teacher identity
       assert.equal(exit.id, page.exit, `${page.file}: sign-out changed id`);
       assert.ok(drawable(exit.querySelector('svg[data-icon="logout"]')), `${page.file}: sign-out has no icon`);
       assert.equal(actions.querySelectorAll('button').length, 2, `${page.file}: the topbar holds more than the bell and sign-out`);
-      // Nothing else may sit in the bar — the teacher identity slot is the
-      // only allowed content addition; buttons remain the original bell/exit.
-      assert.equal(bar.querySelectorAll('[data-theme-toggle], time, .student-date, .manager-top-actions, .topbar-chip').length, 0,
+      // Nothing else may sit in the bar — the buttons remain the original
+      // bell/exit pair, and no identity name slot is allowed back in.
+      assert.equal(bar.querySelectorAll('[data-theme-toggle], time, .student-date, .manager-top-actions, .topbar-chip, .teacher-header-name').length, 0,
         `${page.file}: an extra control is back in the topbar`);
       assert.equal(bar.querySelectorAll('button').length, 2, `${page.file}: the topbar has an extra button`);
       // Dark mode still has a home on every panel: the same switch row the

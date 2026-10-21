@@ -59,7 +59,7 @@
     .admin-feature-tile, .admin-stat-tile, .dash-finance-tile, .admin-stat,
     .staff-stat-tile, .staff-toolbar, .student-filter-panel, .student-filter-toggle,
     .class-context, .exam-question, .mcq-question, .exam-form, .exam-timer,
-    .exam-template-panel, .teacher-toolbar, .teacher-summary>div, .rc-form,
+    .exam-template-panel, .teacher-toolbar, .rc-form,
     .recovery-summary, .notice-detail, .pay-pulse-tile, .pay-search-card,
     .settings-list, .admin-more-menu, .student-row, .student-record-identity,
     .student-record-actions, .profile-stats>div, .fee-balance-grid>div,
@@ -159,7 +159,7 @@
 
   /* 3b. Headline surfaces get a brand wash and a coloured halo, so the first
      card on a page reads as the first card on a page. */
-  .study-progress-card, .admin-hero, .teacher-summary, .pay-search-card,
+  .study-progress-card, .admin-hero, .pay-search-card,
   .finance-search-card, .rc-head, .learning-summary, .recovery-summary {
     background-image: linear-gradient(135deg, var(--tone-blue-soft), transparent 46%, var(--tone-violet-soft));
   }

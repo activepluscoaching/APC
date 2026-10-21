@@ -8,8 +8,12 @@ for (const width of [320, 390, 1024]) {
     await expect(page.locator('#teacherHome')).toBeVisible();
     await expect(page.locator('#teacherHome .teacher-home-tile')).toHaveCount(6);
     expect(await page.locator('.teacher-home-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3);
-    await expect(page.locator('#teacherHomeStudentTotal')).toBeVisible();
-    expect(await page.locator('#teacherHomeStudentTotal').evaluate(el => Boolean(el.closest('.teacher-summary-section')))).toBe(true);
+    // ক্লাস উপস্থিতি হোম থেকে সম্পূর্ণ সরানো হয়েছে — একমাত্র দরজা ক্লাস হাব সাবমেনুতে।
+    await expect(page.locator('#teacherHome [data-teacher-view="routine-view"]')).toHaveCount(0);
+    await page.locator('.admin-bottom [data-teacher-view="classes"]').click();
+    await expect(page.locator('#teacherClasses .teacher-submenu [data-teacher-view="routine-view"]')).toBeVisible();
+    // ২০২৬-১০-২১: "আজকের সারাংশ" KPI সারফেস হোম থেকে বাদ — কোনো summary কার্ড থাকবে না।
+    await expect(page.locator('#teacherHome .teacher-summary-section, #teacherHomeStudentTotal')).toHaveCount(0);
     await expect(page.locator('#teacherHome .hero-slider, #teacherHome .admin-hero')).toHaveCount(0);
     await expect(page.locator('#notificationButton')).toBeVisible();
     await expect(page.locator('.teacher-shell .admin-bottom .admin-bottom-item')).toHaveCount(5);

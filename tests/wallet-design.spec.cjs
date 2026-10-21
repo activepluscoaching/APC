@@ -84,7 +84,11 @@ for (const role of ['manager', 'teacher']) test(`${role} service shortcuts and b
   const targetHome = role === 'manager' ? 'dashboard' : 'home';
   const shortcuts = page.locator(homeShortcuts[role]);
   const routes = await shortcuts.evaluateAll((buttons, attribute) => buttons.map(button => button.getAttribute(attribute)), attribute);
-  expect(routes).toHaveLength(role === 'manager' ? 9 : 7);
+  // 2026-10-20: the teacher home grid now holds six screen-only tiles (the
+  // duplicate pill row and the form-opening shortcut were consolidated into
+  // the কাজ দিন hub); the other portals keep their previous counts.
+  const expectedShortcuts = role === 'manager' ? 9 : role === 'teacher' ? 6 : 7;
+  expect(routes).toHaveLength(expectedShortcuts);
   for (let index = 0; index < routes.length; index++) {
     const route = routes[index];
     const backTarget = (role === 'manager' && route === 'exams') || (role === 'teacher' && route === 'online-exams') ? 'academic' : targetHome;

@@ -74,10 +74,8 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 844, height: 390 }
   test(`the teacher activity form fits the mobile layout at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await enterPortal(page, 'teacher');
-    // The homework tile opens the homework screen; its create action opens the
-    // shared activity form (creation is centred in the work surfaces, not More).
-    await page.locator('#teacherHome .teacher-home-tile[data-teacher-view=homework]').click();
-    await page.locator('#teacherNewActivity').click();
+    // ২০২৬-১০-২১: the home homework hero opens the shared activity form directly.
+    await page.locator('#teacherHome [data-new-activity=homework]').click();
     await expect(page.locator('#teacherActivityForm')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(page.locator('#activity-title')).toHaveCSS('font-size', '16px');

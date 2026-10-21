@@ -377,17 +377,20 @@ test('workflow 7 — a counter payment shows on the student ফি screen, which
 test('workflow 8 — a teacher notice reaches its own class only: board and notification feed', async () => {
   const base = await seedAcademics();
   const teacher = await openStaff('teacher.html', 'teacher', base);
-  /* The teacher writes it in the panel itself: কাজ দিন হাব → নোটিশ দিন, which
+  /* The teacher writes it in the panel itself: the কাজ দিন hub → নোটিশ দিন
      opens the self-contained notice editor modal directly over the hub (the
-     same unified create flow as বাড়ির কাজ/সাজেশন). The notice board screen
-     stays reachable from the home নোটিশ tile. */
+     same unified create flow as বাড়ির কাজ/সাজেশন). The 2026 Home redesign is
+     create-first for academic work; the notice board screen keeps its own Home
+     chip ("নোটিশ বোর্ড"), whose "+ নোটিশ" button opens this same composer. */
   await openStaffPanel(teacher, 'teacher', {
     provision: false,
     importPanel: () => import('../js/teacher.js'),
     shellId: 'teacherShell',
     ready: () => teacher.$$('#teacherClassFilter option').length > 1
   });
-  teacher.click(teacher.$('.teacher-home-tile[data-teacher-view="academic"]'));
+  teacher.click(teacher.$('.admin-bottom [data-teacher-view="classes"]'));
+  await teacher.flush(3);
+  teacher.click(teacher.$('#teacherClasses .teacher-submenu [data-teacher-view="academic"]'));
   await teacher.flush(6);
   assert.equal(teacher.$('#teacherAcademic').hidden, false, 'একাডেমিক is the hub seat');
   teacher.click(teacher.$('#teacherAcademic [data-new-notice]'));

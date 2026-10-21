@@ -6,10 +6,13 @@ for (const width of [320, 390, 1024]) {
     await page.setViewportSize({ width, height: 844 });
     await enterPortal(page, 'teacher');
     await expect(page.locator('#teacherHome')).toBeVisible();
-    await expect(page.locator('#teacherHome .teacher-home-tile')).toHaveCount(6);
-    expect(await page.locator('.teacher-home-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3);
-    // ক্লাস উপস্থিতি হোম থেকে সম্পূর্ণ সরানো হয়েছে — একমাত্র দরজা ক্লাস হাব সাবমেনুতে।
-    await expect(page.locator('#teacherHome [data-teacher-view="routine-view"]')).toHaveCount(0);
+    // ২০২৬-১০-২১ রিডিজাইন: চারটি ফুল-ওয়াইড হিরো কার্ড এক কলামে, পুরোনো ৩×২ গ্রিড নেই।
+    await expect(page.locator('#teacherHome .teacher-action-card')).toHaveCount(4);
+    expect(await page.locator('.teacher-home-actions').evaluate(el => getComputedStyle(el).flexDirection)).toBe('column');
+    await expect(page.locator('#teacherHome .teacher-home-tile')).toHaveCount(0);
+    // রুটিন দরজা হোমে ফিরেছে — তবে শুধু-পঠন (routine-view); উপস্থিতি-মার্কিং দরজা নয়।
+    await expect(page.locator('#teacherHome [data-teacher-view="routine-view"]')).toHaveCount(1);
+    await expect(page.locator('#teacherHome [data-open-routine-session]')).toHaveCount(0);
     await page.locator('.admin-bottom [data-teacher-view="classes"]').click();
     await expect(page.locator('#teacherClasses .teacher-submenu [data-teacher-view="routine-view"]')).toBeVisible();
     // ২০২৬-১০-২১: "আজকের সারাংশ" KPI সারফেস হোম থেকে বাদ — কোনো summary কার্ড থাকবে না।
@@ -29,7 +32,10 @@ for (const width of [320, 390, 1024]) {
     await expect(page.locator('#teacherStudents')).toBeVisible();
     await expect(page.locator('.admin-bottom [data-teacher-view="students"]')).toHaveAttribute('aria-current', 'page');
     await page.locator('.admin-bottom [data-teacher-view="home"]').click();
-    await page.locator('.teacher-home-tile[data-teacher-view="homework"]').click();
+    // Home heroes are create-first; the records screen opens via the নম্বর
+    // এন্ট্রি chip and the homework type tab (which lights the ক্লাস seat).
+    await page.locator('#teacherHome .teacher-action-secondary [data-teacher-view="exam"]').click();
+    await page.locator('.teacher-type-tabs [data-type-tab="homework"]').click();
     await expect(page.locator('#teacherRecords')).toBeVisible();
     await expect(page.locator('.admin-bottom [data-teacher-view="classes"]')).toHaveAttribute('aria-current', 'page');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

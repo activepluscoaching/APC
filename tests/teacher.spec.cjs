@@ -29,7 +29,10 @@ async function enter(page) {
 async function goAcademic(page) {
   await page.locator('.admin-bottom [data-teacher-view=home]').click();
   await expect(page.locator('#teacherHome')).toBeVisible();
-  await page.locator('#teacherHome .teacher-home-tile[data-teacher-view=academic]').click();
+  // ২০২৬-১০-২১: the academic hub door moved off Home into the ক্লাস seat.
+  await page.locator('.admin-bottom [data-teacher-view=classes]').click();
+  await expect(page.locator('#teacherClasses')).toBeVisible();
+  await page.locator('#teacherClasses .teacher-submenu [data-teacher-view=academic]').click();
   await expect(page.locator('#teacherAcademic')).toBeVisible();
 }
 async function create(page, type, title, overrides = {}) {
@@ -93,15 +96,11 @@ async function seed(page, activities) {
   }, activities);
 }
 
-test('the Teacher home homework tile opens the homework screen, whose create button opens the form', async ({ page }) => {
+test('the Teacher home homework hero opens the reused create form directly', async ({ page }) => {
   await enter(page);
   await expect(page.locator('#teacherClassFilter option').first()).toHaveText('সব নির্ধারিত শ্রেণি');
-  // Home tiles are screen doors; no form pops directly over the launcher.
-  await page.locator('#teacherHome .teacher-home-tile[data-teacher-view=homework]').click();
-  await expect(page.locator('#teacherRecords')).toBeVisible();
-  await expect(page.locator('#teacherModalBackdrop')).toBeHidden();
-  // The reused assignment form opens from the in-screen create action.
-  await page.locator('#teacherNewActivity').click();
+  // Home heroes are create doors: the reused assignment form pops over Home.
+  await page.locator('#teacherHome [data-new-activity=homework]').click();
   await expect(page.locator('#teacherModalBackdrop')).toBeVisible();
   await expect(page.locator('#teacherModalTitle')).toContainText('নতুন');
   await expect(page.locator('#teacherModalTitle')).toContainText('কাজ');
@@ -265,8 +264,12 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
     const responsiveHeader = await page.evaluate(() => {
       const topbarName = document.querySelector('.teacher-header-name');
       const bell = document.querySelector('#notificationButton').getBoundingClientRect();
-      const columns = getComputedStyle(document.querySelector('.teacher-home-grid')).gridTemplateColumns.trim().split(/\s+/).length;
-      return topbarName === null && bell.width > 0 && columns === 3 && document.documentElement.scrollWidth <= innerWidth;
+      // ২০২৬-১০-২১: Home is now a single column of full-width hero action cards.
+      const actions = document.querySelector('.teacher-home-actions');
+      const cards = actions ? [...actions.querySelectorAll('.teacher-action-card')] : [];
+      const singleFullWidth = cards.length === 4 &&
+        cards.every(card => Math.abs(card.getBoundingClientRect().width - actions.getBoundingClientRect().width) < 2);
+      return topbarName === null && bell.width > 0 && singleFullWidth && document.documentElement.scrollWidth <= innerWidth;
     });
     expect(responsiveHeader).toBe(true);
     await expect(page.locator('.admin-bottom-item')).toHaveCount(5);
@@ -359,8 +362,11 @@ test('concurrent teacher tabs preserve both saves and immediately refresh each o
   await Promise.all([seed(page, [{ title: 'প্রথম ট্যাবের কাজ' }]), seed(other, [{ title: 'দ্বিতীয় ট্যাবের কাজ' }])]);
   // The home work feed is gone, so cross-tab refresh is verified on the
   // suggestion records surface both tabs own — each must list both saves.
+  // Home heroes are create-first, so records open via the নম্বর এন্ট্রি chip
+  // and the suggestion type tab.
   for (const p of [page, other]) {
-    await p.locator('#teacherHome .teacher-home-tile[data-teacher-view=suggestion]').click();
+    await p.locator('#teacherHome .teacher-action-secondary [data-teacher-view=exam]').click();
+    await p.locator('.teacher-type-tabs [data-type-tab=suggestion]').click();
     await expect(p.locator('#teacherRecordList .teaching-card')).toHaveCount(2);
   }
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).activities.length, KEY)).toBe(2);

@@ -12,7 +12,7 @@
  * that, long-lived app windows re-check whenever they become visible. */
 import { requestPersistentStorage } from './storage-safety.js';
 
-export const SW_VERSION = 387;
+export const SW_VERSION = 388;
 
 export function registerServiceWorker() {
   void requestPersistentStorage();

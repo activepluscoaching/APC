@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=387"></script>
-  <script src="js/app-entry.js?v=387" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=387"></script>
-  <script src="js/topbar-connectivity.js?v=387" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=387"></script>
-  <script src="js/appearance-boot.js?v=387"></script>
-  <script src="js/theme-logos.js?v=387"></script>
+  <script src="js/sanitize-url.js?v=388"></script>
+  <script src="js/app-entry.js?v=388" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=388"></script>
+  <script src="js/topbar-connectivity.js?v=388" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=388"></script>
+  <script src="js/appearance-boot.js?v=388"></script>
+  <script src="js/theme-logos.js?v=388"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=387">
-  <link rel="stylesheet" href="css/ui-layout.css?v=387">
-  <link rel="stylesheet" href="css/ui-components.css?v=387">
-  <link rel="stylesheet" href="css/ui-forms.css?v=387">
-  <link rel="stylesheet" href="css/ui-features.css?v=387">
-  <link rel="stylesheet" href="css/notice-board.css?v=387">
-  <link rel="stylesheet" href="css/ui-status.css?v=387">
-  <link rel="stylesheet" href="css/ui-auth.css?v=387">
-  <link rel="stylesheet" href="css/app-polish.css?v=387">
-  <link rel="stylesheet" href="css/student-record.css?v=387">
-  <link rel="stylesheet" href="css/exam-archive.css?v=387">
-  <link rel="stylesheet" href="css/academics.css?v=387">
-  <link rel="stylesheet" href="css/notifications.css?v=387">
-  <link rel="stylesheet" href="css/course-hub.css?v=387">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=387">
+  <link rel="stylesheet" href="css/foundation.css?v=388">
+  <link rel="stylesheet" href="css/ui-layout.css?v=388">
+  <link rel="stylesheet" href="css/ui-components.css?v=388">
+  <link rel="stylesheet" href="css/ui-forms.css?v=388">
+  <link rel="stylesheet" href="css/ui-features.css?v=388">
+  <link rel="stylesheet" href="css/notice-board.css?v=388">
+  <link rel="stylesheet" href="css/ui-status.css?v=388">
+  <link rel="stylesheet" href="css/ui-auth.css?v=388">
+  <link rel="stylesheet" href="css/app-polish.css?v=388">
+  <link rel="stylesheet" href="css/student-record.css?v=388">
+  <link rel="stylesheet" href="css/exam-archive.css?v=388">
+  <link rel="stylesheet" href="css/academics.css?v=388">
+  <link rel="stylesheet" href="css/notifications.css?v=388">
+  <link rel="stylesheet" href="css/course-hub.css?v=388">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=388">
   <!-- Teacher panel redesign (2026-10-20, v2): presentation-only layer scoped to
        .teacher-reference — the body class teacher.html alone carries — so nothing
        here reaches student/admin/manager/payment. Markup, routes, element IDs and
@@ -377,15 +377,13 @@
   font-weight: 700;
 }
 
-/* 04.6 Service launchers: glass tiles, six distinct tones. The
-   three-column grid itself is owned by .pay-grid.is-3; only gaps and
-   tile presentation are styled, so the computed column count stays 3. ── */
-.teacher-reference #teacherHome .teacher-home-grid,
+/* 04.6 Service launchers. The কাজ দিন / আরও hubs keep their three-column
+   .pay-grid.is-3 glass tiles; the teacher Home now uses mobile-first,
+   full-width hero action cards (single column, soft surface, green accent). ── */
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) {
   gap: 10px;
   margin: 4px 0 14px;
 }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile {
   --tone: var(--tone-mint);
   --tone-soft: var(--tone-mint-soft);
@@ -401,7 +399,6 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   transition: transform .16s var(--t-ease), border-color .16s var(--t-ease);
 }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile::before,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile::before {
   content: '';
   position: absolute;
@@ -410,26 +407,17 @@
   pointer-events: none;
   background: radial-gradient(120% 92% at 100% 0, var(--tone-soft), transparent 62%);
 }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile > *,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile > * { position: relative; }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:active,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:active {
   transform: scale(.97);
   border-color: color-mix(in srgb, var(--tone) 45%, var(--glass-border));
 }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(1),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(2),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(3),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(4),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(5),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
-.teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:nth-child(6),
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
-.teacher-reference #teacherHome .teacher-home-grid .pay-tile-icon,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon {
   width: 46px;
   height: 46px;
@@ -438,9 +426,7 @@
   background: var(--tone-soft);
   color: var(--tone);
 }
-.teacher-reference #teacherHome .teacher-home-grid .pay-tile-icon svg,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon svg { width: 24px; height: 24px; }
-.teacher-reference #teacherHome .teacher-home-grid .pay-tile-label,
 .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-label {
   color: var(--color-text);
   font-size: 12px;
@@ -465,6 +451,123 @@
   color: var(--color-warning);
 }
 .teacher-reference #teacherMore > .pay-grid > .pay-tile { min-height: 112px; }
+
+/* 04.7 Home quick actions — full-width mobile-first hero cards. One column,
+   title + one-line sub on the left, enlarged ai-3d artwork on the right;
+   each card fires the action directly (create flow or read-only routine). ── */
+.teacher-reference .teacher-home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+.teacher-reference .teacher-action-card {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 100px;
+  padding: 14px 16px;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  transition: transform .16s var(--t-ease), box-shadow .18s var(--t-ease), border-color .16s var(--t-ease);
+}
+.teacher-reference .teacher-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+.teacher-reference .teacher-action-card > * { position: relative; }
+.teacher-reference .teacher-action-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.teacher-reference .teacher-action-title {
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.teacher-reference .teacher-action-sub {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.teacher-reference .teacher-action-art {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: var(--tone);
+  background: var(--tone-soft);
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+}
+.teacher-reference .teacher-action-art svg { width: 42px; height: 42px; }
+.teacher-reference .teacher-action-card:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+.teacher-reference .teacher-action-card:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+.teacher-reference .teacher-action-card:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+.teacher-reference .teacher-action-card.is-accent {
+  --tone: var(--color-primary);
+  --tone-soft: var(--glass-accent-soft);
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
+}
+.teacher-reference .teacher-action-card:active { transform: scale(.98); }
+.teacher-reference .teacher-action-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.teacher-reference .teacher-action-secondary button {
+  flex: 1 1 30%;
+  min-width: 0;
+  padding: 11px 8px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  box-shadow: var(--glass-shadow);
+  transition: transform .15s var(--t-ease), border-color .15s var(--t-ease);
+}
+.teacher-reference .teacher-action-secondary button:active {
+  transform: scale(.97);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--glass-border));
+}
+@media (hover: hover) {
+  .teacher-reference .teacher-action-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
+    box-shadow: var(--glass-shadow-strong);
+  }
+  .teacher-reference .teacher-action-secondary button:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--color-primary) 38%, var(--glass-border));
+  }
+}
 
 .teacher-reference .teaching-card-head {
   display: flex;
@@ -1301,7 +1404,7 @@
 }
 .teacher-reference .teacher-view:not([hidden]) .teacher-home-intro { animation: apc-teacher-rise .32s var(--t-ease) both; }
 .teacher-reference .teacher-view:not([hidden]) .teacher-home-today { animation: apc-teacher-rise .32s var(--t-ease) .14s both; }
-.teacher-reference .teacher-view:not([hidden]) .teacher-home-grid { animation: apc-teacher-rise .32s var(--t-ease) .2s both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-actions { animation: apc-teacher-rise .32s var(--t-ease) .2s both; }
 @media (prefers-reduced-motion: reduce) {
   .teacher-reference *,
   .teacher-reference *::before,
@@ -1354,7 +1457,6 @@ body.teacher-reference {
 }
 /* Hover elevation on pointer devices; touch keeps the existing :active press. */
 @media (hover: hover) {
-  .teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:hover,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:hover {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
@@ -1374,26 +1476,29 @@ body.teacher-reference {
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene { border-radius: 15px; }
   .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon { width: 46px; height: 46px; }
   .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 18.5px; }
-  .teacher-reference #teacherHome .teacher-home-grid,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) { gap: 8px; }
-  .teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile {
     min-height: 96px;
     padding: 11px 4px 10px;
     border-radius: 17px;
   }
-  .teacher-reference #teacherHome .teacher-home-grid .pay-tile-icon,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon {
     width: 42px;
     height: 42px;
     border-radius: 13px;
   }
+  .teacher-reference .teacher-home-actions { gap: 10px; }
+  .teacher-reference .teacher-action-card { min-height: 88px; padding: 12px 14px; gap: 12px; border-radius: 16px; }
+  .teacher-reference .teacher-action-art { width: 50px; height: 50px; border-radius: 14px; }
+  .teacher-reference .teacher-action-art svg { width: 36px; height: 36px; }
+  .teacher-reference .teacher-action-title { font-size: 14px; }
+  .teacher-reference .teacher-action-sub { font-size: 11.5px; }
   .teacher-reference .chip-row .day-tab { padding: 8px 12px; font-size: 12px; }
   .teacher-reference .teacher-type-tabs .pay-tile { font-size: 10.5px; }
 }
   </style>
-  <script type="module" src="js/ui-accessibility.js?v=387"></script>
-  <script src="js/launch-screen.js?v=387" defer></script>
+  <script type="module" src="js/ui-accessibility.js?v=388"></script>
+  <script src="js/launch-screen.js?v=388" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -1424,7 +1529,41 @@ body.teacher-reference {
 <section class="teacher-home-today admin-card" aria-labelledby="teacherHomeTodayTitle">        <div class="teacher-section-heading"><h2 id="teacherHomeTodayTitle">আজকের ক্লাস</h2><small id="teacherTodayClassCount">—</small></div>
         <div id="teacherTodayClasses" class="teacher-record-list"></div>
 </section>
-<nav class="teacher-home-grid pay-grid is-3" aria-label="শিক্ষকের কাজ"><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="academic"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">কাজ দিন</span></button><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="homework"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">বাড়ির কাজ</span></button><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="suggestion"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="suggestion" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/suggestion.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">সাজেশন</span></button><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="notice"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="notice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/notice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">নোটিশ</span></button><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="online-exams"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="exam-create" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam-create.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">পরীক্ষা তৈরি</span></button><button class="teacher-home-tile pay-tile" type="button" data-teacher-view="exam"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="marks-entry" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/marks-entry.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">নম্বর এন্ট্রি</span></button></nav>
+<nav class="teacher-home-actions" aria-label="দ্রুত কাজ">
+          <button class="teacher-action-card" type="button" data-new-activity="homework" aria-label="বাড়ির কাজ দিন — নতুন হোমওয়ার্ক তৈরি করুন">
+            <span class="teacher-action-body">
+              <span class="teacher-action-title">বাড়ির কাজ দিন</span>
+              <span class="teacher-action-sub">শ্রেণিতে হোমওয়ার্ক দিন ও জমা দেখুন</span>
+            </span>
+            <span class="teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="teacher-action-card" type="button" data-new-activity="suggestion" aria-label="সাজেশন দিন — গুরুত্বপূর্ণ সাজেশন প্রকাশ করুন">
+            <span class="teacher-action-body">
+              <span class="teacher-action-title">সাজেশন দিন</span>
+              <span class="teacher-action-sub">গুরুত্বপূর্ণ সাজেশন প্রকাশ করুন</span>
+            </span>
+            <span class="teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="suggestion" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/suggestion.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="teacher-action-card is-accent" type="button" data-teacher-exam="new-mcq" aria-label="দ্রুত MCQ পরীক্ষা নিন — কয়েক ট্যাপে MCQ চালু করুন">
+            <span class="teacher-action-body">
+              <span class="teacher-action-title">দ্রুত MCQ পরীক্ষা</span>
+              <span class="teacher-action-sub">৩–৫ ট্যাপে MCQ চালু করুন</span>
+            </span>
+            <span class="teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="mcq" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/mcq.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="teacher-action-card" type="button" data-teacher-view="routine-view" aria-label="ক্লাস রুটিন দেখুন — আজকের ও সপ্তাহের রুটিন">
+            <span class="teacher-action-body">
+              <span class="teacher-action-title">ক্লাস রুটিন</span>
+              <span class="teacher-action-sub">আজকের ও সপ্তাহের রুটিন দেখুন</span>
+            </span>
+            <span class="teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="calendar" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/calendar.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <div class="teacher-action-secondary" role="group" aria-label="অন্যান্য কাজ">
+            <button type="button" data-teacher-view="courses" aria-label="উপকরণ ও লেকচার শিট খুলুন">উপকরণ</button>
+            <button type="button" data-teacher-view="notice" aria-label="নোটিশ বোর্ড খুলুন — তালিকা দেখুন বা নতুন নোটিশ দিন">নোটিশ বোর্ড</button>
+            <button type="button" data-teacher-view="exam" aria-label="নম্বর এন্ট্রি করুন">নম্বর এন্ট্রি</button>
+          </div>
+        </nav>
       </section>
       <section id="teacherRecords" class="teacher-view" aria-labelledby="teacherRecordsTitle" hidden>
         <div class="page-intro"><button class="pay-back" type="button" data-teacher-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><div><h1 id="teacherRecordsTitle">পরীক্ষা</h1></div><button id="teacherNewActivity" class="admin-btn primary" type="button">+ নতুন যোগ করুন</button></div>
@@ -1538,7 +1677,7 @@ body.teacher-reference {
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=387"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=387"></script>
+  <script type="module" src="js/theme-entry.js?v=388"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=388"></script>
 </body>
 </html>

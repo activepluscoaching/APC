@@ -214,45 +214,68 @@ test('একাডেমিক is one hub whose six cards open the screens that 
   assert.match(read('js/exam-manager.js'), /return \{\s*open\(screen = ''\)/, 'the workspace exposes a deep link');
 });
 
-test('teacher Home is the launcher: welcome, one 3-column grid over existing screens, today, no work feed', () => {
-  /* মাস্টার প্রম্পট ২০২৬-১০: Home = স্বাগতম + একটি ৩-কলাম আইকন গ্রিড +
-     আজকের ক্লাস (Manager routine)। প্রতিটি হোম টাইল একটি বিদ্যমান স্ক্রিন
-     খোলে; সব তৈরি-কর্ম এক জায়গায় — কাজ দিন হাবে।
-     ২০২৬-১০-২০: ক্লাস উপস্থিতির দরজা হোম থেকে সরে ক্লাস হাবের
-     routine-view সাবমেনুতে গেছে; ফিচারটি বাদ যায়নি, শুধু স্থান বদলেছে।
-     ২০২৬-১০-২১: হোমপেজ ক্লিন — "সাম্প্রতিক কাজ" ফিড সরানো হয়েছে; সব কার্যক্রম
-     তার নিজস্ব রেকর্ডস ট্যাবে অক্ষত, শুধু হোম সারফেস থেকে বাদ। */
+test('teacher Home is the launcher: welcome, four full-width action cards + secondary chips, today, no work feed', () => {
+  /* মালিক-আদেশ ২০২৬-১০-২১: পুরোনো ৩×২ pay-tile গ্রিড সরে student-প্যানেল-সদৃশ
+     মোবাইল-ফার্স্ট ফুল-ওয়াইড হিরো কার্ড এসেছে। চারটি প্রাইমারি কার্ড সরাসরি কাজ
+     খোলে (হোমওয়ার্ক/সাজেশন ফর্ম, এক-ট্যাপ দ্রুত MCQ, শুধু-পঠন রুটিন); নিচে
+     সেকেন্ডারি চিপ (উপকরণ, নোটিশ বোর্ড, নম্বর এন্ট্রি)। পূর্ণ তৈরি-কর্ম একাডেমিক
+     হাবেও অক্ষত, তাই কোনো ফিচার বা অ্যাক্সেস বাদ যায়নি।
+     হোম ক্লিন: "সাম্প্রতিক কাজ" ফিড ও KPI স্ট্রিপ নিষিদ্ধ; আজকের ক্লাস বহাল। */
   const home = teacherHtml.slice(teacherHtml.indexOf('id="teacherHome"'), teacherHtml.indexOf('id="teacherRecords"'));
-  assert.match(home, /teacher-home-grid/);
-  const gridStart = home.indexOf('class="teacher-home-grid');
-  const gridEnd = home.indexOf('</nav>', gridStart);
-  const grid = home.slice(gridStart, gridEnd);
-  assert.deepEqual([...grid.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['academic', 'homework', 'suggestion', 'notice', 'online-exams', 'exam'],
-    'every grid tile routes to an existing screen');
-  assert.equal((grid.match(/class="teacher-home-tile pay-tile"/g) || []).length, 6,
-    'teacher destinations use the same pay-tile components as the other portals');
-  /* Attendance keeps exactly one door: the ক্লাস hub submenu, never Home. */
-  assert.equal((home.match(/data-teacher-view="routine-view"/g) || []).length, 0,
-    'class attendance has no door on the home screen');
-  assert.equal((teacherHtml.match(/data-teacher-view="routine-view"/g) || []).length, 1,
-    'routine/attendance stays reachable from exactly one place — the ক্লাস submenu');
-  /* ২০২৬-১০-২০: Home tiles open SCREENS only; every create action lives in the
-     কাজ দিন academic hub, so Home carries no form-opening shortcut or pill row. */
-  assert.equal((home.match(/data-new-activity=|data-new-notice/g) || []).length, 0,
-    'no home tile opens a form directly — creation is centred in the hub');
+  assert.equal(home.includes('teacher-home-grid'), false, 'the old 3×2 tile grid is retired');
+  assert.equal((home.match(/class="teacher-home-tile/g) || []).length, 0, 'no old pay-tile launcher remains on home');
+  assert.match(home, /class="teacher-home-actions"/);
+  const actionsStart = home.indexOf('class="teacher-home-actions"');
+  const actionsEnd = home.indexOf('</nav>', actionsStart);
+  const actions = home.slice(actionsStart, actionsEnd);
+  assert.equal((actions.match(/class="teacher-action-card/g) || []).length, 4, 'four full-width hero action cards');
+  /* বাধ্যতামূলক ক্রম ও সরাসরি-অ্যাকশন অ্যাট্রিবিউট। */
+  const i1 = actions.indexOf('data-new-activity="homework"');
+  const i2 = actions.indexOf('data-new-activity="suggestion"');
+  const i3 = actions.indexOf('data-teacher-exam="new-mcq"');
+  const i4 = actions.indexOf('data-teacher-view="routine-view"');
+  assert.ok(i1 > 0 && i1 < i2 && i2 < i3 && i3 < i4, 'ক্রম: বাড়ির কাজ → সাজেশন → দ্রুত MCQ → ক্লাস রুটিন');
+  assert.match(actions, /teacher-action-card is-accent/, 'the MCQ card carries the green highlight');
+  /* প্রতিটি কার্ডে থ্রিডি আইকন ও বাংলা aria-label। */
+  assert.ok((actions.match(/assets\/icons\/ai-3d\//g) || []).length >= 4, 'every hero card shows an ai-3d artwork');
+  for (const match of actions.matchAll(/<button[^>]*aria-label="([^"]+)"/g)) {
+    assert.ok(/[ঀ-৿]/.test(match[1]), 'hero/chip buttons carry a Bengali aria-label');
+  }
+  /* হোমের রুটিন দরজা শুধু-পঠন (routine-view); উপস্থিতি-মার্কিং দরজা হোমে নেই। */
+  assert.equal((home.match(/data-teacher-view="routine-view"/g) || []).length, 1, 'one read-only routine door on Home');
+  assert.equal((home.match(/data-teacher-view="routine"/g) || []).length, 0, 'attendance-marking door stays off Home');
+  assert.equal(home.includes('data-open-routine-session'), false, 'no attendance session starts from Home');
+  assert.equal((teacherHtml.match(/data-teacher-view="routine-view"/g) || []).length, 2,
+    'routine reachable from Home and the ক্লাস hub');
+  /* create-first launchers now live on Home (reverses the old screen-only rule). */
+  assert.deepEqual([...actions.matchAll(/data-new-activity="([a-z]+)"/g)].map(match => match[1]),
+    ['homework', 'suggestion'], 'homework and suggestion heroes open the create forms');
+  assert.match(home, /data-teacher-exam="new-mcq"/, 'one-tap quick MCQ from Home');
+  /* সেকেন্ডারি চিপ: উপকরণ, নোটিশ বোর্ড, নম্বর এন্ট্রি — কোনো ফিচার হারায়নি।
+     নোটিশ চিপ বোর্ড স্ক্রিন খোলে (যার ভেতরেই "+ নোটিশ" তৈরি বাটন আছে), তাই
+     কম্পোজার ও বোর্ড-তালিকা দুটোই অক্ষত থাকে। */
+  const secStart = home.indexOf('teacher-action-secondary');
+  const sec = home.slice(secStart, home.indexOf('</div>', secStart));
+  assert.equal((sec.match(/<button/g) || []).length, 3, 'three secondary chips');
+  assert.match(sec, /data-teacher-view="courses"/);
+  assert.match(sec, /data-teacher-view="notice"/);
+  assert.equal(sec.includes('data-new-notice'), false, 'the chip opens the board, whose own button creates notices');
+  assert.match(sec, /data-teacher-view="exam"/);
+  /* রেকর্ড লিস্ট অক্ষত: নম্বর এন্ট্রি চিপ রেকর্ডস খোলে, টাইপ-ট্যাবে সব কার্যক্রম-লিস্ট। */
+  assert.match(teacherHtml, /data-type-tab="homework"/);
+  assert.match(teacherHtml, /data-type-tab="suggestion"/);
+  assert.match(read('js/teacher.js'), /data-teacher-open-class/, 'class cards still open the per-class homework records');
+  /* ক্লিন-হোম ইনভেরিয়েন্টগুলো আগের মালিক-সিদ্ধান্ত অনুযায়ী বহাল। */
   assert.equal(home.includes('teacher-home-extra'), false, 'the duplicate soft-pill row is gone');
   assert.equal(home.includes('teacherQuickActions'), false, 'home must not duplicate the create-tile shelf');
   assert.match(home, /id="teacherTodayClasses"/, 'আজকের ক্লাস from the Manager routine');
-  /* The home screen stays clean: no recent-work feed and no KPI summary strip.
-     Every activity remains reachable on its own records tab (and the routine
-     screen), so these are surface removals, not data/feature losses. */
   assert.equal(home.includes('id="teacherRecent"'), false, 'no recent-work feed on the clean home screen');
   assert.equal(home.includes('teacher-summary-section'), false, 'the আজকের সারাংশ KPI strip left the home screen');
   for (const gone of ['teacherHomeStudentTotal', 'teacherHomePendingTotal', 'teacherHomeUpcomingTotal']) {
     assert.equal(teacherHtml.includes(gone), false, `${gone} summary card is gone`);
   }
   assert.equal(teacherHtml.includes('teacherHeaderName'), false, 'the teacher name is not repeated in the topbar (hero card only)');
+  /* পূর্ণ তৈরি-কর্ম হাব দুটো ফর্ম-দরজা ও সব ক্যানোনিকাল রুট ধরে রেখেছে। */
   const hub = teacherHtml.slice(teacherHtml.indexOf('id="teacherAcademic"'), teacherHtml.indexOf('id="teacherNotice"'));
   assert.match(hub, /data-new-activity="homework"/);
   assert.match(hub, /data-new-activity="suggestion"/);

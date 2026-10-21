@@ -19,11 +19,14 @@ const homeGrid = {
   student: '#homeView #studentServices',
   admin: '#adminFeatureGrid',
   manager: '.manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"]',
-  teacher: '#teacherHome .teacher-home-grid'
+  teacher: '#teacherHome .teacher-home-actions'
 };
+/* ২০২৬-১০-২১: teacher Home is create-first — heroes open forms/MCQ/modals, not
+   round-trip screens. Only the pure screen doors (read-only routine, materials)
+   keep a pay-back-to-home round trip, so the router shortcut test scopes to them. */
 const homeShortcuts = {
   manager: '.manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > button[data-manager-view]',
-  teacher: '#teacherHome [data-teacher-view]:not([data-new-activity])'
+  teacher: '#teacherHome [data-teacher-view="routine-view"], #teacherHome .teacher-action-secondary [data-teacher-view="courses"]'
 };
 const navCount = { student: 5, admin: 6, manager: 6, teacher: 5, payment: 5 };
 const shell = { student: '#appShell', admin: '#adminShell', manager: '#managerShell', teacher: '#teacherShell', payment: '#payShell' };
@@ -52,19 +55,35 @@ for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for
     if (role !== 'payment') {
       const grid = page.locator(homeGrid[role]);
       await expect(grid).toBeVisible();
-      const columns = await grid.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-      expect(columns).toBe(role === 'admin' ? 2 : 3);
-      const icons = grid.locator(role === 'admin' ? '.admin-feature-icon' : '.pay-tile-icon');
-      expect(await icons.evaluateAll(elements => elements.every(el => {
-        const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && Math.abs(r.width - r.height) < 1;
-      }))).toBe(true);
-      const serviceIcons = grid.locator(role === 'admin' ? '.admin-feature-icon svg' : '.pay-tile-icon svg');
-      expect(await serviceIcons.count()).toBeGreaterThan(0);
-      expect(await serviceIcons.evaluateAll(icons => icons.every(svg =>
-        svg.dataset.iconSet === 'active-plus-soft3d' && svg.dataset.iconStyle === 'color'
-        && [...svg.querySelectorAll('image')].some(image => image.getAttribute('href')?.startsWith('assets/icons/ai-3d/'))
-      ))).toBe(true);
+      if (role === 'teacher') {
+        // ২০২৬-১০-২১: one column of four full-width hero action cards, no grid.
+        expect(await grid.evaluate(el => getComputedStyle(el).flexDirection)).toBe('column');
+        await expect(grid.locator('.teacher-action-card')).toHaveCount(4);
+        const art = grid.locator('.teacher-action-art svg');
+        expect(await art.count()).toBe(4);
+        expect(await art.evaluateAll(svgs => svgs.every(svg => {
+          const r = svg.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        }))).toBe(true);
+        expect(await art.evaluateAll(svgs => svgs.every(svg =>
+          svg.dataset.iconSet === 'active-plus-soft3d' && svg.dataset.iconStyle === 'color'
+          && [...svg.querySelectorAll('image')].some(image => image.getAttribute('href')?.startsWith('assets/icons/ai-3d/'))
+        ))).toBe(true);
+      } else {
+        const columns = await grid.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+        expect(columns).toBe(role === 'admin' ? 2 : 3);
+        const icons = grid.locator(role === 'admin' ? '.admin-feature-icon' : '.pay-tile-icon');
+        expect(await icons.evaluateAll(elements => elements.every(el => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && Math.abs(r.width - r.height) < 1;
+        }))).toBe(true);
+        const serviceIcons = grid.locator(role === 'admin' ? '.admin-feature-icon svg' : '.pay-tile-icon svg');
+        expect(await serviceIcons.count()).toBeGreaterThan(0);
+        expect(await serviceIcons.evaluateAll(icons => icons.every(svg =>
+          svg.dataset.iconSet === 'active-plus-soft3d' && svg.dataset.iconStyle === 'color'
+          && [...svg.querySelectorAll('image')].some(image => image.getAttribute('href')?.startsWith('assets/icons/ai-3d/'))
+        ))).toBe(true);
+      }
     }
     expect(await nav.locator('svg').evaluateAll(icons => icons.every(svg =>
       svg.dataset.iconSet === 'active-plus-soft3d' && svg.dataset.iconStyle === 'glyph'
@@ -84,10 +103,10 @@ for (const role of ['manager', 'teacher']) test(`${role} service shortcuts and b
   const targetHome = role === 'manager' ? 'dashboard' : 'home';
   const shortcuts = page.locator(homeShortcuts[role]);
   const routes = await shortcuts.evaluateAll((buttons, attribute) => buttons.map(button => button.getAttribute(attribute)), attribute);
-  // 2026-10-20: the teacher home grid now holds six screen-only tiles (the
-  // duplicate pill row and the form-opening shortcut were consolidated into
-  // the কাজ দিন hub); the other portals keep their previous counts.
-  const expectedShortcuts = role === 'manager' ? 9 : role === 'teacher' ? 6 : 7;
+  // 2026-10-21: the teacher Home is create-first (heroes open forms/MCQ/modals),
+  // so only its two pure screen doors — read-only routine and materials — take
+  // the pay-back round trip; the other portals keep their previous counts.
+  const expectedShortcuts = role === 'manager' ? 9 : role === 'teacher' ? 2 : 7;
   expect(routes).toHaveLength(expectedShortcuts);
   for (let index = 0; index < routes.length; index++) {
     const route = routes[index];

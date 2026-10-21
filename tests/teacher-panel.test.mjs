@@ -1,7 +1,7 @@
 /* Teacher panel on the real teacher.html (jsdom): the redesigned clean home
-   (welcome hero + 3-column launcher grid + আজকের ক্লাস, no work feed), bulk
-   marking, grouping and paging. The Playwright spec covers CRUD end to end;
-   this file covers the management layer added on top of it. */
+   (welcome hero + four full-width create-first action cards, secondary chips +
+   আজকের ক্লাস, no work feed), bulk marking, grouping and paging. The Playwright
+   spec covers CRUD end to end; this file covers the management layer on top. */
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadPage } from './jsdom-harness.mjs';
@@ -76,40 +76,47 @@ test('the welcome hero shows the teacher name from the staff profile, never the 
   assert.equal($('.teacher-welcome-note'), null, 'the daily-work note text is gone with its card');
 });
 
-test('home is welcome + one 3-column grid over existing screens + today, with no work feed', () => {
-  const tiles = $$('#teacherHome .teacher-home-tile');
-  // ২০২৬-১০-২০: উপস্থিতি/রুটিন টাইল হোম থেকে সরে ক্লাস হাব সাবমেনুতে গেছে।
-  // "কাজ দিন" একাডেমিক হাব এখন হোমের প্রথম স্বতন্ত্র ফিচার-টাইল।
-  assert.equal(tiles.length, 6, 'ছয়টি ফিচার-টাইল — ক্লাস উপস্থিতি হোমে থাকবে না');
-  assert.ok($('.teacher-home-grid'), 'the grid container exists');
-  assert.deepEqual(tiles.map(t => t.dataset.teacherView),
-    ['academic', 'homework', 'suggestion', 'notice', 'online-exams', 'exam'],
-    'প্রতিটি টাইল একটি বিদ্যমান স্ক্রিনে যায়');
-  assert.equal($('#teacherHome [data-teacher-view="routine-view"]'), null,
-    'হোম পেজে ক্লাস উপস্থিতির কোনো দরজা থাকবে না');
-  const workHub = $('#teacherHome .teacher-home-tile[data-teacher-view="academic"]');
-  assert.ok(workHub, '"কাজ দিন" হাবের স্বতন্ত্র হোম টাইল আছে');
-  assert.equal(workHub.querySelector('.pay-tile-label').textContent.trim(), 'কাজ দিন');
-  /* Home tiles are screen doors, never form doors — every create action now
-     lives inside the কাজ দিন academic hub. */
-  assert.equal($$('#teacherHome [data-new-activity], #teacherHome [data-new-notice]').length, 0,
-    'হোম টাইল সরাসরি কোনো ফর্ম খোলে না');
-  assert.equal($$('.teacher-home-extra').length, 0, 'ডুপ্লিকেট পিল-সারি সরানো হয়েছে');
+test('home is welcome + four full-width action cards and secondary chips, with no work feed', () => {
+  /* মালিক-আদেশ ২০২৬-১০-২১: পুরোনো ৩×২ টাইল গ্রিড সরে চারটি ফুল-ওয়াইড হিরো
+     কার্ড + তিনটি সেকেন্ডারি চিপ এসেছে। কার্ডগুলো সরাসরি কাজ খোলে। */
+  const cards = $$('#teacherHome .teacher-action-card');
+  assert.equal(cards.length, 4, 'চারটি ফুল-ওয়াইড হিরো কার্ড');
+  assert.ok($('#teacherHome .teacher-home-actions'), 'the action list container exists');
+  assert.equal($$('#teacherHome .teacher-home-tile').length, 0, 'পুরোনো ৩×২ টাইল গ্রিড নেই');
+  /* বাধ্যতামূলক ক্রম ও সরাসরি-অ্যাকশন অ্যাট্রিবিউট। */
+  assert.deepEqual(cards.map(c => c.dataset.newActivity || c.dataset.teacherExam || c.dataset.teacherView),
+    ['homework', 'suggestion', 'new-mcq', 'routine-view'],
+    'ক্রম: হোমওয়ার্ক → সাজেশন → দ্রুত MCQ → ক্লাস রুটিন');
+  const mcq = $('#teacherHome [data-teacher-exam="new-mcq"]');
+  assert.ok(mcq && mcq.classList.contains('is-accent'), 'MCQ কার্ড সবুজ হাইলাইটে');
+  /* রুটিন কার্ড শুধু-পঠন; উপস্থিতি-মার্কিং দরজা হোমে নেই। */
+  assert.ok($('#teacherHome [data-teacher-view="routine-view"]'), 'শুধু-পঠন রুটিন দরজা হোমে আছে');
+  assert.equal($$('#teacherHome [data-teacher-view="routine"]').length, 0, 'উপস্থিতি-মার্কিং দরজা হোমে নেই');
+  assert.equal($$('#teacherHome [data-open-routine-session]').length, 0);
+  /* প্রতিটি কার্ডে দৃশ্যমান থ্রিডি আইকন ও বাংলা লেবেল। */
+  for (const card of cards) {
+    assert.ok(card.querySelector('svg image[href^="assets/icons/ai-3d/"]'), 'কার্ডে থ্রিডি আইকন');
+    assert.ok(/[ঀ-৿]/.test(card.getAttribute('aria-label')), 'বাংলা aria-label');
+  }
+  /* সেকেন্ডারি চিপ: উপকরণ, নোটিশ বোর্ড, নম্বর এন্ট্রি। */
+  const chips = $$('#teacherHome .teacher-action-secondary button');
+  assert.equal(chips.length, 3);
+  assert.ok($('#teacherHome .teacher-action-secondary [data-teacher-view="courses"]'));
+  assert.ok($('#teacherHome .teacher-action-secondary [data-teacher-view="notice"]'), 'নোটিশ বোর্ড স্ক্রিন-দরজা');
+  assert.ok($('#teacherHome .teacher-action-secondary [data-teacher-view="exam"]'));
   assert.ok($('#teacherTodayClasses'), 'আজকের ক্লাস section');
   assert.equal($('#teacherRecent'), null, 'হোম ক্লিন — কোনো সাম্প্রতিক-কাজ ফিড নেই');
 });
 
-test('the home homework tile opens the homework screen; its create button opens the form', async () => {
-  const tile = $('#teacherHome .teacher-home-tile[data-teacher-view="homework"]');
-  assert.equal(tile.dataset.newActivity, undefined, 'the tile is a screen door, not a form door');
-  ctx.click(tile);
+test('the home homework hero opens the create form directly; the records list keeps its own screen', async () => {
+  /* ২০২৬-১০-২১: হোম হিরো create-first — ট্যাপেই পুনঃব্যবহৃত অ্যাসাইনমেন্ট ফর্ম
+     ওভারলে খোলে, লিস্ট স্ক্রিনে নেভিগেট করে না। রেকর্ডস লিস্ট তার নিজস্ব
+     স্ক্রিনে (নম্বর এন্ট্রি চিপ → টাইপ-ট্যাব) অক্ষত থাকে। */
+  const card = $('#teacherHome [data-new-activity="homework"]');
+  assert.ok(card, 'হোমে হোমওয়ার্ক হিরো কার্ড');
+  ctx.click(card);
   await settle();
-  assert.equal($('#teacherRecords').hidden, false, 'the homework records screen opens');
-  assert.equal($('#teacherModalBackdrop').hidden, true, 'no form pops over the home screen');
-  /* The create action stays one tap inside the screen it owns. */
-  ctx.click($('#teacherNewActivity'));
-  await settle();
-  assert.equal($('#teacherModalBackdrop').hidden, false, 'the in-screen create button opens the reused form');
+  assert.equal($('#teacherModalBackdrop').hidden, false, 'হিরো ট্যাপে সরাসরি ফর্ম খোলে');
   assert.equal(nfc($('#teacherModalTitle').textContent), nfc('নতুন বাড়ির কাজ'));
   assert.ok($('#activity-title'), 'the normal assignment form is reused');
   ctx.click($('#teacherModalClose'));
@@ -369,13 +376,20 @@ test('the grid doors open their own screens and the routine lives on one screen'
   assert.equal($('.teacher-routine-tabs [data-routine-tab="today"]').getAttribute('aria-selected'), 'false');
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
-  ctx.click($('#teacherHome [data-teacher-view="homework"]'));
+  /* ২০২৬-১০-২১: হোম হিরো create-first। রেকর্ডস লিস্ট তার নিজস্ব স্ক্রিনে —
+     নম্বর এন্ট্রি চিপ রেকর্ডস খোলে, টাইপ-ট্যাবে হোমওয়ার্ক লিস্টে যাওয়া যায়। */
+  ctx.click($('#teacherHome .teacher-action-secondary [data-teacher-view="exam"]'));
   await settle();
-  assert.equal($('#teacherRecords').hidden, false, 'বাড়ির কাজ door opens the records screen');
+  assert.equal($('#teacherRecords').hidden, false, 'নম্বর এন্ট্রি চিপ রেকর্ডস স্ক্রিন খোলে');
+  ctx.click($('.teacher-type-tabs [data-type-tab="homework"]'));
+  await settle();
+  assert.equal($('[data-type-tab="homework"]').getAttribute('aria-selected'), 'true', 'হোমওয়ার্ক লিস্ট টাইপ-ট্যাবে খোলে');
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
-  /* উপকরণ now lives under the কাজ দিন hub instead of a home tile. */
-  ctx.click($('#teacherHome .teacher-home-tile[data-teacher-view="academic"]'));
+  /* উপকরণ lives under the কাজ দিন hub reached from the ক্লাস seat. */
+  ctx.click($('.admin-bottom [data-teacher-view="classes"]'));
+  await settle();
+  ctx.click($('#teacherClasses .teacher-submenu [data-teacher-view="academic"]'));
   await settle();
   ctx.click($('#teacherAcademic [data-teacher-view="courses"]'));
   await settle();
@@ -383,11 +397,13 @@ test('the grid doors open their own screens and the routine lives on one screen'
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
   assert.equal($('#teacherHome').hidden, false, 'bottom nav brings the teacher back home');
-  /* The new suggestion home tile opens the suggestion records screen. */
-  ctx.click($('#teacherHome .teacher-home-tile[data-teacher-view="suggestion"]'));
+  /* The suggestion hero opens the suggestion create form directly. */
+  ctx.click($('#teacherHome [data-new-activity="suggestion"]'));
   await settle();
-  assert.equal($('#teacherRecords').hidden, false);
-  assert.equal($('[data-type-tab="suggestion"]').getAttribute('aria-selected'), 'true');
+  assert.equal($('#teacherModalBackdrop').hidden, false, 'সাজেশন হিরো সরাসরি ফর্ম খোলে');
+  assert.match($('#teacherModalTitle').textContent, /সাজেশন/);
+  ctx.click($('#teacherModalClose'));
+  await settle();
 });
 
 test('the exam seat lands on one CTA and four doors, not a nine-tile shelf', async () => {

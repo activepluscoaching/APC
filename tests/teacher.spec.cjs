@@ -260,7 +260,10 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
       expect(welcomeFits.scrollWidth, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.clientWidth + 1);
       expect(welcomeFits.textRight, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.boxRight + 1);
       expect(welcomeFits.textBottom, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.introBottom + 1);
-      expect(welcomeFits.introBottom - welcomeFits.helperNoteBottom, JSON.stringify(welcomeFits)).toBeGreaterThanOrEqual(0);
+      // The daily-work note moved out of the gradient hero into its own
+      // standalone glass card directly below it, so it must sit beneath the
+      // hero card (and still inside the page width).
+      expect(welcomeFits.helperNoteBottom - welcomeFits.introBottom, JSON.stringify(welcomeFits)).toBeGreaterThanOrEqual(0);
       expect(welcomeFits.documentWidth, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.viewportWidth);
     }
     const responsiveHeader = await page.evaluate(() => {

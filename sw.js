@@ -1,3 +1,5 @@
+// v384: Teacher hero — move the daily-work prompt ("আপনার আজকের কাজগুলো…") out of the gradient
+// welcome card into its own standalone glass card directly below it; pin refresh for teacher assets.
 // v383: Teacher hero — remove the role/teacher-id identity sub-card from the welcome card (the
 // role and id stay on the "আমার প্রোফাইল" screen); pin refresh for the rebuilt teacher assets.
 // v382: Teacher panel visual refresh — AI day/night hero artwork with gentle motion inside the
@@ -135,7 +137,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 383;
+const CACHE_VERSION = 384;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',

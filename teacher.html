@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=383"></script>
-  <script src="js/app-entry.js?v=383" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=383"></script>
-  <script src="js/topbar-connectivity.js?v=383" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=383"></script>
-  <script src="js/appearance-boot.js?v=383"></script>
-  <script src="js/theme-logos.js?v=383"></script>
+  <script src="js/sanitize-url.js?v=384"></script>
+  <script src="js/app-entry.js?v=384" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=384"></script>
+  <script src="js/topbar-connectivity.js?v=384" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=384"></script>
+  <script src="js/appearance-boot.js?v=384"></script>
+  <script src="js/theme-logos.js?v=384"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=383">
-  <link rel="stylesheet" href="css/ui-layout.css?v=383">
-  <link rel="stylesheet" href="css/ui-components.css?v=383">
-  <link rel="stylesheet" href="css/ui-forms.css?v=383">
-  <link rel="stylesheet" href="css/ui-features.css?v=383">
-  <link rel="stylesheet" href="css/notice-board.css?v=383">
-  <link rel="stylesheet" href="css/ui-status.css?v=383">
-  <link rel="stylesheet" href="css/ui-auth.css?v=383">
-  <link rel="stylesheet" href="css/app-polish.css?v=383">
-  <link rel="stylesheet" href="css/student-record.css?v=383">
-  <link rel="stylesheet" href="css/exam-archive.css?v=383">
-  <link rel="stylesheet" href="css/academics.css?v=383">
-  <link rel="stylesheet" href="css/notifications.css?v=383">
-  <link rel="stylesheet" href="css/course-hub.css?v=383">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=383">
+  <link rel="stylesheet" href="css/foundation.css?v=384">
+  <link rel="stylesheet" href="css/ui-layout.css?v=384">
+  <link rel="stylesheet" href="css/ui-components.css?v=384">
+  <link rel="stylesheet" href="css/ui-forms.css?v=384">
+  <link rel="stylesheet" href="css/ui-features.css?v=384">
+  <link rel="stylesheet" href="css/notice-board.css?v=384">
+  <link rel="stylesheet" href="css/ui-status.css?v=384">
+  <link rel="stylesheet" href="css/ui-auth.css?v=384">
+  <link rel="stylesheet" href="css/app-polish.css?v=384">
+  <link rel="stylesheet" href="css/student-record.css?v=384">
+  <link rel="stylesheet" href="css/exam-archive.css?v=384">
+  <link rel="stylesheet" href="css/academics.css?v=384">
+  <link rel="stylesheet" href="css/notifications.css?v=384">
+  <link rel="stylesheet" href="css/course-hub.css?v=384">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=384">
   <!-- Teacher panel redesign (2026-10-20, v2): presentation-only layer scoped to
        .teacher-reference — the body class teacher.html alone carries — so nothing
        here reaches student/admin/manager/payment. Markup, routes, element IDs and
@@ -323,61 +323,78 @@
   font-size: 12.5px;
   line-height: 1.55;
 }
-/* Daily-work prompt: calendar cue + the required note line + scroll hint. */
-.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt {
+/* Daily-work prompt — now a STANDALONE glass card below the welcome hero
+   (owner request 2026-10-21): calendar cue + the required note line + a
+   chevron scroll hint, styled on the page surface like the other home cards.
+   Markup, class names and text are unchanged; only its placement and skin move. ── */
+.teacher-reference #teacherHome .teacher-hero-prompt {
   position: relative;
-  z-index: 1;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   min-width: 0;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid var(--pay-hero-line);
-  background: color-mix(in srgb, var(--pay-on-hero) 14%, transparent);
+  margin: 0 0 14px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
-.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt-icon {
+.teacher-reference #teacherHome .teacher-hero-prompt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 92% at 100% 0, var(--tone-mint-soft), transparent 62%);
+}
+.teacher-reference #teacherHome .teacher-hero-prompt > * { position: relative; }
+.teacher-reference #teacherHome .teacher-hero-prompt-icon {
   flex: none;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  color: var(--pay-on-hero);
-  background: var(--pay-hero-chip);
-  border: 1px solid var(--pay-hero-line);
+  border-radius: 14px;
+  color: var(--color-primary);
+  background: var(--glass-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
-.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt-text {
+.teacher-reference #teacherHome .teacher-hero-prompt-text {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.teacher-reference #teacherHome .teacher-home-intro .teacher-welcome-note {
+.teacher-reference #teacherHome .teacher-welcome-note {
   margin: 0;
-  color: var(--pay-on-hero);
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 750;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt-sub {
+.teacher-reference #teacherHome .teacher-hero-prompt-sub {
   margin: 0;
-  color: var(--pay-on-hero-soft);
+  color: var(--color-text-secondary);
   font-size: 11.5px;
   font-weight: 600;
   line-height: 1.45;
 }
-.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt-cue {
+.teacher-reference #teacherHome .teacher-hero-prompt-cue {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--pay-on-hero-soft);
-  background: color-mix(in srgb, var(--pay-on-hero) 10%, transparent);
+  color: var(--color-primary);
+  background: var(--glass-accent-soft);
+  border: 1px solid var(--glass-border);
 }
 /* 04.2 Status banners (data error, no-assignment notice). ── */
 .teacher-reference .finance-error {
@@ -1382,8 +1399,9 @@
   to { opacity: 1; transform: none; }
 }
 .teacher-reference .teacher-view:not([hidden]) .teacher-home-intro { animation: apc-teacher-rise .32s var(--t-ease) both; }
-.teacher-reference .teacher-view:not([hidden]) .teacher-home-today { animation: apc-teacher-rise .32s var(--t-ease) .1s both; }
-.teacher-reference .teacher-view:not([hidden]) .teacher-home-grid { animation: apc-teacher-rise .32s var(--t-ease) .15s both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-hero-prompt { animation: apc-teacher-rise .32s var(--t-ease) .08s both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-today { animation: apc-teacher-rise .32s var(--t-ease) .14s both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-grid { animation: apc-teacher-rise .32s var(--t-ease) .2s both; }
 @media (prefers-reduced-motion: reduce) {
   .teacher-reference *,
   .teacher-reference *::before,
@@ -1460,8 +1478,8 @@ body.teacher-reference {
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene { border-radius: 15px; }
   .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon { width: 46px; height: 46px; }
   .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 18.5px; }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt { padding: 10px; gap: 9px; }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-prompt-icon { width: 38px; height: 38px; }
+  .teacher-reference #teacherHome .teacher-hero-prompt { padding: 11px 12px; gap: 10px; }
+  .teacher-reference #teacherHome .teacher-hero-prompt-icon { width: 40px; height: 40px; }
   .teacher-reference #teacherHome .teacher-home-grid,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) { gap: 8px; }
   .teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile,
@@ -1480,8 +1498,8 @@ body.teacher-reference {
   .teacher-reference .teacher-type-tabs .pay-tile { font-size: 10.5px; }
 }
   </style>
-  <script type="module" src="js/ui-accessibility.js?v=383"></script>
-  <script src="js/launch-screen.js?v=383" defer></script>
+  <script type="module" src="js/ui-accessibility.js?v=384"></script>
+  <script src="js/launch-screen.js?v=384" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -1507,14 +1525,14 @@ body.teacher-reference {
             <h1 id="teacherHomeTitle">স্বাগতম</h1>
             <p class="teacher-hero-warm">আপনার পাঠদান ও শিক্ষার্থীদের অগ্রযাত্রায় আজকের দিনটি হোক ফলপ্রসূ।</p>
           </div>
-          <div class="teacher-hero-prompt">
-            <span class="teacher-hero-prompt-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="calendar" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/calendar.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
-            <div class="teacher-hero-prompt-text">
-              <p class="teacher-welcome-note">আপনার আজকের কাজগুলো দেখে নিন।</p>
-              <p class="teacher-hero-prompt-sub">ক্লাস, উপস্থিতি, বাড়ির কাজ ও পরীক্ষা — এক জায়গায়।</p>
-            </div>
-            <span class="teacher-hero-prompt-cue" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-down" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/chevron-down.svg" width="18" height="18" preserveAspectRatio="xMidYMid meet"/></svg></span>
+        </div>
+        <div class="teacher-hero-prompt">
+          <span class="teacher-hero-prompt-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="calendar" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/calendar.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          <div class="teacher-hero-prompt-text">
+            <p class="teacher-welcome-note">আপনার আজকের কাজগুলো দেখে নিন।</p>
+            <p class="teacher-hero-prompt-sub">ক্লাস, উপস্থিতি, বাড়ির কাজ ও পরীক্ষা — এক জায়গায়।</p>
           </div>
+          <span class="teacher-hero-prompt-cue" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-down" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/chevron-down.svg" width="18" height="18" preserveAspectRatio="xMidYMid meet"/></svg></span>
         </div>
         <div id="teacherDataError" class="finance-error" role="alert" hidden>ডেটা পড়া যায়নি। <button id="teacherRetry" class="mini-btn" type="button">আবার চেষ্টা করুন</button></div>
       <p id="teacherAssignmentNotice" class="finance-error" role="status" hidden>এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি — আপনার অ্যাকাউন্টে কোনো ক্লাস বা বিষয় যুক্ত হয়নি। অ্যাসাইন হলে এখানেই দেখা যাবে; কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>
@@ -1635,7 +1653,7 @@ body.teacher-reference {
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=383"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=383"></script>
+  <script type="module" src="js/theme-entry.js?v=384"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=384"></script>
 </body>
 </html>

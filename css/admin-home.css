@@ -1,0 +1,125 @@
+/* Admin home — teacher/student style hero + full-width action cards */
+.admin-reference .admin-home-intro{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:168px;
+  margin:0 0 14px;
+  border-radius:22px;
+  color:#fff;
+  box-shadow:0 10px 28px rgb(15 23 42 / .12);
+}
+.admin-reference .admin-hero-scene{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+}
+.admin-reference .admin-hero-art{
+  display:block;width:100%;height:100%;object-fit:cover;object-position:center 40%;
+  transform:scale(1.03);
+}
+.admin-reference .admin-hero-scene-scrim{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(0deg,rgb(8 40 32 / .9) 0%,rgb(8 40 32 / .55) 40%,rgb(8 40 32 / .2) 70%,transparent 100%),
+    linear-gradient(90deg,rgb(8 40 32 / .45) 0%,transparent 70%);
+}
+.admin-reference .admin-hero-scene-sheen{
+  position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 40%,rgb(255 255 255 / .12) 50%,transparent 60%);
+  transform:translateX(-40%);
+  animation:admin-hero-sheen 10s ease-in-out infinite;
+}
+@keyframes admin-hero-sheen{
+  0%,100%{transform:translateX(-45%)}
+  50%{transform:translateX(25%)}
+}
+.admin-reference .admin-hero-content{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;justify-content:space-between;gap:1.25rem;
+  min-height:168px;padding:16px;
+}
+.admin-reference .admin-hero-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+}
+.admin-reference .admin-home-intro .admin-hero-icon{
+  display:grid;place-items:center;
+  width:50px;height:50px;border-radius:999px;
+  font-size:18px;font-weight:750;
+  background:rgb(255 255 255 / .18);
+  border:1px solid rgb(255 255 255 / .4);
+  color:#fff;
+  backdrop-filter:blur(10px);
+}
+.admin-reference .admin-date-on-hero{
+  margin:0;padding:6px 12px;border-radius:999px;
+  background:rgb(255 255 255 / .16);
+  border:1px solid rgb(255 255 255 / .28);
+  color:#fff;font-size:12px;font-weight:600;
+}
+.admin-reference .admin-hero-kicker{
+  margin:0 0 4px;color:rgb(255 255 255 / .82);font-size:12px;font-weight:600;
+}
+.admin-reference .admin-hero-title-text{
+  margin:0;color:#fff;font-size:clamp(20px,5.6vw,25px);font-weight:750;line-height:1.3;
+}
+.admin-reference .admin-hero-warm{
+  margin:6px 0 0;max-width:36ch;color:rgb(255 255 255 / .9);
+  font-size:12.5px;font-weight:500;line-height:1.65;
+}
+.admin-reference .admin-home-intro .admin-welcome{
+  color:rgb(255 255 255 / .95);font-size:13px;font-weight:600;margin:0 0 2px;
+}
+
+/* Full-width hero action cards (quick access + portals) */
+.admin-reference .admin-home-actions{
+  display:grid;gap:10px;margin:0 0 16px;
+}
+.admin-reference .admin-action-card{
+  --tone:var(--color-primary,#0e7a55);
+  --tone-soft:color-mix(in srgb,var(--tone) 14%,#fff);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;min-height:84px;padding:14px 16px;
+  border:1px solid color-mix(in srgb,var(--tone) 18%,transparent);
+  border-radius:18px;
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--tone) 10%,#fff) 0%,#fff 48%,#fff 100%);
+  box-shadow:0 6px 18px rgb(15 23 42 / .06);
+  text-align:left;text-decoration:none;color:inherit;cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.admin-reference .admin-action-card.is-accent{
+  --tone:#0b6e4f;
+  border-color:color-mix(in srgb,var(--tone) 28%,transparent);
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--tone) 16%,#fff) 0%,#fff 55%);
+}
+.admin-reference .admin-action-card:active{transform:scale(.985)}
+.admin-reference .admin-action-body{
+  display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;
+}
+.admin-reference .admin-action-title{
+  font-size:15px;font-weight:750;color:var(--color-text,#0f172a);line-height:1.35;
+}
+.admin-reference .admin-action-sub{
+  font-size:12px;font-weight:500;color:var(--color-text-secondary,#64748b);line-height:1.45;
+}
+.admin-reference .admin-action-art{
+  display:grid;place-items:center;flex:none;
+  width:52px;height:52px;border-radius:16px;
+  background:var(--tone-soft);
+  border:1px solid color-mix(in srgb,var(--tone) 22%,transparent);
+}
+.admin-reference .admin-action-art svg,
+.admin-reference .admin-action-art img{
+  width:32px;height:32px;
+}
+
+/* Stats remain soft cards */
+.admin-reference .admin-stat-tile{
+  border-radius:16px;
+  box-shadow:0 4px 14px rgb(15 23 42 / .04);
+}
+.admin-reference .admin-summary-title,
+.admin-reference .pay-section-label{
+  font-size:13px;font-weight:700;color:var(--color-text-secondary,#64748b);
+  margin:4px 0 10px;
+}

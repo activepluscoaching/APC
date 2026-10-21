@@ -327,10 +327,16 @@ test('teacher ক্লাস hub groups the class list, read-only routine and a
   /* The existing rendered list and its loader stay exactly where the
      teacher-assigned-classes tests read them. */
   assert.match(classes, /id="teacherClassList"/);
-  /* Submenu doors reuse existing routes instead of duplicating screens. */
+  /* Submenu doors reuse existing routes instead of duplicating screens. একাডেমিক
+     কার্যক্রম is no longer one of them: it is its own Home feature card
+     (owner order 2026-10-21). */
   assert.deepEqual([...classes.matchAll(/data-teacher-view="([a-z-]+)"/g)].map(match => match[1]),
-    ['home', 'routine-view', 'academic']);
+    ['home', 'routine-view']);
   assert.match(nfc(classes), /ক্লাস ও বিষয়/);
+  assert.equal(/data-teacher-view="academic"/.test(classes), false, 'academic lives outside the ক্লাস screen');
+  const home = teacherHtml.slice(teacherHtml.indexOf('id="teacherHome"'), teacherHtml.indexOf('id="teacherRecords"'));
+  assert.match(home, /class="teacher-academic-hub"[^>]*data-teacher-view="academic"/,
+    'Home carries the academic feature card');
 });
 
 test('a teacher notice is class/batch-scoped and stays a notice, never a notification', async () => {

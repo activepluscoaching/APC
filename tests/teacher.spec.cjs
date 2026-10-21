@@ -29,10 +29,8 @@ async function enter(page) {
 async function goAcademic(page) {
   await page.locator('.admin-bottom [data-teacher-view=home]').click();
   await expect(page.locator('#teacherHome')).toBeVisible();
-  // ২০২৬-১০-২১: the academic hub door moved off Home into the ক্লাস seat.
-  await page.locator('.admin-bottom [data-teacher-view=classes]').click();
-  await expect(page.locator('#teacherClasses')).toBeVisible();
-  await page.locator('#teacherClasses .teacher-submenu [data-teacher-view=academic]').click();
+  // ২০২৬-১০-২১: একাডেমিক কার্যক্রম is its own Home feature card (out of ক্লাস).
+  await page.locator('#teacherHome .teacher-academic-hub').click();
   await expect(page.locator('#teacherAcademic')).toBeVisible();
 }
 async function create(page, type, title, overrides = {}) {

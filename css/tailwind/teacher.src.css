@@ -230,6 +230,91 @@
     color: var(--color-text-secondary);
   }
 
+  /* 04.2b একাডেমিক কার্যক্রম — a first-class feature card on Home, outside the
+     ক্লাস screen (owner order 2026-10-21). One gradient rail, tinted artwork disc,
+     title + what is inside, and a chevron; it glows a little because it is a
+     hub, not a single action. */
+  .teacher-reference #teacherHome .teacher-academic-hub {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 74px;
+    margin: 0 0 14px;
+    padding: 12px 38px 12px 12px;
+    overflow: hidden;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--glass-border));
+    background-color: var(--glass-surface);
+    background-image: linear-gradient(120deg,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      color-mix(in srgb, var(--brand-2) 8%, transparent) 58%,
+      transparent 100%);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transition: transform .16s var(--t-ease), border-color .16s var(--t-ease), box-shadow .18s var(--t-ease);
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub:active { transform: scale(.985); }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon svg { width: 27px; height: 27px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-title {
+    color: var(--color-text);
+    font-size: 14.5px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-sub {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-chevron {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid color-mix(in srgb, var(--color-primary) 62%, var(--color-text-muted));
+    border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 62%, var(--color-text-muted));
+    border-radius: 1px;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+  @media (hover: hover) {
+    .teacher-reference #teacherHome .teacher-academic-hub:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--color-primary) 44%, var(--glass-border));
+      box-shadow: var(--glass-shadow-strong);
+    }
+  }
+
   /* 04.3 Section headings ──────────────────────────────────────────────────── */
   .teacher-reference .teacher-section-heading {
     @apply flex items-center justify-between gap-2.5;
@@ -1294,14 +1379,13 @@ body.teacher-reference {
    shared `.pay-tile` geometry, and no new element is introduced.
    ========================================================================== */
 
-/* ── 24.1 ক্লাস: three separate tabs (owner order 2026-10-21) ──────────────── */
-/* "ক্লাস ও বিষয়", "রুটিন ও সময়সূচি" and "একাডেমিক কার্যক্রম" must not share one
-   card grid: they are three tabs of the ক্লাস screen. The first tab is the class
-   list itself; the other two are routes to their own screens, so the bar is a
-   segmented tablist — never side-by-side doors. */
+/* ── 24.1 ক্লাস: two separate tabs (owner order 2026-10-21) ────────────────── */
+/* "ক্লাস ও বিষয়" and "রুটিন ও সময়সূচি" are two tabs of the ক্লাস screen, never
+   doors side by side: the first is the class list itself, the second opens the
+   read-only routine. একাডেমিক কার্যক্রম no longer lives here. */
 .teacher-reference #teacherClasses .teacher-class-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
   margin: 2px 0 14px;
   padding: 4px;
@@ -1318,7 +1402,7 @@ body.teacher-reference {
   justify-content: center;
   min-width: 0;
   min-height: 50px;
-  padding: 7px 6px;
+  padding: 7px 10px;
   cursor: pointer;
   text-align: center;
   text-wrap: balance;
@@ -1326,7 +1410,7 @@ body.teacher-reference {
   border-radius: 13px;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 700;
   line-height: 1.3;
   transition: color .15s var(--t-ease), background-color .15s var(--t-ease), transform .15s var(--t-ease);
@@ -1672,12 +1756,21 @@ body.teacher-reference {
 
 /* Small phones: keep the doors readable at 320–380px. */
 @media (max-width: 380px) {
+  .teacher-reference #teacherHome .teacher-academic-hub {
+    min-height: 68px;
+    gap: 10px;
+    padding: 10px 32px 10px 10px;
+    border-radius: 17px;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon { width: 40px; height: 40px; border-radius: 13px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-title { font-size: 13.5px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-sub { font-size: 10.5px; }
   .teacher-reference #teacherClasses .teacher-class-tabs { gap: 3px; padding: 3px; border-radius: 15px; }
   .teacher-reference #teacherClasses .teacher-class-tab {
     min-height: 48px;
-    padding: 6px 4px;
+    padding: 6px 6px;
     border-radius: 11px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     line-height: 1.25;
   }
   .teacher-reference #teacherClassList .teacher-class-summary { padding: 10px; gap: 9px; }

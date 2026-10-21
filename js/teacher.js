@@ -480,10 +480,10 @@ function showAddChapterModal(course) {
 function render() { renderHome(); renderRecords(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
 const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
-/* ক্লাস-screen tabs (owner order 2026-10-21): "ক্লাস ও বিষয়", "রুটিন ও সময়সূচি" and
-   "একাডেমিক কার্যক্রম" are three separate tabs, never doors side by side. The
-   first tab is the class list itself; the other two are routes to their own
-   screens, so the tab bar only marks the current selection. */
+/* ক্লাস-screen tabs (owner order 2026-10-21): "ক্লাস ও বিষয়" and "রুটিন ও সময়সূচি"
+   are separate tabs, never doors side by side. The first tab is the class list
+   itself; the second is the route to the read-only routine screen. একাডেমিক
+   কার্যক্রম left this screen entirely — it is its own feature card on Home. */
 function syncClassTabs(active = 'list') {
   $$('.teacher-class-tabs [role="tab"]').forEach(tab => {
     const selected = (tab.dataset.classTab || '') === active;
@@ -1069,9 +1069,7 @@ $('#teacherClassList')?.addEventListener('click', event => {
 document.addEventListener('click', event => {
   if (state.busy) return;
   const classTab = event.target.closest('.teacher-class-tabs [role="tab"]');
-  if (classTab && classTab.hasAttribute('data-teacher-view')) {
-    syncClassTabs(classTab.dataset.teacherView === 'routine-view' ? 'routine' : 'academic');
-  }
+  if (classTab && classTab.hasAttribute('data-teacher-view')) syncClassTabs('routine');
   const examTile = event.target.closest('[data-teacher-exam]');
   if (examTile) {
     state.examScreen = EXAM_SCREENS[examTile.dataset.teacherExam] || 'home';

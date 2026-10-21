@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=395"></script>
-  <script src="js/app-entry.js?v=395" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=395"></script>
-  <script src="js/topbar-connectivity.js?v=395" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=395"></script>
-  <script src="js/appearance-boot.js?v=395"></script>
-  <script src="js/theme-logos.js?v=395"></script>
+  <script src="js/sanitize-url.js?v=396"></script>
+  <script src="js/app-entry.js?v=396" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=396"></script>
+  <script src="js/topbar-connectivity.js?v=396" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=396"></script>
+  <script src="js/appearance-boot.js?v=396"></script>
+  <script src="js/theme-logos.js?v=396"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=395">
-  <link rel="stylesheet" href="css/ui-layout.css?v=395">
-  <link rel="stylesheet" href="css/ui-components.css?v=395">
-  <link rel="stylesheet" href="css/ui-forms.css?v=395">
-  <link rel="stylesheet" href="css/ui-features.css?v=395">
-  <link rel="stylesheet" href="css/notice-board.css?v=395">
-  <link rel="stylesheet" href="css/ui-status.css?v=395">
-  <link rel="stylesheet" href="css/ui-auth.css?v=395">
-  <link rel="stylesheet" href="css/app-polish.css?v=395">
-  <link rel="stylesheet" href="css/student-record.css?v=395">
-  <link rel="stylesheet" href="css/exam-archive.css?v=395">
-  <link rel="stylesheet" href="css/academics.css?v=395">
-  <link rel="stylesheet" href="css/notifications.css?v=395">
-  <link rel="stylesheet" href="css/course-hub.css?v=395">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=395">
+  <link rel="stylesheet" href="css/foundation.css?v=396">
+  <link rel="stylesheet" href="css/ui-layout.css?v=396">
+  <link rel="stylesheet" href="css/ui-components.css?v=396">
+  <link rel="stylesheet" href="css/ui-forms.css?v=396">
+  <link rel="stylesheet" href="css/ui-features.css?v=396">
+  <link rel="stylesheet" href="css/notice-board.css?v=396">
+  <link rel="stylesheet" href="css/ui-status.css?v=396">
+  <link rel="stylesheet" href="css/ui-auth.css?v=396">
+  <link rel="stylesheet" href="css/app-polish.css?v=396">
+  <link rel="stylesheet" href="css/student-record.css?v=396">
+  <link rel="stylesheet" href="css/exam-archive.css?v=396">
+  <link rel="stylesheet" href="css/academics.css?v=396">
+  <link rel="stylesheet" href="css/notifications.css?v=396">
+  <link rel="stylesheet" href="css/course-hub.css?v=396">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=396">
   <!-- Teacher panel styles — rewritten on Tailwind (2026-10-21).
        Source: css/tailwind/teacher.src.css · build: `npm run build:teacher-css`
        → css/teacher-panel.css (committed: GitHub Pages has no build step).
@@ -54,9 +54,9 @@
        Every colour is a foundation palette token, so light and AMOLED inherit
        the same language from this one sheet. The old inline style block is
        gone; nothing visual lives in this file any more. -->
-  <link rel="stylesheet" href="css/teacher-panel.css?v=395">
-  <script type="module" src="js/ui-accessibility.js?v=395"></script>
-  <script src="js/launch-screen.js?v=395" defer></script>
+  <link rel="stylesheet" href="css/teacher-panel.css?v=396">
+  <script type="module" src="js/ui-accessibility.js?v=396"></script>
+  <script src="js/launch-screen.js?v=396" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -179,13 +179,15 @@
           <button class="day-tab" type="button" data-teacher-view="exam">নম্বর ও ফলাফল</button>
         </nav><div id="teacherExamWorkspace" hidden></div></section>
       <section id="teacherClasses" class="teacher-view" aria-labelledby="teacherClassesTitle" hidden><div class="page-intro"><button class="pay-back" type="button" data-teacher-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><h1 id="teacherClassesTitle">ক্লাস</h1></div>
-        <div class="teacher-section-heading"><h2>ক্লাস মেনু</h2></div>
-        <nav class="pay-grid is-2 teacher-submenu" aria-label="ক্লাস মেনু">
-          <button class="pay-tile" type="button" data-teacher-view="routine-view"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="attendance" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/attendance.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">রুটিন ও সময়সূচি<small>৯টি বিভাগ — শুধু-পঠন</small></span></button>
-          <button class="pay-tile" type="button" data-teacher-view="academic"><span class="pay-tile-icon"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="pay-tile-label">একাডেমিক কার্যক্রম<small>বাড়ির কাজ, সাজেশন, নোটিশ</small></span></button>
+        <nav class="teacher-submenu teacher-class-tabs" role="tablist" aria-label="ক্লাস বিভাগ">
+          <button class="teacher-class-tab" id="teacherClassTabList" type="button" role="tab" aria-selected="true" aria-controls="teacherClassPanel" data-class-tab="list">ক্লাস ও বিষয়</button>
+          <button class="teacher-class-tab" type="button" role="tab" aria-selected="false" data-teacher-view="routine-view" aria-label="রুটিন ও সময়সূচি ট্যাব — শুধু-পঠন রুটিন">রুটিন ও সময়সূচি</button>
+          <button class="teacher-class-tab" type="button" role="tab" aria-selected="false" data-teacher-view="academic" aria-label="একাডেমিক কার্যক্রম ট্যাব — বাড়ির কাজ, সাজেশন, নোটিশ">একাডেমিক কার্যক্রম</button>
         </nav>
-        <div class="teacher-section-heading"><h2>ক্লাস ও বিষয়</h2><small id="teacherClassCount">—</small></div>
-        <div id="teacherClassList" class="teacher-record-list"></div>
+        <div class="teacher-class-panel" id="teacherClassPanel" role="tabpanel" aria-labelledby="teacherClassTabList">
+          <div class="teacher-section-heading"><h2>আপনার ক্লাস</h2><small id="teacherClassCount">—</small></div>
+          <div id="teacherClassList" class="teacher-record-list"></div>
+        </div>
       </section>
       <section id="teacherRoutine" class="teacher-view" aria-labelledby="teacherRoutineTitle" hidden><div class="page-intro"><button class="pay-back" type="button" data-teacher-view="home" aria-label="হোমে ফিরুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button><h1 id="teacherRoutineTitle">রুটিন</h1></div><p class="teacher-local-note">এটি ম্যানেজারের সময়সূচির শুধু-পঠন দৃশ্য। শিক্ষক এখান থেকে রুটিন পরিবর্তন করতে পারবেন না। নিজের ক্লাসের উপস্থিতি নথিভুক্ত করতে <button class="mini-btn" type="button" data-teacher-view="routine">উপস্থিতি খুলুন →</button></p><nav class="chip-row teacher-routine-tabs" role="tablist" aria-label="রুটিন বিভাগ">
           <button class="day-tab" type="button" role="tab" aria-selected="true" data-routine-tab="today">আজ</button>
@@ -231,7 +233,7 @@
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=395"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=395"></script>
+  <script type="module" src="js/theme-entry.js?v=396"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=396"></script>
 </body>
 </html>

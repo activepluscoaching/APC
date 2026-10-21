@@ -480,6 +480,17 @@ function showAddChapterModal(course) {
 function render() { renderHome(); renderRecords(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
 const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
+/* ক্লাস-screen tabs (owner order 2026-10-21): "ক্লাস ও বিষয়", "রুটিন ও সময়সূচি" and
+   "একাডেমিক কার্যক্রম" are three separate tabs, never doors side by side. The
+   first tab is the class list itself; the other two are routes to their own
+   screens, so the tab bar only marks the current selection. */
+function syncClassTabs(active = 'list') {
+  $$('.teacher-class-tabs [role="tab"]').forEach(tab => {
+    const selected = (tab.dataset.classTab || '') === active;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.classList.toggle('is-active', selected);
+  });
+}
 function setView(view) {
   if (!TEACHER_VIEWS.includes(view)) return;
   /* The nine routine pages are one screen now; their routes stay as aliases
@@ -495,6 +506,7 @@ function setView(view) {
   state.view = view;
   const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
+  if (panel === 'teacherClasses') syncClassTabs('list');
   $$('.teacher-type-tabs [data-type-tab]').forEach(el => {
     const active = el.dataset.typeTab === view;
     el.classList.toggle('active', active);
@@ -1056,6 +1068,10 @@ $('#teacherClassList')?.addEventListener('click', event => {
 });
 document.addEventListener('click', event => {
   if (state.busy) return;
+  const classTab = event.target.closest('.teacher-class-tabs [role="tab"]');
+  if (classTab && classTab.hasAttribute('data-teacher-view')) {
+    syncClassTabs(classTab.dataset.teacherView === 'routine-view' ? 'routine' : 'academic');
+  }
   const examTile = event.target.closest('[data-teacher-exam]');
   if (examTile) {
     state.examScreen = EXAM_SCREENS[examTile.dataset.teacherExam] || 'home';

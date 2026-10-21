@@ -1,3 +1,6 @@
+// v396: Teacher ক্লাস — 'ক্লাস ও বিষয়', 'রুটিন ও সময়সূচি' and 'একাডেমিক কার্যক্রম' are now three
+// separate tabs (the two doors that shared one grid are gone), with the class list in the first
+// tab panel; pin refresh.
 // v395: Teacher ক্লাস — every class is one collapsed disclosure row (name, group, subject and
 // student counts); subjects and the class-work action open only on tap, and the two class doors
 // shrink to compact rows so no primary information lies open; pin refresh.
@@ -164,7 +167,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 395;
+const CACHE_VERSION = 396;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',

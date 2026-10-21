@@ -115,6 +115,38 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   assert.match(sceneRule, /position:absolute/, 'the scene fills the card behind the text');
 });
 
+test('ক্লাস splits ক্লাস ও বিষয় / রুটিন ও সময়সূচি / একাডেমিক কার্যক্রম into separate tabs', () => {
+  const view = page.querySelector('#teacherClasses');
+  const tabs = [...view.querySelectorAll('.teacher-class-tabs [role="tab"]')];
+  assert.equal(tabs.length, 3, 'three tabs, not two doors side by side');
+  assert.match(view.querySelector('.teacher-class-tabs').className, /teacher-submenu/,
+    'the tablist keeps the class the locked tests query');
+  assert.equal(view.querySelector('.teacher-class-tabs').getAttribute('role'), 'tablist');
+  assert.match(tabs[0].textContent, /ক্লাস ও বিষয়/);
+  assert.match(tabs[1].textContent, /রুটিন ও সময়সূচি/);
+  assert.match(tabs[2].textContent, /একাডেমিক কার্যক্রম/);
+  /* The first tab is the class list itself; the other two are the routes that
+     used to sit in one card grid. */
+  assert.equal(tabs[0].getAttribute('aria-selected'), 'true', 'the class list tab starts selected');
+  assert.equal(tabs[0].hasAttribute('data-teacher-view'), false, 'the list tab is not a route');
+  assert.equal(tabs[1].getAttribute('data-teacher-view'), 'routine-view');
+  assert.equal(tabs[2].getAttribute('data-teacher-view'), 'academic');
+  assert.equal(tabs[0].getAttribute('aria-controls'), 'teacherClassPanel');
+  assert.ok(view.querySelector('#teacherClassPanel #teacherClassList'), 'the class list lives in the first tab panel');
+  assert.equal(view.querySelectorAll('.teacher-submenu .pay-tile').length, 0, 'no door tiles remain');
+
+  const teacherJs = read('js/teacher.js');
+  assert.match(teacherJs, /function syncClassTabs/, 'the tab selection is managed in one place');
+  assert.match(teacherJs, /if \(panel === 'teacherClasses'\) syncClassTabs\('list'\)/,
+    'returning to ক্লাস always lands on the class list tab');
+
+  const compiled = read('css/teacher-panel.css');
+  assert.match(compiled, /#teacherClasses \.teacher-class-tabs\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/,
+    'the three tabs share one row');
+  assert.match(compiled, /#teacherClasses \.teacher-class-tab\.is-active,[^{]*\{[^}]*linear-gradient/,
+    'the active tab carries the brand gradient');
+});
+
 test('the ক্লাস screen keeps every class row collapsed until it is tapped', () => {
   const teacherJs = read('js/teacher.js');
   assert.match(teacherJs, /<details class="teacher-class-details">/, 'class rows are native disclosures');

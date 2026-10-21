@@ -73,8 +73,10 @@ The three seats that are reached from the bottom dock were redesigned in the
 same scoped sheet (section 24 of the source), keeping every route, id and class
 the router and the locked tests use:
 
-* **ক্লাস** — the two doors (রুটিন ও সময়সূচি, একাডেমিক কার্যক্রম) are compact
-  rows (tinted artwork disc, title + sub, chevron), and every class is one
+* **ক্লাস** — the screen opens with a three-tab segmented bar: **ক্লাস ও বিষয়**
+  (the class list itself, first tab, selected by default), **রুটিন ও সময়সূচি**
+  and **একাডেমিক কার্যক্রম** (each a tab that opens its own screen). The two
+  doors never share one card grid again. Every class is one
   **collapsed disclosure row**: the summary shows only the class, its group and
   the subject/student counts, with a count chip beside the section heading. The
   subject list, the approved-student count and the "এই ক্লাসের কাজ দেখুন"

@@ -1277,3 +1277,373 @@ body.teacher-reference {
   .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 19.5px; }
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm { font-size: 12px; }
 }
+
+/* ============================================================================
+   24 ── SCREEN REFRESH: ক্লাস / পরীক্ষা / আরও (2026-10-21, round 2)
+   ----------------------------------------------------------------------------
+   These three seats keep every route, id and class the router and the tests
+   depend on (`.teacher-submenu`, `.pay-tile`, `.teacher-cta`, `#teacherExamHub
+   .day-tab`, `.teacher-menu-group`), and only their surface changes:
+     • ক্লাস  — two door cards with a tinted artwork disc and a forward chevron
+                instead of flat tiles, and class cards with a brand accent.
+     • পরীক্ষা — one primary gradient action, one quiet secondary action, and a
+                2×2 grid of section doors in place of a chip scroller.
+     • আরও   — one grouped settings list (icon, label, chevron) instead of a
+                two-tile grid.
+   Written last on purpose: id-led selectors so nothing here has to fight the
+   shared `.pay-tile` geometry, and no new element is introduced.
+   ========================================================================== */
+
+/* ── 24.1 ক্লাস: doors ─────────────────────────────────────────────────────── */
+.teacher-reference #teacherClasses .teacher-section-heading { margin: 16px 2px 9px; }
+.teacher-reference #teacherClasses > .teacher-section-heading:first-of-type { margin-top: 4px; }
+.teacher-reference #teacherClasses .teacher-submenu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 142px;
+  padding: 13px 13px 12px;
+  text-align: left;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  transition: transform .16s var(--t-ease), border-color .16s var(--t-ease), box-shadow .18s var(--t-ease);
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile:nth-child(2) {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(125% 95% at 100% 0, var(--tone-soft), transparent 66%);
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile::after {
+  content: '›';
+  position: absolute;
+  right: 11px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding-bottom: 2px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--tone) 26%, transparent);
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile > * { position: relative; z-index: 1; }
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon svg { width: 26px; height: 26px; }
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 22px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile-label small {
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 550;
+  line-height: 1.45;
+}
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile:active { transform: scale(.975); }
+@media (hover: hover) {
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 40%, var(--glass-border));
+    box-shadow: var(--glass-shadow-strong);
+  }
+}
+
+/* ── 24.2 ক্লাস: the teacher's own class cards ────────────────────────────── */
+.teacher-reference #teacherClassList { display: grid; gap: 9px; }
+.teacher-reference #teacherClassList .teaching-card {
+  position: relative;
+  padding: 13px 14px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+.teacher-reference #teacherClassList .teaching-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+}
+.teacher-reference #teacherClassList .teaching-card h3 {
+  margin: 0 0 2px;
+  padding-left: 4px;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+.teacher-reference #teacherClassList .teaching-card p {
+  margin: 0 0 6px;
+  padding-left: 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.teacher-reference #teacherClassList .teaching-card small {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: var(--t-radius-chip);
+  background: var(--glass-accent-soft);
+  color: var(--color-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.teacher-reference #teacherClassList .teaching-card p:last-child { margin-bottom: 0; }
+.teacher-reference #teacherClassList .mini-btn {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ── 24.3 পরীক্ষা: one primary action, one quiet one, 2×2 doors ───────────── */
+.teacher-reference #teacherOnlineExams .teacher-cta {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 62px;
+  margin: 4px 0 9px;
+  border: 0;
+  border-radius: 20px;
+  padding: 12px 18px;
+  background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--brand-2) 58%, var(--tone-mint) 100%);
+  color: var(--pay-on-fab);
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  box-shadow: var(--accent-glow), inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
+  transition: transform .16s var(--t-ease), filter .18s var(--t-ease);
+}
+.teacher-reference #teacherOnlineExams .teacher-cta::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%,
+    color-mix(in srgb, #fff 22%, transparent) 50%, transparent 58%);
+  transform: translateX(-55%);
+  animation: apc-teacher-scene-sheen 7.5s var(--t-ease) infinite;
+}
+.teacher-reference #teacherOnlineExams .teacher-cta:active { transform: scale(.985); }
+.teacher-reference #teacherOnlineExams > .mini-btn {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 14px;
+  border-radius: 15px;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+.teacher-reference #teacherOnlineExams > .teacher-local-note {
+  margin: 12px 0 14px;
+  padding: 11px 13px 11px 15px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 52%, transparent);
+  background: var(--glass-bg-soft);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.teacher-reference #teacherExamHub {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 6px;
+}
+.teacher-reference #teacherExamHub .day-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: var(--glass-shadow);
+  transition: transform .15s var(--t-ease), border-color .15s var(--t-ease);
+}
+.teacher-reference #teacherExamHub .day-tab:active { transform: scale(.97); }
+.teacher-reference #teacherExamHub .day-tab.active,
+.teacher-reference #teacherExamHub .day-tab[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--glass-border));
+  background-image: linear-gradient(135deg,
+    var(--glass-accent-soft), color-mix(in srgb, var(--brand-2) 16%, transparent));
+  color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+@media (hover: hover) {
+  .teacher-reference #teacherExamHub .day-tab:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--color-primary) 36%, var(--glass-border));
+  }
+}
+
+/* ── 24.4 আরও: one grouped settings list ──────────────────────────────────── */
+.teacher-reference #teacherMore .teacher-menu-group { margin: 0 0 12px; }
+.teacher-reference #teacherMore .teacher-menu-group-title {
+  margin: 0 2px 8px;
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 750;
+  letter-spacing: .06em;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 5px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile {
+  --tone: var(--tone-violet);
+  --tone-soft: var(--tone-violet-soft);
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 34px 10px 10px;
+  text-align: left;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color .15s var(--t-ease), transform .15s var(--t-ease);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile + .pay-tile {
+  border-top: 1px solid var(--glass-border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile:nth-child(2) {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile::before { background: none; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile > * { position: relative; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile::after {
+  content: '›';
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-icon svg { width: 23px; height: 23px; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile:active { transform: scale(.99); }
+@media (hover: hover) {
+  .teacher-reference #teacherMore .teacher-menu-group .pay-tile:hover {
+    background: var(--glass-accent-soft);
+  }
+}
+.teacher-reference #teacherMore > .teacher-local-note {
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* Small phones: keep the doors readable at 320–380px. */
+@media (max-width: 380px) {
+  .teacher-reference #teacherClasses .teacher-submenu { gap: 8px; }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile {
+    min-height: 132px;
+    padding: 11px;
+    border-radius: 17px;
+  }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label { font-size: 12px; }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label small { font-size: 10px; }
+  .teacher-reference #teacherOnlineExams .teacher-cta { min-height: 56px; font-size: 15px; }
+  .teacher-reference #teacherExamHub .day-tab { min-height: 48px; font-size: 11.5px; }
+  .teacher-reference #teacherMore .teacher-menu-group .pay-tile { min-height: 58px; }
+}

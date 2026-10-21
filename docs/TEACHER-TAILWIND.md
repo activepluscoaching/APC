@@ -66,3 +66,20 @@ showed two suns next to the day/night chip on the card. The chip
 marker; day is sky + clouds, night is stars + city glow. Replacement rules
 (size, calm zones, palette) live in `assets/teacher-hero/README.md` and are
 locked by `tests/teacher-panel-tailwind.test.mjs`.
+
+## Screen refresh (ক্লাস / পরীক্ষা / আরও)
+
+The three seats that are reached from the bottom dock were redesigned in the
+same scoped sheet (section 24 of the source), keeping every route, id and class
+the router and the locked tests use:
+
+* **ক্লাস** — the two doors (রুটিন ও সময়সূচি, একাডেমিক কার্যক্রম) are now door
+  cards: tinted artwork disc, title + sub, forward chevron; the teacher's own
+  classes render as accent-barred cards with a full-width "এই ক্লাসের কাজ দেখুন"
+  action.
+* **পরীক্ষা** — one primary gradient action (দ্রুত MCQ), one quiet dashed
+  secondary action, and the four section doors as a 2×2 grid instead of a chip
+  scroller; the approval note reads as an info card.
+* **আরও** — a single grouped settings list (icon disc, label, chevron) rather
+  than a two-tile grid.
+

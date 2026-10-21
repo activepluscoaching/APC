@@ -14,7 +14,7 @@
     "build:qrcode": "node tools/build-qrcode.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.0",
+    "@playwright/test": "1.64.1",
     "@sparticuz/chromium": "^153.0.0",
     "esbuild": "^0.28.2",
     "firebase": "^13.0.0",

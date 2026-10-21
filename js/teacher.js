@@ -131,14 +131,30 @@ function renderHome() {
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
   /* Time-based greeting only; "শিক্ষক প্যানেল" is the hero's static subline.
-     The decorative glint follows the time of day (sun by day, moon by night). */
+     The decorative glint and the framed AI scene both follow the time of day
+     (sun/daytime classroom by day, moon/lamp study scene at night). */
   $('#teacherToday').textContent = `${hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা'}!`;
+  const isDay = hour >= 6 && hour < 18;
   const glint = $('#teacherHeroGlint');
   if (glint) {
-    const isDay = hour >= 6 && hour < 18;
     glint.setAttribute('href', `assets/icons/ai-3d/${isDay ? 'sun' : 'moon'}.svg`);
     const glintSvg = glint.closest('svg');
     if (glintSvg) glintSvg.setAttribute('data-icon', isDay ? 'sun' : 'moon');
+  }
+  /* Swap the hero illustration only when the mode actually changes; a short
+     fade hides the src switch. Both files are precached, so the swap is instant
+     and works offline. Render runs on every data event, hence the mode guard. */
+  const heroArt = $('#teacherHeroArt');
+  if (heroArt) {
+    const mode = isDay ? 'day' : 'night';
+    if (heroArt.dataset.mode !== mode) {
+      heroArt.classList.add('is-fading');
+      setTimeout(() => {
+        heroArt.setAttribute('src', `assets/teacher-hero/teacher-hero-${mode}.webp`);
+        heroArt.dataset.mode = mode;
+        heroArt.classList.remove('is-fading');
+      }, 220);
+    }
   }
   /* শিক্ষক-পরিচিতি শুধু welcome hero কার্ডে (শিরোনাম, আইডি ব্যাজ, অ্যাভাটার);
      টপবারে নামের পুনরাবৃত্তি নেই। textContent ব্যবহারে account profile-এর

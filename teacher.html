@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=381"></script>
-  <script src="js/app-entry.js?v=381" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=381"></script>
-  <script src="js/topbar-connectivity.js?v=381" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=381"></script>
-  <script src="js/appearance-boot.js?v=381"></script>
-  <script src="js/theme-logos.js?v=381"></script>
+  <script src="js/sanitize-url.js?v=382"></script>
+  <script src="js/app-entry.js?v=382" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=382"></script>
+  <script src="js/topbar-connectivity.js?v=382" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=382"></script>
+  <script src="js/appearance-boot.js?v=382"></script>
+  <script src="js/theme-logos.js?v=382"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=381">
-  <link rel="stylesheet" href="css/ui-layout.css?v=381">
-  <link rel="stylesheet" href="css/ui-components.css?v=381">
-  <link rel="stylesheet" href="css/ui-forms.css?v=381">
-  <link rel="stylesheet" href="css/ui-features.css?v=381">
-  <link rel="stylesheet" href="css/notice-board.css?v=381">
-  <link rel="stylesheet" href="css/ui-status.css?v=381">
-  <link rel="stylesheet" href="css/ui-auth.css?v=381">
-  <link rel="stylesheet" href="css/app-polish.css?v=381">
-  <link rel="stylesheet" href="css/student-record.css?v=381">
-  <link rel="stylesheet" href="css/exam-archive.css?v=381">
-  <link rel="stylesheet" href="css/academics.css?v=381">
-  <link rel="stylesheet" href="css/notifications.css?v=381">
-  <link rel="stylesheet" href="css/course-hub.css?v=381">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=381">
+  <link rel="stylesheet" href="css/foundation.css?v=382">
+  <link rel="stylesheet" href="css/ui-layout.css?v=382">
+  <link rel="stylesheet" href="css/ui-components.css?v=382">
+  <link rel="stylesheet" href="css/ui-forms.css?v=382">
+  <link rel="stylesheet" href="css/ui-features.css?v=382">
+  <link rel="stylesheet" href="css/notice-board.css?v=382">
+  <link rel="stylesheet" href="css/ui-status.css?v=382">
+  <link rel="stylesheet" href="css/ui-auth.css?v=382">
+  <link rel="stylesheet" href="css/app-polish.css?v=382">
+  <link rel="stylesheet" href="css/student-record.css?v=382">
+  <link rel="stylesheet" href="css/exam-archive.css?v=382">
+  <link rel="stylesheet" href="css/academics.css?v=382">
+  <link rel="stylesheet" href="css/notifications.css?v=382">
+  <link rel="stylesheet" href="css/course-hub.css?v=382">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=382">
   <!-- Teacher panel redesign (2026-10-20, v2): presentation-only layer scoped to
        .teacher-reference — the body class teacher.html alone carries — so nothing
        here reaches student/admin/manager/payment. Markup, routes, element IDs and
@@ -177,6 +177,66 @@
   pointer-events: none;
   background: radial-gradient(circle, color-mix(in srgb, var(--brand-2) 32%, transparent), transparent 72%);
 }
+/* 04.1b Hero artwork: framed day/night 3D scene with slow "living" motion.
+   The illustration is decorative (aria-hidden, empty alt); every meaning is
+   already carried by the text zones below it. ── */
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--pay-hero-line);
+  aspect-ratio: 828 / 462;
+  background: color-mix(in srgb, var(--pay-on-hero) 10%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--pay-hero-a) 45%, transparent);
+}
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.06);
+  animation: apc-teacher-scene-zoom 16s var(--t-ease) infinite alternate;
+  transition: opacity .45s var(--t-ease);
+}
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art.is-fading { opacity: 0; }
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 44%, color-mix(in srgb, var(--pay-hero-a) 42%, transparent) 100%);
+}
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen {
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, color-mix(in srgb, var(--pay-on-hero) 16%, transparent) 50%, transparent 58%);
+  transform: translateX(-45%);
+  animation: apc-teacher-scene-sheen 9s var(--t-ease) infinite;
+}
+@keyframes apc-teacher-scene-zoom {
+  from { transform: scale(1.06) translateY(0); }
+  to { transform: scale(1.13) translateY(-1.5%); }
+}
+@keyframes apc-teacher-scene-sheen {
+  0%, 60% { transform: translateX(-45%); opacity: 0; }
+  72% { opacity: 1; }
+  88%, 100% { transform: translateX(45%); opacity: 0; }
+}
+@keyframes apc-teacher-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
+  animation: apc-teacher-float 4.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art,
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen,
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint { animation: none !important; }
+}
+
 /* Greeting strip: avatar initial, time greeting + panel label, decorative glint. */
 .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-top {
   position: relative;
@@ -1396,9 +1456,69 @@
   }
 }
 
+/* 22 ── Whole-panel atmosphere & cohesive elevation (hero design language).
+   Token-only values, scoped to .teacher-reference, so dark/AMOLED self-theme
+   and no other panel is touched. Home keeps its own bespoke entrance above. ── */
+body.teacher-reference {
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(60% 30% at 90% -4%, color-mix(in srgb, var(--brand-2) 15%, transparent), transparent 72%),
+    radial-gradient(54% 28% at -8% 6%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 70%),
+    radial-gradient(72% 40% at 50% 114%, color-mix(in srgb, var(--tone-violet) 9%, transparent), transparent 74%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+/* Gradient accent tick beside every screen section heading. */
+.teacher-reference .teacher-section-heading h2 {
+  position: relative;
+  padding-left: 12px;
+}
+.teacher-reference .teacher-section-heading h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  border-radius: var(--t-radius-chip);
+  background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+}
+/* Smooth, consistent motion surfaces for the shared cards. */
+.teacher-reference .teacher-view .teaching-card,
+.teacher-reference .teacher-view .admin-card {
+  transition: transform .18s var(--t-ease), box-shadow .18s var(--t-ease), border-color .18s var(--t-ease);
+}
+/* Quiet entrance for sub-screens only (Home's staggered reveal is separate). */
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .page-intro,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .admin-card,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teaching-card,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teacher-toolbar,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teacher-type-tabs,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .chip-row,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .pay-grid {
+  animation: apc-teacher-rise .3s var(--t-ease) both;
+}
+/* Hover elevation on pointer devices; touch keeps the existing :active press. */
+@media (hover: hover) {
+  .teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile:hover,
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
+    box-shadow: var(--glass-shadow-strong);
+  }
+  .teacher-reference .teacher-view .teaching-card:hover,
+  .teacher-reference .teacher-view .admin-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--glass-shadow-strong);
+  }
+  .teacher-reference .pay-back:hover { transform: translateY(-1px) scale(1.03); }
+}
+
 /* 21 ── Small phones: reclaim horizontal space, keep three columns. ── */
 @media (max-width: 380px) {
   .teacher-reference #teacherHome .teacher-home-intro { padding: 15px 13px; border-radius: 21px; gap: 12px; }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene { border-radius: 15px; }
   .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon { width: 46px; height: 46px; }
   .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 18.5px; }
   .teacher-reference #teacherHome .teacher-home-intro .teacher-identity-card,
@@ -1423,8 +1543,8 @@
   .teacher-reference .teacher-type-tabs .pay-tile { font-size: 10.5px; }
 }
   </style>
-  <script type="module" src="js/ui-accessibility.js?v=381"></script>
-  <script src="js/launch-screen.js?v=381" defer></script>
+  <script type="module" src="js/ui-accessibility.js?v=382"></script>
+  <script src="js/launch-screen.js?v=382" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -1432,6 +1552,11 @@
     <main class="admin-main" id="teacherMain">
       <section id="teacherHome" class="teacher-view" aria-labelledby="teacherHomeTitle">
         <div class="home-dashboard-intro teacher-home-intro" data-home-intro>
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img id="teacherHeroArt" class="teacher-hero-art" src="assets/teacher-hero/teacher-hero-day.webp" alt="শিক্ষকের ডেস্কের থ্রিডি চিত্র — দিনে আলোকিত শ্রেণিকক্ষ, রাতে প্রদীপ ও চাঁদের দৃশ্য" width="828" height="462" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
           <div class="teacher-hero-top">
             <span class="admin-hero-icon" aria-hidden="true"><span id="teacherHomeInitial">শি</span></span>
             <div class="teacher-hero-greet">
@@ -1581,7 +1706,7 @@
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=381"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=381"></script>
+  <script type="module" src="js/theme-entry.js?v=382"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=382"></script>
 </body>
 </html>

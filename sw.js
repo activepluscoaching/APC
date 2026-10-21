@@ -1,3 +1,5 @@
+// v382: Teacher panel visual refresh — AI day/night hero artwork with gentle motion inside the
+// welcome card, panel-wide ambient atmosphere and cohesive hover/entrance elevation; pin refresh.
 // v381: Teacher Home hero redesign — five organised zones (greeting strip with day/night
 // glint, divider, welcome title, identity sub-card, and the daily-task prompt); cache pin refresh.
 // v380: Teacher panel door consolidation — creation centred in the কাজ দিন hub, Home tiles open screens only,
@@ -131,7 +133,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 381;
+const CACHE_VERSION = 382;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -336,6 +338,8 @@ const APP_SHELL = [
   './assets/icons/maskable-512.png',
   './assets/icons/apple-touch-icon.png',
   './assets/icons/app-logo.png',
+  './assets/teacher-hero/teacher-hero-day.webp',
+  './assets/teacher-hero/teacher-hero-night.webp',
   './js/appearance.js',
   './js/appearance-boot.js',
   './js/theme-logos.js',

@@ -15,7 +15,9 @@ test('the teacher advice library is a clean, Bengali, de-duplicated set', () => 
   assert.equal(new Set(TEACHER_DAILY_ADVICE).size, TEACHER_DAILY_ADVICE.length, 'no duplicate advice');
   /* The no-JS fallback written in teacher.html stays the library's first line. */
   const html = readFileSync(new URL('../teacher.html', import.meta.url), 'utf8');
-  const warm = html.match(/<p class="teacher-hero-warm">([^<]+)<\/p>/);
+  /* The warm line may also carry Tailwind utilities (layout lives on the
+     element now); only its text has to stay the library head. */
+  const warm = html.match(/<p class="teacher-hero-warm[^"]*">([^<]+)<\/p>/);
   assert.ok(warm, 'the hero keeps a warm-line element');
   assert.equal(warm[1].trim(), TEACHER_DAILY_ADVICE[0], 'the static fallback matches advice[0]');
 });

@@ -1,3 +1,7 @@
+// v392: Teacher panel rewritten on Tailwind — the compiled, .teacher-reference-scoped sheet
+// (css/teacher-panel.css) replaces the 1,300-line inline block, and the Home hero is now the
+// day/night classroom picture itself with the greeting and daily line laid over it (no card
+// behind the image); pin refresh for the rebuilt teacher assets.
 // v391: Teacher hero — the warm line is now a daily rotating piece of Bangla teaching advice
 // (new offline teacher-daily-advice module, deterministic per Dhaka day, no storage/network); pin refresh.
 // v390: Teacher hero — remove the time-of-day greeting ("শুভ অপরাহ্ন!") and the "শিক্ষক প্যানেল"
@@ -151,7 +155,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 391;
+const CACHE_VERSION = 392;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -274,6 +278,7 @@ const APP_SHELL = [
   './css/app-polish.css',
   './css/student-record.css',
   './css/ui-wallet.css',
+  './css/teacher-panel.css',
   './css/hero-cards.css' + '?v=379',
   './css/student-home-design.css',
   './js/student-record.js',

@@ -16,6 +16,15 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PAGES = ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html'];
 
+/* Pages may append their own scoped sheet after the canonical fifteen. Only the
+   teacher panel does: css/teacher-panel.css is the Tailwind build, wrapped in
+   `.teacher-reference` (the body class only teacher.html carries) with preflight
+   off, so it cannot reach another portal. Keeping it out of design-system.css
+   keeps the other four portals on exactly the same fifteen-sheet cascade. */
+export const PAGE_SCOPED_SHEETS = Object.freeze({
+  'teacher.html': Object.freeze(['teacher-panel.css'])
+});
+
 export function canonicalOrder() {
   const css = readFileSync(path.join(ROOT, 'css/design-system.css'), 'utf8');
   return [...css.matchAll(/@import\s+url\(\s*['"]\.\/([^'")]+)['"]?\s*\)/g)].map(match => match[1]);
@@ -32,7 +41,10 @@ export function checkAll() {
   const problems = [];
   for (const page of PAGES) {
     const links = pageStylesheets(page);
-    if (links.join(',') !== order.join(',')) {
+    const canonicalLinks = links.slice(0, order.length);
+    const extras = links.slice(order.length);
+    const expectedExtras = PAGE_SCOPED_SHEETS[page] || [];
+    if (canonicalLinks.join(',') !== order.join(',') || extras.join(',') !== expectedExtras.join(',')) {
       const missing = order.filter(name => !links.includes(name));
       const extra = links.filter(name => !order.includes(name));
       const reordered = !missing.length && !extra.length;
@@ -41,6 +53,7 @@ export function checkAll() {
         missing,
         extra,
         reordered,
+        extras,
         expected: order,
         actual: links
       });

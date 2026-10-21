@@ -129,7 +129,14 @@ test('the new icon dependency ships in the bumped offline release', () => {
     /* The stylesheets are linked directly (fifteen parallel <link>s instead of
        one @import chain), so EVERY sheet must carry the release query. */
     const links = [...read(page + '.html').matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(match => match[1]);
-    assert.equal(links.length, 15, `${page} must link the fifteen canonical sheets`);
+    /* The teacher panel appends its own Tailwind build (css/teacher-panel.css)
+       after the canonical fifteen; every other portal links exactly fifteen. */
+    const scoped = page === 'teacher' ? ['css/teacher-panel.css'] : [];
+    assert.equal(links.length, 15 + scoped.length, `${page} must link the fifteen canonical sheets`);
+    if (scoped.length) {
+      assert.deepEqual(links.slice(-scoped.length).map(href => href.split('?')[0]), scoped,
+        `${page} keeps its page-scoped sheet after the canonical order`);
+    }
     for (const href of links) assert.match(href, new RegExp(`\\?v=${version}$`), `${page}: ${href} is not pinned to CACHE_VERSION`);
   }
   for (const file of ['js/icons.js','js/icon-set.js']) {

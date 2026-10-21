@@ -21,6 +21,7 @@ import { initFixedShell } from './fixed-shell.js';
 import { registerServiceWorker } from './service-worker.js';
 import { mountReports, refreshReports } from './reports.js';
 import { teachingRepository, DEMO_TEACHER, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, todayISO, displayDate, safeResourceURL, matchesStudent, watchTeachingData } from './teaching-data.js';
+import { pickTeacherAdvice } from './teacher-daily-advice.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -161,6 +162,10 @@ function renderHome() {
   const name = String(state.teacher?.fullName || '').trim();
   $('#teacherHomeTitle').textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম';
   if ($('#teacherHomeInitial')) $('#teacherHomeInitial').textContent = name.charAt(0) || 'শি';
+  /* প্রতিদিন নতুন পরামর্শ: একই ঢাকা-দিনে একই লাইন, পরদিন নিজে থেকে বদলায়।
+     কোনো স্টোরেজ/নেটওয়ার্ক নেই — বিশুদ্ধ তারিখ-ভিত্তিক নির্বাচন। */
+  const warmLine = $('.teacher-hero-warm');
+  if (warmLine) warmLine.textContent = pickTeacherAdvice();
   /* মালিকের নির্দেশ (২০২৬-১০-২১): হোম থেকে "আজকের সারাংশ" KPI সারফেস বাদ।
      একই সংখ্যাগুলো এখনও কর্মক্ষেত্রেই হিসাব হয় (পেন্ডিং নেভি ডট renderTypeCounts-এ,
      পরীক্ষা তার নিজস্ব স্ক্রিনে) — শুধু হোম-কার্ড তিনটি সরানো হয়েছে। */

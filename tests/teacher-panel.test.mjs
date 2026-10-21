@@ -12,6 +12,7 @@ import { enabledClasses } from '../js/config.js';
 import { TEACHER_ASSIGNMENTS_KEY } from '../js/teacher-assignments.js';
 import { STAFF_ACCOUNTS, updateStaffProfile } from '../js/staff-auth.js';
 import { openStaffPanel } from './staff-harness.mjs';
+import { pickTeacherAdvice } from '../js/teacher-daily-advice.js';
 
 /* Bangla literals from different files can carry precomposed or decomposed
    nukta forms (ড়/য়) — compare in one normalization, like the architecture
@@ -75,6 +76,8 @@ test('the welcome hero shows the teacher name from the staff profile, never the 
   assert.equal($('.teacher-hero-greet'), null, 'the greeting wrapper is removed');
   assert.equal($('.teacher-hero-sub'), null, 'the panel subline is removed');
   assert.ok($('#teacherHeroGlint'), 'the day/night glint stays on the identity strip');
+  assert.equal($('.teacher-hero-warm').textContent, pickTeacherAdvice(), 'the warm line shows today’s rotating advice');
+  assert.ok($('.teacher-hero-warm').textContent.trim().length > 0, 'the daily advice is never blank');
   assert.equal($('#teacherIdentityBadge'), null, 'the role/id sub-card was removed from the hero by owner request');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the name stays out of the topbar');
   // The decorative daily-work prompt card had no action and was removed from Home by owner request.

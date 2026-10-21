@@ -1,3 +1,5 @@
+// v391: Teacher hero — the warm line is now a daily rotating piece of Bangla teaching advice
+// (new offline teacher-daily-advice module, deterministic per Dhaka day, no storage/network); pin refresh.
 // v390: Teacher hero — remove the time-of-day greeting ("শুভ অপরাহ্ন!") and the "শিক্ষক প্যানেল"
 // subline from the home identity strip; avatar initial and day/night glint stay; pin refresh.
 // v389: Teacher panel — remove the student list screen and its bottom-nav seat entirely (surface
@@ -149,7 +151,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 390;
+const CACHE_VERSION = 391;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -454,6 +456,7 @@ const APP_SHELL = [
   './js/manager.js',
   './js/payment.js',
   './js/teacher.js',
+  './js/teacher-daily-advice.js',
   './js/teaching-data.js',
   './js/teacher-assignments.js',
   './js/student-teaching.js',

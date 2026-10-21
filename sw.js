@@ -1,3 +1,5 @@
+// v387: Teacher home — remove the non-actionable daily-work prompt card ("আপনার আজকের কাজগুলো…")
+// entirely from Home (markup, styles and tests); pin refresh for the rebuilt teacher assets.
 // v386: Teacher hero — fold greeting and welcome into one tidy text stack by dropping the hard
 // divider (uniform flex spacing), keeping the clean flat gradient and clear page background; pin refresh.
 // v385: Teacher hero — clear the background behind the card (remove the panel ambient wash and the
@@ -141,7 +143,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 386;
+const CACHE_VERSION = 387;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',

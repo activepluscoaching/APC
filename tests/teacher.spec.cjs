@@ -239,7 +239,6 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
       await expect(page.locator('#teacherHomeTitle')).toHaveText(`স্বাগতম, ${fullName}`);
       const welcomeFits = await page.evaluate(() => {
         const title = document.querySelector('#teacherHomeTitle');
-        const note = document.querySelector('.teacher-welcome-note');
         const intro = document.querySelector('.teacher-home-intro');
         const range = document.createRange();
         range.selectNodeContents(title);
@@ -252,7 +251,6 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
           textBottom: Math.max(...textRects.map(rect => rect.bottom)),
           boxRight: title.getBoundingClientRect().right,
           introBottom: introRect.bottom,
-          helperNoteBottom: note.getBoundingClientRect().bottom,
           documentWidth: document.documentElement.scrollWidth,
           viewportWidth: innerWidth
         };
@@ -260,10 +258,8 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
       expect(welcomeFits.scrollWidth, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.clientWidth + 1);
       expect(welcomeFits.textRight, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.boxRight + 1);
       expect(welcomeFits.textBottom, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.introBottom + 1);
-      // The daily-work note moved out of the gradient hero into its own
-      // standalone glass card directly below it, so it must sit beneath the
-      // hero card (and still inside the page width).
-      expect(welcomeFits.helperNoteBottom - welcomeFits.introBottom, JSON.stringify(welcomeFits)).toBeGreaterThanOrEqual(0);
+      // The decorative daily-work prompt card was removed from Home; the welcome
+      // title must still fit inside the hero without any horizontal overflow.
       expect(welcomeFits.documentWidth, JSON.stringify(welcomeFits)).toBeLessThanOrEqual(welcomeFits.viewportWidth);
     }
     const responsiveHeader = await page.evaluate(() => {

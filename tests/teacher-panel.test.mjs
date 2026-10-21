@@ -71,7 +71,9 @@ test('the welcome hero shows the teacher name from the staff profile, never the 
   assert.equal($('#teacherHomeInitial').textContent, 'প', 'the hero avatar uses the name initial');
   assert.equal($('#teacherIdentityBadge'), null, 'the role/id sub-card was removed from the hero by owner request');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the name stays out of the topbar');
-  assert.match($('#teacherHome').textContent, /আপনার আজকের কাজগুলো দেখে নিন।/);
+  // The decorative daily-work prompt card had no action and was removed from Home by owner request.
+  assert.equal($('.teacher-hero-prompt'), null, 'the daily-work prompt card no longer appears on Home');
+  assert.equal($('.teacher-welcome-note'), null, 'the daily-work note text is gone with its card');
 });
 
 test('home is welcome + one 3-column grid over existing screens + today, with no work feed', () => {

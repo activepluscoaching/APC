@@ -56,11 +56,11 @@ test('an empty home reports honestly: no classes today, and stays clean', () => 
 });
 
 test('the welcome hero shows the teacher name from the staff profile, never the topbar', async () => {
-  /* A provisioned test account starts without a display name — the hero still
-     greets politely; once the profile carries a name, the hero title and avatar
-     initial update after the next data event. The role/id sub-card no longer
-     lives on the hero (it stays on "আমার প্রোফাইল"), and the name must never
-     appear a second time in the shared topbar. */
+  /* A provisioned test account starts without a display name — the welcome
+     title stays plain; once the profile carries a name, the hero title and
+     avatar initial update after the next data event. The role/id sub-card no
+     longer lives on the hero (it stays on "আমার প্রোফাইল"), and the name must
+     never appear a second time in the shared topbar. */
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম', 'no name on the account yet — a plain welcome');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the topbar has no name slot even before a name exists');
   const updated = await updateStaffProfile('teacher', { fullName: 'পরীক্ষা শিক্ষক' });
@@ -69,6 +69,12 @@ test('the welcome hero shows the teacher name from the staff profile, never the 
   await ctx.waitFor(() => $('#teacherHomeTitle').textContent === 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeTitle').textContent, 'স্বাগতম, পরীক্ষা শিক্ষক');
   assert.equal($('#teacherHomeInitial').textContent, 'প', 'the hero avatar uses the name initial');
+  /* মালিক-আদেশ ২০২৬-১০-২১: সময়-ভিত্তিক শুভেচ্ছা ("শুভ অপরাহ্ন!") ও "শিক্ষক প্যানেল"
+     সাবলাইন হিরো থেকে বাদ; পরিচয়-স্ট্রিপে শুধু অ্যাভাটার-অক্ষর ও দিন/রাত glint। */
+  assert.equal($('#teacherToday'), null, 'the time-of-day greeting is removed');
+  assert.equal($('.teacher-hero-greet'), null, 'the greeting wrapper is removed');
+  assert.equal($('.teacher-hero-sub'), null, 'the panel subline is removed');
+  assert.ok($('#teacherHeroGlint'), 'the day/night glint stays on the identity strip');
   assert.equal($('#teacherIdentityBadge'), null, 'the role/id sub-card was removed from the hero by owner request');
   assert.equal($('.app-topbar .teacher-header-name'), null, 'the name stays out of the topbar');
   // The decorative daily-work prompt card had no action and was removed from Home by owner request.

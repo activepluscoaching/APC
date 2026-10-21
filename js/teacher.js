@@ -129,10 +129,10 @@ function renderHome() {
      profile and every publish gate read the same assignment rows. */
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  /* Time-based greeting only; "শিক্ষক প্যানেল" is the hero's static subline.
-     The decorative glint and the framed AI scene both follow the time of day
-     (sun/daytime classroom by day, moon/lamp study scene at night). */
-  $('#teacherToday').textContent = `${hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা'}!`;
+  /* The decorative glint and the framed AI scene both follow the time of day
+     (sun/daytime classroom by day, moon/lamp study scene at night). The
+     time-of-day greeting and the "শিক্ষক প্যানেল" subline were removed from the
+     hero by owner order; only the avatar initial, glint and welcome stay. */
   const isDay = hour >= 6 && hour < 18;
   const glint = $('#teacherHeroGlint');
   if (glint) {

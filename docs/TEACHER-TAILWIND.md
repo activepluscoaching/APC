@@ -55,3 +55,14 @@ The owner asked (2026-10-21) for the hero to *be* the picture:
 
 The identity initial, the day/night glint and the picture swap are still driven
 by `js/teacher.js` (`#teacherHomeInitial`, `#teacherHeroGlint`, `#teacherHeroArt`).
+
+## Artwork
+
+`assets/teacher-hero/teacher-hero-day.webp` and `-night.webp` are a matched pair
+(828 × 462, 16:10) that `js/teacher.js` swaps at 06:00 / 18:00 Asia/Dhaka.
+**Neither illustration contains a sun or a moon** — the old day scene did, so it
+showed two suns next to the day/night chip on the card. The chip
+(`.teacher-hero-glint`, sun by day → moon by night) is the only celestial
+marker; day is sky + clouds, night is stars + city glow. Replacement rules
+(size, calm zones, palette) live in `assets/teacher-hero/README.md` and are
+locked by `tests/teacher-panel-tailwind.test.mjs`.

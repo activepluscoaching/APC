@@ -1,3 +1,6 @@
+// v393: Teacher hero artwork redesigned as a matched day/night pair with no sun or moon in the
+// scene — the card's day/night chip is now the single celestial marker (two suns showed before);
+// the picture card's scrim is lighter so the brighter scene still reads; pin refresh.
 // v392: Teacher panel rewritten on Tailwind — the compiled, .teacher-reference-scoped sheet
 // (css/teacher-panel.css) replaces the 1,300-line inline block, and the Home hero is now the
 // day/night classroom picture itself with the greeting and daily line laid over it (no card
@@ -155,7 +158,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 392;
+const CACHE_VERSION = 393;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',

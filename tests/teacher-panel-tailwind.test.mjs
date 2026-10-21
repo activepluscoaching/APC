@@ -84,6 +84,19 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   assert.ok(content.querySelector('.admin-hero-icon #teacherHomeInitial'), 'the identity initial stays on the picture');
   assert.ok(content.querySelector('.teacher-hero-glint'), 'the day/night glint stays on the picture');
 
+  /* One celestial marker only (owner report: the old day artwork carried its own
+     sun beside the day/night chip, so two suns showed at once). The artwork is
+     sky/clouds by day and stars by night; the chip is what changes with the
+     clock, driven by js/teacher.js. */
+  assert.equal(scene.querySelectorAll('svg, img:not(#teacherHeroArt), [data-icon]').length, 0,
+    'the artwork layer holds nothing but the picture and its scrim');
+  const glints = hero.querySelectorAll('.teacher-hero-glint');
+  assert.equal(glints.length, 1, 'exactly one time-of-day marker on the card');
+  assert.ok(glints[0].querySelector('#teacherHeroGlint'), 'the marker is the swappable sun/moon icon');
+  const teacherJs = read('js/teacher.js');
+  assert.match(teacherJs, /isDay \? 'sun' : 'moon'/, 'the marker follows the Dhaka clock');
+  assert.match(teacherJs, /teacher-hero-\$\{mode\}\.webp/, 'the picture swaps with the same clock');
+
   /* The old card: a padded gradient surface with a framed picture inside it. It
      must be gone — the picture is the surface, and the text floats over it. */
   const compiled = read('css/teacher-panel.css');
@@ -100,6 +113,30 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   const sceneRule = ruleFor('.teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene{');
   assert.doesNotMatch(sceneRule, /border-radius/, 'the scene is no longer a framed picture inside a card');
   assert.match(sceneRule, /position:absolute/, 'the scene fills the card behind the text');
+});
+
+test('both hero illustrations ship at the card\'s 828×462 size, day and night', () => {
+  for (const mode of ['day', 'night']) {
+    const file = `assets/teacher-hero/teacher-hero-${mode}.webp`;
+    assert.ok(existsSync(path.join(root, file)), `${file} exists`);
+    /* RIFF/WEBP header, then the VP8/VP8L/VP8X chunk; the pixel size is read
+       from the plain-lossy VP8 header this export uses. */
+    const buffer = readFileSync(path.join(root, file));
+    assert.equal(buffer.toString('ascii', 0, 4), 'RIFF', `${file} is a RIFF container`);
+    assert.equal(buffer.toString('ascii', 8, 12), 'WEBP', `${file} is WebP`);
+    assert.equal(buffer.toString('ascii', 12, 16), 'VP8 ', `${file} is a lossy WebP`);
+    const start = buffer.indexOf(Buffer.from([0x9d, 0x01, 0x2a]));
+    assert.ok(start > 0, `${file} carries a VP8 frame header`);
+    const width = buffer.readUInt16LE(start + 3) & 0x3fff;
+    const height = buffer.readUInt16LE(start + 5) & 0x3fff;
+    assert.deepEqual([width, height], [828, 462], `${file} matches the markup's intrinsic size`);
+  }
+  /* The markup must keep the same intrinsic size as the files, so the card
+     never reflows before the picture decodes. */
+  const art = page.querySelector('#teacherHeroArt');
+  assert.deepEqual([art.getAttribute('width'), art.getAttribute('height')], ['828', '462']);
+  assert.ok(existsSync(path.join(root, 'assets/teacher-hero/README.md')),
+    'the artwork rules (no sun/moon in the scene) are documented beside the files');
 });
 
 test('the committed stylesheet is what the Tailwind build produces', { skip: !existsSync(path.join(root, 'node_modules/.bin/tailwindcss')) }, () => {

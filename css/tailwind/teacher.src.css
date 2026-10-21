@@ -136,12 +136,16 @@
     position: absolute;
     inset: 0;
     background:
+      /* Two layers: a bottom veil that carries the greeting and the daily line,
+         and a soft left falloff that keeps the identity chip readable over the
+         bright chalkboard. Lighter than the first pass — the redesigned scene is
+         brighter, and the canvas should still look like a photograph. */
       linear-gradient(0deg,
-        rgb(var(--t-scrim-ink) / .92) 0%,
-        rgb(var(--t-scrim-ink) / .70) 30%,
-        rgb(var(--t-scrim-ink) / .22) 58%,
-        rgb(var(--t-scrim-ink) / .05) 100%),
-      linear-gradient(90deg, rgb(var(--t-scrim-ink) / .52) 0%, transparent 82%);
+        rgb(var(--t-scrim-ink) / .88) 0%,
+        rgb(var(--t-scrim-ink) / .58) 26%,
+        rgb(var(--t-scrim-ink) / .16) 54%,
+        rgb(var(--t-scrim-ink) / .02) 100%),
+      linear-gradient(90deg, rgb(var(--t-scrim-ink) / .40) 0%, transparent 76%);
   }
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen {
     position: absolute;
@@ -163,6 +167,10 @@
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 20px rgb(var(--t-scrim-ink) / .22);
   }
+  /* The one time-of-day marker on the hero: the artwork itself carries no sun
+     and no moon any more (the day scene is sky and clouds, the night scene is
+     stars), so this chip is what changes with the clock — sun by day, moon by
+     night, driven by js/teacher.js. */
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
     background: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
     border: 1px solid color-mix(in srgb, var(--pay-on-hero) 40%, transparent);
@@ -1263,8 +1271,8 @@ body.teacher-reference {
     font-size: 16px;
   }
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
   }
   .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 19.5px; }
   .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm { font-size: 12px; }

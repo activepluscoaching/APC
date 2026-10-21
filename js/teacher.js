@@ -130,10 +130,12 @@ function renderHome() {
      profile and every publish gate read the same assignment rows. */
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  /* The decorative glint and the framed AI scene both follow the time of day
-     (sun/daytime classroom by day, moon/lamp study scene at night). The
-     time-of-day greeting and the "শিক্ষক প্যানেল" subline were removed from the
-     hero by owner order; only the avatar initial, glint and welcome stay. */
+  /* The hero follows the time of day twice over: the picture swaps between the
+     day and the night classroom, and this glass chip is the ONLY sun/moon on the
+     card (the artwork keeps its sky free of celestial bodies, owner note
+     2026-10-21 — two suns showed at once). The time-of-day greeting and the
+     "শিক্ষক প্যানেল" subline were removed from the hero by owner order; only the
+     avatar initial, glint and welcome stay. */
   const isDay = hour >= 6 && hour < 18;
   const glint = $('#teacherHeroGlint');
   if (glint) {

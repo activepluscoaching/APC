@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=392"></script>
-  <script src="js/app-entry.js?v=392" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=392"></script>
-  <script src="js/topbar-connectivity.js?v=392" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=392"></script>
-  <script src="js/appearance-boot.js?v=392"></script>
-  <script src="js/theme-logos.js?v=392"></script>
+  <script src="js/sanitize-url.js?v=393"></script>
+  <script src="js/app-entry.js?v=393" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=393"></script>
+  <script src="js/topbar-connectivity.js?v=393" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=393"></script>
+  <script src="js/appearance-boot.js?v=393"></script>
+  <script src="js/theme-logos.js?v=393"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -30,21 +30,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=392">
-  <link rel="stylesheet" href="css/ui-layout.css?v=392">
-  <link rel="stylesheet" href="css/ui-components.css?v=392">
-  <link rel="stylesheet" href="css/ui-forms.css?v=392">
-  <link rel="stylesheet" href="css/ui-features.css?v=392">
-  <link rel="stylesheet" href="css/notice-board.css?v=392">
-  <link rel="stylesheet" href="css/ui-status.css?v=392">
-  <link rel="stylesheet" href="css/ui-auth.css?v=392">
-  <link rel="stylesheet" href="css/app-polish.css?v=392">
-  <link rel="stylesheet" href="css/student-record.css?v=392">
-  <link rel="stylesheet" href="css/exam-archive.css?v=392">
-  <link rel="stylesheet" href="css/academics.css?v=392">
-  <link rel="stylesheet" href="css/notifications.css?v=392">
-  <link rel="stylesheet" href="css/course-hub.css?v=392">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=392">
+  <link rel="stylesheet" href="css/foundation.css?v=393">
+  <link rel="stylesheet" href="css/ui-layout.css?v=393">
+  <link rel="stylesheet" href="css/ui-components.css?v=393">
+  <link rel="stylesheet" href="css/ui-forms.css?v=393">
+  <link rel="stylesheet" href="css/ui-features.css?v=393">
+  <link rel="stylesheet" href="css/notice-board.css?v=393">
+  <link rel="stylesheet" href="css/ui-status.css?v=393">
+  <link rel="stylesheet" href="css/ui-auth.css?v=393">
+  <link rel="stylesheet" href="css/app-polish.css?v=393">
+  <link rel="stylesheet" href="css/student-record.css?v=393">
+  <link rel="stylesheet" href="css/exam-archive.css?v=393">
+  <link rel="stylesheet" href="css/academics.css?v=393">
+  <link rel="stylesheet" href="css/notifications.css?v=393">
+  <link rel="stylesheet" href="css/course-hub.css?v=393">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=393">
   <!-- Teacher panel styles — rewritten on Tailwind (2026-10-21).
        Source: css/tailwind/teacher.src.css · build: `npm run build:teacher-css`
        → css/teacher-panel.css (committed: GitHub Pages has no build step).
@@ -54,9 +54,9 @@
        Every colour is a foundation palette token, so light and AMOLED inherit
        the same language from this one sheet. The old inline style block is
        gone; nothing visual lives in this file any more. -->
-  <link rel="stylesheet" href="css/teacher-panel.css?v=392">
-  <script type="module" src="js/ui-accessibility.js?v=392"></script>
-  <script src="js/launch-screen.js?v=392" defer></script>
+  <link rel="stylesheet" href="css/teacher-panel.css?v=393">
+  <script type="module" src="js/ui-accessibility.js?v=393"></script>
+  <script src="js/launch-screen.js?v=393" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
@@ -76,7 +76,7 @@
           <div class="teacher-hero-content relative z-10 flex min-h-[var(--t-hero-min-h)] flex-col justify-between gap-8 p-4">
             <div class="teacher-hero-top flex items-start justify-between gap-3">
               <span class="admin-hero-icon grid h-[50px] w-[50px] flex-none place-items-center rounded-full text-[18px] font-[750]" aria-hidden="true"><span id="teacherHomeInitial">শি</span></span>
-              <span class="teacher-hero-glint grid h-[38px] w-[38px] flex-none place-items-center rounded-full" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image id="teacherHeroGlint" href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <span class="teacher-hero-glint grid h-10 w-10 flex-none place-items-center rounded-full" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image id="teacherHeroGlint" href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
             </div>
             <div class="teacher-hero-welcome flex min-w-0 flex-col gap-1.5">
               <h1 id="teacherHomeTitle" class="m-0 text-[clamp(20px,5.6vw,25px)] font-[750] leading-[1.32] break-words text-on-hero">স্বাগতম</h1>
@@ -231,7 +231,7 @@
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=392"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=392"></script>
+  <script type="module" src="js/theme-entry.js?v=393"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=393"></script>
 </body>
 </html>

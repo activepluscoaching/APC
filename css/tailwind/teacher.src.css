@@ -1,0 +1,1782 @@
+/* ============================================================================
+   TEACHER PANEL — Tailwind source (2026-10-21 rewrite)
+   ----------------------------------------------------------------------------
+   Built with `npm run build:teacher-css` into css/teacher-panel.css.
+   The compiled sheet is what teacher.html links; this source is the only place
+   teacher presentation is authored.
+
+   Structure
+     @layer base        scoped design tokens (teacher body only)
+     @layer components  the teacher surface system, written with @apply
+     deep-screen rules  records / routine / exams / courses / reports / settings
+                        / modals / notification centre — component rules that the
+                        JS renderers depend on (they are Tailwind components too,
+                        see the note above that block)
+
+   Rules of engagement
+     • Only `.teacher-reference` selectors: nothing reaches the other portals.
+     • Only foundation palette tokens: light + AMOLED share this one build.
+     • Geometry owned by the shared sheets (shell width, dock seats, form font
+       sizes) is never re-declared here.
+   ========================================================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 01 ── Scoped tokens ─────────────────────────────────────────────────────── */
+@layer base {
+  .teacher-reference {
+    --t-radius-tile: 20px;
+    --t-radius-card: 22px;
+    --t-radius-chip: 999px;
+    --t-ease: cubic-bezier(.33, .05, .28, 1);
+    /* Hero scrim: one ink that reads on both the bright day scene and the
+       night scene, and stays legible in the AMOLED theme because the artwork
+       itself is unchanged between themes. */
+    --t-scrim-ink: 4 24 17;
+    --t-hero-min-h: 236px;
+  }
+  @media (max-width: 380px) {
+    .teacher-reference { --t-hero-min-h: 220px; }
+  }
+}
+
+@layer components {
+  /* 02 ── Brand bar ────────────────────────────────────────────────────────── */
+  .teacher-reference .teacher-shell > .app-topbar {
+    @apply border-b;
+    background-color: var(--pay-hero-a);
+    background-image: var(--pay-hero-gradient);
+    border-color: var(--pay-hero-line);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--pay-on-hero) 14%, transparent);
+  }
+  .teacher-reference .app-topbar .app-brand-logo { @apply rounded-xl; }
+  .teacher-reference .app-topbar .app-brand-institute { color: var(--pay-on-hero); }
+  .teacher-reference .app-topbar .app-brand-slogan { color: var(--pay-on-hero-soft); }
+  .teacher-reference .app-topbar-icon {
+    @apply rounded-[14px];
+    background: color-mix(in srgb, var(--pay-on-hero) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pay-on-hero) 18%, transparent);
+    color: var(--pay-on-hero);
+    transition: transform .16s var(--t-ease), background-color .16s var(--t-ease);
+  }
+  .teacher-reference .app-topbar-icon:hover {
+    background: color-mix(in srgb, var(--pay-on-hero) 22%, transparent);
+  }
+  .teacher-reference .app-topbar-icon:active { @apply scale-95; }
+  .teacher-reference .notification-dot {
+    box-shadow: 0 0 0 2px var(--pay-hero-a);
+  }
+
+  /* 03 ── Bottom dock (geometry stays with ui-wallet.css) ──────────────────── */
+  .teacher-reference .teacher-shell > .admin-bottom::before {
+    @apply rounded-t-[22px];
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--glass-border));
+    border-bottom: 0;
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--glass-bar));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .teacher-reference .admin-bottom-item { @apply rounded-[15px]; }
+  .teacher-reference .admin-bottom-item.active {
+    color: var(--color-primary);
+    background: var(--glass-accent-soft);
+  }
+  .teacher-reference .admin-bottom-item.active .nav-chip {
+    background-image: linear-gradient(140deg, var(--color-primary), var(--brand-2));
+    color: var(--pay-on-fab);
+    box-shadow: var(--accent-glow);
+  }
+
+  /* 04 ── HOME ─────────────────────────────────────────────────────────────── */
+
+  /* 04.1 The hero IS the picture. There is no gradient card behind it: the
+     day/night classroom illustration fills the whole card, and the greeting and
+     the daily line sit on the artwork over a bottom scrim built from the ink
+     token above. Every text zone is in normal flow above the <img>, so long
+     Bengali names wrap inside the picture instead of pushing it away. */
+  .teacher-reference #teacherHome .teacher-home-intro {
+    /* Layout for the image-as-card is written out rather than @apply-ed so the
+       clipping/stacking context is ordered with the rest of this rule. */
+    position: relative;
+    isolation: isolate;
+    /* display is re-declared because the shared .home-dashboard-intro rule sets
+       a row flex container; the picture card stacks its scene and its text. */
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    /* A 16:10 window keeps almost the whole classroom illustration (its
+       meaningful content spans the full width); the text lies over the desk at
+       the bottom. min-height wins on narrow phones. */
+    aspect-ratio: 16 / 10;
+    min-height: var(--t-hero-min-h);
+    margin: 2px 0 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 26px;
+    background: var(--pay-hero-a);
+    box-shadow: var(--glass-shadow-strong);
+    color: var(--pay-on-hero);
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-content { width: 100%; }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art {
+    @apply block h-full w-full object-cover;
+    object-position: center 46%;
+    transform: scale(1.04);
+    animation: apc-teacher-scene-zoom 18s var(--t-ease) infinite alternate;
+    transition: opacity .45s var(--t-ease);
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art.is-fading { @apply opacity-0; }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      /* Two layers: a bottom veil that carries the greeting and the daily line,
+         and a soft left falloff that keeps the identity chip readable over the
+         bright chalkboard. Lighter than the first pass — the redesigned scene is
+         brighter, and the canvas should still look like a photograph. */
+      linear-gradient(0deg,
+        rgb(var(--t-scrim-ink) / .88) 0%,
+        rgb(var(--t-scrim-ink) / .58) 26%,
+        rgb(var(--t-scrim-ink) / .16) 54%,
+        rgb(var(--t-scrim-ink) / .02) 100%),
+      linear-gradient(90deg, rgb(var(--t-scrim-ink) / .40) 0%, transparent 76%);
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 42%,
+      color-mix(in srgb, var(--pay-on-hero) 16%, transparent) 50%, transparent 58%);
+    transform: translateX(-45%);
+    animation: apc-teacher-scene-sheen 9s var(--t-ease) infinite;
+  }
+  /* .teacher-hero-content, .teacher-hero-top, .teacher-hero-welcome and the
+     h1/warm line take their layout from Tailwind utilities in teacher.html;
+     only what utilities cannot express (gradients, blur, shadows, motion)
+     stays here. */
+  .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon {
+    background: color-mix(in srgb, var(--pay-on-hero) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pay-on-hero) 44%, transparent);
+    color: var(--pay-on-hero);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgb(var(--t-scrim-ink) / .22);
+  }
+  /* The one time-of-day marker on the hero: the artwork itself carries no sun
+     and no moon any more (the day scene is sky and clouds, the night scene is
+     stars), so this chip is what changes with the clock — sun by day, moon by
+     night, driven by js/teacher.js. */
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
+    background: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pay-on-hero) 40%, transparent);
+    color: var(--pay-on-hero);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    animation: apc-teacher-float 4.5s ease-in-out infinite;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-welcome {
+    @apply flex min-w-0 flex-col gap-1.5;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro h1 {
+    /* colour + size come from utilities; the halo is what keeps white text
+       readable over the bright part of the illustration. */
+    text-shadow: 0 2px 14px rgb(var(--t-scrim-ink) / .55);
+    overflow-wrap: anywhere;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm {
+    color: color-mix(in srgb, var(--pay-on-hero) 88%, transparent);
+    text-shadow: 0 1px 10px rgb(var(--t-scrim-ink) / .55);
+  }
+  @keyframes apc-teacher-scene-zoom {
+    from { transform: scale(1.04) translateY(0); }
+    to { transform: scale(1.11) translateY(-1.5%); }
+  }
+  @keyframes apc-teacher-scene-sheen {
+    0%, 62% { transform: translateX(-45%); opacity: 0; }
+    74% { opacity: 1; }
+    90%, 100% { transform: translateX(45%); opacity: 0; }
+  }
+  @keyframes apc-teacher-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art,
+    .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen,
+    .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint { animation: none !important; }
+  }
+
+  /* 04.2 Status banners ────────────────────────────────────────────────────── */
+  .teacher-reference .finance-error {
+    @apply rounded-2xl;
+    border: 1px solid color-mix(in srgb, var(--color-danger) 38%, var(--color-border));
+    background: color-mix(in srgb, var(--color-danger) 8%, var(--glass-surface));
+    color: var(--color-danger);
+  }
+  .teacher-reference #teacherDataError .mini-btn,
+  .teacher-reference .finance-error .mini-btn {
+    border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+    color: var(--color-danger);
+  }
+  .teacher-reference #teacherAssignmentNotice {
+    @apply rounded-2xl;
+    border: 1px solid color-mix(in srgb, var(--color-warning) 38%, var(--color-border));
+    background: color-mix(in srgb, var(--color-warning) 9%, var(--glass-surface));
+    color: var(--color-text-secondary);
+  }
+
+  /* 04.2b একাডেমিক কার্যক্রম — a first-class feature card on Home, outside the
+     ক্লাস screen (owner order 2026-10-21). One gradient rail, tinted artwork disc,
+     title + what is inside, and a chevron; it glows a little because it is a
+     hub, not a single action. */
+  .teacher-reference #teacherHome .teacher-academic-hub {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 74px;
+    margin: 0 0 14px;
+    padding: 12px 38px 12px 12px;
+    overflow: hidden;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--glass-border));
+    background-color: var(--glass-surface);
+    background-image: linear-gradient(120deg,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      color-mix(in srgb, var(--brand-2) 8%, transparent) 58%,
+      transparent 100%);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transition: transform .16s var(--t-ease), border-color .16s var(--t-ease), box-shadow .18s var(--t-ease);
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub:active { transform: scale(.985); }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon svg { width: 27px; height: 27px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-title {
+    color: var(--color-text);
+    font-size: 14.5px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-sub {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-chevron {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid color-mix(in srgb, var(--color-primary) 62%, var(--color-text-muted));
+    border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 62%, var(--color-text-muted));
+    border-radius: 1px;
+    transform: translateY(-50%) rotate(-45deg);
+  }
+  @media (hover: hover) {
+    .teacher-reference #teacherHome .teacher-academic-hub:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--color-primary) 44%, var(--glass-border));
+      box-shadow: var(--glass-shadow-strong);
+    }
+  }
+
+  /* 04.3 Section headings ──────────────────────────────────────────────────── */
+  .teacher-reference .teacher-section-heading {
+    @apply flex items-center justify-between gap-2.5;
+  }
+  .teacher-reference #teacherHome .teacher-section-heading { margin: 18px 2px 9px; }
+  .teacher-reference #teacherHome .teacher-section-heading h2 {
+    @apply text-[15.5px] font-[750];
+    color: var(--color-text);
+  }
+  .teacher-reference #teacherHome .teacher-section-heading small {
+    @apply rounded-chip border px-2.5 py-[3px] text-[11px] font-bold;
+    border-color: var(--glass-border);
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+
+  /* 04.4 Today's classes ───────────────────────────────────────────────────── */
+  .teacher-reference #teacherHome .teacher-home-today {
+    @apply rounded-card border p-3.5;
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .teacher-reference #teacherHome .teacher-home-today .teacher-record-list { @apply grid gap-2; }
+  .teacher-reference #teacherHome .teacher-home-class {
+    @apply flex items-center gap-[11px] rounded-[17px] border p-3;
+    border-color: var(--glass-border);
+    background: var(--glass-bg-soft);
+    transition: border-color .16s var(--t-ease), transform .16s var(--t-ease);
+  }
+  .teacher-reference #teacherHome .teacher-home-class:active { @apply scale-[.99]; }
+  .teacher-reference #teacherHome .teacher-home-class-icon {
+    @apply grid h-[42px] w-[42px] flex-none place-items-center rounded-[14px];
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--glass-border));
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+  .teacher-reference #teacherHome .teacher-home-class h3 { @apply text-[13.5px] font-bold; }
+  .teacher-reference #teacherHome .teacher-home-class p {
+    color: var(--color-text-secondary);
+    font-size: 11.5px;
+  }
+  .teacher-reference #teacherHome .teacher-home-class > small {
+    @apply ml-auto flex-none rounded-chip border px-[9px] py-[3px] text-[10.5px] font-bold;
+    border-color: var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--color-primary);
+  }
+
+  /* 04.5 Service launchers (কাজ দিন / ক্লাস / আরও hubs) ─────────────────────── */
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) {
+    @apply my-1 mb-3.5 gap-2.5;
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile {
+    --tone: var(--tone-mint);
+    --tone-soft: var(--tone-mint-soft);
+    @apply relative min-h-[104px] overflow-hidden rounded-tile px-1.5 pt-3.5 pb-3;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transition: transform .16s var(--t-ease), border-color .16s var(--t-ease);
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile::before {
+    content: '';
+    @apply pointer-events-none absolute inset-0;
+    border-radius: inherit;
+    background: radial-gradient(120% 92% at 100% 0, var(--tone-soft), transparent 62%);
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile > * { @apply relative; }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:active {
+    @apply scale-[.97];
+    border-color: color-mix(in srgb, var(--tone) 45%, var(--glass-border));
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:nth-child(6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon {
+    @apply h-[46px] w-[46px] rounded-[15px];
+    border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+    background: var(--tone-soft);
+    color: var(--tone);
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon svg { @apply h-6 w-6; }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-label {
+    @apply text-[12px] font-bold leading-[1.35] text-ink;
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .academic-count {
+    @apply absolute top-2 right-2 z-[1] min-w-5 rounded-chip px-1.5 py-px text-[10.5px] font-[750];
+    background: var(--tone-soft);
+    color: var(--tone);
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .academic-count.is-pending {
+    background: var(--tone-amber-soft);
+    color: var(--color-warning);
+  }
+  .teacher-reference #teacherMore > .pay-grid > .pay-tile { @apply min-h-[112px]; }
+
+  /* 04.6 Home quick actions: one column of full-width cards ─────────────────── */
+  .teacher-reference .teacher-home-actions {
+    @apply my-1 mb-4 flex flex-col gap-3;
+  }
+  .teacher-reference .teacher-action-card {
+    --tone: var(--tone-mint);
+    --tone-soft: var(--tone-mint-soft);
+    @apply relative flex min-h-[100px] w-full items-center gap-3.5 overflow-hidden rounded-[18px] px-4 py-3.5 text-left;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transition: transform .16s var(--t-ease), box-shadow .18s var(--t-ease), border-color .16s var(--t-ease);
+  }
+  .teacher-reference .teacher-action-card::before {
+    content: '';
+    @apply pointer-events-none absolute inset-0;
+    border-radius: inherit;
+    background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+  }
+  .teacher-reference .teacher-action-card > * { @apply relative; }
+  .teacher-reference .teacher-action-body { @apply flex min-w-0 flex-1 flex-col gap-1; }
+  .teacher-reference .teacher-action-title { @apply text-[15px] font-extrabold leading-[1.3] text-ink; }
+  .teacher-reference .teacher-action-sub {
+    @apply text-[12px] font-semibold leading-[1.35] text-ink-soft;
+  }
+  .teacher-reference .teacher-action-art {
+    @apply grid h-[58px] w-[58px] flex-none place-items-center rounded-2xl;
+    color: var(--tone);
+    background: var(--tone-soft);
+    border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+  }
+  .teacher-reference .teacher-action-art svg { @apply h-[42px] w-[42px]; }
+  .teacher-reference .teacher-action-card:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+  .teacher-reference .teacher-action-card:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+  .teacher-reference .teacher-action-card:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .teacher-reference .teacher-action-card.is-accent {
+    --tone: var(--color-primary);
+    --tone-soft: var(--glass-accent-soft);
+    border-color: color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
+  }
+  .teacher-reference .teacher-action-card:active { @apply scale-[.98]; }
+  .teacher-reference .teacher-action-secondary { @apply mt-0.5 flex flex-wrap gap-2; }
+  .teacher-reference .teacher-action-secondary button {
+    @apply min-w-0 flex-[1_1_30%] rounded-[14px] border px-2 py-[11px] text-center text-[12.5px] font-bold leading-tight text-ink;
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    transition: transform .15s var(--t-ease), border-color .15s var(--t-ease);
+  }
+  .teacher-reference .teacher-action-secondary button:active {
+    @apply scale-[.97];
+    border-color: color-mix(in srgb, var(--color-primary) 40%, var(--glass-border));
+  }
+  @media (hover: hover) {
+    .teacher-reference .teacher-action-card:hover {
+      @apply -translate-y-0.5;
+      border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
+      box-shadow: var(--glass-shadow-strong);
+    }
+    .teacher-reference .teacher-action-secondary button:hover {
+      @apply -translate-y-px;
+      border-color: color-mix(in srgb, var(--color-primary) 38%, var(--glass-border));
+    }
+  }
+
+  /* 05 ── SHARED SUB-SCREEN CHROME ─────────────────────────────────────────── */
+
+  /* 05.1 Page intro + circular back button */
+  .teacher-reference .teacher-view > .page-intro {
+    @apply mb-3.5 border-b px-0 pt-2 pb-3;
+    border-color: var(--glass-border);
+  }
+  .teacher-reference .teacher-view > .page-intro h1 { @apply text-xl font-[750]; }
+  .teacher-reference .pay-back {
+    @apply h-11 w-11 min-h-11 min-w-11 rounded-full border;
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    color: var(--color-primary);
+    box-shadow: var(--glass-shadow);
+    transition: transform .16s var(--t-ease);
+  }
+  .teacher-reference .pay-back:active { @apply scale-[.94]; }
+  .teacher-reference .page-intro .admin-btn.primary {
+    @apply rounded-chip border-0;
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    box-shadow: var(--accent-glow);
+  }
+
+  /* 05.2 Cards everywhere */
+  .teacher-reference .teacher-view .admin-card,
+  .teacher-reference .teacher-view .teacher-home-today {
+    @apply rounded-card border;
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+
+  /* 05.3 Segmented record tabs */
+  .teacher-reference .teacher-type-tabs.pay-grid {
+    @apply gap-[5px] rounded-[18px] border p-[5px];
+    border-color: var(--glass-border);
+    background: var(--glass-bar);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .teacher-reference .teacher-type-tabs .pay-tile {
+    @apply min-h-[46px] rounded-[13px] border px-1 py-1.5 text-[11.5px] font-[650];
+    border-color: transparent;
+    background: transparent;
+    color: var(--color-text-secondary);
+    box-shadow: none;
+  }
+  .teacher-reference .teacher-type-tabs .pay-tile.active {
+    background: var(--glass-accent-soft);
+    border-color: color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
+    color: var(--color-primary);
+    outline: 0;
+  }
+  .teacher-reference .teacher-type-tabs .tab-count { @apply text-[10px] font-bold; }
+
+  /* 05.4 Filter chips */
+  .teacher-reference .chip-row { @apply gap-2; }
+  .teacher-reference .chip-row .day-tab {
+    @apply min-h-[42px] rounded-chip border px-[15px] py-2 text-[12.5px] font-[650];
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    color: var(--color-text-secondary);
+    box-shadow: none;
+  }
+  .teacher-reference .chip-row .day-tab.active,
+  .teacher-reference .chip-row .day-tab[aria-selected="true"] {
+    background-image: linear-gradient(135deg, var(--glass-accent-soft),
+      color-mix(in srgb, var(--brand-2) 14%, transparent));
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--glass-border));
+    color: var(--color-primary);
+  }
+
+  /* 05.5 Primary CTA */
+  .teacher-reference .teacher-cta {
+    @apply min-h-[52px] w-full rounded-[18px] border-0 text-base font-[750];
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    color: var(--pay-on-fab);
+    box-shadow: var(--accent-glow);
+    transition: transform .16s var(--t-ease);
+  }
+  .teacher-reference .teacher-cta:active { @apply scale-[.98]; }
+
+  /* 05.6 Toolbars (input font sizes stay owned by the global 16px rule) */
+  .teacher-reference .teacher-view .teacher-toolbar {
+    @apply my-3 grid gap-1.5 rounded-[18px] border p-3.5;
+    border-color: var(--glass-border);
+    background: var(--glass-bg-soft);
+  }
+  .teacher-reference .teacher-toolbar label {
+    @apply mt-0.5 mb-0 text-[11.5px] font-semibold text-ink-soft;
+  }
+
+  /* 05.7 Empty states, notes, hints */
+  .teacher-reference .teacher-empty {
+    @apply rounded-[18px] border border-dashed px-[18px] py-[26px] text-center text-[13px] leading-[1.7];
+    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    background: var(--glass-bg-soft);
+    color: var(--color-text-secondary);
+  }
+  .teacher-reference .teacher-local-note {
+    @apply rounded-2xl border px-3.5 py-3 text-[13px] leading-[1.75];
+    border-color: var(--glass-border);
+    background: var(--glass-bg-soft);
+    color: var(--color-text-secondary);
+  }
+  .teacher-reference .finance-hint { @apply rounded-xl; color: var(--color-text-secondary); }
+  .teacher-reference .teacher-group-label {
+    @apply mx-0.5 mt-3.5 mb-0.5 flex items-center gap-2 text-[12.5px] font-[750];
+    color: var(--color-primary);
+  }
+  .teacher-reference .teacher-group-label span {
+    @apply rounded-chip px-[9px] py-0.5 text-[10.5px] font-bold;
+    background: var(--glass-accent-soft);
+  }
+  .teacher-reference .teacher-list-more {
+    @apply w-full rounded-chip border font-bold;
+    border-color: color-mix(in srgb, var(--color-primary) 26%, var(--glass-border));
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+
+  /* 06 ── Teaching cards (records, notices, classes, routine) ──────────────── */
+  .teacher-reference .teacher-view .teaching-card {
+    @apply rounded-[19px] border p-3.5;
+    border-color: var(--glass-border);
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .teacher-reference .teacher-view .teaching-card h3 { @apply text-[15px] leading-[1.45]; }
+  .teacher-reference .teacher-view .teaching-card p,
+  .teacher-reference .teacher-view .teaching-card small { @apply break-words; }
+  .teacher-reference .teaching-card-head {
+    @apply flex flex-wrap items-center justify-between gap-2;
+  }
+  .teacher-reference .teaching-kind {
+    @apply inline-flex items-center rounded-chip px-2.5 py-[3px] text-[11px] font-bold;
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+  .teacher-reference .teaching-status {
+    @apply rounded-chip border px-2.5 py-[3px] text-[11px] font-bold;
+    border-color: var(--glass-border);
+    background: var(--glass-bg-soft);
+    color: var(--color-text-secondary);
+  }
+  .teacher-reference .teaching-status.published {
+    background: var(--pay-success-soft);
+    color: var(--pay-success);
+    border-color: transparent;
+  }
+  .teacher-reference .teaching-status.draft {
+    background: var(--tone-amber-soft);
+    color: var(--color-warning);
+    border-color: transparent;
+  }
+  .teacher-reference .teaching-progress-line {
+    @apply rounded-xl px-[11px] py-[7px] text-[12px] font-[650];
+    background: var(--glass-bg-soft);
+    color: var(--color-text-secondary);
+  }
+  .teacher-reference .teaching-progress-line.pending {
+    background: var(--tone-amber-soft);
+    color: var(--color-warning);
+  }
+  .teacher-reference .teaching-progress-line.clear {
+    background: var(--tone-mint-soft);
+    color: var(--pay-success);
+  }
+  .teacher-reference .teaching-preview {
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .teacher-reference .teaching-resource {
+    @apply my-1 inline-flex items-center gap-1.5 rounded-chip px-[13px] py-[7px] text-[12.5px] font-bold no-underline;
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+  .teacher-reference .teaching-resource svg { @apply h-[15px] w-[15px]; }
+  .teacher-reference .teaching-actions button { @apply rounded-[13px] font-[650]; }
+  .teacher-reference .teaching-actions button.primary,
+  .teacher-reference .teaching-actions button[type="submit"] {
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    border: 0;
+    color: var(--pay-on-fab);
+  }
+  .teacher-reference .teaching-actions button.danger {
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+  }
+}
+
+/* 07+ ── DEEP SCREENS ────────────────────────────────────────────────────────
+   Records, the academic/more launchers, notices, routine, online exams, classes,
+   courses, reports, settings, the modal system, notification centre, toast,
+   motion and small-phone tuning. These are Tailwind components too — plain
+   component rules are kept as-is where a JS template renders the markup, so a
+   renderer never depends on a utility class it cannot see. Geometry stays from
+   the shared sheets.
+   ------------------------------------------------------------------------- */
+
+/* 07 ── RECORDS SCREEN ── */
+.teacher-reference #teacherOnlineExamHint {
+  border-color: color-mix(in srgb, var(--tone-blue) 32%, var(--glass-border));
+  background: color-mix(in srgb, var(--tone-blue) 8%, var(--glass-surface));
+  color: var(--color-text-secondary);
+}
+.teacher-reference #teacherOnlineExamHint .mini-btn {
+  color: var(--tone-blue);
+  border-color: color-mix(in srgb, var(--tone-blue) 38%, var(--color-border));
+}
+.teacher-reference #teacherRecordCount,
+.teacher-reference #teacherNoticeCount {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--color-text-secondary);
+}
+
+/* 08 ── ACADEMIC HUB / MORE launchers inherit 04.6; scope note only. ── */
+.teacher-reference #teacherAcademicScope {
+  border-color: color-mix(in srgb, var(--color-primary) 22%, var(--glass-border));
+}
+
+/* 08.1 ── Grouped submenus: the ক্লাস hub doors and the three labelled
+   groups inside আরও. Every door is an existing route — no new screens. ── */
+.teacher-reference .teacher-menu-group { display: grid; gap: 8px; margin-bottom: 18px; }
+.teacher-reference .teacher-menu-group-title {
+  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.teacher-reference .teacher-submenu { margin: 4px 0 16px; }
+.teacher-reference .teacher-menu-group .pay-grid,
+.teacher-reference .teacher-submenu.pay-grid {
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.teacher-reference .teacher-menu-group .pay-tile,
+.teacher-reference .teacher-submenu .pay-tile {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  overflow: hidden;
+  min-height: 104px;
+  padding: 14px 8px 12px;
+  border-radius: var(--t-radius-tile);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  transition: transform .16s var(--t-ease), border-color .16s var(--t-ease);
+}
+.teacher-reference .teacher-menu-group .pay-tile::before,
+.teacher-reference .teacher-submenu .pay-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 92% at 100% 0, var(--tone-soft), transparent 62%);
+}
+.teacher-reference .teacher-menu-group .pay-tile > *,
+.teacher-reference .teacher-submenu .pay-tile > * { position: relative; }
+.teacher-reference .teacher-menu-group .pay-tile:active,
+.teacher-reference .teacher-submenu .pay-tile:active {
+  transform: scale(.97);
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--glass-border));
+}
+.teacher-reference .teacher-menu-group .pay-tile .pay-tile-icon,
+.teacher-reference .teacher-submenu .pay-tile .pay-tile-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+.teacher-reference .teacher-menu-group .pay-tile .pay-tile-icon svg,
+.teacher-reference .teacher-submenu .pay-tile .pay-tile-icon svg { width: 24px; height: 24px; }
+.teacher-reference .teacher-menu-group .pay-tile .pay-tile-label,
+.teacher-reference .teacher-submenu .pay-tile .pay-tile-label {
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.teacher-reference .pay-tile-label small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+.teacher-reference .teacher-menu-group .pay-tile:nth-child(1),
+.teacher-reference .teacher-submenu .pay-tile:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+.teacher-reference .teacher-menu-group .pay-tile:nth-child(2),
+.teacher-reference .teacher-submenu .pay-tile:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+.teacher-reference .teacher-menu-group .pay-tile:nth-child(3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+.teacher-reference .teacher-menu-group .pay-tile:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+.teacher-reference .teacher-menu-group .pay-tile:nth-child(5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+.teacher-reference #teacherClasses .teacher-section-heading { margin: 16px 2px 9px; }
+.teacher-reference #teacherClasses .teacher-section-heading h2 {
+  font-size: 15.5px;
+  font-weight: 750;
+  color: var(--color-text);
+}
+
+/* 09 ── NOTICES ── */
+.teacher-reference #teacherNoticeList .teaching-card { position: relative; overflow: hidden; }
+.teacher-reference #teacherNoticeList .teaching-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 11 ── ROUTINE (read-only, nine tabs) ── */
+.teacher-reference #teacherRoutineViewList .exam-card {
+  border-radius: 19px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.teacher-reference #teacherRoutineViewList .exam-card > h3 {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--color-primary);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.teacher-reference #teacherRoutineViewList .teaching-actions .admin-btn.primary {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  border: 0;
+  border-radius: 13px;
+  color: var(--pay-on-fab);
+}
+
+/* 12 ── ONLINE EXAMS: hub chips + mounted workspace ── */
+.teacher-reference #teacherOnlineExams .mini-btn {
+  border-radius: var(--t-radius-chip);
+  font-weight: 700;
+}
+.teacher-reference .exam-hub { gap: 10px; }
+.teacher-reference .exam-hub .exam-actions button {
+  border-radius: 14px;
+  font-weight: 650;
+}
+.teacher-reference .exam-hub .exam-actions button.primary {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  border: 0;
+  color: var(--pay-on-fab);
+  box-shadow: var(--accent-glow);
+}
+.teacher-reference #teacherExamWorkspace .exam-card,
+.teacher-reference #teacherExamWorkspace .exam-bank-row,
+.teacher-reference #teacherExamWorkspace .exam-bank-pick {
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference #teacherExamWorkspace .exam-note {
+  padding: 11px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+.teacher-reference #teacherExamWorkspace .exam-filters {
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+}
+.teacher-reference #teacherExamWorkspace .exam-section-title {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--color-text);
+}
+.teacher-reference #teacherExamWorkspace .exam-date-head {
+  border-inline-start-color: var(--color-primary);
+}
+.teacher-reference #teacherExamWorkspace .exam-question {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+}
+.teacher-reference #teacherExamWorkspace .exam-option-correct {
+  color: var(--pay-success);
+  font-weight: 700;
+}
+.teacher-reference #teacherExamWorkspace .exam-table-wrap {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+.teacher-reference #teacherExamWorkspace .exam-error {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--glass-surface));
+  color: var(--color-danger);
+}
+.teacher-reference #teacherExamWorkspace .exam-message {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
+  background: var(--glass-accent-soft);
+  color: var(--color-primary);
+}
+.teacher-reference #teacherExamWorkspace .exam-actions button {
+  border-radius: 13px;
+  font-weight: 650;
+}
+.teacher-reference #teacherExamWorkspace .exam-actions button.primary,
+.teacher-reference #teacherExamWorkspace [data-exam-action="request"] {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  border: 0;
+  color: var(--pay-on-fab);
+}
+.teacher-reference #teacherExamWorkspace .exam-template-panel {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+}
+.teacher-reference #teacherExamWorkspace .exam-bank-picker summary {
+  border-radius: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* 13 ── MY CLASSES ── */
+.teacher-reference #teacherClassList .teaching-card h3 { color: var(--color-text); }
+.teacher-reference #teacherClassList .mini-btn { border-radius: var(--t-radius-chip); font-weight: 700; }
+
+/* 14 ── COURSES & MATERIALS ── */
+.teacher-reference #teacherCourseChaptersBox { padding: 14px; }
+.teacher-reference #teacherCourseChaptersBox .course-chapter-list {
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+  padding: 6px 10px;
+}
+.teacher-reference #teacherCourseChaptersBox .teacher-progress-row {
+  border-bottom: 1px solid var(--glass-border);
+}
+.teacher-reference #teacherCourseChaptersBox .teacher-progress-row:last-child { border-bottom: 0; }
+.teacher-reference #teacherCourseChaptersBox .mini-btn { border-radius: var(--t-radius-chip); }
+.teacher-reference #teacherCourseChaptersBox .mini-btn.approve {
+  background: var(--pay-success-soft);
+  color: var(--pay-success);
+  border-color: transparent;
+}
+.teacher-reference #teacherCourseChaptersBox .mini-btn.danger {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+}
+.teacher-reference #teacherCourseEditor .admin-card,
+.teacher-reference #teacherCourseEditor .course-manage-card {
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+}
+.teacher-reference .course-rich-toolbar {
+  border-radius: 14px 14px 0 0;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+}
+.teacher-reference .course-rich-toolbar button {
+  min-height: 38px;
+  min-width: 40px;
+  border-radius: 10px;
+}
+.teacher-reference .course-rich-editor {
+  border-radius: 0 0 14px 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+}
+
+/* 15 ── REPORTS CENTER ── */
+.teacher-reference #teacherAcademicReportList .teaching-card h3 { color: var(--color-primary); }
+.teacher-reference .report-center-new .rc-form,
+.teacher-reference .report-center-new .rc-head {
+  border-radius: 19px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+.teacher-reference .report-center-new .rc-title { font-weight: 750; }
+.teacher-reference .report-center-new .rc-generate,
+.teacher-reference .report-center-new .rc-download {
+  border-radius: 14px;
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  border: 0;
+  color: var(--pay-on-fab);
+  font-weight: 700;
+  box-shadow: var(--accent-glow);
+}
+.teacher-reference .report-center-new .rc-back { border-radius: 50%; }
+.teacher-reference .report-center-new select,
+.teacher-reference .report-center-new input { border-radius: 13px; }
+
+/* 16 ── SETTINGS / PROFILE ── */
+.teacher-reference .settings-hub { display: grid; gap: 18px; }
+.teacher-reference .settings-group-title {
+  margin: 0 2px 8px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+.teacher-reference #teacherProfileCard.teacher-card,
+.teacher-reference #teacherProfileCard.admin-card {
+  border-radius: 19px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference .manager-profile-list {
+  display: grid;
+  gap: 10px;
+}
+.teacher-reference .manager-profile-list > div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  background: var(--glass-bg-soft);
+}
+.teacher-reference .manager-profile-list small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.teacher-reference .manager-profile-list strong { font-size: 14px; font-weight: 700; }
+.teacher-reference .settings-list {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference .settings-row-link,
+.teacher-reference .settings-toggle {
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
+}
+.teacher-reference .settings-list > *:last-child { border-bottom: 0; }
+.teacher-reference .settings-row-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  text-align: start;
+  border-radius: 0;
+}
+.teacher-reference .settings-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+}
+.teacher-reference .settings-icon.purple {
+  background: var(--tone-violet-soft);
+  color: var(--tone-violet);
+}
+.teacher-reference .theme-card {
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+}
+.teacher-reference .theme-switch-icon {
+  background: var(--tone-violet-soft);
+  color: var(--tone-violet);
+  border-radius: 13px;
+}
+.teacher-reference .profile-section .eyebrow {
+  margin: 2px 2px 8px;
+  font-size: 11.5px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  color: var(--color-text-secondary);
+}
+.teacher-reference .notice-setting-row,
+.teacher-reference .settings-row-button,
+.teacher-reference .notice-permission-row,
+.teacher-reference .notice-history-row {
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+}
+.teacher-reference .notice-history-row.unread { border-inline-start: 3px solid var(--color-primary); }
+
+/* 17 ── MODALS ── */
+.teacher-reference #teacherModalBackdrop .admin-modal {
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-dialog);
+}
+.teacher-reference #teacherModalBackdrop .admin-modal-header {
+  border-bottom-color: var(--glass-border);
+}
+.teacher-reference #teacherModalBackdrop .admin-modal-close {
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  background: var(--glass-bg-soft);
+}
+.teacher-reference .teacher-form input,
+.teacher-reference .teacher-form select,
+.teacher-reference .teacher-form textarea { border-radius: 13px; }
+.teacher-reference .teacher-form .modal-actions .admin-btn.primary,
+.teacher-reference .teacher-form .modal-actions button[type="submit"] {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  border: 0;
+  border-radius: 14px;
+  color: var(--pay-on-fab);
+  font-weight: 700;
+}
+.teacher-reference .teacher-form .modal-actions .admin-btn.ghost { border-radius: 14px; }
+
+/* 17.1 Homework composer — field chrome inside the standard modal. ── */
+.teacher-reference .teacher-homework-form .homework-field:focus-within {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+.teacher-reference .teacher-homework-form .homework-attachment,
+.teacher-reference .teacher-homework-form .homework-options {
+  border-radius: 16px;
+  overflow: hidden;
+}
+.teacher-reference .teacher-homework-form .homework-attachment[open],
+.teacher-reference .teacher-homework-form .homework-options[open] {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+/* 17.2 Progress / marking sheet. ── */
+.teacher-reference .teacher-progress-bar {
+  padding: 12px 13px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+}
+.teacher-reference .progress-summary {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.teacher-reference .progress-summary.complete { color: var(--pay-success); }
+.teacher-reference .teacher-quick-fill {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.teacher-reference .teacher-quick-fill button {
+  min-height: 38px;
+  padding: 6px 13px;
+  border-radius: var(--t-radius-chip);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--glass-border));
+  background: var(--glass-accent-soft);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.teacher-reference .teacher-progress-list { gap: 8px; }
+.teacher-reference .teacher-progress-row {
+  padding: 11px 12px;
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+}
+.teacher-reference .teacher-progress-row[hidden] { display: none; }
+.teacher-reference .teacher-progress-row label { font-size: 13px; font-weight: 700; }
+.teacher-reference .teacher-progress-row label small { display: block; font-weight: 500; color: var(--color-text-secondary); }
+.teacher-reference .teacher-progress-row select,
+.teacher-reference .teacher-progress-row input[type="number"],
+.teacher-reference .teacher-progress-row input[type="text"] { border-radius: 12px; }
+.teacher-reference .teacher-student-answer {
+  grid-column: 1 / -1;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--tone-blue-soft);
+  font-size: 12px;
+}
+.teacher-reference .teacher-student-answer .admin-btn { border-radius: var(--t-radius-chip); }
+.teacher-reference .modal-copy {
+  padding: 10px 13px;
+  border-radius: 13px;
+  background: var(--glass-bg-soft);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
+
+/* 18 ── NOTIFICATION CENTER (injected on body, inside .teacher-reference) ── */
+.teacher-reference .modal-backdrop > .modal {
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+}
+.teacher-reference .notice-filters .chip {
+  border-radius: var(--t-radius-chip);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  font-weight: 700;
+}
+.teacher-reference .notice-filters .chip.active {
+  background: var(--glass-accent-soft);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--glass-border));
+  color: var(--color-primary);
+}
+.teacher-reference .notice-empty {
+  border-radius: 18px;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  background: var(--glass-bg-soft);
+}
+
+/* 19 ── TOAST ── */
+.teacher-reference .admin-toast {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--color-text);
+  color: var(--color-bg);
+  box-shadow: var(--glass-shadow-strong);
+  font-weight: 650;
+}
+
+/* 20 ── Quiet entrance, home blocks only. ── */
+@keyframes apc-teacher-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-intro { animation: apc-teacher-rise .32s var(--t-ease) both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-today { animation: apc-teacher-rise .32s var(--t-ease) .14s both; }
+.teacher-reference .teacher-view:not([hidden]) .teacher-home-actions { animation: apc-teacher-rise .32s var(--t-ease) .2s both; }
+@media (prefers-reduced-motion: reduce) {
+  .teacher-reference *,
+  .teacher-reference *::before,
+  .teacher-reference *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 22 ── Cohesive elevation (hero design language). The page background stays
+   clean and flat (owner request: clear the background behind the hero card);
+   token-only values, scoped to .teacher-reference, so dark/AMOLED self-theme
+   and no other panel is touched. Home keeps its own bespoke entrance above. ── */
+body.teacher-reference {
+  background-color: var(--color-bg);
+  background-image: none;
+}
+/* Gradient accent tick beside every screen section heading. */
+.teacher-reference .teacher-section-heading h2 {
+  position: relative;
+  padding-left: 12px;
+}
+.teacher-reference .teacher-section-heading h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  border-radius: var(--t-radius-chip);
+  background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+}
+/* Smooth, consistent motion surfaces for the shared cards. */
+.teacher-reference .teacher-view .teaching-card,
+.teacher-reference .teacher-view .admin-card {
+  transition: transform .18s var(--t-ease), box-shadow .18s var(--t-ease), border-color .18s var(--t-ease);
+}
+/* Quiet entrance for sub-screens only (Home's staggered reveal is separate). */
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .page-intro,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .admin-card,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teaching-card,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teacher-toolbar,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .teacher-type-tabs,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .chip-row,
+.teacher-reference .teacher-view:not(#teacherHome):not([hidden]) > .pay-grid {
+  animation: apc-teacher-rise .3s var(--t-ease) both;
+}
+/* Hover elevation on pointer devices; touch keeps the existing :active press. */
+@media (hover: hover) {
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
+    box-shadow: var(--glass-shadow-strong);
+  }
+  .teacher-reference .teacher-view .teaching-card:hover,
+  .teacher-reference .teacher-view .admin-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--glass-shadow-strong);
+  }
+  .teacher-reference .pay-back:hover { transform: translateY(-1px) scale(1.03); }
+}
+
+/* 21 ── Small phones: reclaim horizontal space, keep three columns. ── */
+@media (max-width: 380px) {
+  .teacher-reference #teacherHome .teacher-home-intro { padding: 15px 13px; border-radius: 21px; gap: 12px; }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene { border-radius: 15px; }
+  .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon { width: 46px; height: 46px; }
+  .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 18.5px; }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) { gap: 8px; }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) > .pay-tile {
+    min-height: 96px;
+    padding: 11px 4px 10px;
+    border-radius: 17px;
+  }
+  .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) .pay-tile-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+  .teacher-reference .teacher-home-actions { gap: 10px; }
+  .teacher-reference .teacher-action-card { min-height: 88px; padding: 12px 14px; gap: 12px; border-radius: 16px; }
+  .teacher-reference .teacher-action-art { width: 50px; height: 50px; border-radius: 14px; }
+  .teacher-reference .teacher-action-art svg { width: 36px; height: 36px; }
+  .teacher-reference .teacher-action-title { font-size: 14px; }
+  .teacher-reference .teacher-action-sub { font-size: 11.5px; }
+  .teacher-reference .chip-row .day-tab { padding: 8px 12px; font-size: 12px; }
+  .teacher-reference .teacher-type-tabs .pay-tile { font-size: 10.5px; }
+}
+
+
+/* 23 ── Small phones: the hero keeps its full-bleed picture and only the inner
+   padding tightens. The legacy padding/radius rules above target the card box
+   itself, so they are reset here now that the card is the image. ── */
+@media (max-width: 380px) {
+  .teacher-reference #teacherHome .teacher-home-intro {
+    padding: 0;
+    gap: 0;
+    border-radius: 22px;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-content {
+    padding: 13px;
+    gap: 18px;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
+    width: 36px;
+    height: 36px;
+  }
+  .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 19.5px; }
+  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm { font-size: 12px; }
+}
+
+/* ============================================================================
+   24 ── SCREEN REFRESH: ক্লাস / পরীক্ষা / আরও (2026-10-21, round 2)
+   ----------------------------------------------------------------------------
+   These three seats keep every route, id and class the router and the tests
+   depend on (`.teacher-submenu`, `.pay-tile`, `.teacher-cta`, `#teacherExamHub
+   .day-tab`, `.teacher-menu-group`), and only their surface changes:
+     • ক্লাস  — two door cards with a tinted artwork disc and a forward chevron
+                instead of flat tiles, and class cards with a brand accent.
+     • পরীক্ষা — one primary gradient action, one quiet secondary action, and a
+                2×2 grid of section doors in place of a chip scroller.
+     • আরও   — one grouped settings list (icon, label, chevron) instead of a
+                two-tile grid.
+   Written last on purpose: id-led selectors so nothing here has to fight the
+   shared `.pay-tile` geometry, and no new element is introduced.
+   ========================================================================== */
+
+/* ── 24.1 ক্লাস: two separate tabs (owner order 2026-10-21) ────────────────── */
+/* "ক্লাস ও বিষয়" and "রুটিন ও সময়সূচি" are two tabs of the ক্লাস screen, never
+   doors side by side: the first is the class list itself, the second opens the
+   read-only routine. একাডেমিক কার্যক্রম no longer lives here. */
+.teacher-reference #teacherClasses .teacher-class-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 2px 0 14px;
+  padding: 4px;
+  border-radius: 17px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bar);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+.teacher-reference #teacherClasses .teacher-class-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 50px;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: center;
+  text-wrap: balance;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  transition: color .15s var(--t-ease), background-color .15s var(--t-ease), transform .15s var(--t-ease);
+}
+.teacher-reference #teacherClasses .teacher-class-tab:active { transform: scale(.97); }
+.teacher-reference #teacherClasses .teacher-class-tab.is-active,
+.teacher-reference #teacherClasses .teacher-class-tab[aria-selected="true"] {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  color: var(--pay-on-fab);
+  box-shadow: var(--accent-glow);
+  font-weight: 800;
+}
+.teacher-reference #teacherClasses .teacher-class-tab:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .teacher-reference #teacherClasses .teacher-class-tab:not(.is-active):hover {
+    background: var(--glass-accent-soft);
+    color: var(--color-primary);
+  }
+}
+/* The first tab's panel: the teacher's own class list. */
+.teacher-reference #teacherClasses .teacher-class-panel { animation: apc-teacher-rise .26s var(--t-ease) both; }
+.teacher-reference #teacherClasses .teacher-class-panel .teacher-section-heading { margin: 0 2px 9px; }
+
+/* ── 24.2 ক্লাস ও বিষয়: one collapsed row per class ───────────────────────── */
+/* Owner order (2026-10-21): no primary information may lie open. A class is a
+   single compact row — name, group, subject count and student count — and the
+   subject list plus the class-work action open only when the row is tapped.
+   Native <details>/<summary>: keyboard and screen-reader support for free, and
+   the closed state is the default in the markup, so nothing is exposed before
+   the teacher asks for it. */
+.teacher-reference #teacherClassList { display: grid; gap: 8px; }
+.teacher-reference #teacherClassList .teacher-class-card { padding: 0; overflow: hidden; }
+.teacher-reference #teacherClassList .teacher-class-details { display: block; }
+.teacher-reference #teacherClassList .teacher-class-summary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s var(--t-ease);
+}
+.teacher-reference #teacherClassList .teacher-class-summary::-webkit-details-marker { display: none; }
+.teacher-reference #teacherClassList .teacher-class-details[open] > .teacher-class-summary {
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+.teacher-reference #teacherClassList .teacher-class-summary:active {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+.teacher-reference #teacherClassList .teacher-class-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background-image: linear-gradient(140deg, var(--glass-accent-soft),
+    color-mix(in srgb, var(--brand-2) 12%, transparent));
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+}
+.teacher-reference #teacherClassList .teacher-class-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.teacher-reference #teacherClassList .teacher-class-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.teacher-reference #teacherClassList .teacher-class-heading small {
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.teacher-reference #teacherClassList .teacher-class-chevron {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  border-radius: 1px;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform .2s var(--t-ease), border-color .2s var(--t-ease);
+}
+.teacher-reference #teacherClassList .teacher-class-details[open] .teacher-class-chevron {
+  transform: rotate(225deg) translate(-1px, -1px);
+  border-color: var(--color-primary);
+}
+/* Belt and braces: the UA hides a closed details' children, but state it here
+   too so a closed row can never leak its facts in any engine. */
+.teacher-reference #teacherClassList .teacher-class-details:not([open]) > .teacher-class-body { display: none; }
+.teacher-reference #teacherClassList .teacher-class-body {
+  padding: 2px 12px 12px;
+  border-top: 1px solid var(--glass-border);
+  animation: apc-teacher-rise .24s var(--t-ease) both;
+}
+.teacher-reference #teacherClassList .teacher-class-facts {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 11px;
+}
+.teacher-reference #teacherClassList .teacher-class-facts > div {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+.teacher-reference #teacherClassList .teacher-class-facts dt {
+  color: var(--color-text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.teacher-reference #teacherClassList .teacher-class-facts dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.teacher-reference #teacherClassList .teacher-class-open {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
+  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+.teacher-reference #teacherClassList .teacher-class-open:active { transform: scale(.99); }
+@media (hover: hover) {
+  .teacher-reference #teacherClassList .teacher-class-summary:hover { background: var(--glass-bg-soft); }
+  .teacher-reference #teacherClassList .teacher-class-open:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 48%, var(--glass-border));
+  }
+}
+
+/* ── 24.3 পরীক্ষা: one primary action, one quiet one, 2×2 doors ───────────── */
+.teacher-reference #teacherOnlineExams .teacher-cta {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 62px;
+  margin: 4px 0 9px;
+  border: 0;
+  border-radius: 20px;
+  padding: 12px 18px;
+  background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--brand-2) 58%, var(--tone-mint) 100%);
+  color: var(--pay-on-fab);
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  box-shadow: var(--accent-glow), inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
+  transition: transform .16s var(--t-ease), filter .18s var(--t-ease);
+}
+.teacher-reference #teacherOnlineExams .teacher-cta::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%,
+    color-mix(in srgb, #fff 22%, transparent) 50%, transparent 58%);
+  transform: translateX(-55%);
+  animation: apc-teacher-scene-sheen 7.5s var(--t-ease) infinite;
+}
+.teacher-reference #teacherOnlineExams .teacher-cta:active { transform: scale(.985); }
+.teacher-reference #teacherOnlineExams > .mini-btn {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 14px;
+  border-radius: 15px;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+.teacher-reference #teacherOnlineExams > .teacher-local-note {
+  margin: 12px 0 14px;
+  padding: 11px 13px 11px 15px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 52%, transparent);
+  background: var(--glass-bg-soft);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.teacher-reference #teacherExamHub {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 6px;
+}
+.teacher-reference #teacherExamHub .day-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: var(--glass-shadow);
+  transition: transform .15s var(--t-ease), border-color .15s var(--t-ease);
+}
+.teacher-reference #teacherExamHub .day-tab:active { transform: scale(.97); }
+.teacher-reference #teacherExamHub .day-tab.active,
+.teacher-reference #teacherExamHub .day-tab[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--glass-border));
+  background-image: linear-gradient(135deg,
+    var(--glass-accent-soft), color-mix(in srgb, var(--brand-2) 16%, transparent));
+  color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+@media (hover: hover) {
+  .teacher-reference #teacherExamHub .day-tab:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--color-primary) 36%, var(--glass-border));
+  }
+}
+
+/* ── 24.4 আরও: one grouped settings list ──────────────────────────────────── */
+.teacher-reference #teacherMore .teacher-menu-group { margin: 0 0 12px; }
+.teacher-reference #teacherMore .teacher-menu-group-title {
+  margin: 0 2px 8px;
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 750;
+  letter-spacing: .06em;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 5px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile {
+  --tone: var(--tone-violet);
+  --tone-soft: var(--tone-violet-soft);
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 34px 10px 10px;
+  text-align: left;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color .15s var(--t-ease), transform .15s var(--t-ease);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile + .pay-tile {
+  border-top: 1px solid var(--glass-border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile:nth-child(2) {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile::before { background: none; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile > * { position: relative; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile::after {
+  content: '›';
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-icon svg { width: 23px; height: 23px; }
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.teacher-reference #teacherMore .teacher-menu-group .pay-tile:active { transform: scale(.99); }
+@media (hover: hover) {
+  .teacher-reference #teacherMore .teacher-menu-group .pay-tile:hover {
+    background: var(--glass-accent-soft);
+  }
+}
+.teacher-reference #teacherMore > .teacher-local-note {
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* Small phones: keep the doors readable at 320–380px. */
+@media (max-width: 380px) {
+  .teacher-reference #teacherHome .teacher-academic-hub {
+    min-height: 68px;
+    gap: 10px;
+    padding: 10px 32px 10px 10px;
+    border-radius: 17px;
+  }
+  .teacher-reference #teacherHome .teacher-academic-hub-icon { width: 40px; height: 40px; border-radius: 13px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-title { font-size: 13.5px; }
+  .teacher-reference #teacherHome .teacher-academic-hub-sub { font-size: 10.5px; }
+  .teacher-reference #teacherClasses .teacher-class-tabs { gap: 3px; padding: 3px; border-radius: 15px; }
+  .teacher-reference #teacherClasses .teacher-class-tab {
+    min-height: 48px;
+    padding: 6px 6px;
+    border-radius: 11px;
+    font-size: 11.5px;
+    line-height: 1.25;
+  }
+  .teacher-reference #teacherClassList .teacher-class-summary { padding: 10px; gap: 9px; }
+  .teacher-reference #teacherClassList .teacher-class-mark { width: 34px; height: 34px; border-radius: 11px; }
+  .teacher-reference #teacherClassList .teacher-class-heading h3 { font-size: 13px; }
+  .teacher-reference #teacherOnlineExams .teacher-cta { min-height: 56px; font-size: 15px; }
+  .teacher-reference #teacherExamHub .day-tab { min-height: 48px; font-size: 11.5px; }
+  .teacher-reference #teacherMore .teacher-menu-group .pay-tile { min-height: 58px; }
+}

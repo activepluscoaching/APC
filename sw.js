@@ -1,3 +1,22 @@
+// v397: Teacher — একাডেমিক কার্যক্রম moved out of the ক্লাস screen into its own Home feature card
+// (accent rail, artwork disc, what-is-inside line); ক্লাস now has two tabs (ক্লাস ও বিষয়,
+// রুটিন ও সময়সূচি) and the academic screen names itself after the feature; pin refresh.
+// v396: Teacher ক্লাস — 'ক্লাস ও বিষয়', 'রুটিন ও সময়সূচি' and 'একাডেমিক কার্যক্রম' are now three
+// separate tabs (the two doors that shared one grid are gone), with the class list in the first
+// tab panel; pin refresh.
+// v395: Teacher ক্লাস — every class is one collapsed disclosure row (name, group, subject and
+// student counts); subjects and the class-work action open only on tap, and the two class doors
+// shrink to compact rows so no primary information lies open; pin refresh.
+// v394: Teacher ক্লাস / পরীক্ষা / আরও seats redesigned in the scoped Tailwind sheet — door cards for
+// the class menu and class rows, one primary + one quiet action and 2×2 exam doors, and a single
+// grouped settings list in আরও; same routes, ids and classes; pin refresh.
+// v393: Teacher hero artwork redesigned as a matched day/night pair with no sun or moon in the
+// scene — the card's day/night chip is now the single celestial marker (two suns showed before);
+// the picture card's scrim is lighter so the brighter scene still reads; pin refresh.
+// v392: Teacher panel rewritten on Tailwind — the compiled, .teacher-reference-scoped sheet
+// (css/teacher-panel.css) replaces the 1,300-line inline block, and the Home hero is now the
+// day/night classroom picture itself with the greeting and daily line laid over it (no card
+// behind the image); pin refresh for the rebuilt teacher assets.
 // v391: Teacher hero — the warm line is now a daily rotating piece of Bangla teaching advice
 // (new offline teacher-daily-advice module, deterministic per Dhaka day, no storage/network); pin refresh.
 // v390: Teacher hero — remove the time-of-day greeting ("শুভ অপরাহ্ন!") and the "শিক্ষক প্যানেল"
@@ -151,7 +170,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 391;
+const CACHE_VERSION = 397;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -274,6 +293,7 @@ const APP_SHELL = [
   './css/app-polish.css',
   './css/student-record.css',
   './css/ui-wallet.css',
+  './css/teacher-panel.css',
   './css/hero-cards.css' + '?v=379',
   './css/student-home-design.css',
   './js/student-record.js',

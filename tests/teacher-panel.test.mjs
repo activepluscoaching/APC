@@ -399,11 +399,11 @@ test('the grid doors open their own screens and the routine lives on one screen'
   assert.equal($('[data-type-tab="homework"]').getAttribute('aria-selected'), 'true', 'হোমওয়ার্ক লিস্ট টাইপ-ট্যাবে খোলে');
   ctx.click($('.admin-bottom [data-teacher-view="home"]'));
   await settle();
-  /* উপকরণ lives under the কাজ দিন hub reached from the ক্লাস seat. */
-  ctx.click($('.admin-bottom [data-teacher-view="classes"]'));
+  /* উপকরণ lives under the একাডেমিক কার্যক্রম hub, which is its own feature card
+     on Home (out of the ক্লাস screen by owner order 2026-10-21). */
+  ctx.click($('#teacherHome .teacher-academic-hub'));
   await settle();
-  ctx.click($('#teacherClasses .teacher-submenu [data-teacher-view="academic"]'));
-  await settle();
+  assert.equal($('#teacherAcademic').hidden, false, 'the Home hub card opens the academic screen');
   ctx.click($('#teacherAcademic [data-teacher-view="courses"]'));
   await settle();
   assert.equal($('#teacherCourses').hidden, false, 'উপকরণ door opens its own screen');

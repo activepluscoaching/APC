@@ -130,10 +130,12 @@ function renderHome() {
      profile and every publish gate read the same assignment rows. */
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  /* The decorative glint and the framed AI scene both follow the time of day
-     (sun/daytime classroom by day, moon/lamp study scene at night). The
-     time-of-day greeting and the "শিক্ষক প্যানেল" subline were removed from the
-     hero by owner order; only the avatar initial, glint and welcome stay. */
+  /* The hero follows the time of day twice over: the picture swaps between the
+     day and the night classroom, and this glass chip is the ONLY sun/moon on the
+     card (the artwork keeps its sky free of celestial bodies, owner note
+     2026-10-21 — two suns showed at once). The time-of-day greeting and the
+     "শিক্ষক প্যানেল" subline were removed from the hero by owner order; only the
+     avatar initial, glint and welcome stay. */
   const isDay = hour >= 6 && hour < 18;
   const glint = $('#teacherHeroGlint');
   if (glint) {
@@ -220,17 +222,41 @@ function renderRecords() {
 const weekdayNames = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 function renderTeacherClasses() {
   const host = $('#teacherClassList'); if (!host) return;
+  const count = $('#teacherClassCount');
   /* Only tell a teacher "no class is assigned" when that is the truth — after
      the data actually came back empty. While a load is still running, or has
      failed (Firebase slow or unreachable), say that instead and offer a retry:
      an honest empty state must never be shown over classes that do exist. */
   if (!state.ready) {
+    if (count) count.textContent = '—';
     host.innerHTML = '<p class="teacher-empty">আপনার ক্লাসের তথ্য আনা হচ্ছে… অনুগ্রহ করে একটু ক্ষণ করুন। <button class="mini-btn" type="button" data-teacher-class-retry>আবার চেষ্টা করুন</button></p>';
     return;
   }
+  if (count) count.textContent = state.assignments.length ? `${bn(state.assignments.length)}টি ক্লাস` : '—';
+  /* মালিকের নির্দেশ (২০২৬-১০-২১): ক্লাসের প্রাথমিক তথ্য খোলা থাকবে না। প্রতিটি
+     ক্লাস এখন একটি সংক্ষিপ্ত সারি — নাম, গ্রুপ, বিষয়-সংখ্যা ও শিক্ষার্থী-সংখ্যা
+     এক নজরে; বিষয়ের তালিকা ও "এই ক্লাসের কাজ দেখুন" বাটন শুধু সারিতে ট্যাপ
+     করলে খোলে (নেটিভ <details>, তাই কিবোর্ড ও স্ক্রিন-রিডারেও কাজ করে)। */
   host.innerHTML = state.assignments.map(item => {
+    const subjects = (item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean);
     const students = state.students.filter(student => student.className === item.className && (!item.group || student.group === item.group));
-    return `<article class="teaching-card"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><p>${esc((item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean).join(', ') || '—')}</p><small>${bn(students.length)} জন অনুমোদিত শিক্ষার্থী</small><p><button class="mini-btn" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button></p></article>`;
+    const initial = String(item.className || 'ক').trim().charAt(0) || 'ক';
+    return `<article class="teaching-card teacher-class-card">
+          <details class="teacher-class-details">
+            <summary class="teacher-class-summary">
+              <span class="teacher-class-mark" aria-hidden="true">${esc(initial)}</span>
+              <span class="teacher-class-heading"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><small>${bn(subjects.length)}টি বিষয় · ${bn(students.length)} জন শিক্ষার্থী</small></span>
+              <span class="teacher-class-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="teacher-class-body">
+              <dl class="teacher-class-facts">
+                <div><dt>বিষয়</dt><dd>${esc(subjects.join(', ') || '—')}</dd></div>
+                <div><dt>শিক্ষার্থী</dt><dd>${bn(students.length)} জন অনুমোদিত</dd></div>
+              </dl>
+              <button class="mini-btn teacher-class-open" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button>
+            </div>
+          </details>
+        </article>`;
   }).join('') || '<p class="teacher-empty">এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি। অ্যাসাইন হলে এখানে আপনার ক্লাস ও বিষয় দেখা যাবে; কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>';
 }
 function assignedRoutineRows(day) {
@@ -454,6 +480,17 @@ function showAddChapterModal(course) {
 function render() { renderHome(); renderRecords(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
 const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
+/* ক্লাস-screen tabs (owner order 2026-10-21): "ক্লাস ও বিষয়" and "রুটিন ও সময়সূচি"
+   are separate tabs, never doors side by side. The first tab is the class list
+   itself; the second is the route to the read-only routine screen. একাডেমিক
+   কার্যক্রম left this screen entirely — it is its own feature card on Home. */
+function syncClassTabs(active = 'list') {
+  $$('.teacher-class-tabs [role="tab"]').forEach(tab => {
+    const selected = (tab.dataset.classTab || '') === active;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.classList.toggle('is-active', selected);
+  });
+}
 function setView(view) {
   if (!TEACHER_VIEWS.includes(view)) return;
   /* The nine routine pages are one screen now; their routes stay as aliases
@@ -469,6 +506,7 @@ function setView(view) {
   state.view = view;
   const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
+  if (panel === 'teacherClasses') syncClassTabs('list');
   $$('.teacher-type-tabs [data-type-tab]').forEach(el => {
     const active = el.dataset.typeTab === view;
     el.classList.toggle('active', active);
@@ -1030,6 +1068,8 @@ $('#teacherClassList')?.addEventListener('click', event => {
 });
 document.addEventListener('click', event => {
   if (state.busy) return;
+  const classTab = event.target.closest('.teacher-class-tabs [role="tab"]');
+  if (classTab && classTab.hasAttribute('data-teacher-view')) syncClassTabs('routine');
   const examTile = event.target.closest('[data-teacher-exam]');
   if (examTile) {
     state.examScreen = EXAM_SCREENS[examTile.dataset.teacherExam] || 'home';

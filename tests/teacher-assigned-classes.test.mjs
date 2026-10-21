@@ -219,6 +219,15 @@ test('the Teacher Panel lists all three classes, opens the clicked one, and neve
     }
     assert.ok(text.includes(nfc(MATH)) && text.includes(nfc(ENGLISH)), '\u09ac\u09bf\u09b7\u09df\u0997\u09c1\u09b2\u09cb \u0995\u09be\u09b0\u09cd\u09a1\u09c7 \u0986\u099b\u09c7');
     assert.ok(!text.includes(nfc(EMPTY_MESSAGE)), '\u0995\u09cd\u09b2\u09be\u09b8 \u09a5\u09be\u0995\u09be\u09b0 \u0995\u09c7 "\u0995\u09cd\u09b2\u09be\u09b8 \u09a8\u09c7\u0987" \u09ac\u09b2\u09be \u09b9\u09df \u09a8\u09be');
+    /* মালিকের নির্দেশ (২০২৬-১০-২১): প্রাথমিক তথ্য খোলা থাকবে না — প্রতিটি ক্লাস
+       একটি সংক্ষিপ্ত সারি, বিষয়-তালিকা ও কাজ-বাটন শুধু ট্যাপে খোলে। */
+    assert.equal(page.$$('#teacherClassList .teacher-class-details').length, 3, 'প্রতিটি ক্লাস একটি disclosure সারি');
+    assert.equal(page.$$('#teacherClassList .teacher-class-details[open]').length, 0, 'কোনো ক্লাস ডিফল্টে খোলা নেই');
+    for (const row of page.$$('#teacherClassList .teacher-class-summary')) {
+      assert.ok(row.querySelector('h3')?.textContent.trim(), 'সারিতে ক্লাসের নাম আছে');
+      assert.ok(row.querySelector('small')?.textContent.trim(), 'সারিতে বিষয়/শিক্ষার্থী-সংখ্যা আছে');
+    }
+    assert.equal(page.$$('#teacherClassList .teacher-class-body').length, 3, 'খোলা অংশ আলাদা রাখা হয়েছে');
     assert.equal(page.$('#teacherDataError').hidden, true, '\u09ad\u09c1\u09b2 \u09a4\u09cd\u09b0\u09c1\u099f\u09bf \u09a6\u09c7\u0996\u09be\u09df \u09a8\u09be');
     const filterOptions = [...page.$('#teacherClassFilter').options].map(option => nfc(option.textContent));
     for (const className of [CLASS_SIX, CLASS_SEVEN, CLASS_EIGHT]) {

@@ -115,6 +115,21 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   assert.match(sceneRule, /position:absolute/, 'the scene fills the card behind the text');
 });
 
+test('the ক্লাস screen keeps every class row collapsed until it is tapped', () => {
+  const teacherJs = read('js/teacher.js');
+  assert.match(teacherJs, /<details class="teacher-class-details">/, 'class rows are native disclosures');
+  assert.match(teacherJs, /<summary class="teacher-class-summary">/, 'the summary is the tap target');
+  assert.doesNotMatch(teacherJs, /<details class="teacher-class-details" open/,
+    'no class row is rendered open');
+  const compiled = read('css/teacher-panel.css');
+  assert.match(compiled, /teacher-class-details\[open\]>\.teacher-class-summary/, 'the open state is styled');
+  assert.match(compiled, /teacher-class-chevron/, 'the row shows an expand chevron');
+  const classesView = page.querySelector('#teacherClasses');
+  assert.ok(classesView.querySelector('#teacherClassCount'), 'the heading carries a count chip');
+  assert.doesNotMatch(classesView.textContent, /জন অনুমোদিত শিক্ষার্থী/,
+    'the static markup has no open class detail');
+});
+
 test('both hero illustrations ship at the card\'s 828×462 size, day and night', () => {
   for (const mode of ['day', 'night']) {
     const file = `assets/teacher-hero/teacher-hero-${mode}.webp`;

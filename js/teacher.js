@@ -222,17 +222,41 @@ function renderRecords() {
 const weekdayNames = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 function renderTeacherClasses() {
   const host = $('#teacherClassList'); if (!host) return;
+  const count = $('#teacherClassCount');
   /* Only tell a teacher "no class is assigned" when that is the truth — after
      the data actually came back empty. While a load is still running, or has
      failed (Firebase slow or unreachable), say that instead and offer a retry:
      an honest empty state must never be shown over classes that do exist. */
   if (!state.ready) {
+    if (count) count.textContent = '—';
     host.innerHTML = '<p class="teacher-empty">আপনার ক্লাসের তথ্য আনা হচ্ছে… অনুগ্রহ করে একটু ক্ষণ করুন। <button class="mini-btn" type="button" data-teacher-class-retry>আবার চেষ্টা করুন</button></p>';
     return;
   }
+  if (count) count.textContent = state.assignments.length ? `${bn(state.assignments.length)}টি ক্লাস` : '—';
+  /* মালিকের নির্দেশ (২০২৬-১০-২১): ক্লাসের প্রাথমিক তথ্য খোলা থাকবে না। প্রতিটি
+     ক্লাস এখন একটি সংক্ষিপ্ত সারি — নাম, গ্রুপ, বিষয়-সংখ্যা ও শিক্ষার্থী-সংখ্যা
+     এক নজরে; বিষয়ের তালিকা ও "এই ক্লাসের কাজ দেখুন" বাটন শুধু সারিতে ট্যাপ
+     করলে খোলে (নেটিভ <details>, তাই কিবোর্ড ও স্ক্রিন-রিডারেও কাজ করে)। */
   host.innerHTML = state.assignments.map(item => {
+    const subjects = (item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean);
     const students = state.students.filter(student => student.className === item.className && (!item.group || student.group === item.group));
-    return `<article class="teaching-card"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><p>${esc((item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean).join(', ') || '—')}</p><small>${bn(students.length)} জন অনুমোদিত শিক্ষার্থী</small><p><button class="mini-btn" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button></p></article>`;
+    const initial = String(item.className || 'ক').trim().charAt(0) || 'ক';
+    return `<article class="teaching-card teacher-class-card">
+          <details class="teacher-class-details">
+            <summary class="teacher-class-summary">
+              <span class="teacher-class-mark" aria-hidden="true">${esc(initial)}</span>
+              <span class="teacher-class-heading"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><small>${bn(subjects.length)}টি বিষয় · ${bn(students.length)} জন শিক্ষার্থী</small></span>
+              <span class="teacher-class-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="teacher-class-body">
+              <dl class="teacher-class-facts">
+                <div><dt>বিষয়</dt><dd>${esc(subjects.join(', ') || '—')}</dd></div>
+                <div><dt>শিক্ষার্থী</dt><dd>${bn(students.length)} জন অনুমোদিত</dd></div>
+              </dl>
+              <button class="mini-btn teacher-class-open" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button>
+            </div>
+          </details>
+        </article>`;
   }).join('') || '<p class="teacher-empty">এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি। অ্যাসাইন হলে এখানে আপনার ক্লাস ও বিষয় দেখা যাবে; কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>';
 }
 function assignedRoutineRows(day) {

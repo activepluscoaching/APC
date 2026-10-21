@@ -1294,13 +1294,13 @@ body.teacher-reference {
    shared `.pay-tile` geometry, and no new element is introduced.
    ========================================================================== */
 
-/* ── 24.1 ক্লাস: doors ─────────────────────────────────────────────────────── */
+/* ── 24.1 ক্লাস: the two doors (compact, nothing shouting) ────────────────── */
 .teacher-reference #teacherClasses .teacher-section-heading { margin: 16px 2px 9px; }
 .teacher-reference #teacherClasses > .teacher-section-heading:first-of-type { margin-top: 4px; }
 .teacher-reference #teacherClasses .teacher-submenu {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 9px;
   margin: 0 0 6px;
 }
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile {
@@ -1308,14 +1308,14 @@ body.teacher-reference {
   --tone-soft: var(--tone-mint-soft);
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  min-height: 142px;
-  padding: 13px 13px 12px;
+  gap: 9px;
+  min-height: 76px;
+  padding: 10px 26px 10px 10px;
   text-align: left;
-  border-radius: 20px;
+  border-radius: 17px;
   border: 1px solid var(--glass-border);
   background: var(--glass-surface);
   box-shadow: var(--glass-shadow);
@@ -1333,23 +1333,16 @@ body.teacher-reference {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(125% 95% at 100% 0, var(--tone-soft), transparent 66%);
+  background: radial-gradient(130% 100% at 100% 0, var(--tone-soft), transparent 70%);
 }
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile::after {
   content: '›';
   position: absolute;
-  right: 11px;
-  bottom: 10px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding-bottom: 2px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--tone) 26%, transparent);
-  background: var(--tone-soft);
-  color: var(--tone);
-  font-size: 15px;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  color: color-mix(in srgb, var(--tone) 70%, var(--color-text-secondary));
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
 }
@@ -1357,29 +1350,30 @@ body.teacher-reference {
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
   background: var(--tone-soft);
   color: var(--tone);
 }
-.teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon svg { width: 26px; height: 26px; }
+.teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon svg { width: 23px; height: 23px; }
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding-right: 22px;
+  gap: 1px;
+  min-width: 0;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 750;
   line-height: 1.35;
 }
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label small {
   color: var(--color-text-secondary);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 550;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 .teacher-reference #teacherClasses .teacher-submenu .pay-tile:active { transform: scale(.975); }
 @media (hover: hover) {
@@ -1390,55 +1384,122 @@ body.teacher-reference {
   }
 }
 
-/* ── 24.2 ক্লাস: the teacher's own class cards ────────────────────────────── */
-.teacher-reference #teacherClassList { display: grid; gap: 9px; }
-.teacher-reference #teacherClassList .teaching-card {
-  position: relative;
-  padding: 13px 14px 12px;
-  border-radius: 18px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-surface);
-  box-shadow: var(--glass-shadow);
-  overflow: hidden;
+/* ── 24.2 ক্লাস ও বিষয়: one collapsed row per class ───────────────────────── */
+/* Owner order (2026-10-21): no primary information may lie open. A class is a
+   single compact row — name, group, subject count and student count — and the
+   subject list plus the class-work action open only when the row is tapped.
+   Native <details>/<summary>: keyboard and screen-reader support for free, and
+   the closed state is the default in the markup, so nothing is exposed before
+   the teacher asks for it. */
+.teacher-reference #teacherClassList { display: grid; gap: 8px; }
+.teacher-reference #teacherClassList .teacher-class-card { padding: 0; overflow: hidden; }
+.teacher-reference #teacherClassList .teacher-class-details { display: block; }
+.teacher-reference #teacherClassList .teacher-class-summary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s var(--t-ease);
 }
-.teacher-reference #teacherClassList .teaching-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background-image: linear-gradient(180deg, var(--color-primary), var(--brand-2));
+.teacher-reference #teacherClassList .teacher-class-summary::-webkit-details-marker { display: none; }
+.teacher-reference #teacherClassList .teacher-class-details[open] > .teacher-class-summary {
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
-.teacher-reference #teacherClassList .teaching-card h3 {
-  margin: 0 0 2px;
-  padding-left: 4px;
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 1.4;
-  color: var(--color-text);
+.teacher-reference #teacherClassList .teacher-class-summary:active {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
-.teacher-reference #teacherClassList .teaching-card p {
-  margin: 0 0 6px;
-  padding-left: 4px;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  line-height: 1.55;
-}
-.teacher-reference #teacherClassList .teaching-card small {
-  display: inline-block;
-  margin-bottom: 8px;
-  padding: 3px 10px;
-  border-radius: var(--t-radius-chip);
-  background: var(--glass-accent-soft);
+.teacher-reference #teacherClassList .teacher-class-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  background-image: linear-gradient(140deg, var(--glass-accent-soft),
+    color-mix(in srgb, var(--brand-2) 12%, transparent));
   color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+}
+.teacher-reference #teacherClassList .teacher-class-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.teacher-reference #teacherClassList .teacher-class-heading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.teacher-reference #teacherClassList .teacher-class-heading small {
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.teacher-reference #teacherClassList .teacher-class-chevron {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 3px;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  border-radius: 1px;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform .2s var(--t-ease), border-color .2s var(--t-ease);
+}
+.teacher-reference #teacherClassList .teacher-class-details[open] .teacher-class-chevron {
+  transform: rotate(225deg) translate(-1px, -1px);
+  border-color: var(--color-primary);
+}
+/* Belt and braces: the UA hides a closed details' children, but state it here
+   too so a closed row can never leak its facts in any engine. */
+.teacher-reference #teacherClassList .teacher-class-details:not([open]) > .teacher-class-body { display: none; }
+.teacher-reference #teacherClassList .teacher-class-body {
+  padding: 2px 12px 12px;
+  border-top: 1px solid var(--glass-border);
+  animation: apc-teacher-rise .24s var(--t-ease) both;
+}
+.teacher-reference #teacherClassList .teacher-class-facts {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 11px;
+}
+.teacher-reference #teacherClassList .teacher-class-facts > div {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+.teacher-reference #teacherClassList .teacher-class-facts dt {
+  color: var(--color-text-muted);
   font-size: 10.5px;
   font-weight: 700;
+  letter-spacing: .04em;
 }
-.teacher-reference #teacherClassList .teaching-card p:last-child { margin-bottom: 0; }
-.teacher-reference #teacherClassList .mini-btn {
+.teacher-reference #teacherClassList .teacher-class-facts dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.teacher-reference #teacherClassList .teacher-class-open {
   display: block;
   width: 100%;
-  min-height: 42px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 9px 12px;
   border-radius: 13px;
   border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
   background: color-mix(in srgb, var(--color-primary) 7%, transparent);
@@ -1446,6 +1507,13 @@ body.teacher-reference {
   font-size: 12.5px;
   font-weight: 700;
   text-align: center;
+}
+.teacher-reference #teacherClassList .teacher-class-open:active { transform: scale(.99); }
+@media (hover: hover) {
+  .teacher-reference #teacherClassList .teacher-class-summary:hover { background: var(--glass-bg-soft); }
+  .teacher-reference #teacherClassList .teacher-class-open:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 48%, var(--glass-border));
+  }
 }
 
 /* ── 24.3 পরীক্ষা: one primary action, one quiet one, 2×2 doors ───────────── */
@@ -1635,14 +1703,18 @@ body.teacher-reference {
 
 /* Small phones: keep the doors readable at 320–380px. */
 @media (max-width: 380px) {
-  .teacher-reference #teacherClasses .teacher-submenu { gap: 8px; }
+  .teacher-reference #teacherClasses .teacher-submenu { gap: 7px; }
   .teacher-reference #teacherClasses .teacher-submenu .pay-tile {
-    min-height: 132px;
-    padding: 11px;
-    border-radius: 17px;
+    min-height: 72px;
+    padding: 9px 22px 9px 9px;
+    border-radius: 15px;
   }
-  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label { font-size: 12px; }
-  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label small { font-size: 10px; }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label { font-size: 11.5px; }
+  .teacher-reference #teacherClasses .teacher-submenu .pay-tile-label small { font-size: 9.5px; }
+  .teacher-reference #teacherClassList .teacher-class-summary { padding: 10px; gap: 9px; }
+  .teacher-reference #teacherClassList .teacher-class-mark { width: 34px; height: 34px; border-radius: 11px; }
+  .teacher-reference #teacherClassList .teacher-class-heading h3 { font-size: 13px; }
   .teacher-reference #teacherOnlineExams .teacher-cta { min-height: 56px; font-size: 15px; }
   .teacher-reference #teacherExamHub .day-tab { min-height: 48px; font-size: 11.5px; }
   .teacher-reference #teacherMore .teacher-menu-group .pay-tile { min-height: 58px; }

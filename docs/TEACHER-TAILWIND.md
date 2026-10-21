@@ -73,10 +73,13 @@ The three seats that are reached from the bottom dock were redesigned in the
 same scoped sheet (section 24 of the source), keeping every route, id and class
 the router and the locked tests use:
 
-* **ক্লাস** — the two doors (রুটিন ও সময়সূচি, একাডেমিক কার্যক্রম) are now door
-  cards: tinted artwork disc, title + sub, forward chevron; the teacher's own
-  classes render as accent-barred cards with a full-width "এই ক্লাসের কাজ দেখুন"
-  action.
+* **ক্লাস** — the two doors (রুটিন ও সময়সূচি, একাডেমিক কার্যক্রম) are compact
+  rows (tinted artwork disc, title + sub, chevron), and every class is one
+  **collapsed disclosure row**: the summary shows only the class, its group and
+  the subject/student counts, with a count chip beside the section heading. The
+  subject list, the approved-student count and the "এই ক্লাসের কাজ দেখুন"
+  action appear only when the row is tapped (`<details>`/`<summary>`, closed by
+  default). No primary information lies open (owner order 2026-10-21).
 * **পরীক্ষা** — one primary gradient action (দ্রুত MCQ), one quiet dashed
   secondary action, and the four section doors as a 2×2 grid instead of a chip
   scroller; the approval note reads as an info card.

@@ -1,3 +1,27 @@
+// v391: Teacher hero — the warm line is now a daily rotating piece of Bangla teaching advice
+// (new offline teacher-daily-advice module, deterministic per Dhaka day, no storage/network); pin refresh.
+// v390: Teacher hero — remove the time-of-day greeting ("শুভ অপরাহ্ন!") and the "শিক্ষক প্যানেল"
+// subline from the home identity strip; avatar initial and day/night glint stay; pin refresh.
+// v389: Teacher panel — remove the student list screen and its bottom-nav seat entirely (surface
+// removal only; student data still drives attendance, homework review and class cards); pin refresh.
+// v388: Teacher home — replace the 3×2 pay-tile grid with mobile-first full-width hero action
+// cards (homework, suggestion, one-tap quick MCQ, read-only routine) plus secondary chips; pin refresh.
+// v387: Teacher home — remove the non-actionable daily-work prompt card ("আপনার আজকের কাজগুলো…")
+// entirely from Home (markup, styles and tests); pin refresh for the rebuilt teacher assets.
+// v386: Teacher hero — fold greeting and welcome into one tidy text stack by dropping the hard
+// divider (uniform flex spacing), keeping the clean flat gradient and clear page background; pin refresh.
+// v385: Teacher hero — clear the background behind the card (remove the panel ambient wash and the
+// in-card glow blobs) for a clean flat gradient surface, and tighten the on-card text rhythm; pin refresh.
+// v384: Teacher hero — move the daily-work prompt ("আপনার আজকের কাজগুলো…") out of the gradient
+// welcome card into its own standalone glass card directly below it; pin refresh for teacher assets.
+// v383: Teacher hero — remove the role/teacher-id identity sub-card from the welcome card (the
+// role and id stay on the "আমার প্রোফাইল" screen); pin refresh for the rebuilt teacher assets.
+// v382: Teacher panel visual refresh — AI day/night hero artwork with gentle motion inside the
+// welcome card, panel-wide ambient atmosphere and cohesive hover/entrance elevation; pin refresh.
+// v381: Teacher Home hero redesign — organised zones (greeting strip with day/night glint,
+// divider, welcome title, and the daily-task prompt); cache pin refresh.
+// v380: Teacher panel door consolidation — creation centred in the কাজ দিন hub, Home tiles open screens only,
+// আরও reduced to reports/settings, and homework uses the shared standard modal; cache pin refresh for the rebuilt teacher assets.
 // v379: cross-device notification read receipts; preserve them in the synced settings collection.
 // v378: Student Home reference-match shortcut sizing, violet active tab, and Dhaka-clock greeting/art.
 // v376: staggered Student icon motion, time-of-day greetings, and eased truthful progress.
@@ -127,7 +151,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 379;
+const CACHE_VERSION = 391;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -332,6 +356,8 @@ const APP_SHELL = [
   './assets/icons/maskable-512.png',
   './assets/icons/apple-touch-icon.png',
   './assets/icons/app-logo.png',
+  './assets/teacher-hero/teacher-hero-day.webp',
+  './assets/teacher-hero/teacher-hero-night.webp',
   './js/appearance.js',
   './js/appearance-boot.js',
   './js/theme-logos.js',
@@ -430,6 +456,7 @@ const APP_SHELL = [
   './js/manager.js',
   './js/payment.js',
   './js/teacher.js',
+  './js/teacher-daily-advice.js',
   './js/teaching-data.js',
   './js/teacher-assignments.js',
   './js/student-teaching.js',

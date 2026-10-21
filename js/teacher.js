@@ -1,5 +1,4 @@
 import { examRepository, watchExams } from './exam-data.js';
-import { guardianDraft } from './guardian-message.js';
 import { loadRoutine, loadNotices, saveNotices, WEEK_DAYS } from './office-data.js';
 import { normalizeClassId, normalizeSectionId } from './class-key.js';
 import { listTeacherAssignments, syncTeacherAssignmentFromDirectory, effectiveTeacherAssignments } from './teacher-assignments.js';
@@ -21,7 +20,8 @@ import { mountProfileSelfEdit } from './staff-self-edit.js';
 import { initFixedShell } from './fixed-shell.js';
 import { registerServiceWorker } from './service-worker.js';
 import { mountReports, refreshReports } from './reports.js';
-import { teachingRepository, DEMO_TEACHER, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, todayISO, displayDate, safeResourceURL, matchesStudent, searchTeachingStudents, watchTeachingData } from './teaching-data.js';
+import { teachingRepository, DEMO_TEACHER, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, todayISO, displayDate, safeResourceURL, matchesStudent, watchTeachingData } from './teaching-data.js';
+import { pickTeacherAdvice } from './teacher-daily-advice.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -87,21 +87,6 @@ function recordCard(a) {
       ${a.type !== 'exam' ? `<button type="button" data-record-action="edit" data-id="${esc(a.id)}">সম্পাদনা</button>${a.status === 'published' && ACTIVITY_TYPES[a.type].progress ? `<button class="primary" type="button" data-record-action="progress" data-id="${esc(a.id)}">${ACTIVITY_TYPES[a.type].progress}</button>` : ''}<button class="danger" type="button" data-record-action="delete" data-id="${esc(a.id)}">মুছুন</button>` : '<small>পরীক্ষার approval ও score-entry Examination workflow-এ নিয়ন্ত্রিত</small>'}
     </div></article>`;
 }
-/* Slim Home card (মাস্টার প্রম্পট ২০২৬-১০): নাম, শ্রেণি ও স্ট্যাটাস এক নজরে;
-   কার্ডে ট্যাপ দিলে সংশ্লিষ্ট কার্যক্রমটি নিজেই খোলে, আর কাজ বাকি থাকলে
-   এক-ট্যাপ নথিভুক্তির দরজাটিও কার্ডে থাকে। */
-function homeCard(a) {
-  const note = pendingNote(a);
-  const progress = a.status === 'published' && ACTIVITY_TYPES[a.type].progress;
-  const actionLabel = progress ? ACTIVITY_TYPES[a.type].progress : 'সম্পাদনা করুন';
-  return `<article class="teaching-card teacher-queue-card teacher-home-card" data-record-action="detail" data-id="${esc(a.id)}" data-activity-id="${esc(a.id)}">
-    <div class="teaching-card-head"><span class="teaching-kind">${ACTIVITY_TYPES[a.type].label}</span><span class="teaching-status ${a.status}">${a.status === 'published' ? 'প্রকাশিত' : 'খসড়া'}</span></div>
-    <h3>${esc(a.title)}</h3>
-    <small>${esc(a.className)} • ${esc(a.group || 'সব বিভাগ')}${a.time ? ' • ' + esc(bn(a.time)) : ''}</small>
-    ${note ? `<p class="teaching-progress-line pending">${esc(note)}</p>` : ''}
-    ${note || a.status === 'draft' ? `<div class="teaching-actions"><button class="primary" type="button" data-record-action="${progress ? 'progress' : 'edit'}" data-id="${esc(a.id)}">${actionLabel}</button></div>` : ''}
-  </article>`;
-}
 /** Today first, then the nearest upcoming date, then the most recent past date. */
 function byDueDate(a, b) {
   const today = todayISO();
@@ -145,36 +130,54 @@ function renderHome() {
      profile and every publish gate read the same assignment rows. */
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  $('#teacherToday').textContent = `${hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা'} · শিক্ষক প্যানেল`;
-  /* শিক্ষক-নাম টপবারে এবং welcome hero-তে; textContent ব্যবহার করে account
-     profile-এর নাম নিরাপদে দেখানো হয়। */
-  const name = String(state.teacher?.fullName || '').trim();
-  const teacherId = String(state.teacher?.staffId && state.teacher?.kind !== 'system' ? state.teacher.staffId : currentTeacherId());
-  $('#teacherHomeTitle').textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম';
-  const idBadge = $('#teacherIdentityBadge');
-  if (idBadge) { idBadge.textContent = `শিক্ষক আইডি: ${teacherId}`; idBadge.dataset.teacherId = teacherId; }
-  const headerName = $('#teacherHeaderName');
-  if (headerName) {
-    headerName.textContent = name;
-    headerName.dataset.teacherId = teacherId;
-    headerName.hidden = !name;
-    if (name) headerName.title = name;
-    else headerName.removeAttribute('title');
+  /* The decorative glint and the framed AI scene both follow the time of day
+     (sun/daytime classroom by day, moon/lamp study scene at night). The
+     time-of-day greeting and the "শিক্ষক প্যানেল" subline were removed from the
+     hero by owner order; only the avatar initial, glint and welcome stay. */
+  const isDay = hour >= 6 && hour < 18;
+  const glint = $('#teacherHeroGlint');
+  if (glint) {
+    glint.setAttribute('href', `assets/icons/ai-3d/${isDay ? 'sun' : 'moon'}.svg`);
+    const glintSvg = glint.closest('svg');
+    if (glintSvg) glintSvg.setAttribute('data-icon', isDay ? 'sun' : 'moon');
   }
+  /* Swap the hero illustration only when the mode actually changes; a short
+     fade hides the src switch. Both files are precached, so the swap is instant
+     and works offline. Render runs on every data event, hence the mode guard. */
+  const heroArt = $('#teacherHeroArt');
+  if (heroArt) {
+    const mode = isDay ? 'day' : 'night';
+    if (heroArt.dataset.mode !== mode) {
+      heroArt.classList.add('is-fading');
+      setTimeout(() => {
+        heroArt.setAttribute('src', `assets/teacher-hero/teacher-hero-${mode}.webp`);
+        heroArt.dataset.mode = mode;
+        heroArt.classList.remove('is-fading');
+      }, 220);
+    }
+  }
+  /* শিক্ষকের নাম হিরো কার্ডে শুধু শিরোনাম ও অ্যাভাটার-অক্ষরে; টপবারে নামের
+     পুনরাবৃত্তি নেই। ভূমিকা ও শিক্ষক আইডি এখন শুধু "আমার প্রোফাইল" স্ক্রিনে
+     (renderTeacherProfile) — হিরোর পরিচিতি সাব-কার্ডটি মালিক-নির্দেশে বাদ। */
+  const name = String(state.teacher?.fullName || '').trim();
+  $('#teacherHomeTitle').textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম';
   if ($('#teacherHomeInitial')) $('#teacherHomeInitial').textContent = name.charAt(0) || 'শি';
-  const records = own();
-  const scopedStudents = state.students.filter(student => state.assignments.some(assignment => matchesStudent(assignment, student)));
-  $('#teacherHomeStudentTotal').textContent = hasAssignments ? bn(new Set(scopedStudents.map(student => student.id)).size) : '—';
-  const pending = records.filter(record => record.type === 'homework' && record.status === 'published').reduce((total, record) => total + rosterFor(record).filter(student => !['done', 'reviewed'].includes(record.progress?.[student.id]?.value)).length, 0);
-  $('#teacherHomePendingTotal').textContent = hasAssignments ? bn(pending) : '—';
-  $('#teacherHomeUpcomingTotal').textContent = state.exams === null ? '—' : bn(state.exams.filter(exam => ['published', 'approved'].includes(exam.status) && Number(exam.startAt) > Date.now()).length);
+  /* প্রতিদিন নতুন পরামর্শ: একই ঢাকা-দিনে একই লাইন, পরদিন নিজে থেকে বদলায়।
+     কোনো স্টোরেজ/নেটওয়ার্ক নেই — বিশুদ্ধ তারিখ-ভিত্তিক নির্বাচন। */
+  const warmLine = $('.teacher-hero-warm');
+  if (warmLine) warmLine.textContent = pickTeacherAdvice();
+  /* মালিকের নির্দেশ (২০২৬-১০-২১): হোম থেকে "আজকের সারাংশ" KPI সারফেস বাদ।
+     একই সংখ্যাগুলো এখনও কর্মক্ষেত্রেই হিসাব হয় (পেন্ডিং নেভি ডট renderTypeCounts-এ,
+     পরীক্ষা তার নিজস্ব স্ক্রিনে) — শুধু হোম-কার্ড তিনটি সরানো হয়েছে। */
   const todays = assignedRoutineRows(routineTodayKey()).sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
   $('#teacherTodayClassCount').textContent = hasAssignments ? `${bn(todays.length)}টি ক্লাস` : '—';
   renderTypeCounts();
   $('#teacherTodayClasses').innerHTML = todays.length
     ? todays.map(item => `<article class="teacher-home-class"><span class="teacher-home-class-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false" data-icon="class-today" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/class-today.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><div><h3>${esc(item.className || 'ক্লাস')} · ${esc(item.subject || 'বিষয় উল্লেখ নেই')}</h3><p>${esc(item.time || 'সময় নির্ধারিত নয়')}${item.room ? ` · ${esc(item.room)}` : ''}</p></div><small>আজকের</small></article>`).join('')
     : '<p class="teacher-empty">আজ কোনো নির্ধারিত ক্লাস নেই</p>';
-  $('#teacherRecent').innerHTML = records.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 3).map(homeCard).join('') || `<p class="teacher-empty">${hasAssignments ? 'এখনও কোনো academic কাজ যোগ করা হয়নি।' : 'Assignment না থাকায় academic কাজ দেখানো হচ্ছে না।'}</p>`;
+  /* মালিকের নির্দেশ (২০২৬-১০): হোমপেজ ক্লিন — কোনো "সাম্প্রতিক কাজ" ফিড নেই।
+     সব কার্যক্রম (উপস্থিতি ক্লাসসহ) তার নিজস্ব রেকর্ডস ট্যাব ও রুটিন স্ক্রিনে অক্ষত
+     থাকে; শুধু হোম থেকে সারফেসটি সরানো হয়েছে, কোনো ডেটা বা কর্মপ্রবাহ নয়। */
 }
 function renderRecords() {
   if (!ACTIVITY_TYPES[state.view]) return;
@@ -214,22 +217,6 @@ function renderRecords() {
   }
 }
 
-function renderStudents() {
-  const className = $('#teacherStudentClass').value;
-  if (!state.assignments.length) {
-    $('#teacherStudentCount').textContent = '—';
-    $('#teacherStudentList').innerHTML = '<p class="teacher-empty">এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি — অ্যাসাইন হলে শিক্ষার্থী খুঁজতে পারবেন। কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>';
-    return;
-  }
-  if (!$('#teacherStudentSearch').value.trim()) {
-    $('#teacherStudentCount').textContent = '';
-    $('#teacherStudentList').innerHTML = '<p class="teacher-empty">শিক্ষার্থী খুঁজতে নাম, শিক্ষার্থী আইডি বা মোবাইল লিখুন।</p>';
-    return;
-  }
-  const students = searchTeachingStudents(state.students, $('#teacherStudentSearch').value).filter(s => className === 'all' || s.className === className);
-  $('#teacherStudentCount').textContent = `${bn(students.length)} জন অনুমোদিত শিক্ষার্থী`;
-  $('#teacherStudentList').innerHTML = students.map(s => `<article class="teaching-card"><span class="student-avatar" aria-hidden="true">${esc(s.name.charAt(0))}</span><h3>${esc(s.name)}</h3><small>শিক্ষার্থী আইডি: ${esc(s.id)}</small><p>${esc(s.className)} • ${esc(s.group || '—')}</p><small>মোবাইল: ${esc(s.mobile || s.studentMobile || '—')}</small><div class="teaching-actions"><button type="button" data-student-detail="${esc(s.id)}">শেখার অগ্রগতি</button><button type="button" data-guardian-student="${esc(s.id)}">অভিভাবককে জানান</button></div></article>`).join('') || '<p class="teacher-empty">কোনো শিক্ষার্থী পাওয়া যায়নি</p>';
-}
 const weekdayNames = { sat: 'শনিবার', sun: 'রবিবার', mon: 'সোমবার', tue: 'মঙ্গলবার', wed: 'বুধবার', thu: 'বৃহস্পতিবার' };
 function renderTeacherClasses() {
   const host = $('#teacherClassList'); if (!host) return;
@@ -464,9 +451,9 @@ function showAddChapterModal(course) {
   });
 }
 
-function render() { renderHome(); renderRecords(); renderStudents(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
+function render() { renderHome(); renderRecords(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
-const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'students', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
+const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
 function setView(view) {
   if (!TEACHER_VIEWS.includes(view)) return;
   /* The nine routine pages are one screen now; their routes stay as aliases
@@ -480,7 +467,7 @@ function setView(view) {
     state.recordLimit = 15;
   }
   state.view = view;
-  const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', students: 'teacherStudents', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
+  const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
   $$('.teacher-type-tabs [data-type-tab]').forEach(el => {
     const active = el.dataset.typeTab === view;
@@ -488,11 +475,10 @@ function setView(view) {
     el.setAttribute('aria-selected', String(active));
     if (el.matches('.pay-tile')) el.setAttribute('aria-pressed', String(active));
   });
-  /* The bottom bar keeps its five seats: the academic screens light up the
-     একাডেমিক seat, the class-test results the ফলাফল seat. */
+  /* The bottom bar keeps its four seats: the academic/class screens light up
+     the ক্লাস seat, the class-test results the পরীক্ষা seat. */
   const bottomView = view === 'home' ? 'home'
-    : view === 'students' ? 'students'
-      : ['academic', 'classes', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
+    : ['academic', 'classes', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
         : ['exam', 'online-exams'].includes(view) ? 'online-exams' : 'more';
   $$('.admin-bottom [data-teacher-view]').forEach(el => {
     const active = el.dataset.teacherView === bottomView;
@@ -521,7 +507,7 @@ async function reload() {
     state.db = db; state.courses = courseData.courses || []; state.students = students; state.teacher = teacher; state.exams = examData?.exams || null;
     state.assignments = await effectiveTeacherAssignments(teacher?.username || 'teacher.apc');
     state.ready = true;
-    ['teacherClassFilter', 'teacherStudentClass', 'teacherNoticeClass'].forEach(id => {
+    ['teacherClassFilter', 'teacherNoticeClass'].forEach(id => {
       const select = $('#' + id), selected = select.value;
       select.innerHTML = `<option value="all">সব নির্ধারিত শ্রেণি</option>${classOptions(selected)}`;
       if ([...select.options].some(option => option.value === selected)) select.value = selected; else select.value = 'all';
@@ -533,7 +519,6 @@ async function reload() {
 }
 function openModal(title, html) {
   if ($('#teacherModalBackdrop').hidden) modalTrigger = document.activeElement;
-  $('#teacherModalBackdrop').classList.remove('is-homework-editor');
   $('#teacherModalClose').textContent = '×';
   $('#teacherModalClose').setAttribute('aria-label', 'বন্ধ করুন');
   $('#teacherModalTitle').textContent = title;
@@ -588,9 +573,10 @@ function showEditor(type, old = null) {
 // homework screen keeps optional controls discoverable without duplicating data.
 function prepareHomeworkEditor(activity) {
   const form = $('#teacherActivityForm');
-  $('#teacherModalBackdrop').classList.add('is-homework-editor');
-  $('#teacherModalClose').textContent = '←';
-  $('#teacherModalClose').setAttribute('aria-label', 'ফিরুন');
+  /* ২০২৬-১০-২০: হোমওয়ার্ক ফর্ম আর অস্বচ্ছ ফুল-স্ক্রিন টেকওভার নয় — অ্যাপের অন্য
+     সব ডায়ালগের (সাজেশন/নোটিশ) মতোই একই স্ট্যান্ডার্ড মডাল/বটম-শিট, যাতে
+     হেডার-ফুটার বোঝা যায় এবং সব ফর্মের ফরম্যাট এক রকম থাকে। ফর্মের ফিল্ড-আইকন
+     স্টাইলিং teacher-homework-form ক্লাসেই থাকে। */
   form.classList.add('teacher-homework-form');
   form.addEventListener('invalid', event => {
     const details = event.target.closest('details');
@@ -646,21 +632,6 @@ function prepareHomeworkEditor(activity) {
   const submit = form.querySelector('[type="submit"]');
   const syncStatus = () => { submit.textContent = $('#activity-status').value === 'published' ? 'প্রকাশ করুন' : 'খসড়া সংরক্ষণ করুন'; };
   $('#activity-status').addEventListener('change', syncStatus); syncStatus();
-  const footer = $('.admin-bottom').cloneNode(true);
-  footer.className = 'teacher-composer-nav';
-  footer.setAttribute('aria-label', 'শিক্ষক প্যানেল');
-  footer.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
-  footer.querySelectorAll('.nav-dot').forEach(node => node.remove());
-  footer.querySelectorAll('button').forEach(button => {
-    button.className = 'teacher-composer-link';
-    const active = button.dataset.teacherView === 'classes';
-    button.classList.toggle('active', active);
-    button.removeAttribute('aria-current');
-    if (active) button.setAttribute('aria-current', 'page');
-    button.addEventListener('click', () => closeModal());
-  });
-  $('#teacherModalBody').append(footer);
-
 }
 
 async function save(form, operation, message) {
@@ -786,13 +757,7 @@ function showDelete(a) {
   openModal('কাজটি মুছে ফেলবেন?', `<form id="teacherDeleteForm"><p class="modal-copy"><strong>${esc(a.title)}</strong> মুছে গেলে শিক্ষার্থী অ্যাপ থেকেও সরে যাবে। এই কাজের নম্বর, জমার অবস্থা বা উপস্থিতিও মুছে যাবে।</p><p class="finance-error" id="teacherSaveError" role="alert" hidden></p><div class="modal-actions"><button class="admin-btn ghost" type="button" data-close-teacher>না, রাখুন</button><button class="admin-btn primary" type="submit">হ্যাঁ, মুছে ফেলুন</button></div></form>`);
   $('#teacherDeleteForm').addEventListener('submit', event => { event.preventDefault(); save(event.currentTarget, () => teachingRepository.deleteActivity(a.id), 'কাজটি মুছে ফেলা হয়েছে'); });
 }
-function showStudent(id) {
-  const s = state.students.find(student => student.id === id); if (!s) return;
-  const records = own().filter(a => a.status === 'published' && matchesStudent(a, s) && a.progress[s.id]);
-  openModal(s.name, `<p class="modal-copy">শিক্ষার্থী আইডি: ${esc(s.id)} • ${esc(s.className)} • ${esc(s.group || '—')}</p><div class="teacher-record-list">${records.map(a => `<article class="teaching-card"><small>${ACTIVITY_TYPES[a.type].label}</small><h3>${esc(a.title)}</h3><p>${a.type === 'exam' ? `${bn(a.progress[s.id].value)} / ${bn(a.totalMarks)}` : PROGRESS_LABELS[a.progress[s.id].value] || '—'}</p></article>`).join('') || '<p class="teacher-empty">এখনও কোনো নম্বর বা অগ্রগতি নথিভুক্ত হয়নি।</p>'}</div>`);
-}
-
-['teacherClassFilter', 'teacherStudentClass'].forEach(id => { $('#' + id).insertAdjacentHTML('beforeend', classOptions()); });
+['teacherClassFilter'].forEach(id => { $('#' + id).insertAdjacentHTML('beforeend', classOptions()); });
 /* ---- একাডেমিক hub, notice composer and quick actions ------------------------ */
 
 /** Which academic section is which: the hub card targets an existing screen. */
@@ -1063,7 +1028,6 @@ $('#teacherClassList')?.addEventListener('click', event => {
      existing হোমওয়ার্ক / সাজেশন / উপজাতি / পরীক্ষা workflow. */
   setView('homework');
 });
-['teacherStudentSearch', 'teacherStudentClass'].forEach(id => $('#' + id).addEventListener(id.includes('Search') ? 'input' : 'change', renderStudents));
 document.addEventListener('click', event => {
   if (state.busy) return;
   const examTile = event.target.closest('[data-teacher-exam]');
@@ -1073,11 +1037,17 @@ document.addEventListener('click', event => {
     return;
   }
   const nav = event.target.closest('[data-teacher-view]');
+  /* Creation doors ("কাজ দিন" hub-এর "দিন" বাটন) গন্তব্য স্ক্রিনে নেভিগেট না
+     করে বর্তমান স্ক্রিনের উপরেই ফর্ম খোলে — ফর্ম বন্ধ করলে শিক্ষক যে হাব থেকে
+     খুলেছেন সেখানেই ফেরেন, রেকর্ডস স্ক্রিনে ছিটকে যান না। নেভিগেশন-দরজা
+     (শুধু data-teacher-view) আগের মতোই স্ক্রিন বদলায়। */
+  const create = event.target.closest('[data-new-activity]');
+  if (create) { showEditor(create.dataset.newActivity); return; }
+  if (event.target.closest('[data-new-notice]')) { showNoticeEditor(); return; }
   if (nav) {
     if (nav.dataset.teacherView === 'exam' || nav.dataset.teacherView === 'online-exams') state.examScreen = '';
     setView(nav.dataset.teacherView);
   }
-  if (event.target.closest('[data-course-chapters-open]')) { setView('courses'); $('#teacherCourseChaptersBox')?.scrollIntoView?.(); return; }
   const courseChBtn = event.target.closest('[data-course-ch-action]');
   if (courseChBtn) {
     const act = courseChBtn.dataset.courseChAction;
@@ -1099,8 +1069,6 @@ document.addEventListener('click', event => {
     return;
   }
   const routineSessionBtn = event.target.closest('[data-open-routine-session]'); if (routineSessionBtn) { openRoutineSession(routineSessionBtn); return; }
-  const create = event.target.closest('[data-new-activity]'); if (create) showEditor(create.dataset.newActivity);
-  if (event.target.closest('[data-new-notice]')) showNoticeEditor();
   const section = event.target.closest('[data-academic-section]');
   if (section) {
     const target = ACADEMIC_SECTIONS[section.dataset.academicSection];
@@ -1122,9 +1090,6 @@ document.addEventListener('click', event => {
     const a = own().find(item => item.id === record.dataset.id); if (!a) return;
     ({ detail: showDetail, edit: a => showEditor(a.type, a), progress: showProgress, delete: showDelete })[record.dataset.recordAction]?.(a);
   }
-  const guardian = event.target.closest('[data-guardian-student]');
-  if (guardian) { const row = state.students.find(s => s.id === guardian.dataset.guardianStudent); if (row) { const kind = window.prompt('বার্তার ধরন: absence / result / due', 'absence'); if (kind) { try { window.open(guardianDraft(row, kind), '_blank', 'noopener,noreferrer'); } catch (error) { toast(error.message); } } } return; }
-  const student = event.target.closest('[data-student-detail]'); if (student) showStudent(student.dataset.studentDetail);
 });
 $('#teacherModalClose').addEventListener('click', closeModal);
 $('#teacherModalBackdrop').addEventListener('click', event => { if (event.target === event.currentTarget) closeModal(); });

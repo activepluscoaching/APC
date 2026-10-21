@@ -565,16 +565,6 @@ label { font-size: 13.5px; font-weight: 600; margin-block: 14px 6px; }
 }
 .admin-hero-stats .tile-label, .manager-kpi-grid .tile-label { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--pay-on-hero-soft); }
 .admin-hero-stats .tile-value, .manager-kpi-grid .tile-value { margin: 0; font-size: 23px; line-height: 1.3; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--pay-on-hero); }
-.teacher-summary {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px; padding: 0;
-  background: transparent; border: 0; box-shadow: none;
-}
-.teacher-summary > div {
-  display: grid; align-content: center; justify-items: center; gap: 3px; min-height: 78px; padding: 10px 6px;
-  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px; box-shadow: none; color: var(--color-text);
-}
-.teacher-summary span { margin: 0; color: var(--color-text-secondary); font-size: 12px; }
-.teacher-summary strong { margin: 0; color: var(--color-primary); font-size: 22px; font-variant-numeric: tabular-nums; }
 .admin-hero-stats .tile-icon { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px;
   border-radius: 50%; background: var(--tone-soft, var(--pay-disc)); color: var(--tone, var(--pay-disc-ink)); }
 .admin-hero-stats .tile-icon svg { width: 17px; height: 17px; }
@@ -1075,7 +1065,6 @@ html[data-theme="dark"] .auth-brand img { background: transparent; padding: 0; b
 
 /* 16 ── Theme details, responsive layout, safe areas and accessibility ──── */
 html[data-theme="dark"] .admin-hero-stats, html[data-theme="dark"] .manager-kpi-grid,
-html[data-theme="dark"] .teacher-summary, html[data-theme="dark"] .pay-grid,
 html[data-theme="dark"] .admin-feature-grid, html[data-theme="dark"] .pay-pulse-row { box-shadow: none; }
 html[data-theme="dark"] .app-topbar {
   background: var(--pay-hero-a); color: var(--pay-on-hero); border-bottom: 1px solid var(--pay-hero-line);
@@ -1969,31 +1958,11 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
    remain teacher-specific, while the visual components match every portal. */
 @media screen {
 .teacher-reference #teacherHome { max-width: 760px; margin-inline: auto; }
-.teacher-reference #teacherHome .teacher-home-summary { margin-bottom: 14px; }
 .teacher-reference #teacherHome .teacher-home-today { margin-bottom: 14px; }
-.teacher-reference #teacherHome .teacher-home-extra { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-.teacher-reference #teacherHome .teacher-home-extra button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--glass-border); border-radius: 14px; background: var(--glass-surface); color: var(--color-text); font-size: 13px; }
 .teacher-reference #teacherHome #teacherIdentityBadge { display: inline-block; color: var(--pay-on-hero-soft); font-size: 12px; line-height: 1.45; }
 }
 
-/* Homework uses the existing accessible modal and save path, presented like a
-   compact full-page composer. Other teacher dialogs are unchanged. */
 @media screen {
-.teacher-reference #teacherModalBackdrop.is-homework-editor {
-  align-items: flex-start; padding: 0 16px calc(80px + var(--safe-bottom));
-  background: var(--color-bg); overflow-y: auto;
-}
-.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal {
-  width: 100%; max-width: 600px; max-height: none; margin-inline: auto;
-  padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible;
-}
-.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-header {
-  display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding: 18px 0 14px; border: 0; background: transparent;
-}
-.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-header > div { flex: 1; }
-.teacher-reference #teacherModalBackdrop.is-homework-editor #teacherModalTitle { font-size: 22px; font-weight: 400; }
-.teacher-reference #teacherModalBackdrop.is-homework-editor #teacherModalClose { order: -1; min-width: 32px; min-height: 40px; width: 32px; padding: 0; background: transparent; border: 0; border-radius: 8px; color: var(--color-text); font-size: 24px; }
-.teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal-body { padding: 0; }
 .teacher-reference .teacher-homework-form { display: flex; flex-direction: column; gap: 12px; }
 .teacher-reference .teacher-homework-form > datalist { display: none; }
 .teacher-reference .teacher-homework-form .homework-field { position: relative; display: flex; align-items: center; gap: 10px; padding: 9px 12px; min-height: 52px; border: 1px solid var(--color-border); border-radius: 15px; background: var(--color-surface); }
@@ -2017,13 +1986,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .teacher-reference .teacher-homework-form .modal-actions { display: flex; gap: 8px; margin: 0; padding: 0; border: 0; }
 .teacher-reference .teacher-homework-form .modal-actions [type="submit"] { flex: 1; min-height: 48px; background: var(--color-primary); color: var(--pay-on-hero); border: 0; border-radius: 14px; font-size: 17px; }
 .teacher-reference .teacher-homework-form .modal-actions [data-close-teacher] { min-height: 44px; font-size: 13px; border-radius: 12px; }
-}
-@media screen {
-.teacher-reference .teacher-composer-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 2px; width: min(632px,100%); padding: 9px 10px calc(9px + var(--safe-bottom)); background: var(--color-surface); border-top: 1px solid var(--color-border); z-index: 2; }
-.teacher-reference .teacher-composer-link { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 54px; padding: 6px 2px; border: 0; border-radius: 14px; background: transparent; color: var(--color-text-secondary); font-size: 12px; }
-.teacher-reference .teacher-composer-link.active { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); }
-.teacher-reference .teacher-composer-link .nav-chip { display: grid; place-items: center; position: static; width: 24px; height: 24px; margin: 0; border: 0; background: transparent; color: inherit; box-shadow: none; }
-.teacher-reference .teacher-composer-link svg { width: 23px; height: 23px; }
 }
 .teacher-reference .teacher-homework-form .homework-field-icon svg { display: block; width: 18px; height: 18px; }
 
@@ -2727,7 +2689,6 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
     .admin-card, .pay-card, .staff-card, .student-card, .manager-record,
     .student-row, .staff-list-item, .teaching-card, .teacher-toolbar,
     .staff-toolbar, .student-filter-panel, .teacher-home-today,
-    .teacher-summary, .admin-hero-stats, .manager-kpi-grid,
     .study-progress-card, .dashboard-exam-card, .dashboard-fee-card,
     .challenge-card, .profile-card, .profile-details-card,
     .profile-section, .course-card, .learning-card, .routine-card,
@@ -2738,7 +2699,7 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
     border-radius: var(--glass-radius);
     box-shadow: var(--glass-shadow);
   }
-  :is(.app-shell, .admin-shell, .pay-shell) :is(.admin-hero-stats, .manager-kpi-grid, .teacher-summary) {
+  :is(.app-shell, .admin-shell, .pay-shell) :is(.admin-hero-stats, .manager-kpi-grid) {
     background: var(--glass-strong);
   }
   :is(.app-shell, .admin-shell, .pay-shell) :is(.pay-grid, .admin-feature-grid) {
@@ -2882,8 +2843,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
 .admin-view[data-view-panel="dashboard"] .admin-hero-icon { background: var(--pay-hero-b); border-color: var(--pay-hero-line); }
 .admin-date-pill, .admin-hero-head > .badge { background: var(--pay-hero-b); color: var(--pay-on-hero); border-color: var(--pay-hero-line); }
 .admin-hero-icon { background: var(--pay-hero-b); border: 1px solid var(--pay-hero-line); color: var(--pay-on-hero); }
-.teacher-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
-.teacher-summary > div { min-width: 0; min-height: 78px; border: 1px solid var(--color-border); border-radius: 16px; }
 
 .manager-view[data-view-panel="finance"] .page-intro { margin-bottom: 8px; padding-bottom: 4px; }
 .manager-finance-tabs {
@@ -3016,21 +2975,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
     width: 50px; height: 50px; border-radius: 50%; background: var(--pay-hero-chip);
     border: 1px solid var(--pay-hero-line); color: var(--pay-on-hero); font-size: 19px;
   }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 0; padding: 0;
-    border: 0; border-radius: 0; background: transparent; box-shadow: none;
-  }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary > div {
-    min-width: 0; min-height: 76px; padding: 9px 5px; border: 1px solid var(--pay-hero-line);
-    border-radius: 16px; background: var(--pay-hero-stat-chip); color: var(--pay-on-hero);
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary strong {
-    color: var(--pay-on-hero); font-size: 21px; line-height: 1.25;
-  }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary span {
-    color: var(--pay-on-hero); font-size: 11px; font-weight: 600; line-height: 1.35; text-align: center;
-  }
   .teacher-reference #teacherHome .teacher-welcome-note { color: var(--pay-on-hero); }
   .teacher-reference #teacherHome .teacher-home-today {
     margin: 0 0 16px; padding: 15px; border: 1px solid var(--glass-border);
@@ -3040,8 +2984,7 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   }
   .teacher-reference #teacherHome .teacher-home-today .teacher-section-heading { margin: 0 0 10px; }
   .teacher-reference #teacherHome .teacher-home-today .teacher-section-heading h2 { font-size: 16px; font-weight: 650; }
-  .teacher-reference #teacherHome .teacher-home-today .teacher-record-list,
-  .teacher-reference #teacherHome #teacherRecent { display: grid; gap: 8px; margin: 0; }
+  .teacher-reference #teacherHome .teacher-home-today .teacher-record-list { display: grid; gap: 8px; margin: 0; }
   .teacher-reference #teacherHome .teacher-home-class {
     display: flex; align-items: center; gap: 10px; min-width: 0; padding: 11px;
     border: 1px solid var(--glass-border); border-radius: 16px; background: var(--glass-bg-soft);
@@ -3094,12 +3037,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   }
   .teacher-reference #teacherMore > .pay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .teacher-reference #teacherMore > .pay-grid > .pay-tile { min-height: 112px; }
-  .teacher-reference #teacherHome .teacher-home-extra { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
-  .teacher-reference #teacherHome .teacher-home-extra button {
-    min-height: 42px; padding: 8px 13px; border: 1px solid var(--glass-border); border-radius: 14px;
-    background: var(--glass-surface); color: var(--color-text); font-size: 12.5px;
-    -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
-  }
 
   .teacher-reference .teacher-view > .page-intro {
     margin: 0 0 14px; padding: 8px 0 12px; border-bottom: 1px solid var(--glass-border);
@@ -3218,20 +3155,9 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   .teacher-reference .admin-bottom-item .nav-chip svg { width: 22px; height: 22px; }
   .teacher-reference .teacher-home-grid button:focus-visible,
   .teacher-reference .teacher-view button:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
-  .teacher-reference #teacherModalBackdrop.is-homework-editor { padding-bottom: calc(24px + var(--safe-bottom)); }
-  .teacher-reference #teacherModalBackdrop.is-homework-editor .teacher-composer-nav {
-    position: relative; left: auto; right: auto; bottom: auto; transform: none; width: 100%; max-width: none;
-    margin: 14px 0 calc(12px + var(--safe-bottom)); border: 1px solid var(--glass-border); border-radius: 18px;
-    background: var(--glass-bar); filter: none;
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  }
 @media (max-width: 380px) {
   .teacher-reference .teacher-shell > .admin-main { padding: 12px 12px calc(88px + var(--safe-bottom)); }
   .teacher-reference #teacherHome .teacher-hero { padding: 15px 12px; border-radius: 22px; }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary { gap: 6px; }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary > div { min-height: 70px; padding: 7px 3px; }
-  .teacher-reference #teacherHome .teacher-hero .teacher-home-summary strong { font-size: 19px; }
   .teacher-reference #teacherHome .teacher-home-grid,
   .teacher-reference .teacher-view > .pay-grid:not(.teacher-type-tabs) { gap: 8px; }
   .teacher-reference #teacherHome .teacher-home-grid > .teacher-home-tile,
@@ -3384,7 +3310,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
     left: 50%; right: auto; width: min(100vw, 430px); max-width: 430px;
     transform: translateX(-50%);
   }
-  .teacher-reference .teacher-composer-nav { width: min(100vw, 430px); }
 
   /* The Manager uses the same fixed bottom bar as the other four roles. */
   .manager-shell { display: flex; flex-direction: column; }
@@ -3434,7 +3359,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   }
   .pay-main { display: block; }
   .staff-stats, .manager-finance-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .teacher-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .admin-view[data-view-panel="profile"] .settings-group-grid { grid-template-columns: minmax(0, 1fr); }
   .admin-profile-avatar { width: 56px; height: 56px; font-size: 21px; }
   .admin-profile-hero { padding: 18px; }
@@ -3549,10 +3473,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   .apc-lock-card { width: min(100%, 398px); }
   .staff-modal-backdrop.is-more-sheet { padding: 0; }
   .staff-modal-backdrop.is-more-sheet .staff-modal { width: 100%; max-width: none; }
-  .teacher-reference #teacherModalBackdrop.is-homework-editor { padding-bottom: calc(24px + var(--safe-bottom)); }
-  .teacher-reference #teacherModalBackdrop.is-homework-editor .admin-modal {
-    width: 100%; max-width: 398px;
-  }
   .apc-alert-backdrop { padding: var(--space-4) 12px calc(90px + var(--safe-bottom)); }
   .apc-inapp-alert { width: 100%; max-width: 100%; }
 
@@ -3583,7 +3503,6 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
   .student-record-actions { padding: 12px 16px; }
   .student-record-actions button { font-size: 13px; }
   .admin-backup-action { text-align: center; }
-  .teacher-header-name { max-width: 78px; padding: 5px 7px; font-size: 11px; }
   .notice-filters .notice-read-all { margin-left: 0; width: 100%; }
   .notice-detail { padding: var(--space-3); }
   .notice-empty { padding: var(--space-4) var(--space-3); }
@@ -4048,20 +3967,14 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   display: block; max-width: 100%; margin: 2px 0 0; color: var(--color-text-secondary);
   font-size: 12px; line-height: 1.35; overflow-wrap: anywhere;
 }
-.teacher-summary-section, .manager-home-summary, .admin-home-summary {
+
+.manager-home-summary, .admin-home-summary {
   margin: 0 0 14px; padding: 0; border: 0; border-radius: 0;
   background: transparent; color: var(--color-text); box-shadow: none;
 }
-.teacher-summary-section .teacher-summary-title, .manager-summary-title, .admin-summary-title {
+.manager-summary-title, .admin-summary-title {
   margin: 0 0 10px; color: var(--color-text); font-size: 14px; font-weight: 750; line-height: 1.4;
 }
-.teacher-summary-section .teacher-home-summary { margin: 0; padding: 0; }
-.teacher-summary-section .teacher-home-summary > div {
-  min-height: 66px; padding: 8px 5px; border: 1px solid var(--color-border); border-radius: 14px;
-  background: var(--color-surface-muted); color: var(--color-text); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
-}
-.teacher-summary-section .teacher-home-summary strong { color: var(--color-text); font-size: 19px; }
-.teacher-summary-section .teacher-home-summary span { color: var(--color-text-secondary); }
 .admin-home-summary .admin-hero-stats, .manager-home-summary .manager-kpi-grid { margin: 0; }
 .admin-home-summary .admin-hero-stats > .admin-stat-tile, .manager-home-summary .manager-kpi-grid > .admin-stat-tile {
   min-height: 76px; padding: 10px; border: 1px solid var(--color-border); border-radius: 14px;

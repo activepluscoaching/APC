@@ -1,6 +1,6 @@
 const {test,expect}=require('./fixtures.cjs');
 const {enterPortal,enterStudentApp}=require('./portal-session.cjs');
-const navCount={login:0,admin:5,manager:5,teacher:5,payment:5,student:5};
+const navCount={login:0,admin:5,manager:5,teacher:4,payment:5,student:5};
 for(const width of [320,390,768,1280])for(const role of ['login','admin','manager','teacher','payment','student']){
  test(`${role} minimal shell at ${width}`,async({page})=>{
  await page.setViewportSize({width,height:844});

@@ -48,20 +48,32 @@ before(async () => {
 });
 after(() => ctx?.window.close());
 
-test('the home সাজেশন tile opens the suggestion screen, not the notice board', async () => {
-  ctx.click($('[data-teacher-view="suggestion"]'));
+test('the home সাজেশন hero opens the suggestion composer, never the notice board', async () => {
+  /* ২০২৬-১০-২১: Home heroes are create-first — the সাজেশন hero opens the
+     suggestion composer over Home, while the separate notice board (a distinct
+     system) stays closed. */
+  ctx.click($('#teacherHome [data-new-activity="suggestion"]'));
   await settle();
-  assert.equal($('#teacherRecords').hidden, false, 'the records screen opens');
+  assert.equal($('#teacherModalBackdrop').hidden, false, 'the suggestion composer opens over Home');
+  assert.match(nfc($('#teacherModalTitle').textContent), /সাজেশন/, 'the composer is for a suggestion');
   assert.equal($('#teacherNotice').hidden, true, 'the notice board stays closed — these are two different things');
-  const tab = $('[data-type-tab="suggestion"]');
-  assert.equal(tab.getAttribute('aria-selected'), 'true', 'the suggestion tab is the selected one');
-  assert.equal(nfc(tab.firstChild.textContent.trim()), nfc('সাজেশন'), 'and it is labelled সাজেশন');
+  ctx.click($('#teacherModalClose'));
+  await settle();
+  assert.equal($('#teacherModalBackdrop').hidden, true);
 });
 
-test('the suggestion screen names itself সাজেশন everywhere the teacher reads', async () => {
-  ctx.click($('[data-teacher-view="suggestion"]'));
+test('the suggestion records screen names itself সাজেশন everywhere the teacher reads', async () => {
+  /* The records list keeps its own screen: Home heroes are create-first, so the
+     teacher enters records through the নম্বর এন্ট্রি chip and the সাজেশন tab. */
+  ctx.click($('#teacherHome .teacher-action-secondary [data-teacher-view="exam"]'));
   await settle();
-  assert.equal(nfc($('#teacherRecordsTitle').textContent), nfc('সাজেশন'), 'the page heading matches where the teacher clicked');
+  ctx.click($('.teacher-type-tabs [data-type-tab="suggestion"]'));
+  await settle();
+  assert.equal($('#teacherRecords').hidden, false, 'the records screen opens');
+  const tab = $('[data-type-tab="suggestion"]');
+  assert.equal(tab.getAttribute('aria-selected'), 'true', 'the suggestion tab is selected');
+  assert.equal(nfc(tab.firstChild.textContent.trim()), nfc('সাজেশন'), 'and it is labelled সাজেশন');
+  assert.equal(nfc($('#teacherRecordsTitle').textContent), nfc('সাজেশন'), 'the page heading matches the selected tab');
   assert.equal(nfc($('#teacherNewActivity').textContent), nfc('+ সাজেশন'), 'the add button continues the same workflow');
   const chip = $('#teacherRecordList .teaching-kind');
   assert.ok(chip, 'the record renders');

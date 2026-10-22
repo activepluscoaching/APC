@@ -41,7 +41,15 @@ const money = value => `৳${bn(Number(value || 0).toLocaleString('en-US'))}`;
 /* The Manager keeps five bottom seats. Reports and the advice editor live in
    More; their route names and data hooks remain unchanged. */
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
-const MANAGER_VIEWS = Object.freeze(['dashboard', 'students', 'academic', 'academic-records', 'classes', 'teachers', 'finance', 'notices', 'routine', ...ROUTINE_CHILD_VIEWS, 'exams', 'courses', 'results', 'reports', 'advice', 'profile', 'settings', 'more']);
+const MANAGER_VIEWS = Object.freeze(['dashboard', 'students', 'academic', 'academic-records', 'classes', 'class-chat', 'teachers', 'finance', 'notices', 'routine', ...ROUTINE_CHILD_VIEWS, 'exams', 'courses', 'results', 'reports', 'advice', 'profile', 'settings', 'more']);
+let managerChatFlight = null;
+function mountManagerClassChat() {
+  const mount = $('#managerClassChatMount');
+  if (!mount) return;
+  managerChatFlight ??= import('./class-chat.js').catch(err => { managerChatFlight = null; throw err; });
+  void managerChatFlight.then(mod => mod.mountClassChat(mount, { portal: 'manager', getStaff: () => managerAccount }))
+    .catch(err => console.warn('[Active Plus] manager class-chat failed:', err?.message));
+}
 const LEGACY_VIEWS = Object.freeze({
   approvals: { view: 'students', scope: 'pending' },
   'cash-counter': { view: 'finance', segment: 'approval' }
@@ -180,7 +188,7 @@ function renderView(view) {
   $$('.manager-view').forEach(panel => { const active = panel.dataset.viewPanel === view; panel.classList.toggle('active', active); panel.hidden = !active; });
   const seat = view === 'dashboard' ? 'dashboard'
     : view === 'students' ? 'students'
-      : ['academic', 'academic-records', 'notices', 'routine', 'exams', 'results', 'courses', 'teachers', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'academic'
+      : ['academic', 'academic-records', 'class-chat', 'notices', 'routine', 'exams', 'results', 'courses', 'teachers', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'academic'
         : view === 'finance' ? 'finance' : 'more';
   $$('.manager-bottom [data-manager-view]').forEach(button => {
     const active = button.dataset.managerView === seat;
@@ -208,6 +216,7 @@ function renderView(view) {
   if (view === 'results') renderResults();
   if (view === 'reports') void refreshReports($('#managerReports'));
   if (view === 'profile') renderProfile();
+  if (view === 'class-chat') mountManagerClassChat();
   $('#managerMain')?.scrollTo({ top: 0, behavior: 'smooth' });
   return true;
 }

@@ -92,7 +92,7 @@ test('আরও keeps account routes, settings and help separate from academics'
   const ctx = await loadPage('student.html');
   const more = ctx.$('#profileView');
   assert.deepEqual(ctx.$$('#profileView .more-menu button').map(button => button.dataset.view).filter(Boolean),
-    ['my-profile', 'reports', 'notification-settings', 'student-fee']);
+    ['notice-board', 'my-profile', 'reports', 'notification-settings', 'student-fee']);
   assert.equal(ctx.$('#settingsView'), null, 'the student has one compact More settings surface, not a duplicate settings page');
   assert.ok(more.querySelector('[data-settings-toggle="theme"]'), 'the theme switch stays in More');
   assert.ok(more.querySelector('#moreTrustedDeviceToggle'), 'the trusted-device switch stays in More');
@@ -135,13 +135,13 @@ test('the ফি screen is read-only and reads the one finance store', async () 
   ctx.window.close();
 });
 
-test('Home keeps the six quick academic cards, reference order and existing routes', async () => {
+test('Home keeps the quick academic cards, reference order and existing routes', async () => {
   const ctx = await loadPage('student.html');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
-    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'নোটিশ বোর্ড']);
+    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'নোটিশ বোর্ড', 'শ্রেণি চ্যাট']);
   assert.deepEqual(ctx.$$('#studentServices [data-action]').map(node => node.dataset.action),
     ['homework', 'suggestion', 'question-bank']);
-  assert.deepEqual(ctx.$$('#studentServices [data-view]').map(node => node.dataset.view), ['exams', 'exam-results', 'notice-board']);
+  assert.deepEqual(ctx.$$('#studentServices [data-view]').map(node => node.dataset.view), ['exams', 'exam-results', 'notice-board', 'class-chat']);
   assert.equal(ctx.$('#studentServices [data-exam-tab="results"]').dataset.view, 'exam-results');
   assert.equal(ctx.$('#homeNoticeList'), null, 'the bottom নতুন Notice preview is gone');
   assert.ok(ctx.$('#studentServices [data-view="notice-board"]'), 'Notice Board stays on Home as a tile');

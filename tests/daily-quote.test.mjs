@@ -63,9 +63,9 @@ test('the retained quote renderer still paints offline behind the replacement He
   assert.ok(order(summary, menu), 'progress precedes the six shortcuts');
   assert.ok(order(ctx.$('.daily-quote-text'), ctx.$('.daily-quote-footer')), 'the date and summary sit below the advice');
   assert.equal(ctx.$$('#homeView .daily-quote-card').length, 1, 'the existing offline quote renderer is preserved but hidden under the new Hero');
-  assert.equal(ctx.$$('#studentServices .pay-tile').length, 6, 'the quick menu keeps its existing cards');
+  assert.equal(ctx.$$('#studentServices .pay-tile').length, 7, 'the quick menu keeps its existing cards');
   assert.deepEqual(ctx.$$('#studentServices .pay-tile-label').map(node => node.textContent.trim()),
-    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'নোটিশ বোর্ড']);
+    ['বাড়ির কাজ', 'পরীক্ষা', 'সাজেশন', 'প্রশ্নব্যাংক', 'ফলাফল', 'নোটিশ বোর্ড', 'শ্রেণি চ্যাট']);
   card.stop();
 });
 

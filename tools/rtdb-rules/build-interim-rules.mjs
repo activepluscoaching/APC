@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 const AUTH = 'auth != null';
 const ADVICE_EDITOR = `${AUTH} && auth.token.status === 'active' && auth.token.mustChangePassword !== true && (auth.token.role === 'admin' || auth.token.role === 'manager')`;
 const STAFF_ROLES = ['admin', 'manager', 'teacher', 'payment'];
-const RECORD_COLLECTIONS = ['students', 'transactions', 'notices', 'routine', 'teaching', 'academics', 'courseContent', 'courses', 'teacherAssignments'];
+const RECORD_COLLECTIONS = ['students', 'transactions', 'notices', 'routine', 'teaching', 'academics', 'courseContent', 'courses', 'teacherAssignments', 'classChat'];
 const hasChildren = "newData.hasChildren()";
 const idMatches = variable => `newData.child('id').val() === ${variable}`;
 

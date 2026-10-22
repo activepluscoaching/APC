@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/cache-refresh.js?v=407"></script>
-  <script src="js/sanitize-url.js?v=407"></script>
-  <script src="js/app-entry.js?v=407" data-entry="teacher"></script>
-  <script type="module" src="js/teacher.js?v=407"></script>
-  <script src="js/topbar-connectivity.js?v=407" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=407"></script>
-  <script src="js/appearance-boot.js?v=407"></script>
-  <script src="js/theme-logos.js?v=407"></script>
+  <script src="js/cache-refresh.js?v=408"></script>
+  <script src="js/sanitize-url.js?v=408"></script>
+  <script src="js/app-entry.js?v=408" data-entry="teacher"></script>
+  <script type="module" src="js/teacher.js?v=408"></script>
+  <script src="js/topbar-connectivity.js?v=408" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=408"></script>
+  <script src="js/appearance-boot.js?v=408"></script>
+  <script src="js/theme-logos.js?v=408"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="robots" content="noindex">
@@ -31,21 +31,21 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=407">
-  <link rel="stylesheet" href="css/ui-layout.css?v=407">
-  <link rel="stylesheet" href="css/ui-components.css?v=407">
-  <link rel="stylesheet" href="css/ui-forms.css?v=407">
-  <link rel="stylesheet" href="css/ui-features.css?v=407">
-  <link rel="stylesheet" href="css/notice-board.css?v=407">
-  <link rel="stylesheet" href="css/ui-status.css?v=407">
-  <link rel="stylesheet" href="css/ui-auth.css?v=407">
-  <link rel="stylesheet" href="css/app-polish.css?v=407">
-  <link rel="stylesheet" href="css/student-record.css?v=407">
-  <link rel="stylesheet" href="css/exam-archive.css?v=407">
-  <link rel="stylesheet" href="css/academics.css?v=407">
-  <link rel="stylesheet" href="css/notifications.css?v=407">
-  <link rel="stylesheet" href="css/course-hub.css?v=407">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=407">
+  <link rel="stylesheet" href="css/foundation.css?v=408">
+  <link rel="stylesheet" href="css/ui-layout.css?v=408">
+  <link rel="stylesheet" href="css/ui-components.css?v=408">
+  <link rel="stylesheet" href="css/ui-forms.css?v=408">
+  <link rel="stylesheet" href="css/ui-features.css?v=408">
+  <link rel="stylesheet" href="css/notice-board.css?v=408">
+  <link rel="stylesheet" href="css/ui-status.css?v=408">
+  <link rel="stylesheet" href="css/ui-auth.css?v=408">
+  <link rel="stylesheet" href="css/app-polish.css?v=408">
+  <link rel="stylesheet" href="css/student-record.css?v=408">
+  <link rel="stylesheet" href="css/exam-archive.css?v=408">
+  <link rel="stylesheet" href="css/academics.css?v=408">
+  <link rel="stylesheet" href="css/notifications.css?v=408">
+  <link rel="stylesheet" href="css/course-hub.css?v=408">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=408">
   <!-- Teacher panel styles — rewritten on Tailwind (2026-10-21).
        Source: css/tailwind/teacher.src.css · build: `npm run build:teacher-css`
        → css/teacher-panel.css (committed: GitHub Pages has no build step).
@@ -55,13 +55,13 @@
        Every colour is a foundation palette token, so light and AMOLED inherit
        the same language from this one sheet. The old inline style block is
        gone; nothing visual lives in this file any more. -->
-  <link rel="stylesheet" href="css/teacher-panel.css?v=407">
-  <script type="module" src="js/ui-accessibility.js?v=407"></script>
-  <script src="js/launch-screen.js?v=407" defer></script>
+  <link rel="stylesheet" href="css/teacher-panel.css?v=408">
+  <script type="module" src="js/ui-accessibility.js?v=408"></script>
+  <script src="js/launch-screen.js?v=408" defer></script>
 </head>
 <body class="teacher-reference">
   <div class="admin-shell teacher-shell" id="teacherShell" hidden>
-    <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="teacherExit" type="button" aria-label="লগআউট"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div></header>
+    <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon class-chat-topbar-button" id="classChatTopbarButton" data-teacher-view="class-chat" type="button" aria-label="শ্রেণি চ্যাট খুলুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot class-chat-dot" data-chat-unread-dot hidden aria-hidden="true"></span></button><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="teacherExit" type="button" aria-label="লগআউট"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div></header>
     <main class="admin-main" id="teacherMain">
       <section id="teacherHome" class="teacher-view" aria-labelledby="teacherHomeTitle">
         <div class="home-dashboard-intro teacher-home-intro" data-home-intro data-hero-mode="day">
@@ -93,6 +93,14 @@
           <span class="teacher-academic-hub-body">
             <span class="teacher-academic-hub-title">একাডেমিক কার্যক্রম</span>
             <span class="teacher-academic-hub-sub">বাড়ির কাজ, সাজেশন, প্রশ্ন, পরীক্ষা, উপকরণ ও নোটিশ</span>
+          </span>
+          <span class="teacher-academic-hub-chevron" aria-hidden="true"></span>
+        </button>
+        <button class="teacher-chat-hub" type="button" data-teacher-view="class-chat" aria-label="শ্রেণি চ্যাট ও মডারেশন খুলুন — শ্রেণিভিত্তিক আলোচনা ও মডারেশন">
+          <span class="teacher-academic-hub-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          <span class="teacher-academic-hub-body">
+            <span class="teacher-academic-hub-title">শ্রেণি চ্যাট ও মডারেশন</span>
+            <span class="teacher-academic-hub-sub">সকল শ্রেণির আলোচনা কক্ষ, বার্তা পিন ও চ্যাট লক নিয়ন্ত্রণ</span>
           </span>
           <span class="teacher-academic-hub-chevron" aria-hidden="true"></span>
         </button>
@@ -666,6 +674,29 @@
           <button class="day-tab" type="button" data-settings-tab="data" aria-pressed="false">ডেটা ও অফলাইন</button>
         </nav>
       </section>
+      <section id="teacherClassChat" class="teacher-view" aria-labelledby="teacherClassChatTitle" hidden>
+        <div class="home-dashboard-intro teacher-home-intro" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-teacher-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="শ্রেণি চ্যাট ও মডারেশনের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content relative z-10 flex min-h-[var(--t-hero-min-h)] flex-col justify-between gap-4 p-4">
+            <div class="teacher-hero-top flex items-center justify-between gap-3">
+              <button class="pay-back" type="button" data-teacher-view="home" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right ml-auto flex items-center gap-2">
+                <span class="teacher-hero-date-pill" data-teacher-hero-date></span>
+                <span class="teacher-hero-glint grid h-10 w-10 flex-none place-items-center rounded-full" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-teacher-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome flex min-w-0 flex-col gap-1.5">
+              <h1 id="teacherClassChatTitle" class="m-0 text-[clamp(20px,5.4vw,24px)] font-[800] leading-[1.32] break-words text-on-hero">শ্রেণি চ্যাট ও মডারেশন</h1>
+              <p class="teacher-hero-advice m-0 max-w-[34ch] text-[13px] font-medium leading-[1.6]" data-teacher-hero-advice="chat">গঠনমূলক প্রশ্নোত্তর ও শালীন আলোচনা শিক্ষার্থীদের আত্মবিশ্বাস এবং পাঠবোঝা দুটোই বাড়ায়।</p>
+            </div>
+          </div>
+        </div>
+        <div id="teacherClassChatMount" data-class-chat-mount="teacher"></div>
+      </section>
     </main>
     <nav class="admin-bottom" aria-label="শিক্ষক নেভিগেশন">
   <button class="admin-bottom-item active" aria-current="page" type="button" data-teacher-view="home"><span class="nav-chip"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">হোম</span></button>
@@ -678,7 +709,8 @@
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><header class="admin-modal-header"><div><h2 id="teacherModalTitle"></h2></div><button class="admin-modal-close" id="teacherModalClose" type="button" aria-label="বন্ধ করুন">×</button></header><div class="admin-modal-body" id="teacherModalBody"></div></section>
   </div>
 
-  <script type="module" src="js/theme-entry.js?v=407"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=407"></script>
+  <script type="module" src="js/theme-entry.js?v=408"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=408"></script>
+  <script type="module" src="js/class-chat-head.js?v=408"></script>
 </body>
 </html>

@@ -22,11 +22,11 @@ async function openBoard(page) {
   await expect(page.locator('#notice-boardView')).toBeVisible();
 }
 
-test('student Notice Board is separate from the bell and Read ✓ survives reload/offline', async ({ page, context }) => {
+test('student Notice Board syncs with the bell badge and Read ✓ survives reload/offline', async ({ page, context }) => {
   await seedNoticeBoard(page);
   await enter(page);
   await expect(page.locator('#noticeBoardUnreadBadge')).toHaveText('৩');
-  await expect(page.locator('.notification-dot')).toBeHidden();
+  await expect(page.locator('.notification-dot')).toHaveText('৩');
   await page.locator('#studentServices [data-view="notice-board"]').click();
   await expect(page.locator('#notice-boardView')).toBeVisible();
   await expect(page.locator('#noticeBoardList .notice-board-card')).toHaveCount(3);
@@ -39,17 +39,16 @@ test('student Notice Board is separate from the bell and Read ✓ survives reloa
   const urgent = page.locator('#noticeBoardList .notice-board-card').first();
   await urgent.locator('[data-notice-board-open]').click();
   await expect(page.locator('#noticeBoardDetailTitle')).toHaveText('জরুরি ছুটি ঘোষণা');
-  await expect(page.locator('#noticeBoardReadButton')).toHaveText('Read ✓');
+  await expect(page.locator('#noticeBoardReadButton')).toHaveText('পড়া হয়েছে ✓');
   await page.locator('#noticeBoardReadButton').click();
   await expect(page.locator('#noticeBoardReadButton')).toHaveText('পড়া হয়েছে ✓');
   await expect(page.locator('#noticeBoardUnreadBadge')).toHaveText('২');
+  await expect(page.locator('.notification-dot')).toHaveText('২');
 
-  // The ordinary inbox stays clean and points the student to the separate Board.
+  // Notification Center displays the remaining unread notices and opens directly on click.
   await page.locator('#notificationButton').click();
   await expect(page.locator('#noticeModal')).toBeVisible();
-  await expect(page.locator('#noticeListStudent')).toContainText('আলাদা Notice Board');
-  await expect(page.locator('#noticeListStudent')).not.toContainText('জরুরি ছুটি ঘোষণা');
-  await expect(page.locator('.notification-dot')).toBeHidden();
+  await expect(page.locator('#noticeListStudent')).toContainText('নতুন নোটিশ এসেছে - গণিত পরীক্ষার সূচি');
   await page.locator('#noticeModal .modal-close').click();
 
   await page.reload();
@@ -87,10 +86,9 @@ test('per-student Read ✓ receipts sync across tabs; urgent broadcast stays on 
   await other.evaluate(({ key, message }) => localStorage.setItem(key, JSON.stringify({ broadcastAlert: true, broadcastMessage: message })), { key: CONFIG_KEY, message });
   await expect(page.locator('#noticeBoardList')).toContainText(message);
   await expect(page.locator('#noticeBoardList img')).toHaveCount(0);
-  await expect(page.locator('.notification-dot')).toBeHidden();
+  await expect(page.locator('.notification-dot')).toBeVisible();
   await page.locator('#notificationButton').click();
-  await expect(page.locator('#noticeListStudent')).toContainText('আলাদা Notice Board');
-  await expect(page.locator('#noticeListStudent')).not.toContainText('জরুরি সার্ভার ঘোষণা');
+  await expect(page.locator('#noticeListStudent')).toContainText('জরুরি সার্ভার ঘোষণা');
 });
 
 for (const width of [320, 390, 480]) {

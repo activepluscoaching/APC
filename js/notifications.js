@@ -81,12 +81,8 @@ const KIND_TARGET = Object.freeze({
 });
 const ACTION_KINDS = new Set(['exam', 'exam-soon', 'exam-live', 'homework', 'payment-rejected', 'payment-review']);
 const NOTICE_BOARD_KINDS = new Set(['notice', 'broadcast']);
-const generalNotificationItems = items => viewer?.kind === 'student'
-  ? items.filter(item => !NOTICE_BOARD_KINDS.has(item.kind))
-  : items;
-const generalNotificationRecords = records => viewer?.kind === 'student'
-  ? records.filter(record => !NOTICE_BOARD_KINDS.has(record.type))
-  : records;
+const generalNotificationItems = items => items;
+const generalNotificationRecords = records => records;
 const NAV_ATTRIBUTE = Object.freeze({
   student: 'data-view', manager: 'data-manager-view', teacher: 'data-teacher-view', admin: 'data-admin-view',
   /* The counter has its own five seats, so its notifications land on them. */
@@ -118,9 +114,8 @@ let viewer = null;
 let viewerKey = '';
 let armed = false;
 
-/* Notice Board receipts are separate from the bell, but they still suppress a
-   later tray replay if notification delivery starts after the student marked
-   the notice Read. */
+/* Notice Board receipts and Notification Center read records stay synchronized
+   so reading a notice in either surface updates both badges immediately. */
 function noticeBoardReadKeys() {
   const studentId = String(viewer?.studentId ?? '').trim();
   if (viewer?.kind !== 'student' || !studentId) return [];
@@ -129,6 +124,29 @@ function noticeBoardReadKeys() {
     const saved = JSON.parse(window.localStorage.getItem(key) || 'null');
     return Array.isArray(saved?.keys) ? saved.keys.filter(value => typeof value === 'string') : [];
   } catch { return []; }
+}
+
+function writeNoticeBoardReceipts(keys) {
+  const studentId = String(viewer?.studentId ?? '').trim();
+  if (viewer?.kind !== 'student' || !studentId) return false;
+  const noticeKeys = (Array.isArray(keys) ? keys : [keys])
+    .map(key => String(key || ''))
+    .filter(key => key.startsWith('notice:') || key.startsWith('broadcast:'));
+  if (!noticeKeys.length) return false;
+  const storageKey = NOTICE_BOARD_READ_PREFIX + encodeURIComponent(studentId);
+  let existing = [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      existing = Array.isArray(parsed?.keys) ? parsed.keys.filter(value => typeof value === 'string') : [];
+    }
+  } catch { return false; }
+  const merged = [...new Set([...existing, ...noticeKeys])].slice(-200);
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify({ version: 1, keys: merged }));
+    return true;
+  } catch { return false; }
 }
 let refreshTimer = null;
 let armTimer = null;
@@ -462,6 +480,9 @@ export function openNotificationTarget(data) {
        result notification lands on that tab instead of a view of its own. */
     if (opened && kind === 'result') document.querySelector('#examTabs [data-exam-tab="results"]')?.click();
     if (opened && isBoardItem && viewer?.kind === 'student') {
+      try {
+        window.__apcPendingNoticeOpen = { kind, id: sourceId, key, at: Date.now() };
+      } catch { /* ignore read-only window */ }
       window.dispatchEvent(new CustomEvent('apc-notice-open', {
         detail: { kind, id: sourceId, key }
       }));
@@ -661,6 +682,7 @@ export function refreshNotifications() {
   // never turns yesterday's news into unread notifications.
   try {
     syncNotifications({ userId: viewerKey, feed: full, legacyRead: [...receiptsBefore, ...cleared, ...upgradeRead, ...boardReadReceipts] });
+    if (boardReadReceipts.length) markRead(viewerKey, boardReadReceipts);
   } catch (error) {
     console.warn('[Active Plus] notification records unavailable:', error?.name || 'unknown');
   }
@@ -935,6 +957,7 @@ export function initNotifications() {
         // Both stores move together: the record holds the unread state and the
         // receipt stops the tray from announcing the item a second time.
         writeSeen([...new Set([...readSeen(), ...list])]);
+        writeNoticeBoardReceipts(list);
         const changed = markRead(viewerKey, list);
         markInAppHandled(list);
         publish();
@@ -943,6 +966,7 @@ export function initNotifications() {
       markAllRead: () => {
         const unreadKeys = generalNotificationRecords(unreadNotifications(viewerKey)).map(record => record.key);
         markAllSeen();
+        writeNoticeBoardReceipts(unreadKeys);
         const changed = markRead(viewerKey, unreadKeys);
         markInAppHandled(unreadKeys);
         publish();
@@ -966,7 +990,12 @@ export function initNotifications() {
       restore: restoreNotification,
       takeAlerts: takeInAppAlerts,
       whenReady: () => whenPanelReady(),
-      openItem: item => openNotificationTarget({ kind: item?.kind, id: item?.sourceId, key: item?.key, target: item?.target }),
+      openItem: item => openNotificationTarget({
+        kind: item?.kind || item?.type,
+        id: item?.sourceId || item?.relatedId || item?.id,
+        key: item?.key,
+        target: item?.target || item?.targetType
+      }),
       enable: enableNotifications,
       disable: disableNotifications,
       pushSupport: async () => (await import('./push-notifications.js')).pushSupport(),

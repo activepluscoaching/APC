@@ -9,7 +9,8 @@ const COLLECTIONS = {
   'activePlus.admin.routine.v1': 'ক্লাস রুটিন',
   'activePlus.teaching.v1': 'একাডেমিক কার্যক্রম',
   'activePlus.exams.v1': 'পরীক্ষা',
-  'active-plus-app-config-v1': 'অ্যাপ সেটিংস'
+  'active-plus-app-config-v1': 'অ্যাপ সেটিংস',
+  'activePlus.classChat.v1': 'শ্রেণি চ্যাট'
 };
 const itemTime = item => {
   if (!item || typeof item !== 'object') return 0;
@@ -77,6 +78,14 @@ function mergeDocument(key, older, newer, report) {
       attempts: mergeList(`${name} (উত্তর)`, older?.attempts || [], newer?.attempts || [], report)
     };
   }
+  if (key === 'activePlus.classChat.v1') {
+    const rooms = { ...copy(older?.rooms || {}) };
+    for (const [roomKey, info] of Object.entries(newer?.rooms || {})) {
+      if (!rooms[roomKey] || itemTime(info) >= itemTime(rooms[roomKey])) rooms[roomKey] = copy(info);
+    }
+    const messages = mergeList(`${name} (বার্তা)`, older?.messages || [], newer?.messages || [], report);
+    return { version: 1, rooms, messages, updatedAt: Math.max(itemTime(older), itemTime(newer), Date.now()) };
+  }
   return itemTime(newer) >= itemTime(older) && newer !== undefined ? copy(newer) : copy(older);
 }
 
@@ -92,7 +101,7 @@ export function mergeBackups(first, second) {
     if (!inOlder && !inNewer) continue;
     const merged = !inOlder ? newer.data[key] : !inNewer ? older.data[key] : mergeDocument(key, older.data[key], newer.data[key], report);
     data[key] = typeof merged === 'string' ? merged : JSON.stringify(merged);
-    const size = Array.isArray(merged) ? merged.length : merged?.activities?.length ?? merged?.exams?.length ?? Object.keys(merged || {}).length;
+    const size = Array.isArray(merged) ? merged.length : merged?.messages?.length ?? merged?.activities?.length ?? merged?.exams?.length ?? Object.keys(merged || {}).length;
     report.lines.push(`${COLLECTIONS[key]}: ${size} রেকর্ড`);
   }
   const merged = {

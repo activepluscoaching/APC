@@ -522,7 +522,15 @@ function showAddChapterModal(course) {
 
 function render() { renderHome(); renderRecords(); renderTeacherClasses(); renderTeacherRoutine(); renderAcademicReports(); renderTeacherProfile(); renderAcademic(); renderNotices(); renderCourseChapters(); }
 const ROUTINE_CHILD_VIEWS = Object.freeze(['routine-today', 'routine-tomorrow', 'routine-weekly', 'routine-class', 'routine-exam', 'routine-changed', 'routine-holiday', 'routine-important', 'routine-other']);
-const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
+const TEACHER_VIEWS = Object.freeze(['home', 'academic', 'more', 'notice', 'exam', 'online-exams', 'courses', 'classes', 'class-chat', 'routine-view', 'reports', 'profile', ...ROUTINE_CHILD_VIEWS, ...Object.keys(ACTIVITY_TYPES)]);
+let teacherChatFlight = null;
+function mountTeacherClassChat() {
+  const mount = $('#teacherClassChatMount');
+  if (!mount) return;
+  teacherChatFlight ??= import('./class-chat.js').catch(err => { teacherChatFlight = null; throw err; });
+  void teacherChatFlight.then(mod => mod.mountClassChat(mount, { portal: 'teacher', getStaff: () => state.teacher }))
+    .catch(err => console.warn('[Active Plus] teacher class-chat failed:', err?.message));
+}
 /* ক্লাস-screen tabs (owner order 2026-10-21): "ক্লাস ও বিষয়" and "রুটিন ও সময়সূচি"
    are separate tabs, never doors side by side. The first tab is the class list
    itself; the second is the route to the read-only routine screen. একাডেমিক
@@ -547,8 +555,9 @@ function setView(view) {
     state.recordLimit = 15;
   }
   state.view = view;
-  const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
+  const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'class-chat': 'teacherClassChat', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
+  if (view === 'class-chat') mountTeacherClassChat();
   delete $('#teacherRecords')?.dataset.recordsOpen;
   delete $('#teacherNotice')?.dataset.noticeOpen;
   delete $('#teacherRoutine')?.dataset.routineOpen;
@@ -564,7 +573,7 @@ function setView(view) {
   /* The bottom bar keeps its four seats: the academic/class screens light up
      the ক্লাস seat, the class-test results the পরীক্ষা seat. */
   const bottomView = view === 'home' ? 'home'
-    : ['academic', 'classes', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
+    : ['academic', 'classes', 'class-chat', 'homework', 'suggestion', 'courses', 'notice', 'routine', 'routine-view', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'classes'
         : ['exam', 'online-exams'].includes(view) ? 'online-exams' : 'more';
   $$('.admin-bottom [data-teacher-view]').forEach(el => {
     const active = el.dataset.teacherView === bottomView;

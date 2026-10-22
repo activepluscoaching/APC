@@ -40,7 +40,7 @@ for (const width of [320, 390, 1280]) for (const theme of ['light', 'dark']) for
     await expect(page.locator(home[role])).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     expect(await page.locator(shell[role]).evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-    await expect(page.locator('.app-topbar-actions > button')).toHaveCount(2);
+    await expect(page.locator('.app-topbar-actions > button')).toHaveCount(role === 'payment' ? 2 : 3);
     const nav = page.locator(role === 'student' ? '.bottom-nav' : '.admin-bottom');
     await expect(nav).toBeVisible();
     await expect(nav.locator(':scope > button')).toHaveCount(navCount[role]);
@@ -283,8 +283,9 @@ test.describe('wallet offline shell', () => {
     await page.reload();
     await expect(page.locator('#loginForm')).toHaveAttribute('data-login-ready', 'true');
     await expect(page.locator('#authScreen')).toBeVisible();
-    await expect(page.locator('.auth-brand h1')).toHaveCSS('color', 'rgb(14, 122, 85)');
-    expect(await page.locator('.auth-panel.active').evaluate(el => getComputedStyle(el).borderRadius)).toBe('26px');
+    await expect(page.locator('.auth-brand h1')).toHaveCSS('color', 'rgb(23, 26, 24)');
+    expect(await page.locator('.auth-card').evaluate(el => getComputedStyle(el).borderRadius)).toBe('20px');
+    expect(await page.locator('.auth-panel.active').evaluate(el => getComputedStyle(el).borderRadius)).toBe('0px');
     await page.locator('[data-auth-tab="register"]').click();
     await expect(page.locator('#registrationForm')).toBeVisible();
   });

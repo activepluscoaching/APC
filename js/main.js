@@ -157,37 +157,36 @@ const state = {
 };
 /* Signed-in features load on demand. */
 const featureHandles = {};
+let classChatFlight = null;
+function ensureStudentClassChat() {
+  const mount = $('#studentClassChatMount');
+  if (!mount) return;
+  classChatFlight ??= import('./class-chat.js').catch(err => { classChatFlight = null; throw err; });
+  void classChatFlight.then(mod => mod.mountClassChat(mount, { portal: 'student', getStudent: () => state.student }))
+    .catch(err => console.warn('[Active Plus] class-chat load failed:', err?.message));
+}
+window.addEventListener('apc-view-change', e => { if (e.detail?.view === 'class-chat') ensureStudentClassChat(); });
 const noticeBoard = { refresh: (...args) => featureHandles.noticeBoard?.refresh?.(...args) };
 const refreshExams = Object.assign(
   (...args) => featureHandles.refreshExams?.(...args),
   { setTab: tab => featureHandles.refreshExams?.setTab?.(tab) }
 );
-/* ইনস্ট্যান্ট MCQ অনুশীলন — official papers are untouched; the practice lane
-   reads the same papers through the question bank they join on publish. */
 const refreshPractice = (...args) => featureHandles.refreshPractice?.(...args);
 const refreshTeaching = (...args) => featureHandles.refreshTeaching?.(...args);
-/* পড়াশোনা = one screen with five sections; the sections own the teaching board's
-   scope, so the board is initialised first and handed in. */
 const refreshStudySections = (...args) => featureHandles.refreshStudySections?.(...args);
-/* ফি is read-only: the same finance repository the Home card reads. */
 const refreshFee = (...args) => featureHandles.refreshFee?.(...args);
 const refreshStudentSections = () => { void refreshStudySections(); void refreshFee(); };
 const refreshDashboard = (...args) => featureHandles.refreshDashboard?.(...args);
-/* Learning Hub uses the shared course, question, and exam stores. */
 const refreshCourses = Object.assign(
   (...args) => featureHandles.refreshCourses?.(...args),
   { paint: (...args) => featureHandles.refreshCourses?.paint?.(...args) }
 );
-/* আজকের অনুপ্রেরণা — the day's quote is on screen before this line returns and
-   never waits for a network or a decision from the reader. */
 const dailyQuote = { paint: (...args) => featureHandles.dailyQuote?.paint?.(...args) };
 const refreshRoutine = (...args) => featureHandles.refreshRoutine?.(...args);
 const refreshReports = (...args) => featureHandles.refreshReports?.(...args);
 const openProfileEditor = (...args) => featureHandles.openProfileEditor?.(...args);
 const shareStudentOnWhatsApp = (...args) => featureHandles.shareStudentOnWhatsApp?.(...args);
 
-/** Every signed-in refresh in one place: login, cloud writes and the moment
-    the lazy chunk lands all repaint through here. */
 function refreshSignedInSurface() {
   refreshDashboard();
   refreshTeaching(); refreshCourses.paint();
@@ -196,6 +195,7 @@ function refreshSignedInSurface() {
   refreshStudentSections();
   refreshNotices();
   refreshReports($('#studentReports'));
+  if ($('#classChatView')?.classList.contains('active')) ensureStudentClassChat();
 }
 
 /* Wire lazily loaded student feature modules. */
@@ -340,11 +340,7 @@ function handleAction(action) {
 }
 
 function enterApp() {
-  // A completed login wins over an in-flight asynchronous session restore.
   sessionRestoreSequence += 1;
-  // A #view shortcut in the URL opens exactly that view after any login;
-  // otherwise every login lands on Home. A leftover panel from a previous
-  // session must never greet the student.
   setView(viewRouteFromHash(), { history: 'replace' });
   openStudentApp(state);
   refreshSignedInSurface();
@@ -356,7 +352,6 @@ function leaveApp() {
   clearSession();
   window.dispatchEvent(new Event('apc-session-ended'));
   if (ON_APP_PAGE) {
-    // Logout from the panel returns to the login door, like every portal.
     window.location.replace('index.html');
     return;
   }
@@ -366,8 +361,6 @@ function leaveApp() {
   setAuthMessage('');
 }
 
-/* A remembered, device-bound session is the only way to restore the app
-   without retyping credentials. An account or legacy skip flag is not enough. */
 async function shouldAutoLogin() {
   if (!state.account) return false;
   return hasSession();
@@ -375,8 +368,6 @@ async function shouldAutoLogin() {
 
 renderStudent(state.student);
 initNavigation({ onAction: handleAction });
-/* The bell and its inbox are owned by the notification engine
-   (js/notifications.js) so every panel shares one receipt list. */
 const refreshNotices = () => { window.apcNoticeCenter?.paint?.(); noticeBoard.refresh(); };
 let rosterProfileSyncFlight = null;
 async function applyRosterProfileToStudent() {
@@ -399,20 +390,13 @@ window.addEventListener('apc-sync-updated', event => {
 window.addEventListener('storage', event => {
   if (!event.key || event.key === ROSTER_KEY) void applyRosterProfileToStudent();
 });
-// The connection smoke test is diagnostic-only and costs an extra SDK download,
-// so it runs only when explicitly asked (index.html?fbtest=1) — never on a
-// normal boot, and never as an unhandled rejection that can take the page down.
 if (navigator.onLine && new URLSearchParams(location.search).get('fbtest') === '1') {
   import('./firebase-online-test.js?v=20261008-syncfix')
     .then(({ testFirebaseOnlineConnection }) => testFirebaseOnlineConnection())
     .catch(() => {});
 }
-// Time/weather decoration is non-critical to first paint; keep it in its own
-// async chunk rather than charging login and dashboard boot for a minute timer.
 void import('./theme.js').then(({ initDynamicTheme }) => initDynamicTheme());
 initAppearance();
-// Clipboard and install prompts are progressive enhancements. Loading these
-// after the shell is interactive keeps first paint lean without changing them.
 void import('./copy.js').then(({ initCopyChips }) => initCopyChips());
 void import('./install.js').then(({ initInstallPrompt }) => initInstallPrompt());
 void import('./service-worker.js').then(({ registerServiceWorker }) => registerServiceWorker()).catch(() => {});

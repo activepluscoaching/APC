@@ -33,14 +33,23 @@ test('the active wallet skin parses, is screen-only and resolves its palette tok
   assert.doesNotMatch(declarations, /#[\da-f]{3,8}\b|\brgba?\(|\bhsla?\(/i, 'component colours belong in the one palette');
 });
 
-test('all portals retain the same uncluttered two-action brand bar', () => {
+test('all portals retain the same uncluttered brand bar (chat + bell + exit on academic/admin portals, bell + exit on payment)', () => {
   for (const name of portals) {
     const document = doc(name);
     const bar = document.querySelector('.app-topbar');
     assert.ok(bar, name + ' appbar missing');
     assert.ok(bar.querySelector('.app-brand-logo[src*="logo-128"]'));
-    assert.equal(bar.querySelectorAll('.app-topbar-actions > button').length, 2, name);
-    assert.equal(bar.querySelectorAll('button').length, 2, 'identity/settings belong in the hero or More, not the appbar');
+    const expectedCount = name === 'payment' ? 2 : 3;
+    assert.equal(bar.querySelectorAll('.app-topbar-actions > button').length, expectedCount, name);
+    assert.equal(bar.querySelectorAll('button').length, expectedCount, 'identity/settings belong in the hero or More, not the appbar');
+    if (name !== 'payment') {
+      const chatBtn = bar.querySelector('#classChatTopbarButton');
+      assert.ok(chatBtn, name + ' topbar chat shortcut missing');
+      assert.ok(chatBtn.querySelector('svg[data-icon="chat"]'), name + ' topbar chat icon missing');
+      assert.ok(chatBtn.querySelector('[data-chat-unread-dot]'), name + ' topbar chat unread dot missing');
+    } else {
+      assert.equal(bar.querySelector('#classChatTopbarButton'), null, 'payment counter carries no class chat button');
+    }
     assert.match(bar.querySelector('[data-fixed-tagline]').textContent, /শিখতে থাকো/);
   }
 });
@@ -68,7 +77,7 @@ test('student, manager and teacher have real, named service shortcuts', () => {
   const expectedCount = { manager: 9, teacher: 0 };
   const studentCards = [
     ['homework', 'বাড়ির কাজ'], ['exams', 'পরীক্ষা'], ['suggestion', 'সাজেশন'],
-    ['question-bank', 'প্রশ্নব্যাংক'], ['exam-results', 'ফলাফল'], ['notice-board', 'নোটিশ বোর্ড']
+    ['question-bank', 'প্রশ্নব্যাংক'], ['exam-results', 'ফলাফল'], ['notice-board', 'নোটিশ বোর্ড'], ['class-chat', 'শ্রেণি চ্যাট']
   ];
   const studentTiles = [...doc('student').querySelectorAll('#studentServices .pay-tile')];
   assert.equal(studentTiles.length, studentCards.length);
@@ -126,7 +135,7 @@ test('secondary screens have accessible home/back controls and staff hub rows ha
   }
   /* Admin: a screen inside a hub returns to that hub; the rest go home. */
   const adminBacks = [...doc('admin').querySelectorAll('.pay-back')].map(button => button.getAttribute('data-admin-view'));
-  assert.deepEqual(adminBacks, ['dashboard', 'dashboard', 'system', 'system', 'dashboard', 'dashboard', 'more', 'data', 'data', 'system', 'system', 'system', 'more', 'more', 'more']);
+  assert.deepEqual(adminBacks, ['dashboard', 'dashboard', 'system', 'system', 'dashboard', 'dashboard', 'more', 'data', 'data', 'system', 'system', 'system', 'more', 'more', 'more', 'more']);
   for (const name of ['admin', 'manager', 'teacher']) {
     for (const row of doc(name).querySelectorAll('.admin-more-item')) {
       assert.ok(row.querySelector('.admin-more-icon, .admin-more-copy'), name + ' hub row has no icon slot');

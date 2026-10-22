@@ -8,7 +8,8 @@ for (const width of [320, 390, 1024]) {
     await page.locator('.bottom-nav [data-view="profile"]').click();
     await expect(page.locator('#moreStudentName')).toHaveText('রাইসা');
     await expect(page.locator('#moreStudentId')).toHaveText('AP-1024');
-    await expect(page.locator('#profileView > nav.more-menu > button')).toHaveCount(4);
+    await expect(page.locator('#profileView > nav.more-menu > button')).toHaveCount(5);
+    await expect(page.locator('#profileView > nav.more-menu > button').first()).toContainText('নোটিশ বোর্ড');
     const themeToggle = page.locator('#moreDarkModeToggle');
     await expect(page.locator('[data-settings-toggle="theme"]')).toHaveCount(1);
     await expect(page.locator('#darkModeToggle')).toHaveCount(0);

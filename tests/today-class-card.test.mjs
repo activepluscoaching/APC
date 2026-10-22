@@ -43,7 +43,7 @@ test('empty Today uses the shared Today-study card/icon/copy/action layout and c
   assert.equal(card.querySelector('small').textContent, 'সব রুটিন দেখতে রুটিন খুলুন।');
   assert.equal(ctx.$('#dashboardRoutineList').dataset.state, 'empty');
   assert.equal(ctx.$('[data-daily-advice-summary]').textContent, 'আজ ক্লাস নেই · বাড়ির কাজ বাকি নেই');
-  assert.equal(ctx.$$('#studentServices .pay-tile').length, 6);
+  assert.equal(ctx.$$('#studentServices .pay-tile').length, 7);
   assert.ok(ctx.$('#dashboardChallengeCard'), 'do not remove or hide Today study');
 });
 

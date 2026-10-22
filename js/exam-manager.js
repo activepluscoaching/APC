@@ -39,7 +39,7 @@ export function initExamManager(container, role) {
   let bankFilters = { query: '', className: 'all', subject: 'all', chapter: 'all', type: 'all', difficulty: 'all' };
   let bankPage = 0, bankEditing = '';
   root.classList.add('exam-workspace');
-  root.innerHTML = '<p class="exam-note">লোকাল ডেমো • প্রশ্ন শিক্ষক তৈরি করবেন, Manager পর্যালোচনা/অনুমোদন/প্রকাশ করবেন। পরীক্ষা ও প্রশ্ন তারিখ অনুযায়ী আলাদা রেকর্ডে থাকে; ডেমোতে সব শ্রেণির অনুমোদিত শিক্ষার্থী অংশ নিতে পারে।</p><p class="exam-error" role="alert" data-exam-error hidden></p><p class="exam-message" role="status" data-exam-message hidden></p><div data-exam-content></div>';
+  root.innerHTML = '<p class="exam-note">লোকাল ডেমো • প্রশ্ন শিক্ষক তৈরি করবেন, ম্যানেজার পর্যালোচনা/অনুমোদন/প্রকাশ করবেন। পরীক্ষা ও প্রশ্ন তারিখ অনুযায়ী আলাদা রেকর্ডে থাকে; ডেমোতে সব শ্রেণির অনুমোদিত শিক্ষার্থী অংশ নিতে পারে।</p><p class="exam-error" role="alert" data-exam-error hidden></p><p class="exam-message" role="status" data-exam-message hidden></p><div data-exam-content></div>';
   const $ = selector => root.querySelector(selector), content = $('[data-exam-content]');
   const button = (action, label, id = '', cls = '') => `<button type="button" class="${cls}" data-exam-action="${action}" data-id="${esc(id)}">${label}</button>`;
   const back = (label = '← পরীক্ষার তালিকা') => `<div class="exam-actions">${button('list', label)}</div>`;
@@ -121,7 +121,7 @@ export function initExamManager(container, role) {
     const subjects = subjectOptions(exams);
     const active = activeFilterCount(filters);
     return `<form class="exam-filters" data-exam-filters>
-      <label class="exam-filter-wide">পরীক্ষার নাম / আইডি / প্রশ্ন খুঁজুন<input type="search" name="query" value="${esc(filters.query)}" placeholder="যেমন: Weekly Exam, E261001…, ঢাকা"></label>
+      <label class="exam-filter-wide">পরীক্ষার নাম / আইডি / প্রশ্ন খুঁজুন<input type="search" name="query" value="${esc(filters.query)}" placeholder="যেমন: সাপ্তাহিক পরীক্ষা, গণিত, ঢাকা"></label>
       <label>পরীক্ষার তারিখ<input type="date" name="date" value="${esc(filters.date)}"></label>
       <label>শুরুর তারিখ (থেকে)<input type="date" name="from" value="${esc(filters.from)}"></label>
       <label>শেষ তারিখ (পর্যন্ত)<input type="date" name="to" value="${esc(filters.to)}"></label>
@@ -226,7 +226,7 @@ export function initExamManager(container, role) {
     const chapters = [...new Set(rows.map(row => row.chapterName).filter(Boolean))];
     const option = (name, label, values, all) => `<label>${label}<select name="${name}"><option value="all">${all}</option>${values.map(item => `<option value="${esc(item)}" ${bankFilters[name] === item ? 'selected' : ''}>${esc(item)}</option>`).join('')}</select></label>`;
     return `<form class="exam-filters exam-bank-filters" data-bank-filters>
-      <label class="exam-filter-wide">প্রশ্ন খুঁজুন (কোড / লেখা / টপিক)<input type="search" name="query" value="${esc(bankFilters.query)}" placeholder="যেমন: QUESTION-0007, ঢাকা, বহুপদী"></label>
+      <label class="exam-filter-wide">প্রশ্ন খুঁজুন (কোড / লেখা / টপিক)<input type="search" name="query" value="${esc(bankFilters.query)}" placeholder="যেমন: প্রশ্ন কোড, ঢাকা, বহুপদী"></label>
       ${option('className', 'শ্রেণি', classes, 'সব শ্রেণি')}
       ${option('subject', 'বিষয়', subjects, 'সব বিষয়')}
       ${option('chapter', 'অধ্যায়', chapters, 'সব অধ্যায়')}
@@ -349,7 +349,7 @@ export function initExamManager(container, role) {
     const perm = permissionFor(exam);
     if (perm.edit) return '';
     if (isLiveExam(exam)) return '<p class="exam-note">পরীক্ষাটি প্রকাশিত — শিক্ষার্থীরা নির্ধারিত সময়ে প্রশ্ন দেখতে পাবে, এখন আর প্রশ্ন বদলানো যাবে না।</p>';
-    return `<p class="exam-note">এই অবস্থায় (${esc(statusLabel(exam.status))}) প্রশ্ন সরাসরি বদলানো যায় না। Manager চাইলে আগে Unpublish/ফেরত দিতে পারেন।</p>`;
+    return `<p class="exam-note">এই অবস্থায় (${esc(statusLabel(exam.status))}) প্রশ্ন সরাসরি বদলানো যায় না। ম্যানেজার চাইলে আগে প্রকাশ বাতিল/ফেরত দিতে পারেন।</p>`;
   }
   /** One question, collapsed; the editor opens inside it on demand. */
   function questionMarkup(exam, question, index, perm) {
@@ -457,7 +457,7 @@ export function initExamManager(container, role) {
       <label>টপিক / অংশ<input name="topic" maxlength="120" value="${esc(data.topic || '')}" placeholder="যেমন: বহুপদী সমীকরণ"></label>
       <label>প্রশ্নের ক্রম<select name="questionOrder"><option value="shuffle" ${data.questionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.questionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
       <label>অপশনের ক্রম<select name="optionOrder"><option value="shuffle" ${data.optionOrder !== 'fixed' ? 'selected' : ''}>প্রতিটি শিক্ষার্থীর জন্য আলাদা ক্রম</option>${e?.optionOrder === 'fixed' ? '<option value="fixed" selected>পুরোনো fixed ক্রম (শুধু বিদ্যমান পরীক্ষা)</option>' : ''}</select></label>
-      <label>Batch / Group<input name="group" maxlength="80" list="examAssignedGroups" value="${esc(data.group || '')}" placeholder="Full-class assignment হলে ফাঁকা রাখুন"><datalist id="examAssignedGroups">${[...new Set(listTeacherAssignments(teachingScopeUsername()).filter(item => item.group).map(item => item.group))].map(group => `<option value="${esc(group)}"></option>`).join('')}</datalist></label>
+      <label>ব্যাচ / গ্রুপ<input name="group" maxlength="80" list="examAssignedGroups" value="${esc(data.group || '')}" placeholder="পুরো শ্রেণির জন্য হলে ফাঁকা রাখুন"><datalist id="examAssignedGroups">${[...new Set(listTeacherAssignments(teachingScopeUsername()).filter(item => item.group).map(item => item.group))].map(group => `<option value="${esc(group)}"></option>`).join('')}</datalist></label>
       ${field('startAt', type === 'mcq' ? 'শুরুর সময় *' : 'প্রশ্ন ডাউনলোড শুরুর সময় *', 'datetime-local', 'required')}${field('endAt', type === 'mcq' ? 'সবার জন্য শেষ সময় *' : 'আজকের প্রস্তুতির শেষ সময় *', 'datetime-local', 'required')}
       <p class="exam-note">সময় Asia/Dhaka (বাংলাদেশ) অনুযায়ী। পরীক্ষার তারিখ ও সময়কাল নিচে আলাদা করে দেখানো হয়। ${type === 'mcq' ? 'প্রতি শিক্ষার্থী একবারই চেষ্টা করতে পারবে। রিফ্রেশে জমা না-দেওয়া উত্তর ও একই শেষ সময় ফিরে আসবে।' : 'শুরুর তারিখের পরের দিন (বাংলাদেশ সময়) ক্লাসে পরীক্ষা হবে। শিক্ষার্থী PDF নেবে, খাতায় উত্তর দেবে।'}</p>
       <p class="exam-note" data-duration-readout></p>
@@ -917,7 +917,7 @@ export function initExamManager(container, role) {
       const exam = db.exams.find(item => item.id === selected);
       run(() => repo.deleteQuestion(exam.id, target.dataset.id, actor), 'প্রশ্ন মুছে ফেলা হয়েছে। বাকি প্রশ্ন অক্ষত আছে।', () => questions(db.exams.find(item => item.id === exam.id)));
     }
-    else if (action === 'request') run(() => repo.requestApproval(e.id, actor), 'Manager-এর অনুমতির জন্য পাঠানো হয়েছে।');
+    else if (action === 'request') run(() => repo.requestApproval(e.id, actor), 'ম্যানেজারের অনুমতির জন্য পাঠানো হয়েছে।');
     else if (action === 'approve' && window.confirm('পরীক্ষাটি অনুমোদন করবেন? এরপর প্রকাশ করা যাবে।')) run(() => repo.approve(e.id, actor), 'পরীক্ষা অনুমোদিত হয়েছে — এখন প্রকাশ করা যাবে।');
     else if (action === 'publish' && window.confirm('পরীক্ষাটি প্রকাশ করবেন? তারপর শিক্ষার্থীরা নির্ধারিত সময়ে প্রশ্ন দেখতে পাবে।')) run(() => repo.publish(e.id, actor), 'পরীক্ষা প্রকাশিত হয়েছে।');
     else if (action === 'unpublish' && window.confirm('Unpublish করলে শিক্ষার্থীরা পরীক্ষাটি আর দেখতে পাবে না। সংরক্ষিত উত্তর ও ফলাফল মুছে যাবে না — আবার প্রকাশ করলে ফিরে আসবে।')) run(() => repo.unpublish(e.id, actor), 'পরীক্ষাটি Unpublish করা হয়েছে — প্রশ্ন ও ফলাফল অক্ষত আছে।');

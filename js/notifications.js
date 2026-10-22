@@ -271,6 +271,7 @@ function scheduleActionBoundary() {
   if (!next) return;
   const delay = Math.min(MAX_TIMER_MS, Math.max(1000, next - now + 500));
   boundaryTimer = setTimeout(() => refreshNotifications(), delay);
+  if (typeof boundaryTimer?.unref === 'function') boundaryTimer.unref();
 }
 
 export function buildFeed() {
@@ -685,6 +686,7 @@ export function refreshNotifications() {
 function scheduleRefresh() {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => refreshNotifications(), REFRESH_DEBOUNCE_MS);
+  if (typeof refreshTimer?.unref === 'function') refreshTimer.unref();
 }
 
 /**
@@ -734,6 +736,7 @@ function noteThenHide(message, ms = 5000) {
   clearTimeout(pillNoteTimer);
   paintPill();
   pillNoteTimer = setTimeout(() => { pillNote = ''; paintPill(); }, ms);
+  if (typeof pillNoteTimer?.unref === 'function') pillNoteTimer.unref();
 }
 
 function mountPill() {
@@ -897,6 +900,7 @@ export function initNotifications() {
     if (!armed) {
       window.addEventListener('apc-sync-status', watchSyncStatus);
       armTimer = setTimeout(armWhenReady, ARM_FALLBACK_MS);
+      if (typeof armTimer?.unref === 'function') armTimer.unref();
       watchSyncStatus();
     }
     window.addEventListener('storage', event => {
@@ -976,6 +980,7 @@ export function initNotifications() {
     // The bell/inbox needs the controller, so it is mounted after it exists.
     if (document.body) mountNoticeCenter();
     else window.addEventListener('DOMContentLoaded', mountNoticeCenter, { once: true });
+    publish({ ready: true });
     return controller;
   } catch (error) {
     console.warn('[Active Plus] notification centre failed to start:', error?.name || 'unknown');

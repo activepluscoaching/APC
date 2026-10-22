@@ -101,8 +101,8 @@ function addField(form, key, options, filters, defaultPeriod) {
     select.dataset.filter = key;
     select.name = key;
     for (const item of [
-      ['all','সব সময়'],['daily','Daily (একদিন)'],['weekly','Weekly (সপ্তাহ)'],
-      ['monthly','Monthly (মাস)'],['custom','Custom Date Range']
+      ['all','সব সময়'],['daily','দৈনিক (একদিন)'],['weekly','সাপ্তাহিক (সপ্তাহ)'],
+      ['monthly','মাসিক (মাস)'],['custom','নির্দিষ্ট তারিখ সীমা']
     ]) select.append(new Option(item[1], item[0]));
     /* A report that is defined as daily/weekly/monthly/custom opens on that
        period, not on "all time" — otherwise "Daily Fee Collection" would
@@ -184,7 +184,7 @@ class ReportCenter {
     this.root.replaceChildren();
 
     const head=el('header','rc-head');
-    head.append(el('p','rc-eyebrow','REPORT CENTER'));
+    head.append(el('p','rc-eyebrow','রিপোর্ট কেন্দ্র'));
     head.append(el('h2','rc-title','রিপোর্ট সেন্টার'));
     this.root.append(head);
 
@@ -247,7 +247,7 @@ class ReportCenter {
 
   async generate() {
     if (!this.definition) {
-      this.showStatus('একটি Report নির্বাচন করুন।','error'); return;
+      this.showStatus('একটি রিপোর্ট নির্বাচন করুন।','error'); return;
     }
     this.clearStatus();
     this.setBusy(true);
@@ -277,7 +277,7 @@ class ReportCenter {
       this.openPreview(blob, rendered.html, { empty: result.empty });
     } catch(error) {
       if (error?.code==='FORBIDDEN') this.showStatus(error.message || 'এই রিপোর্ট দেখার অনুমতি নেই।','error');
-      else this.showStatus(error?.message || 'Report তৈরি করা যায়নি।','error');
+      else this.showStatus(error?.message || 'রিপোর্ট তৈরি করা যায়নি।','error');
     } finally {
       this.setBusy(false);
     }
@@ -290,7 +290,7 @@ class ReportCenter {
 
     const preview=el('section','rc-preview');
     const bar=el('div','rc-preview-head');
-    const back=el('button','rc-back','Back');
+    const back=el('button','rc-back','← ফিরে যান');
     back.type='button';
     back.addEventListener('click',()=>this.closePreview());
     const title=el('strong','rc-preview-title',this.definition?.title || 'PDF প্রিভিউ');

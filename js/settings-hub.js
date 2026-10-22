@@ -238,6 +238,13 @@ export function mountSettingsHub({ mount, role = 'student', actions = {}, sessio
 const GROUP_ICONS = Object.freeze({
   account: 'user', notification: 'bell', app: 'smartphone', security: 'lock', data: 'reports'
 });
+const GROUP_SUBTITLES = Object.freeze({
+  account: 'প্রোফাইল তথ্য, লগইন পাসওয়ার্ড পরিবর্তন ও লগআউট',
+  notification: 'নোটিফিকেশন চালু/বন্ধ, ব্রাউজার অনুমতি, শব্দ, প্রিভিউ ও ইতিহাস',
+  app: 'গাঢ় থিম (দিন/রাত) পরিবর্তন ও হোম স্ক্রিনে অ্যাপ ইনস্টল',
+  security: 'বিশ্বস্ত ডিভাইস ও সেশন নিরাপত্তা তথ্য দেখুন',
+  data: 'অফলাইন ডেটা সংরক্ষণ ও স্টোরেজ ব্যবহারের তথ্য'
+});
 
 function paintGroupHub(root) {
   if (root.dataset.settingsGrouped === '1') return;
@@ -267,24 +274,49 @@ function paintGroupHub(root) {
   });
   let nav = root.querySelector('[data-settings-groups]');
   if (!nav) {
-    nav = element('nav', 'pay-grid is-2 settings-group-grid');
+    const isTeacher = root.dataset.settingsHub === 'teacher';
+    const isManager = root.dataset.settingsHub === 'manager';
+    const isPayment = root.dataset.settingsHub === 'payment';
+    const isActionCardHub = isTeacher || isManager || isPayment;
+    nav = element('nav', isActionCardHub ? 'teacher-home-actions settings-group-grid' : 'pay-grid is-2 settings-group-grid');
     nav.dataset.settingsGroups = 'true';
     nav.setAttribute('aria-label', 'সেটিংস গ্রুপ');
     SETTINGS_GROUPS.forEach(group => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'pay-tile';
       button.dataset.settingsOpen = group.key;
-      const iconHost = element('span', 'pay-tile-icon');
-      iconHost.setAttribute('aria-hidden', 'true');
-      iconHost.append(iconElement(GROUP_ICONS[group.key] || 'settings', 'apc-icon-svg'));
-      button.append(iconHost, element('span', 'pay-tile-label', group.label));
+      if (isActionCardHub) {
+        button.className = `teacher-action-card${group.key === 'notification' ? ' is-accent' : ''}`;
+        const body = element('span', 'teacher-action-body');
+        const titleEl = element('span', 'teacher-action-title pay-tile-label', group.label);
+        if (isManager || isPayment) {
+          titleEl.dataset.actionSub = GROUP_SUBTITLES[group.key] || '';
+          body.append(titleEl);
+        } else {
+          body.append(titleEl, element('span', 'teacher-action-sub', GROUP_SUBTITLES[group.key] || ''));
+        }
+        const iconHost = element('span', 'teacher-action-art pay-tile-icon');
+        iconHost.setAttribute('aria-hidden', 'true');
+        iconHost.append(iconElement(GROUP_ICONS[group.key] || 'settings', 'apc-icon-svg'));
+        button.append(body, iconHost);
+      } else {
+        button.className = 'pay-tile';
+        const iconHost = element('span', 'pay-tile-icon');
+        iconHost.setAttribute('aria-hidden', 'true');
+        iconHost.append(iconElement(GROUP_ICONS[group.key] || 'settings', 'apc-icon-svg'));
+        button.append(iconHost, element('span', 'pay-tile-label', group.label));
+      }
       nav.append(button);
     });
     root.prepend(nav);
   }
   const showGroup = key => {
     nav.hidden = Boolean(key);
+    root.querySelectorAll('[data-settings-open]').forEach(btn => {
+      const active = btn.dataset.settingsOpen === key;
+      btn.classList.toggle('is-open', active);
+      btn.setAttribute('aria-expanded', active ? 'true' : 'false');
+    });
     root.querySelectorAll('[data-settings-group]').forEach(section => {
       section.hidden = section.dataset.settingsGroup !== key;
     });
@@ -292,7 +324,11 @@ function paintGroupHub(root) {
   root.addEventListener('click', event => {
     const open = event.target.closest('[data-settings-open]');
     if (open) {
-      showGroup(open.dataset.settingsOpen);
+      const targetKey = open.dataset.settingsOpen || '';
+      const targetSection = root.querySelector(`[data-settings-group="${targetKey}"]`);
+      const alreadyOpen = Boolean(targetSection && !targetSection.hidden);
+      const canToggleClose = root.dataset.settingsHub === 'teacher' || root.dataset.settingsHub === 'manager' || root.dataset.settingsHub === 'admin' || root.dataset.settingsHub === 'payment';
+      showGroup(canToggleClose && alreadyOpen ? '' : targetKey);
       return;
     }
     if (event.target.closest('[data-settings-hub-back]')) showGroup('');

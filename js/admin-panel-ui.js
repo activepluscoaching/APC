@@ -84,9 +84,16 @@ function renderHub(root, menuSelector, panelView, catalogue, access, onNavigate)
     const entry = catalogue.find(candidate => candidate.view === item.dataset.adminView);
     if (!entry) { item.remove(); return; }
     if (entry.capability && !access.has(entry.capability)) { item.remove(); return; }
-    paintIcon(item.querySelector('.admin-more-icon'), ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-more-icon-svg apc-icon-svg');
+    item.classList.add('teacher-action-card');
+    const iconHost = item.querySelector('.admin-more-icon');
+    if (iconHost) iconHost.classList.add('teacher-action-art', 'pay-tile-icon');
+    const copyHost = item.querySelector('.admin-more-copy');
+    if (copyHost) copyHost.classList.add('teacher-action-body');
+    paintIcon(iconHost, ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-more-icon-svg apc-icon-svg');
     const label = item.querySelector('.admin-more-copy strong');
     const hint = item.querySelector('.admin-more-copy small');
+    if (label) label.classList.add('teacher-action-title');
+    if (hint) hint.classList.add('teacher-action-sub');
     if (label && entry.label && !label.textContent.trim()) label.textContent = entry.label;
     if (hint && entry.hint && !hint.textContent.trim()) hint.textContent = entry.hint;
     /* Bind exactly once per item: these rows live in static markup and the
@@ -113,20 +120,22 @@ function renderFeatureGrid(container, entries, onNavigate) {
   const tiles = entries.map((entry, index) => {
     const tile = document.createElement('button');
     tile.type = 'button';
-    tile.className = 'pay-tile admin-feature-tile';
+    tile.className = 'pay-tile admin-feature-tile teacher-action-card is-accent';
     tile.dataset.adminView = entry.view;
     if (entry.capability) tile.dataset.adminCap = entry.capability;
     if (entry.action) tile.dataset.adminAction = entry.action;
+    if (entry.scope) tile.dataset.studentScope = entry.scope;
     // Staggered entrance, cheap and transform-only.
     tile.style.setProperty('--tile-index', String(index));
 
     const iconWrap = document.createElement('span');
-    iconWrap.className = 'pay-tile-icon admin-feature-icon';
+    iconWrap.className = 'pay-tile-icon admin-feature-icon teacher-action-art';
     iconWrap.append(iconElement(ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-feature-icon-svg apc-icon-svg'));
 
     const label = document.createElement('span');
-    label.className = 'pay-tile-label admin-feature-label';
+    label.className = 'pay-tile-label admin-feature-label teacher-action-title';
     label.textContent = entry.label;
+    label.dataset.actionSub = entry.sub || entry.hint || 'নতুন ও অপেক্ষমাণ শিক্ষার্থীদের নিবন্ধন আবেদন যাচাই ও অনুমোদন করুন';
 
     tile.append(iconWrap, label);
     tile.addEventListener('click', () => onNavigate(entry.view, tile));

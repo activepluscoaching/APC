@@ -39,6 +39,17 @@
   @media (max-width: 380px) {
     .teacher-reference { --t-hero-min-h: 220px; }
   }
+  html:not([data-theme="dark"]) .teacher-reference {
+    --color-bg: #f8fafc;
+    --glass-surface: #ffffff;
+    --glass-bg: #ffffff;
+    --glass-bg-strong: #ffffff;
+    --glass-bg-soft: #f8fafc;
+    --glass-bar: rgba(255, 255, 255, 0.95);
+    --glass-border: #f1f5f9;
+    --glass-shadow: 0 1px 3px 0 rgb(15 23 42 / 0.05), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+    --glass-shadow-strong: 0 10px 24px -8px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04);
+  }
 }
 
 @layer components {
@@ -124,22 +135,40 @@
     z-index: 0;
     pointer-events: none;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art {
+  .teacher-reference .teacher-home-intro {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    min-height: var(--t-hero-min-h);
+    margin: 2px 0 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 26px;
+    background: var(--pay-hero-a);
+    box-shadow: var(--glass-shadow-strong);
+    color: var(--pay-on-hero);
+  }
+  .teacher-reference .teacher-home-intro .teacher-hero-content { width: 100%; }
+  .teacher-reference .teacher-home-intro .teacher-hero-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .teacher-reference .teacher-home-intro .teacher-hero-art {
     @apply block h-full w-full object-cover;
     object-position: center 46%;
     transform: scale(1.04);
     animation: apc-teacher-scene-zoom 18s var(--t-ease) infinite alternate;
     transition: opacity .45s var(--t-ease);
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-art.is-fading { @apply opacity-0; }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-scrim {
+  .teacher-reference .teacher-home-intro .teacher-hero-art.is-fading { @apply opacity-0; }
+  .teacher-reference .teacher-home-intro .teacher-hero-scene-scrim {
     position: absolute;
     inset: 0;
     background:
-      /* Two layers: a bottom veil that carries the greeting and the daily line,
-         and a soft left falloff that keeps the identity chip readable over the
-         bright chalkboard. Lighter than the first pass — the redesigned scene is
-         brighter, and the canvas should still look like a photograph. */
       linear-gradient(0deg,
         rgb(var(--t-scrim-ink) / .88) 0%,
         rgb(var(--t-scrim-ink) / .58) 26%,
@@ -147,7 +176,7 @@
         rgb(var(--t-scrim-ink) / .02) 100%),
       linear-gradient(90deg, rgb(var(--t-scrim-ink) / .40) 0%, transparent 76%);
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-scene-sheen {
+  .teacher-reference .teacher-home-intro .teacher-hero-scene-sheen {
     position: absolute;
     inset: 0;
     background: linear-gradient(115deg, transparent 42%,
@@ -155,11 +184,7 @@
     transform: translateX(-45%);
     animation: apc-teacher-scene-sheen 9s var(--t-ease) infinite;
   }
-  /* .teacher-hero-content, .teacher-hero-top, .teacher-hero-welcome and the
-     h1/warm line take their layout from Tailwind utilities in teacher.html;
-     only what utilities cannot express (gradients, blur, shadows, motion)
-     stays here. */
-  .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon {
+  .teacher-reference .teacher-home-intro .admin-hero-icon {
     background: color-mix(in srgb, var(--pay-on-hero) 18%, transparent);
     border: 1px solid color-mix(in srgb, var(--pay-on-hero) 44%, transparent);
     color: var(--pay-on-hero);
@@ -167,11 +192,7 @@
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 20px rgb(var(--t-scrim-ink) / .22);
   }
-  /* The one time-of-day marker on the hero: the artwork itself carries no sun
-     and no moon any more (the day scene is sky and clouds, the night scene is
-     stars), so this chip is what changes with the clock — sun by day, moon by
-     night, driven by js/teacher.js. */
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
+  .teacher-reference .teacher-home-intro .teacher-hero-glint {
     background: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
     border: 1px solid color-mix(in srgb, var(--pay-on-hero) 40%, transparent);
     color: var(--pay-on-hero);
@@ -179,16 +200,19 @@
     backdrop-filter: blur(10px);
     animation: apc-teacher-float 4.5s ease-in-out infinite;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-welcome {
+  .teacher-reference .teacher-home-intro .teacher-hero-welcome {
     @apply flex min-w-0 flex-col gap-1.5;
   }
-  .teacher-reference #teacherHome .teacher-home-intro h1 {
+  .teacher-reference .teacher-home-intro h1 {
     /* colour + size come from utilities; the halo is what keeps white text
        readable over the bright part of the illustration. */
     text-shadow: 0 2px 14px rgb(var(--t-scrim-ink) / .55);
     overflow-wrap: anywhere;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm {
+  .teacher-reference .teacher-home-intro .teacher-hero-warm,
+  .teacher-reference .teacher-home-intro .teacher-hero-advice,
+  .teacher-reference .teacher-home-intro .teacher-classes-hero-note,
+  .teacher-reference .teacher-home-intro .teacher-exams-hero-note {
     color: color-mix(in srgb, var(--pay-on-hero) 88%, transparent);
     text-shadow: 0 1px 10px rgb(var(--t-scrim-ink) / .55);
   }
@@ -426,7 +450,7 @@
   .teacher-reference .teacher-action-card {
     --tone: var(--tone-mint);
     --tone-soft: var(--tone-mint-soft);
-    @apply relative flex min-h-[100px] w-full items-center gap-3.5 overflow-hidden rounded-[18px] px-4 py-3.5 text-left;
+    @apply relative flex flex-row min-h-[100px] w-full items-center justify-between gap-3.5 overflow-hidden rounded-[18px] px-4 py-3.5 text-left;
     border: 1px solid var(--glass-border);
     background: var(--glass-surface);
     box-shadow: var(--glass-shadow);
@@ -441,10 +465,10 @@
     background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
   }
   .teacher-reference .teacher-action-card > * { @apply relative; }
-  .teacher-reference .teacher-action-body { @apply flex min-w-0 flex-1 flex-col gap-1; }
-  .teacher-reference .teacher-action-title { @apply text-[15px] font-extrabold leading-[1.3] text-ink; }
+  .teacher-reference .teacher-action-body { @apply flex min-w-0 flex-1 flex-col items-start gap-1 text-left; }
+  .teacher-reference .teacher-action-title { @apply text-left text-[15px] font-extrabold leading-[1.3] text-ink; }
   .teacher-reference .teacher-action-sub {
-    @apply text-[12px] font-semibold leading-[1.35] text-ink-soft;
+    @apply text-left text-[12px] font-semibold leading-[1.35] text-ink-soft;
   }
   .teacher-reference .teacher-action-art {
     @apply grid h-[58px] w-[58px] flex-none place-items-center rounded-2xl;
@@ -455,7 +479,10 @@
   .teacher-reference .teacher-action-art svg { @apply h-[42px] w-[42px]; }
   .teacher-reference .teacher-action-card:nth-child(1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
   .teacher-reference .teacher-action-card:nth-child(2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+  .teacher-reference .teacher-action-card:nth-child(3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
   .teacher-reference .teacher-action-card:nth-child(4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+  .teacher-reference .teacher-action-card:nth-child(5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+  .teacher-reference .teacher-action-card:nth-child(6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
   .teacher-reference .teacher-action-card.is-accent {
     --tone: var(--color-primary);
     --tone-soft: var(--glass-accent-soft);
@@ -522,7 +549,7 @@
 
   /* 05.3 Segmented record tabs */
   .teacher-reference .teacher-type-tabs.pay-grid {
-    @apply gap-[5px] rounded-[18px] border p-[5px];
+    @apply gap-[5px] rounded-2xl border p-[5px];
     border-color: var(--glass-border);
     background: var(--glass-bar);
     box-shadow: var(--glass-shadow);
@@ -530,16 +557,18 @@
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   }
   .teacher-reference .teacher-type-tabs .pay-tile {
-    @apply min-h-[46px] rounded-[13px] border px-1 py-1.5 text-[11.5px] font-[650];
+    @apply min-h-[46px] rounded-xl border px-1 py-1.5 text-[11.5px] font-[700];
     border-color: transparent;
     background: transparent;
     color: var(--color-text-secondary);
     box-shadow: none;
   }
-  .teacher-reference .teacher-type-tabs .pay-tile.active {
-    background: var(--glass-accent-soft);
-    border-color: color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
-    color: var(--color-primary);
+  .teacher-reference .teacher-type-tabs .pay-tile.active,
+  .teacher-reference .teacher-type-tabs .pay-tile[aria-selected="true"] {
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    border-color: transparent;
+    color: var(--pay-on-fab);
+    box-shadow: var(--accent-glow);
     outline: 0;
   }
   .teacher-reference .teacher-type-tabs .tab-count { @apply text-[10px] font-bold; }
@@ -547,18 +576,18 @@
   /* 05.4 Filter chips */
   .teacher-reference .chip-row { @apply gap-2; }
   .teacher-reference .chip-row .day-tab {
-    @apply min-h-[42px] rounded-chip border px-[15px] py-2 text-[12.5px] font-[650];
+    @apply min-h-[42px] rounded-xl border px-[15px] py-2 text-[12.5px] font-[700];
     border-color: var(--glass-border);
     background: var(--glass-surface);
     color: var(--color-text-secondary);
-    box-shadow: none;
+    box-shadow: var(--glass-shadow);
   }
   .teacher-reference .chip-row .day-tab.active,
   .teacher-reference .chip-row .day-tab[aria-selected="true"] {
-    background-image: linear-gradient(135deg, var(--glass-accent-soft),
-      color-mix(in srgb, var(--brand-2) 14%, transparent));
-    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--glass-border));
-    color: var(--color-primary);
+    background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+    border-color: transparent;
+    color: var(--pay-on-fab);
+    box-shadow: var(--accent-glow);
   }
 
   /* 05.5 Primary CTA */
@@ -1341,26 +1370,29 @@ body.teacher-reference {
    padding tightens. The legacy padding/radius rules above target the card box
    itself, so they are reset here now that the card is the image. ── */
 @media (max-width: 380px) {
-  .teacher-reference #teacherHome .teacher-home-intro {
+  .teacher-reference .teacher-home-intro {
     padding: 0;
     gap: 0;
     border-radius: 22px;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-content {
+  .teacher-reference .teacher-home-intro .teacher-hero-content {
     padding: 13px;
     gap: 18px;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .admin-hero-icon {
+  .teacher-reference .teacher-home-intro .admin-hero-icon {
     width: 46px;
     height: 46px;
     font-size: 16px;
   }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-glint {
+  .teacher-reference .teacher-home-intro .teacher-hero-glint {
     width: 36px;
     height: 36px;
   }
-  .teacher-reference #teacherHome .teacher-home-intro h1 { font-size: 19.5px; }
-  .teacher-reference #teacherHome .teacher-home-intro .teacher-hero-warm { font-size: 12px; }
+  .teacher-reference .teacher-home-intro h1 { font-size: 19.5px; }
+  .teacher-reference .teacher-home-intro .teacher-hero-warm,
+  .teacher-reference .teacher-home-intro .teacher-hero-advice,
+  .teacher-reference .teacher-home-intro .teacher-classes-hero-note,
+  .teacher-reference .teacher-home-intro .teacher-exams-hero-note { font-size: 12px; }
 }
 
 /* ============================================================================
@@ -1437,178 +1469,186 @@ body.teacher-reference {
 .teacher-reference #teacherClasses .teacher-class-panel { animation: apc-teacher-rise .26s var(--t-ease) both; }
 .teacher-reference #teacherClasses .teacher-class-panel .teacher-section-heading { margin: 0 2px 9px; }
 
-/* ── 24.2 ক্লাস ও বিষয়: one collapsed row per class ───────────────────────── */
-/* Owner order (2026-10-21): no primary information may lie open. A class is a
-   single compact row — name, group, subject count and student count — and the
-   subject list plus the class-work action open only when the row is tapped.
-   Native <details>/<summary>: keyboard and screen-reader support for free, and
-   the closed state is the default in the markup, so nothing is exposed before
-   the teacher asks for it. */
-.teacher-reference #teacherClassList { display: grid; gap: 8px; }
-.teacher-reference #teacherClassList .teacher-class-card { padding: 0; overflow: hidden; }
-.teacher-reference #teacherClassList .teacher-class-details { display: block; }
-.teacher-reference #teacherClassList .teacher-class-summary {
+/* ── 24.2 ক্লাস ও বিষয়: ফুল-উইডথ হিরো ক্লাস কার্ড ───────────────────────── */
+.teacher-reference #teacherClassList { display: grid; gap: 12px; }
+.teacher-reference #teacherClassList .teacher-class-card {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 62px;
-  padding: 11px 12px;
-  cursor: pointer;
-  list-style: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color .15s var(--t-ease);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  transition: transform .16s var(--t-ease), box-shadow .18s var(--t-ease), border-color .16s var(--t-ease);
 }
-.teacher-reference #teacherClassList .teacher-class-summary::-webkit-details-marker { display: none; }
-.teacher-reference #teacherClassList .teacher-class-details[open] > .teacher-class-summary {
-  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+.teacher-reference #teacherClassList .teacher-class-card:nth-child(2n) {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
 }
-.teacher-reference #teacherClassList .teacher-class-summary:active {
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+.teacher-reference #teacherClassList .teacher-class-card:nth-child(3n) {
+  --tone: var(--tone-amber);
+  --tone-soft: var(--tone-amber-soft);
 }
-.teacher-reference #teacherClassList .teacher-class-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
-  background-image: linear-gradient(140deg, var(--glass-accent-soft),
-    color-mix(in srgb, var(--brand-2) 12%, transparent));
-  color: var(--color-primary);
-  font-size: 15px;
-  font-weight: 800;
+.teacher-reference #teacherClassList .teacher-class-card:nth-child(4n) {
+  --tone: var(--tone-violet);
+  --tone-soft: var(--tone-violet-soft);
+}
+.teacher-reference #teacherClassList .teacher-class-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+.teacher-reference #teacherClassList .teacher-class-card > * { position: relative; z-index: 1; }
+.teacher-reference #teacherClassList .teacher-class-hero-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .teacher-reference #teacherClassList .teacher-class-heading {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
   min-width: 0;
-  flex: 1 1 auto;
 }
 .teacher-reference #teacherClassList .teacher-class-heading h3 {
   margin: 0;
   color: var(--color-text);
-  font-size: 14px;
-  font-weight: 750;
-  line-height: 1.35;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.32;
   overflow-wrap: anywhere;
 }
 .teacher-reference #teacherClassList .teacher-class-heading small {
   color: var(--color-text-secondary);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
 }
-.teacher-reference #teacherClassList .teacher-class-chevron {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  margin-right: 3px;
-  border-right: 2px solid var(--color-text-muted);
-  border-bottom: 2px solid var(--color-text-muted);
-  border-radius: 1px;
-  transform: rotate(45deg) translate(-2px, -2px);
-  transition: transform .2s var(--t-ease), border-color .2s var(--t-ease);
+.teacher-reference #teacherClassList .teacher-class-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-.teacher-reference #teacherClassList .teacher-class-details[open] .teacher-class-chevron {
-  transform: rotate(225deg) translate(-1px, -1px);
-  border-color: var(--color-primary);
-}
-/* Belt and braces: the UA hides a closed details' children, but state it here
-   too so a closed row can never leak its facts in any engine. */
-.teacher-reference #teacherClassList .teacher-class-details:not([open]) > .teacher-class-body { display: none; }
-.teacher-reference #teacherClassList .teacher-class-body {
-  padding: 2px 12px 12px;
-  border-top: 1px solid var(--glass-border);
-  animation: apc-teacher-rise .24s var(--t-ease) both;
-}
-.teacher-reference #teacherClassList .teacher-class-facts {
-  display: grid;
-  gap: 7px;
-  margin: 10px 0 11px;
-}
-.teacher-reference #teacherClassList .teacher-class-facts > div {
-  display: grid;
-  grid-template-columns: 68px minmax(0, 1fr);
-  gap: 8px;
-  align-items: baseline;
-}
-.teacher-reference #teacherClassList .teacher-class-facts dt {
-  color: var(--color-text-muted);
-  font-size: 10.5px;
+.teacher-reference #teacherClassList .teacher-class-subject-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--tone) 26%, var(--glass-border));
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: .04em;
-}
-.teacher-reference #teacherClassList .teacher-class-facts dd {
-  margin: 0;
-  color: var(--color-text);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
+  line-height: 1.3;
 }
 .teacher-reference #teacherClassList .teacher-class-open {
-  display: block;
-  width: 100%;
-  min-height: 44px;
-  padding: 9px 12px;
-  border-radius: 13px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--glass-border));
-  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
-  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 0;
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  color: var(--pay-on-fab);
+  box-shadow: var(--accent-glow);
   font-size: 12.5px;
   font-weight: 700;
   text-align: center;
 }
-.teacher-reference #teacherClassList .teacher-class-open:active { transform: scale(.99); }
+.teacher-reference #teacherClassList .teacher-class-open:active { transform: scale(.98); }
+.teacher-reference #teacherClassList .teacher-class-hero-art {
+  display: grid;
+  place-items: center;
+  flex: 0 0 62px;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  color: var(--tone);
+  background: var(--tone-soft);
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
+}
+.teacher-reference #teacherClassList .teacher-class-hero-art svg {
+  width: 42px;
+  height: 42px;
+}
 @media (hover: hover) {
-  .teacher-reference #teacherClassList .teacher-class-summary:hover { background: var(--glass-bg-soft); }
-  .teacher-reference #teacherClassList .teacher-class-open:hover {
-    border-color: color-mix(in srgb, var(--color-primary) 48%, var(--glass-border));
+  .teacher-reference #teacherClassList .teacher-class-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 42%, var(--glass-border));
+    box-shadow: var(--glass-shadow-strong);
   }
 }
 
-/* ── 24.3 পরীক্ষা: one primary action, one quiet one, 2×2 doors ───────────── */
-.teacher-reference #teacherOnlineExams .teacher-cta {
+/* ── 24.3 পরীক্ষা: two full-width action cards + 2×2 section chips ────────── */
+.teacher-reference #teacherOnlineExams .teacher-home-intro {
   position: relative;
-  overflow: hidden;
-  width: 100%;
-  min-height: 62px;
-  margin: 4px 0 9px;
-  border: 0;
-  border-radius: 20px;
-  padding: 12px 18px;
-  background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--brand-2) 58%, var(--tone-mint) 100%);
-  color: var(--pay-on-fab);
-  font-size: 16.5px;
-  font-weight: 800;
-  letter-spacing: .01em;
-  box-shadow: var(--accent-glow), inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
-  transition: transform .16s var(--t-ease), filter .18s var(--t-ease);
-}
-.teacher-reference #teacherOnlineExams .teacher-cta::after {
-  content: '';
-  position: absolute;
-  inset: -40% -60%;
-  pointer-events: none;
-  background: linear-gradient(115deg, transparent 42%,
-    color-mix(in srgb, #fff 22%, transparent) 50%, transparent 58%);
-  transform: translateX(-55%);
-  animation: apc-teacher-scene-sheen 7.5s var(--t-ease) infinite;
-}
-.teacher-reference #teacherOnlineExams .teacher-cta:active { transform: scale(.985); }
-.teacher-reference #teacherOnlineExams > .mini-btn {
+  isolation: isolate;
   display: block;
   width: 100%;
-  min-height: 46px;
-  padding: 9px 14px;
-  border-radius: 15px;
-  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
-  background: transparent;
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 700;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  min-height: var(--t-hero-min-h);
+  margin: 2px 0 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 26px;
+  background: var(--pay-hero-a);
+  box-shadow: var(--glass-shadow-strong);
+  color: var(--pay-on-hero);
+}
+.teacher-reference #teacherOnlineExams .teacher-home-intro .teacher-hero-content { width: 100%; }
+.teacher-reference #teacherOnlineExams .teacher-home-intro .teacher-hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.teacher-reference #teacherOnlineExams .teacher-home-intro .teacher-hero-scene-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 42%,
+    color-mix(in srgb, var(--pay-on-hero) 16%, transparent) 50%, transparent 58%);
+  transform: translateX(-45%);
+  animation: apc-teacher-scene-sheen 9s var(--t-ease) infinite;
+}
+.teacher-reference #teacherOnlineExams .teacher-exams-actions .teacher-action-card.teacher-cta,
+.teacher-reference #teacherOnlineExams .teacher-exams-actions .teacher-action-card.mini-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 100px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background-color: var(--glass-surface);
+  background-image: none;
+  color: var(--color-text);
+  text-align: left;
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference #teacherOnlineExams .teacher-exams-actions .teacher-action-card.teacher-cta {
+  --tone: var(--color-primary);
+  --tone-soft: var(--glass-accent-soft);
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--glass-border));
+}
+.teacher-reference #teacherOnlineExams .teacher-exams-actions .teacher-action-card.mini-btn {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
 }
 .teacher-reference #teacherOnlineExams > .teacher-local-note {
   margin: 12px 0 14px;
@@ -1621,41 +1661,41 @@ body.teacher-reference {
   font-size: 12px;
   line-height: 1.7;
 }
+.teacher-reference #teacherExamWorkspace > .exam-note {
+  display: none;
+}
 .teacher-reference #teacherExamHub {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 12px;
 }
 .teacher-reference #teacherExamHub .day-tab {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  min-height: 54px;
-  padding: 10px 8px;
-  border-radius: 16px;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 100px;
+  padding: 14px 16px;
+  border-radius: 18px;
   border: 1px solid var(--glass-border);
   background: var(--glass-surface);
   color: var(--color-text);
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.3;
-  text-align: center;
+  text-align: left;
   box-shadow: var(--glass-shadow);
-  transition: transform .15s var(--t-ease), border-color .15s var(--t-ease);
+  transition: transform .16s var(--t-ease), box-shadow .18s var(--t-ease), border-color .16s var(--t-ease);
 }
-.teacher-reference #teacherExamHub .day-tab:active { transform: scale(.97); }
+.teacher-reference #teacherExamHub .day-tab:active { transform: scale(.98); }
 .teacher-reference #teacherExamHub .day-tab.active,
 .teacher-reference #teacherExamHub .day-tab[aria-selected="true"] {
-  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--glass-border));
-  background-image: linear-gradient(135deg,
-    var(--glass-accent-soft), color-mix(in srgb, var(--brand-2) 16%, transparent));
-  color: var(--color-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--glass-border));
+  box-shadow: var(--glass-shadow-strong);
 }
 @media (hover: hover) {
   .teacher-reference #teacherExamHub .day-tab:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--color-primary) 36%, var(--glass-border));
   }
 }
@@ -1773,10 +1813,730 @@ body.teacher-reference {
     font-size: 11.5px;
     line-height: 1.25;
   }
-  .teacher-reference #teacherClassList .teacher-class-summary { padding: 10px; gap: 9px; }
-  .teacher-reference #teacherClassList .teacher-class-mark { width: 34px; height: 34px; border-radius: 11px; }
-  .teacher-reference #teacherClassList .teacher-class-heading h3 { font-size: 13px; }
+  .teacher-reference #teacherClassList .teacher-class-card { padding: 13px; gap: 11px; }
+  .teacher-reference #teacherClassList .teacher-class-hero-art { width: 52px; height: 52px; flex-basis: 52px; border-radius: 15px; }
+  .teacher-reference #teacherClassList .teacher-class-heading h3 { font-size: 14.5px; }
   .teacher-reference #teacherOnlineExams .teacher-cta { min-height: 56px; font-size: 15px; }
   .teacher-reference #teacherExamHub .day-tab { min-height: 48px; font-size: 11.5px; }
   .teacher-reference #teacherMore .teacher-menu-group .pay-tile { min-height: 58px; }
 }
+
+/* ============================================================================
+   25 ── UNIFIED SINGLE-THEME SURFACE & BENGALI DATE FIELD CHROME
+   ----------------------------------------------------------------------------
+   Brings every sub-screen (ক্লাস, পরীক্ষা, উপকরণ, রুটিন, নোটিশ লিস্ট, রিপোর্ট,
+   প্রোফাইল/সেটিংস ও মোডাল ফর্ম) into the exact same Tailwind card, button,
+   input, empty-state, and header rhythm as Teacher Home.
+   ========================================================================== */
+html:not([data-theme="dark"]) .teacher-reference .teacher-shell,
+html:not([data-theme="dark"]) .teacher-reference #teacherMain {
+  background-color: #f8fafc;
+  background-image: none;
+}
+
+/* Unified white rounded-2xl cards with subtle border-slate-100 & shadow-sm */
+.teacher-reference .teacher-view .admin-card,
+.teacher-reference .teacher-view .teaching-card,
+.teacher-reference .teacher-view .teacher-toolbar,
+.teacher-reference #teacherClassList .teacher-class-card,
+.teacher-reference #teacherRoutineViewList .exam-card,
+.teacher-reference #teacherExamWorkspace .exam-card,
+.teacher-reference #teacherExamWorkspace .exam-filters,
+.teacher-reference #teacherExamWorkspace .exam-question,
+.teacher-reference #teacherExamWorkspace .exam-template-panel,
+.teacher-reference #teacherCourseEditor .admin-card,
+.teacher-reference #teacherCourseEditor .course-manage-card,
+.teacher-reference .report-center-new .rc-head,
+.teacher-reference .report-center-new .rc-form,
+.teacher-reference .report-center-new .rc-preview,
+.teacher-reference #teacherProfileCard.admin-card,
+.teacher-reference .settings-list,
+.teacher-reference .theme-card,
+.teacher-reference .notice-setting-row,
+.teacher-reference .settings-row-button,
+.teacher-reference .notice-permission-row,
+.teacher-reference .notice-history-row {
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Unified page header (← back + Bengali title + primary pill CTA) */
+.teacher-reference .teacher-view:not(#teacherHome) > .page-intro:not(.teacher-sub-hero) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
+  box-shadow: none;
+}
+.teacher-reference .teacher-view:not(#teacherHome) > .page-intro:not(.teacher-sub-hero) > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.teacher-reference .teacher-view:not(#teacherHome) > .page-intro:not(.teacher-sub-hero) h1 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 19.5px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.teacher-reference #teacherAcademicReports .rp-section > .page-intro {
+  display: none;
+}
+
+/* Unified form inputs (rounded-xl, consistent padding & emerald focus ring) */
+.teacher-reference :is(.teacher-toolbar, #teacherCourseEditor, #teacherExamWorkspace, #teacherReports, #teacherModalBackdrop, #ownProfileEditForm) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .rc-control) {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 12%, var(--glass-border));
+  background-color: var(--glass-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.03);
+  transition: border-color .15s var(--t-ease), box-shadow .15s var(--t-ease);
+}
+.teacher-reference :is(.teacher-toolbar, #teacherCourseEditor, #teacherExamWorkspace, #teacherReports, #teacherModalBackdrop, #ownProfileEditForm) textarea {
+  min-height: 92px;
+}
+.teacher-reference :is(.teacher-toolbar, #teacherCourseEditor, #teacherExamWorkspace, #teacherReports, #teacherModalBackdrop, #ownProfileEditForm) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .rc-control):focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+/* Bengali-friendly date display on existing <input type="date"> fields */
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]) {
+  position: relative;
+}
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit,
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit-fields-wrapper,
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit-text,
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit-month-field,
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit-day-field,
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::-webkit-datetime-edit-year-field {
+  color: transparent;
+}
+.teacher-reference input[type="date"][data-date-bn]:not([data-date-bn=""]):not(:focus)::before {
+  content: attr(data-date-bn);
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text);
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Unified empty states across all views */
+.teacher-reference .teacher-empty,
+.teacher-reference .admin-empty,
+.teacher-reference .notice-empty {
+  margin: 10px 0;
+  padding: 24px 18px;
+  border-radius: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+  background: var(--glass-surface);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* Unified primary & secondary buttons across sub-screens */
+.teacher-reference .admin-btn.primary,
+.teacher-reference #teacherCourseEditor .admin-btn.primary,
+.teacher-reference #ownProfileEditForm .admin-btn.primary {
+  border-radius: 0.75rem;
+  border: 0;
+  background-image: linear-gradient(135deg, var(--color-primary), var(--brand-2));
+  color: var(--pay-on-fab);
+  font-weight: 700;
+  box-shadow: var(--accent-glow);
+}
+.teacher-reference .page-intro .admin-btn.primary {
+  border-radius: 999px;
+  padding: 9px 16px;
+}
+.teacher-reference .report-center-new .rc-back {
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 0.75rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* 3D Isometric Soft-Clay Hero Cards (All 11 Teacher Views) —
+   3D objects anchored on the right third, clean negative space on the left,
+   automatic Day & Night contrast and lightweight CSS fallback. */
+.teacher-reference .teacher-home-intro .teacher-hero-art,
+.teacher-reference .page-intro.teacher-sub-hero .teacher-hero-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  transform: none;
+  animation: none;
+  transition: opacity .35s var(--t-ease);
+}
+.teacher-reference .teacher-hero-art.is-fading,
+.teacher-reference .teacher-hero-art.is-broken {
+  opacity: 0 !important;
+}
+.teacher-reference .teacher-home-intro {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+.teacher-reference .teacher-home-intro .teacher-hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: var(--t-hero-min-h) !important;
+  padding: 16px 18px !important;
+}
+.teacher-reference .teacher-home-intro .teacher-hero-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+.teacher-reference .teacher-home-intro .teacher-hero-top-right {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+.teacher-reference .teacher-home-intro .teacher-hero-welcome {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  max-width: 62% !important;
+  margin-top: auto !important;
+  padding-right: 6px !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-home-intro h1 {
+  display: block !important;
+  margin: 0 !important;
+  text-align: left !important;
+  line-height: 1.32 !important;
+}
+.teacher-reference .teacher-home-intro .teacher-hero-advice,
+.teacher-reference .teacher-home-intro .teacher-hero-warm {
+  display: block !important;
+  margin: 0 !important;
+  max-width: 34ch !important;
+  font-size: 13px !important;
+  line-height: 1.58 !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-hero-date-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+/* Completely hide top-left circle icons & back buttons on all Hero Cards & sub-headers */
+.teacher-reference .teacher-home-intro .admin-hero-icon,
+.teacher-reference .teacher-home-intro .pay-back,
+.teacher-reference .page-intro .pay-back {
+  display: none !important;
+}
+.teacher-reference .teacher-records-head-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+.teacher-reference #teacherMore .teacher-more-actions .teacher-action-card.is-danger {
+  --tone: var(--color-danger);
+  --tone-soft: color-mix(in srgb, var(--color-danger) 12%, var(--glass-surface));
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--glass-border));
+}
+.teacher-reference #teacherMore .teacher-more-actions .teacher-action-card.is-danger .teacher-action-title {
+  color: var(--color-danger);
+}
+/* Guarantee horizontal left-text + right-icon layout on all .teacher-action-card buttons */
+.teacher-reference .teacher-action-card,
+.teacher-reference .pay-tile.teacher-action-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-action-card .teacher-action-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  gap: 4px !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-action-card .teacher-action-title,
+.teacher-reference .teacher-action-card .pay-tile-label {
+  display: block !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
+  color: var(--color-text) !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-action-card .teacher-action-sub {
+  display: block !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  color: var(--color-text-secondary) !important;
+  text-align: left !important;
+}
+.teacher-reference .teacher-action-card .teacher-action-art,
+.teacher-reference .teacher-action-card .pay-tile-icon {
+  display: grid !important;
+  place-items: center !important;
+  flex: none !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 16px !important;
+  color: var(--tone) !important;
+  background: var(--tone-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent) !important;
+  margin: 0 !important;
+}
+.teacher-reference .teacher-action-card .teacher-action-art svg,
+.teacher-reference .teacher-action-card .pay-tile-icon svg {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+/* Profile vs Settings separation in #teacherProfile */
+.teacher-reference #teacherSettingsTabs {
+  display: none !important;
+}
+.teacher-reference #teacherProfile[data-profile-mode="profile"] #teacherSettingsHub {
+  display: none !important;
+}
+.teacher-reference #teacherProfile[data-profile-mode="settings"] #teacherProfileCard {
+  display: none !important;
+}
+.teacher-reference #teacherSettingsHub [data-settings-groups],
+.teacher-reference #teacherSettingsHub [data-settings-groups][hidden] {
+  display: contents !important;
+}
+.teacher-reference #teacherSettingsHub [data-settings-groups] [data-settings-open="notification"] { order: 10; }
+.teacher-reference #teacherSettingsHub [data-settings-group="notification"] { order: 11; }
+.teacher-reference #teacherSettingsHub [data-settings-groups] [data-settings-open="app"] { order: 20; }
+.teacher-reference #teacherSettingsHub [data-settings-group="app"] { order: 21; }
+.teacher-reference #teacherSettingsHub [data-settings-groups] [data-settings-open="security"] { order: 30; }
+.teacher-reference #teacherSettingsHub [data-settings-group="security"] { order: 31; }
+.teacher-reference #teacherSettingsHub [data-settings-groups] [data-settings-open="data"] { order: 40; }
+.teacher-reference #teacherSettingsHub [data-settings-group="data"] { order: 41; }
+.teacher-reference #teacherSettingsHub [data-settings-groups] [data-settings-open="account"] { order: 50; }
+.teacher-reference #teacherSettingsHub [data-settings-group="account"] { order: 51; }
+.teacher-reference #teacherSettingsHub [data-settings-open].is-open {
+  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--glass-border));
+  box-shadow: var(--glass-shadow-strong);
+}
+.teacher-reference #teacherSettingsHub .settings-hub-back {
+  display: none !important;
+}
+.teacher-reference #teacherSettingsHub [data-settings-group] {
+  display: grid;
+  gap: 10px;
+  padding: 2px 0 8px;
+}
+.teacher-reference #teacherSettingsHub [data-settings-group][hidden] {
+  display: none !important;
+}
+
+/* Hide primary data/workspaces by default across all Teacher views (matching ক্লাস & পরীক্ষা) */
+.teacher-reference #teacherRecords:not([data-records-open="1"]) #teacherRecordsWorkspace,
+.teacher-reference #teacherNotice:not([data-notice-open="1"]) #teacherNoticeWorkspace,
+.teacher-reference #teacherRoutine:not([data-routine-open="1"]) .teacher-routine-tabs,
+.teacher-reference #teacherRoutine:not([data-routine-open="1"]) #teacherRoutineViewList,
+.teacher-reference #teacherAcademicReports:not([data-reports-open="summary"]) #teacherAcademicReportList,
+.teacher-reference #teacherAcademicReports:not([data-reports-open="generator"]) .rp-section,
+.teacher-reference #teacherCourses:not([data-courses-open="chapters"]) #teacherCourseChaptersBox,
+.teacher-reference #teacherCourses:not([data-courses-open="materials"]) #teacherCourseEditor {
+  display: none !important;
+}
+
+/* Open panels directly below their clicked action card in Teacher views */
+.teacher-reference #teacherOnlineExams:not([hidden]),
+.teacher-reference #teacherAcademicReports:not([hidden]),
+.teacher-reference #teacherCourses:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.teacher-reference #teacherOnlineExams > .teacher-home-intro,
+.teacher-reference #teacherAcademicReports > .teacher-home-intro,
+.teacher-reference #teacherCourses > .teacher-home-intro {
+  order: 1;
+}
+.teacher-reference #teacherExamActions,
+.teacher-reference #teacherExamActions[hidden],
+.teacher-reference #teacherExamHub,
+.teacher-reference #teacherExamHub[hidden],
+.teacher-reference #teacherAcademicReports > .teacher-home-actions,
+.teacher-reference #teacherCourses > .teacher-home-actions {
+  display: contents !important;
+}
+.teacher-reference #teacherExamActions [data-teacher-exam="new-mcq"] { order: 10; }
+.teacher-reference #teacherExamActions [data-teacher-exam="home"] { order: 20; }
+.teacher-reference #teacherOnlineExams > .teacher-local-note { order: 25; }
+.teacher-reference #teacherExamHub [data-teacher-exam="upcoming"] { order: 30; }
+.teacher-reference #teacherExamHub [data-teacher-exam="archive"] { order: 40; }
+.teacher-reference #teacherExamHub [data-teacher-exam="bank"] { order: 50; }
+.teacher-reference #teacherExamHub [data-teacher-view="exam"] { order: 60; }
+.teacher-reference #teacherOnlineExams[data-exam-tile-open="new-mcq"] #teacherExamWorkspace { order: 11; }
+.teacher-reference #teacherOnlineExams[data-exam-tile-open="home"] #teacherExamWorkspace { order: 21; }
+.teacher-reference #teacherOnlineExams[data-exam-tile-open="upcoming"] #teacherExamWorkspace { order: 31; }
+.teacher-reference #teacherOnlineExams[data-exam-tile-open="archive"] #teacherExamWorkspace { order: 41; }
+.teacher-reference #teacherOnlineExams[data-exam-tile-open="bank"] #teacherExamWorkspace { order: 51; }
+
+.teacher-reference #teacherAcademicReports [data-reports-action="generator"] { order: 10; }
+.teacher-reference #teacherAcademicReports > .rp-section { order: 11; }
+.teacher-reference #teacherAcademicReports [data-reports-action="summary"] { order: 20; }
+.teacher-reference #teacherAcademicReportList { order: 21; }
+
+.teacher-reference #teacherCourses [data-courses-action="new"] { order: 10; }
+.teacher-reference #teacherCourses [data-courses-action="chapters"] { order: 20; }
+.teacher-reference #teacherCourseChaptersBox { order: 21; }
+.teacher-reference #teacherCourses [data-courses-action="materials"] { order: 30; }
+.teacher-reference #teacherCourseEditor { order: 31; }
+.teacher-reference #teacherCourses > .teacher-local-note { order: 40; }
+.teacher-reference :is(.teacher-type-tabs, .teacher-routine-tabs) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.teacher-reference :is(.teacher-type-tabs, .teacher-routine-tabs) .day-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference :is(.teacher-type-tabs, .teacher-routine-tabs) .day-tab:is(.active, .is-active, [aria-selected="true"], [aria-pressed="true"]) {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--glass-border));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--glass-surface));
+  color: var(--color-primary);
+}
+.teacher-reference .teacher-academic-actions .academic-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  margin-inline-start: 6px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 750;
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--glass-surface));
+  color: var(--color-primary);
+}
+.teacher-reference .teacher-academic-actions .academic-count:empty {
+  display: none;
+}
+
+/* Unified Settings & Notification Card & Row Styling */
+.teacher-reference #teacherSettingsHub {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.teacher-reference #teacherSettingsHub .settings-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px 2px;
+}
+.teacher-reference #teacherSettingsHub .settings-group-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.teacher-reference #teacherSettingsHub .settings-group-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+.teacher-reference #teacherSettingsHub #notificationSettings {
+  display: grid;
+  gap: 14px;
+}
+.teacher-reference #teacherSettingsHub #notificationSettings > .profile-section {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.teacher-reference #teacherSettingsHub #notificationSettings > .profile-section:first-child > .eyebrow {
+  display: none;
+}
+.teacher-reference #teacherSettingsHub .profile-section .eyebrow {
+  margin: 2px 4px 2px;
+  font-size: 12.5px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text-secondary);
+}
+.teacher-reference #teacherSettingsHub .settings-list {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+}
+.teacher-reference #teacherSettingsHub .settings-list > .theme-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.teacher-reference #teacherSettingsHub .settings-list :is(.settings-toggle, .settings-row-link, .settings-row-button, .notice-permission-row, .notice-setting-row, .settings-info) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--glass-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: start;
+}
+.teacher-reference #teacherSettingsHub .settings-list > *:last-child,
+.teacher-reference #teacherSettingsHub .settings-list > .theme-card:last-child .settings-toggle {
+  border-bottom: 0;
+}
+.teacher-reference #teacherSettingsHub .settings-copy {
+  display: grid;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.teacher-reference #teacherSettingsHub .settings-copy strong {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+.teacher-reference #teacherSettingsHub .settings-copy small {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+.teacher-reference #teacherSettingsHub :is(.settings-value, .notice-permission-ok, .notice-history-tag) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--glass-surface));
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--glass-border));
+  white-space: nowrap;
+}
+.teacher-reference #teacherSettingsHub .notice-history-list {
+  display: grid;
+  gap: 8px;
+}
+.teacher-reference #teacherSettingsHub .notice-history-list > .admin-empty {
+  margin: 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px dashed var(--glass-border);
+  background: var(--glass-surface);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+.teacher-reference #teacherSettingsHub .form-note {
+  margin: 2px 4px 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+/* Day Mode 3D Hero Card (light sage-cream canvas, crisp dark forest-slate typography) */
+.teacher-reference .teacher-home-intro[data-hero-mode="day"],
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="day"] {
+  background-color: #dfe3cf;
+  border-color: rgb(14 122 85 / .22);
+  color: #0f2922;
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-hero-scene-scrim,
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="day"] .teacher-hero-scene-scrim {
+  background: linear-gradient(90deg,
+    rgb(225 229 210 / .92) 0%,
+    rgb(225 229 210 / .78) 46%,
+    rgb(225 229 210 / .16) 64%,
+    transparent 76%);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] h1,
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="day"] h1 {
+  color: #0f2922 !important;
+  text-shadow: 0 1px 0 rgb(255 255 255 / .65);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-hero-warm,
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-hero-advice,
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-classes-hero-note,
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-exams-hero-note {
+  color: #1e3a32 !important;
+  font-weight: 600;
+  text-shadow: 0 1px 0 rgb(255 255 255 / .55);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .admin-hero-icon,
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-hero-glint,
+.teacher-reference .teacher-home-intro[data-hero-mode="day"] .teacher-hero-date-pill {
+  background: rgb(255 255 255 / .78);
+  border: 1px solid rgb(14 122 85 / .24);
+  color: #0e6b4a;
+  box-shadow: 0 6px 16px -6px rgb(15 41 34 / .14);
+}
+
+/* Night Mode 3D Hero Card (deep muted green-blue canvas, warm ivory-white typography) */
+.teacher-reference .teacher-home-intro[data-hero-mode="night"],
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="night"],
+html[data-theme="dark"] .teacher-reference .teacher-home-intro,
+html[data-theme="dark"] .teacher-reference .page-intro.teacher-sub-hero {
+  background-color: #2a4a52;
+  border-color: rgb(255 255 255 / .18);
+  color: #f8fafc;
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-hero-scene-scrim,
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="night"] .teacher-hero-scene-scrim,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-hero-scene-scrim,
+html[data-theme="dark"] .teacher-reference .page-intro.teacher-sub-hero .teacher-hero-scene-scrim {
+  background: linear-gradient(90deg,
+    rgb(22 42 48 / .92) 0%,
+    rgb(22 42 48 / .76) 46%,
+    rgb(22 42 48 / .16) 64%,
+    transparent 76%);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] h1,
+.teacher-reference .page-intro.teacher-sub-hero[data-hero-mode="night"] h1,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro h1,
+html[data-theme="dark"] .teacher-reference .page-intro.teacher-sub-hero h1 {
+  color: #f8fafc !important;
+  text-shadow: 0 2px 10px rgb(8 20 24 / .55);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-hero-warm,
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-hero-advice,
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-classes-hero-note,
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-exams-hero-note,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-hero-warm,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-hero-advice,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-classes-hero-note,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-exams-hero-note {
+  color: #e2e8f0 !important;
+  font-weight: 550;
+  text-shadow: 0 1px 8px rgb(8 20 24 / .50);
+}
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .admin-hero-icon,
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-hero-glint,
+.teacher-reference .teacher-home-intro[data-hero-mode="night"] .teacher-hero-date-pill,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .admin-hero-icon,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-hero-glint,
+html[data-theme="dark"] .teacher-reference .teacher-home-intro .teacher-hero-date-pill {
+  background: rgb(255 255 255 / .16);
+  border: 1px solid rgb(255 255 255 / .34);
+  color: #f8fafc;
+  box-shadow: 0 8px 20px rgb(8 20 24 / .28);
+}
+
+/* Sub-screen 3D Hero Cards (#teacherRecords, #teacherAcademic, #teacherNotice, #teacherRoutine) */
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: var(--t-hero-min-h);
+  margin: 2px 0 16px;
+  padding: 16px 36% 16px 16px;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-strong);
+}
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero .teacher-hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero .teacher-hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+}
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero > *:not(.teacher-hero-scene) {
+  position: relative;
+  z-index: 1;
+}
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero h1 {
+  margin: 0;
+  font-size: clamp(20px, 5.4vw, 24px);
+  font-weight: 800;
+  line-height: 1.32;
+}
+.teacher-reference .teacher-view > .page-intro.teacher-sub-hero .admin-btn.primary {
+  margin-left: 0;
+}
+

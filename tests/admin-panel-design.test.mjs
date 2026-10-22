@@ -53,3 +53,72 @@ test('student avatars show the student initials, grapheme-safe', () => {
   assert.match(js, /student-avatar" aria-hidden="true">\$\{escapeHtml\(initialsOf\(student\.name\)\)\}/,
     'the list avatar is the student, not a generic glyph');
 });
+
+test('all 17 Admin views have 3D hero cards with daily advice, weekday·date pill, sun/moon glint, and horizontal action cards', () => {
+  assert.match(html, /<body class="admin-reference">/, 'admin body carries .admin-reference');
+  const allPanels = ['dashboard', 'staff', 'system', 'migration', 'roles', 'students', 'reports', 'data', 'backup', 'audit', 'security', 'academics', 'settings', 'more', 'profile', 'content', 'advice'];
+  for (const panel of allPanels) {
+    const chunk = viewOf(panel);
+    assert.match(chunk, /teacher-hero-scene/, `${panel} has a 3D hero scene`);
+    assert.match(chunk, /data-admin-hero-art/, `${panel} has a 3D hero art image`);
+    assert.match(chunk, /data-hero-card=/, `${panel} has a hero card key`);
+    assert.match(chunk, /teacher-hero-date-pill/, `${panel} has top-right weekday·date pill`);
+    assert.match(chunk, /teacher-hero-glint/, `${panel} has top-right sun/moon glint`);
+    assert.match(chunk, /data-admin-hero-advice=/, `${panel} has daily rotating advice`);
+  }
+  const actionCardCount = (html.match(/teacher-action-card/g) || []).length;
+  assert.ok(actionCardCount >= 30, `admin.html has horizontal .teacher-action-card buttons (${actionCardCount})`);
+  assert.doesNotMatch(html, /id="adminHeroAdvice"[^>]*>আজকের পরামর্শ:/, 'admin home advice shows direct advice without prefix');
+  const adminJs = read('js/admin.js');
+  assert.doesNotMatch(adminJs, /আজকের পরামর্শ:\s*\$\{/, 'renderDashboard sets direct advice text without prefix');
+  const academicsJs = read('js/admin-academics.js');
+  assert.match(academicsJs, /<p class="eyebrow">পাঠ্য বিষয়<\/p>/, 'academics eyebrow is in Bengali');
+  assert.doesNotMatch(academicsJs, /<p class="eyebrow">Subjects<\/p>/, 'English Subjects eyebrow is gone');
+});
+
+test('Payment Counter panel has 3D hero cards and horizontal toggle action cards across all 5 views', () => {
+  const payHtml = read('payment.html');
+  assert.match(payHtml, /<body class="pay-body payment-reference">/, 'payment body carries .payment-reference');
+  for (const panel of ['home', 'students', 'payment', 'reports', 'more']) {
+    const start = payHtml.indexOf(`data-pay-panel="${panel}"`);
+    const next = payHtml.indexOf('data-pay-panel="', start + 15);
+    const chunk = payHtml.slice(start, next === -1 ? undefined : next);
+    assert.match(chunk, /teacher-hero-scene/, `payment ${panel} has a 3D hero scene`);
+    assert.match(chunk, /data-pay-hero-art/, `payment ${panel} has a 3D hero art image`);
+    assert.match(chunk, /teacher-hero-date-pill/, `payment ${panel} has top-right weekday·date pill`);
+    assert.match(chunk, /teacher-hero-glint/, `payment ${panel} has top-right sun/moon glint`);
+    assert.match(chunk, /data-pay-hero-advice=/, `payment ${panel} has daily rotating advice`);
+  }
+  for (const toggle of ['today-list', 'student-search', 'payment-entry', 'select-student', 'reports-builder']) {
+    assert.match(payHtml, new RegExp(`data-pay-toggle="${toggle}"`), `payment has action card ${toggle}`);
+  }
+});
+
+test('strict cross-panel isolation: no portal leaks another portal shell, route attribute, or body class', () => {
+  const portals = {
+    student: { html: read('student.html'), bodyClass: 'student-reference', shell: 'appShell', ownAttr: 'data-view=' },
+    teacher: { html: read('teacher.html'), bodyClass: 'teacher-reference', shell: 'teacherShell', ownAttr: 'data-teacher-view=' },
+    manager: { html: read('manager.html'), bodyClass: 'manager-reference', shell: 'managerShell', ownAttr: 'data-manager-view=' },
+    admin:   { html: read('admin.html'),   bodyClass: 'admin-reference',   shell: 'adminShell',   ownAttr: 'data-admin-view=' },
+    payment: { html: read('payment.html'), bodyClass: 'payment-reference', shell: 'payShell', ownAttr: 'data-pay-section=' }
+  };
+  for (const [role, info] of Object.entries(portals)) {
+    assert.ok(info.html.includes(info.bodyClass), `${role}.html carries ${info.bodyClass}`);
+    assert.ok(info.html.includes(`id="${info.shell}"`), `${role}.html carries #${info.shell}`);
+    assert.ok(info.html.includes(info.ownAttr), `${role}.html carries ${info.ownAttr}`);
+    for (const [otherRole, otherInfo] of Object.entries(portals)) {
+      if (otherRole === role) continue;
+      assert.ok(!info.html.includes(otherInfo.bodyClass), `${role}.html never carries ${otherInfo.bodyClass}`);
+      assert.ok(!info.html.includes(`id="${otherInfo.shell}"`), `${role}.html never carries #${otherInfo.shell}`);
+      assert.ok(!info.html.includes(otherInfo.ownAttr), `${role}.html never carries ${otherInfo.ownAttr}`);
+    }
+  }
+  const walletCss = read('css/ui-wallet.css');
+  const teacherCss = read('css/teacher-panel.css');
+  assert.ok(walletCss.includes('body.manager-reference .manager-student-scopes [data-student-scope="all"] { order: 10; }'), 'manager multi-card views open directly below clicked card');
+  assert.ok(walletCss.includes('body.admin-reference .admin-view[data-view-panel="academics"] .admin-action-stack'), 'admin multi-card views open directly below clicked card');
+  assert.ok(walletCss.includes('body.payment-reference #payHomeCard [data-pay-toggle="today-list"] { order: 20; }'), 'payment views open directly below clicked card');
+  assert.ok(teacherCss.includes('#teacherOnlineExams[data-exam-tile-open=new-mcq] #teacherExamWorkspace') && teacherCss.includes('display:contents'), 'teacher exam doors open directly below clicked card');
+});
+
+

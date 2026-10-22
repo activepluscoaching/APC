@@ -21,7 +21,7 @@ import { initFixedShell } from './fixed-shell.js';
 import { registerServiceWorker } from './service-worker.js';
 import { mountReports, refreshReports } from './reports.js';
 import { teachingRepository, DEMO_TEACHER, ACTIVITY_TYPES, PROGRESS_LABELS, escapeText as esc, todayISO, displayDate, safeResourceURL, matchesStudent, watchTeachingData } from './teaching-data.js';
-import { pickTeacherAdvice } from './teacher-daily-advice.js';
+import { pickTeacherAdvice, pickTeacherSectionAdvice } from './teacher-daily-advice.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -67,6 +67,14 @@ function pendingNote(a) {
   if (a.type === 'homework') return stats.missing ? `${bn(stats.missing)} জনের অবস্থা বাকি` : '';
   return stats.missing ? `${bn(stats.missing)} জনের উপস্থিতি বাকি` : '';
 }
+/** Only published items that genuinely wait on the teacher count toward nav/hub badges. */
+function isActionablePending(a) {
+  if (!a || a.status !== 'published') return false;
+  if (['suggestion', 'exam'].includes(a.type)) return false;
+  const stats = progressStats(a);
+  if (a.type === 'homework') return stats.toReview > 0;
+  return isDue(a) && stats.missing > 0;
+}
 const assignedClasses = () => [...new Set(state.assignments.map(item => item.className))];
 const classOptions = value => assignedClasses().map(c => `<option value="${esc(c)}" ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('');
 function activityMeta(a) {
@@ -105,11 +113,11 @@ const dayLabel = date => {
 };
 function renderTypeCounts() {
   const records = own();
-  let pendingTotal = 0;
+  let pendingAcademic = 0;
   Object.keys(ACTIVITY_TYPES).forEach(type => {
     const all = records.filter(a => a.type === type);
-    const waiting = all.filter(a => pendingNote(a)).length;
-    pendingTotal += waiting;
+    const waiting = all.filter(isActionablePending).length;
+    if (type !== 'routine') pendingAcademic += waiting;
     const tab = $('#tabCount-' + type);
     if (tab) tab.textContent = all.length ? bn(all.length) : '';
     /* The nav dot sits on the seat that owns the work: attendance on রুটিন,
@@ -120,7 +128,43 @@ function renderTypeCounts() {
     if (card && type !== 'exam') card.dataset.waiting = waiting ? '1' : '';
   });
   const academicDot = $('#navDot-academic');
-  if (academicDot) { academicDot.hidden = !pendingTotal; academicDot.textContent = bn(pendingTotal); }
+  const routineDot = $('#navDot-routine');
+  if (academicDot) {
+    academicDot.hidden = !pendingAcademic || Boolean(routineDot && !routineDot.hidden);
+    academicDot.textContent = bn(pendingAcademic);
+  }
+}
+function syncHeroArtMode() {
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+  const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark' || Boolean($('#darkModeToggle')?.checked);
+  const isDay = !isDarkTheme && hour >= 6 && hour < 18;
+  $$('#teacherHeroGlint, [data-teacher-hero-glint]').forEach(glint => {
+    glint.setAttribute('href', `assets/icons/ai-3d/${isDay ? 'sun' : 'moon'}.svg`);
+    const glintSvg = glint.closest('svg');
+    if (glintSvg) glintSvg.setAttribute('data-icon', isDay ? 'sun' : 'moon');
+  });
+  const mode = isDay ? 'day' : 'night';
+  $$('.teacher-home-intro, .teacher-sub-hero').forEach(card => {
+    card.dataset.heroMode = mode;
+  });
+  $$('#teacherHeroArt, [data-teacher-hero-art]').forEach(heroArt => {
+    if (!heroArt.__apcErrorWired) {
+      heroArt.__apcErrorWired = true;
+      heroArt.addEventListener('error', () => { heroArt.classList.add('is-broken'); });
+    }
+    const cardKey = heroArt.dataset.heroCard || '';
+    const nextSrc = cardKey
+      ? `assets/images/teacher-hero/${cardKey}-${mode}.webp`
+      : `assets/teacher-hero/teacher-hero-${mode}.webp`;
+    if (heroArt.dataset.mode !== mode || heroArt.getAttribute('src') !== nextSrc) {
+      heroArt.classList.add('is-fading');
+      setTimeout(() => {
+        heroArt.setAttribute('src', nextSrc);
+        heroArt.dataset.mode = mode;
+        heroArt.classList.remove('is-fading', 'is-broken');
+      }, 180);
+    }
+  });
 }
 function renderHome() {
   const hasAssignments = state.assignments.length > 0;
@@ -129,45 +173,43 @@ function renderHome() {
      owns those states), and never from a stale snapshot: the pickers, the
      profile and every publish gate read the same assignment rows. */
   $('#teacherAssignmentNotice').hidden = hasAssignments || !state.ready;
-  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  /* The hero follows the time of day twice over: the picture swaps between the
-     day and the night classroom, and this glass chip is the ONLY sun/moon on the
-     card (the artwork keeps its sky free of celestial bodies, owner note
-     2026-10-21 — two suns showed at once). The time-of-day greeting and the
-     "শিক্ষক প্যানেল" subline were removed from the hero by owner order; only the
-     avatar initial, glint and welcome stay. */
-  const isDay = hour >= 6 && hour < 18;
-  const glint = $('#teacherHeroGlint');
-  if (glint) {
-    glint.setAttribute('href', `assets/icons/ai-3d/${isDay ? 'sun' : 'moon'}.svg`);
-    const glintSvg = glint.closest('svg');
-    if (glintSvg) glintSvg.setAttribute('data-icon', isDay ? 'sun' : 'moon');
-  }
-  /* Swap the hero illustration only when the mode actually changes; a short
-     fade hides the src switch. Both files are precached, so the swap is instant
-     and works offline. Render runs on every data event, hence the mode guard. */
-  const heroArt = $('#teacherHeroArt');
-  if (heroArt) {
-    const mode = isDay ? 'day' : 'night';
-    if (heroArt.dataset.mode !== mode) {
-      heroArt.classList.add('is-fading');
-      setTimeout(() => {
-        heroArt.setAttribute('src', `assets/teacher-hero/teacher-hero-${mode}.webp`);
-        heroArt.dataset.mode = mode;
-        heroArt.classList.remove('is-fading');
-      }, 220);
-    }
-  }
+  syncHeroArtMode();
   /* শিক্ষকের নাম হিরো কার্ডে শুধু শিরোনাম ও অ্যাভাটার-অক্ষরে; টপবারে নামের
      পুনরাবৃত্তি নেই। ভূমিকা ও শিক্ষক আইডি এখন শুধু "আমার প্রোফাইল" স্ক্রিনে
      (renderTeacherProfile) — হিরোর পরিচিতি সাব-কার্ডটি মালিক-নির্দেশে বাদ। */
   const name = String(state.teacher?.fullName || '').trim();
   $('#teacherHomeTitle').textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম';
   if ($('#teacherHomeInitial')) $('#teacherHomeInitial').textContent = name.charAt(0) || 'শি';
+  const now = new Date();
+  let weekday = '';
+  try {
+    weekday = new Intl.DateTimeFormat('bn-BD', { timeZone: 'Asia/Dhaka', weekday: 'long' }).format(now);
+  } catch {
+    weekday = new Intl.DateTimeFormat('bn-BD', { weekday: 'long' }).format(now);
+  }
+  const datePillText = `${weekday ? `${weekday} · ` : ''}${displayDate(todayISO())}`;
+  $$('[data-teacher-hero-date], #teacherHomeDate, #teacherClassesDate, #teacherExamsDate, #teacherMoreDate').forEach(el => { el.textContent = datePillText; });
   /* প্রতিদিন নতুন পরামর্শ: একই ঢাকা-দিনে একই লাইন, পরদিন নিজে থেকে বদলায়।
      কোনো স্টোরেজ/নেটওয়ার্ক নেই — বিশুদ্ধ তারিখ-ভিত্তিক নির্বাচন। */
   const warmLine = $('.teacher-hero-warm');
   if (warmLine) warmLine.textContent = pickTeacherAdvice();
+  $$('[data-teacher-hero-advice]').forEach(el => {
+    const section = el.dataset.teacherHeroAdvice || 'home';
+    if (section === 'home') {
+      el.textContent = pickTeacherAdvice();
+    } else if (section === 'records') {
+      el.textContent = pickTeacherSectionAdvice(state.view || 'homework');
+    } else {
+      el.textContent = pickTeacherSectionAdvice(section);
+    }
+  });
+  const themeStatus = $('[data-more-theme-status]');
+  if (themeStatus) {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    themeStatus.textContent = isDark
+      ? 'বর্তমানে গাঢ় থিম চালু আছে — ট্যাপ করে দিন মোডে যান'
+      : 'বর্তমানে দিন মোড চালু আছে — ট্যাপ করে গাঢ় থিম চালু করুন';
+  }
   /* মালিকের নির্দেশ (২০২৬-১০-২১): হোম থেকে "আজকের সারাংশ" KPI সারফেস বাদ।
      একই সংখ্যাগুলো এখনও কর্মক্ষেত্রেই হিসাব হয় (পেন্ডিং নেভি ডট renderTypeCounts-এ,
      পরীক্ষা তার নিজস্ব স্ক্রিনে) — শুধু হোম-কার্ড তিনটি সরানো হয়েছে। */
@@ -184,11 +226,21 @@ function renderHome() {
 function renderRecords() {
   if (!ACTIVITY_TYPES[state.view]) return;
   $('#teacherRecordsTitle').textContent = ACTIVITY_TYPES[state.view].plural;
+  const recordAdvice = $('#teacherRecords [data-teacher-hero-advice="records"]');
+  if (recordAdvice) recordAdvice.textContent = pickTeacherSectionAdvice(state.view || 'homework');
+  const recordHeroArt = $('#teacherRecords [data-teacher-hero-art]');
+  if (recordHeroArt) {
+    recordHeroArt.dataset.heroCard = state.view === 'routine' ? 'attendance' : state.view === 'exam' ? 'exam' : 'homework';
+    syncHeroArtMode();
+  }
   const status = $('#teacherStatusFilter');
   if (status && status.tagName === 'SELECT') status.value = state.status;
   $('#teacherNewActivity').hidden = state.view === 'exam';
   if ($('#teacherNewActivity') && ACTIVITY_TYPES[state.view]) {
     $('#teacherNewActivity').textContent = `+ ${ACTIVITY_TYPES[state.view].label}`;
+  }
+  if ($('#teacherRecordsActionTitle') && ACTIVITY_TYPES[state.view]) {
+    $('#teacherRecordsActionTitle').textContent = `নতুন ${ACTIVITY_TYPES[state.view].label} যোগ করুন`;
   }
   $('#teacherOnlineExamHint').hidden = state.view !== 'exam';
   const query = $('#teacherRecordSearch').value.trim().toLocaleLowerCase();
@@ -233,29 +285,20 @@ function renderTeacherClasses() {
     return;
   }
   if (count) count.textContent = state.assignments.length ? `${bn(state.assignments.length)}টি ক্লাস` : '—';
-  /* মালিকের নির্দেশ (২০২৬-১০-২১): ক্লাসের প্রাথমিক তথ্য খোলা থাকবে না। প্রতিটি
-     ক্লাস এখন একটি সংক্ষিপ্ত সারি — নাম, গ্রুপ, বিষয়-সংখ্যা ও শিক্ষার্থী-সংখ্যা
-     এক নজরে; বিষয়ের তালিকা ও "এই ক্লাসের কাজ দেখুন" বাটন শুধু সারিতে ট্যাপ
-     করলে খোলে (নেটিভ <details>, তাই কিবোর্ড ও স্ক্রিন-রিডারেও কাজ করে)। */
   host.innerHTML = state.assignments.map(item => {
     const subjects = (item.subjects && item.subjects.length ? item.subjects : [item.subject]).filter(Boolean);
-    const students = state.students.filter(student => student.className === item.className && (!item.group || student.group === item.group));
-    const initial = String(item.className || 'ক').trim().charAt(0) || 'ক';
-    return `<article class="teaching-card teacher-class-card">
-          <details class="teacher-class-details">
-            <summary class="teacher-class-summary">
-              <span class="teacher-class-mark" aria-hidden="true">${esc(initial)}</span>
-              <span class="teacher-class-heading"><h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3><small>${bn(subjects.length)}টি বিষয় · ${bn(students.length)} জন শিক্ষার্থী</small></span>
-              <span class="teacher-class-chevron" aria-hidden="true"></span>
-            </summary>
-            <div class="teacher-class-body">
-              <dl class="teacher-class-facts">
-                <div><dt>বিষয়</dt><dd>${esc(subjects.join(', ') || '—')}</dd></div>
-                <div><dt>শিক্ষার্থী</dt><dd>${bn(students.length)} জন অনুমোদিত</dd></div>
-              </dl>
-              <button class="mini-btn teacher-class-open" type="button" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">এই ক্লাসের কাজ দেখুন</button>
+    const subjectChips = subjects.length
+      ? subjects.map(sub => `<span class="teacher-class-subject-chip">${esc(sub)}</span>`).join('')
+      : '<span class="teacher-class-subject-chip">—</span>';
+    return `<article class="teaching-card teacher-class-card" data-teacher-open-class="${esc(item.className)}" data-teacher-open-group="${esc(item.group || '')}">
+          <div class="teacher-class-hero-main">
+            <div class="teacher-class-heading">
+              <h3>${esc(item.className)}${item.group ? ` • ${esc(item.group)}` : ''}</h3>
+              <small>ট্যাপ করে এই ক্লাসের কাজে যান</small>
             </div>
-          </details>
+            <div class="teacher-class-subjects" aria-label="বিষয়সমূহ" hidden>${subjectChips}</div>
+          </div>
+          <span class="teacher-class-hero-art" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="classes" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/classes.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
         </article>`;
   }).join('') || '<p class="teacher-empty">এখনো কোনো ক্লাস অ্যাসাইন করা হয়নি। অ্যাসাইন হলে এখানে আপনার ক্লাস ও বিষয় দেখা যাবে; কর্তৃপক্ষ সঙ্গে যোগাযোগ করুন।</p>';
 }
@@ -388,7 +431,7 @@ function renderAcademicReports() {
     const attendance = classRecords.filter(item => item.type === 'routine').reduce((sum, item) => sum + Object.keys(item.progress || {}).length, 0);
     const marks = classRecords.filter(item => item.type === 'exam').reduce((sum, item) => sum + Object.keys(item.progress || {}).length, 0);
     const assignments = classRecords.filter(item => item.type === 'homework').length;
-    return `<article class="teaching-card"><h3>${esc(className)}</h3><p>সংরক্ষিত attendance entry: ${bn(attendance)}</p><p>নথিভুক্ত marks entry: ${bn(marks)}</p><p>Assignment activity: ${bn(assignments)}</p></article>`;
+    return `<article class="teaching-card"><h3>${esc(className)}</h3><p>সংরক্ষিত উপস্থিতি এন্ট্রি: ${bn(attendance)}</p><p>নথিভুক্ত নম্বর এন্ট্রি: ${bn(marks)}</p><p>বাড়ির কাজ কার্যক্রম: ${bn(assignments)}</p></article>`;
   });
   host.innerHTML = rows.join('') || '<p class="teacher-empty">রিপোর্ট দেখানোর মতো নির্ধারিত শ্রেণি নেই। এখানে শুধু এই ব্রাউজারে সংরক্ষিত একাডেমিক কাজ গণনা করা হয়; এটি পূর্ণাঙ্গ সার্ভার-রিপোর্ট নয়।</p>';
 }
@@ -397,7 +440,7 @@ function renderTeacherProfile() {
   const account = state.teacher || {};
   const teacherId = String(account.staffId && account.kind !== 'system' ? account.staffId : currentTeacherId());
   host.innerHTML = `<div class="manager-profile-list"><div><small>নাম</small><strong>${esc(account.fullName || '—')}</strong></div><div><small>শিক্ষক আইডি</small><strong id="teacherProfileId">${esc(teacherId)}</strong></div><div><small>ইউজারনেম</small><strong>${esc(account.username || '—')}</strong></div><div><small>যোগাযোগ</small><strong>${esc(account.mobile || '—')}</strong></div><div><small>ভূমিকা</small><strong>শিক্ষক — একাডেমিক</strong></div><div><small>নির্ধারিত শ্রেণি/ব্যাচ</small><strong>${bn(state.assignments.length)}</strong></div></div>`;
-  host.insertAdjacentHTML('beforeend', '<div class="row-actions"><button class="admin-btn ghost" type="button" data-profile-edit>নিজের তথ্য সম্পাদনা</button></div>');
+  host.insertAdjacentHTML('beforeend', '<div class="row-actions"><button class="admin-btn primary" type="button" data-profile-edit>নিজের তথ্য সম্পাদনা</button><button class="admin-btn ghost" type="button" data-more-action="password">পাসওয়ার্ড পরিবর্তন</button></div>');
 }
 
 function renderCourseChapters() {
@@ -506,6 +549,11 @@ function setView(view) {
   state.view = view;
   const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
+  delete $('#teacherRecords')?.dataset.recordsOpen;
+  delete $('#teacherNotice')?.dataset.noticeOpen;
+  delete $('#teacherRoutine')?.dataset.routineOpen;
+  delete $('#teacherAcademicReports')?.dataset.reportsOpen;
+  delete $('#teacherCourses')?.dataset.coursesOpen;
   if (panel === 'teacherClasses') syncClassTabs('list');
   $$('.teacher-type-tabs [data-type-tab]').forEach(el => {
     const active = el.dataset.typeTab === view;
@@ -524,7 +572,14 @@ function setView(view) {
     if (active) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
   });
   // Returning to the Teacher's Settings screen always opens the group menu.
-  if (view === 'profile') resetSettingsHub('[data-settings-hub="teacher"]');
+  if (view === 'profile') {
+    resetSettingsHub('[data-settings-hub="teacher"]');
+    $$('#teacherSettingsTabs [data-settings-tab]').forEach(btn => {
+      const active = btn.dataset.settingsTab === 'all';
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
   paintTeacherExam();
   $('#teacherMain').scrollTo({ top: 0, behavior: 'instant' }); render();
   // The open page lives in the URL, so a refresh lands back on it.
@@ -550,9 +605,9 @@ async function reload() {
       select.innerHTML = `<option value="all">সব নির্ধারিত শ্রেণি</option>${classOptions(selected)}`;
       if ([...select.options].some(option => option.value === selected)) select.value = selected; else select.value = 'all';
     });
-    $('#teacherDataError').hidden = true; render(); return true;
+    if ($('#teacherDataError')) $('#teacherDataError').hidden = true; render(); return true;
   } catch {
-    state.ready = false; $('#teacherDataError').hidden = false; renderTeacherClasses(); return false;
+    state.ready = false; if ($('#teacherDataError')) $('#teacherDataError').hidden = false; if ($('#teacherClassList')) renderTeacherClasses(); return false;
   }
 }
 function openModal(title, html) {
@@ -561,6 +616,7 @@ function openModal(title, html) {
   $('#teacherModalClose').setAttribute('aria-label', 'বন্ধ করুন');
   $('#teacherModalTitle').textContent = title;
   $('#teacherModalBody').innerHTML = html;
+  syncAllDateInputs($('#teacherModalBody'));
   $('#teacherModalBackdrop').hidden = false; document.body.classList.add('admin-modal-open');
   $('#teacherModalBackdrop .admin-modal').scrollTop = 0;
   $('#teacherModalClose').focus();
@@ -816,12 +872,24 @@ const EXAM_SCREENS = Object.freeze({
 });
 function paintTeacherExam() {
   const hub = $('#teacherExamHub');
+  const actions = $('#teacherExamActions');
   const workspace = $('#teacherExamWorkspace');
+  const examsView = $('#teacherOnlineExams');
   if (!hub || !workspace) return;
   const screen = state.view === 'online-exams' || state.view === 'exam' ? state.examScreen : '';
   const open = Boolean(screen);
   hub.hidden = open;
+  if (actions) actions.hidden = open;
   workspace.hidden = !open;
+  if (examsView) {
+    if (open && (state.examTileKey || screen)) examsView.dataset.examTileOpen = state.examTileKey || screen;
+    else delete examsView.dataset.examTileOpen;
+  }
+  $$('#teacherOnlineExams [data-teacher-exam]').forEach(btn => {
+    const active = Boolean(open && btn.dataset.teacherExam === (state.examTileKey || screen));
+    btn.classList.toggle('is-open', active);
+    btn.setAttribute('aria-expanded', active ? 'true' : 'false');
+  });
   if (open) examWorkspace?.open?.(screen);
 }
 function renderAcademic() {
@@ -830,7 +898,7 @@ function renderAcademic() {
   const classes = assignedClasses();
   host.textContent = classes.length
     ? `আপনার নির্ধারিত শ্রেণি: ${classes.join(' • ')} — এই শ্রেণি/বিষয়ের কাজ এখানে যোগ হবে।`
-    : 'Manager এখনো কোনো class/batch assignment দেননি। Assignment পেলে একাডেমিক কাজ খুলে যাবে।';
+    : 'ম্যানেজার এখনো কোনো শ্রেণি/ব্যাচ নির্ধারণ করেননি। নির্ধারণ পেলে একাডেমিক কাজ খুলে যাবে।';
   const records = own();
   const counts = {
     homework: records.filter(a => a.type === 'homework').length,
@@ -840,7 +908,7 @@ function renderAcademic() {
   Object.entries(counts).forEach(([key, value]) => {
     const node = $(`[data-academic-count="${key}"]`);
     if (!node) return;
-    const waiting = records.filter(a => a.type === key && pendingNote(a)).length;
+    const waiting = records.filter(a => a.type === key && isActionablePending(a)).length;
     /* The card shows what is waiting on the teacher first, the total count second. */
     node.textContent = waiting ? `${bn(waiting)} বাকি` : value ? bn(value) : '';
     node.classList.toggle('is-pending', Boolean(waiting));
@@ -991,9 +1059,17 @@ async function showTeacherShell() {
      and theme switch keep their homes; the hub adds the notification group and
      what the Teacher page did not have (app install, session, data). */
   mountSettingsHub({
-    mount: '#teacherProfile',
+    mount: '#teacherSettingsHub',
     role: 'teacher',
-    actions: { logout: () => { clearStaffSession('teacher'); goToLoginPage(); } },
+    actions: {
+      profile: () => {
+        const profileSection = $('#teacherProfile');
+        if (profileSection) profileSection.dataset.profileMode = 'profile';
+        if ($('#teacherProfileTitle')) $('#teacherProfileTitle').textContent = 'আমার প্রোফাইল';
+        $('#teacherProfileCard [data-profile-edit]')?.click();
+      },
+      logout: () => { clearStaffSession('teacher'); goToLoginPage(); }
+    },
     session: { value: 'ডিভাইস-বাউন্ড সেশন', hint: 'লগইন এই ডিভাইসেই বাঁধা' }
   });
   // পড়াশোনা পরিচালনা করুন — content for the Teacher's own class+subject only.
@@ -1014,6 +1090,7 @@ async function showTeacherShell() {
     toast: message => toast(message)
   });
   watchOwnPanelSession('teacher');
+  window.dispatchEvent(new Event('apc-session-ready'));
   return loaded;
 }
 /** The content editor is mounted once; its own paint() keeps it current. */
@@ -1046,6 +1123,7 @@ $('#teacherNewActivity').addEventListener('click', () => showEditor(state.view))
 $('.teacher-type-tabs')?.addEventListener('click', event => {
   const tab = event.target.closest('[data-type-tab]'); if (!tab) return;
   state.recordLimit = 15; setView(tab.dataset.typeTab);
+  if ($('#teacherRecords')) $('#teacherRecords').dataset.recordsOpen = '1';
 });
 $('#teacherRecordMore').addEventListener('click', () => { state.recordLimit += 15; renderRecords(); });
 /* আমার ক্লাস: every নির্ধারিত শ্রেণি opens its own work. The list is one row per
@@ -1065,6 +1143,7 @@ $('#teacherClassList')?.addEventListener('click', event => {
   /* The records screen, narrowed to this class: its type tabs are the teacher's
      existing হোমওয়ার্ক / সাজেশন / উপজাতি / পরীক্ষা workflow. */
   setView('homework');
+  if ($('#teacherRecords')) $('#teacherRecords').dataset.recordsOpen = '1';
 });
 document.addEventListener('click', event => {
   if (state.busy) return;
@@ -1072,9 +1151,150 @@ document.addEventListener('click', event => {
   if (classTab && classTab.hasAttribute('data-teacher-view')) syncClassTabs('routine');
   const examTile = event.target.closest('[data-teacher-exam]');
   if (examTile) {
-    state.examScreen = EXAM_SCREENS[examTile.dataset.teacherExam] || 'home';
-    setView('online-exams');
+    const key = examTile.dataset.teacherExam || '';
+    const nextScreen = EXAM_SCREENS[key] || 'home';
+    const inExamsView = Boolean(examTile.closest('#teacherOnlineExams'));
+    const alreadyOpen = inExamsView && (state.view === 'online-exams' || state.view === 'exam') && Boolean(state.examScreen) && (state.examTileKey || state.examScreen) === key;
+    if (alreadyOpen) {
+      state.examScreen = '';
+      state.examTileKey = '';
+      paintTeacherExam();
+    } else {
+      state.examScreen = nextScreen;
+      state.examTileKey = key;
+      setView('online-exams');
+    }
     return;
+  }
+  const recordsAction = event.target.closest('[data-records-action]');
+  if (recordsAction) {
+    if (recordsAction.dataset.recordsAction === 'create') {
+      $('#teacherNewActivity')?.click();
+    } else if (recordsAction.dataset.recordsAction === 'list') {
+      const rec = $('#teacherRecords');
+      if (rec) {
+        if (rec.dataset.recordsOpen === '1') delete rec.dataset.recordsOpen;
+        else rec.dataset.recordsOpen = '1';
+      }
+    }
+    return;
+  }
+  const noticeOpenBtn = event.target.closest('[data-notice-action]');
+  if (noticeOpenBtn && noticeOpenBtn.dataset.noticeAction === 'list') {
+    const sec = $('#teacherNotice');
+    if (sec) {
+      if (sec.dataset.noticeOpen === '1') delete sec.dataset.noticeOpen;
+      else sec.dataset.noticeOpen = '1';
+    }
+    return;
+  }
+  const routineAction = event.target.closest('[data-routine-action]');
+  if (routineAction && routineAction.dataset.routineAction === 'list') {
+    const sec = $('#teacherRoutine');
+    if (sec) {
+      if (sec.dataset.routineOpen === '1') delete sec.dataset.routineOpen;
+      else sec.dataset.routineOpen = '1';
+    }
+    return;
+  }
+  if (event.target.closest('.teacher-routine-tabs [data-routine-tab]')) {
+    const sec = $('#teacherRoutine');
+    if (sec) sec.dataset.routineOpen = '1';
+  }
+  const reportsAction = event.target.closest('[data-reports-action]');
+  if (reportsAction) {
+    const sec = $('#teacherAcademicReports');
+    const mode = reportsAction.dataset.reportsAction;
+    if (sec && mode) {
+      if (sec.dataset.reportsOpen === mode) delete sec.dataset.reportsOpen;
+      else sec.dataset.reportsOpen = mode;
+    }
+    return;
+  }
+  const coursesAction = event.target.closest('[data-courses-action]');
+  if (coursesAction) {
+    const sec = $('#teacherCourses');
+    const mode = coursesAction.dataset.coursesAction;
+    if (mode === 'new') {
+      if (sec) sec.dataset.coursesOpen = 'materials';
+      $('#teacherCourseEditor [data-ce-new]')?.click();
+    } else if (sec && mode) {
+      if (sec.dataset.coursesOpen === mode) delete sec.dataset.coursesOpen;
+      else sec.dataset.coursesOpen = mode;
+    }
+    return;
+  }
+  const settingsOpen = event.target.closest('[data-settings-open]');
+  if (settingsOpen) {
+    const targetKey = settingsOpen.dataset.settingsOpen || '';
+    const targetSection = $(`#teacherSettingsHub [data-settings-group="${targetKey}"]`);
+    const isNowOpen = Boolean(targetSection && !targetSection.hidden);
+    const openKey = isNowOpen ? targetKey : 'all';
+    const profileSection = $('#teacherProfile');
+    if (profileSection) profileSection.dataset.settingsTab = openKey;
+    $$('#teacherSettingsTabs [data-settings-tab]').forEach(btn => {
+      const active = btn.dataset.settingsTab === openKey;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    return;
+  }
+  const settingsTab = event.target.closest('#teacherSettingsTabs [data-settings-tab]');
+  if (settingsTab) {
+    const tabKey = settingsTab.dataset.settingsTab || 'all';
+    const profileSection = $('#teacherProfile');
+    if (profileSection) profileSection.dataset.settingsTab = tabKey;
+    const hub = $('#teacherSettingsHub');
+    if (typeof hub?.__apcShowSettingsGroup === 'function') {
+      hub.__apcShowSettingsGroup(tabKey === 'all' ? '' : tabKey);
+    }
+    $$('#teacherSettingsTabs [data-settings-tab]').forEach(btn => {
+      const active = btn.dataset.settingsTab === tabKey;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    return;
+  }
+  const moreAction = event.target.closest('[data-more-action]');
+  if (moreAction) {
+    const kind = moreAction.dataset.moreAction;
+    if (kind === 'password') {
+      openStaffPasswordDialog({ role: 'teacher', mode: 'change' });
+      return;
+    }
+    if (kind === 'settings') {
+      setView('profile');
+      const profileSection = $('#teacherProfile');
+      if (profileSection) {
+        profileSection.dataset.profileMode = 'settings';
+        profileSection.dataset.settingsTab = 'all';
+      }
+      $$('#teacherSettingsTabs [data-settings-tab]').forEach(btn => {
+        const active = btn.dataset.settingsTab === 'all';
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      if ($('#teacherProfileTitle')) $('#teacherProfileTitle').textContent = 'সেটিংস ও নোটিফিকেশন';
+      const adviceEl = $('#teacherProfile [data-teacher-hero-advice]');
+      if (adviceEl) adviceEl.textContent = pickTeacherSectionAdvice('settings');
+      return;
+    }
+    if (kind === 'theme') {
+      $('#darkModeToggle')?.click();
+      syncHeroArtMode();
+      const themeStatus = $('[data-more-theme-status]');
+      if (themeStatus) {
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        themeStatus.textContent = isDark
+          ? 'বর্তমানে গাঢ় থিম চালু আছে — ট্যাপ করে দিন মোডে যান'
+          : 'বর্তমানে দিন মোড চালু আছে — ট্যাপ করে গাঢ় থিম চালু করুন';
+      }
+      return;
+    }
+    if (kind === 'logout') {
+      $('#teacherExit')?.click();
+      return;
+    }
   }
   const nav = event.target.closest('[data-teacher-view]');
   /* Creation doors ("কাজ দিন" hub-এর "দিন" বাটন) গন্তব্য স্ক্রিনে নেভিগেট না
@@ -1085,8 +1305,35 @@ document.addEventListener('click', event => {
   if (create) { showEditor(create.dataset.newActivity); return; }
   if (event.target.closest('[data-new-notice]')) { showNoticeEditor(); return; }
   if (nav) {
-    if (nav.dataset.teacherView === 'exam' || nav.dataset.teacherView === 'online-exams') state.examScreen = '';
+    if (nav.closest('#teacherOnlineExams .teacher-home-intro') && state.examScreen) {
+      state.examScreen = '';
+      paintTeacherExam();
+      return;
+    }
+    if (nav.dataset.teacherView === 'exam' || nav.dataset.teacherView === 'online-exams') { state.examScreen = ''; state.examTileKey = ''; }
     setView(nav.dataset.teacherView);
+    if (nav.dataset.teacherView === 'profile') {
+      const profileSection = $('#teacherProfile');
+      const isSettings = nav.dataset.moreOpen === 'settings';
+      if (profileSection) {
+        profileSection.dataset.profileMode = isSettings ? 'settings' : 'profile';
+        if (isSettings) profileSection.dataset.settingsTab = 'all';
+      }
+      if (isSettings) {
+        $$('#teacherSettingsTabs [data-settings-tab]').forEach(btn => {
+          const active = btn.dataset.settingsTab === 'all';
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+      if ($('#teacherProfileTitle')) {
+        $('#teacherProfileTitle').textContent = isSettings ? 'সেটিংস ও নোটিফিকেশন' : 'আমার প্রোফাইল';
+      }
+      const adviceEl = $('#teacherProfile [data-teacher-hero-advice]');
+      if (adviceEl) {
+        adviceEl.textContent = pickTeacherSectionAdvice(isSettings ? 'settings' : 'profile');
+      }
+    }
   }
   const courseChBtn = event.target.closest('[data-course-ch-action]');
   if (courseChBtn) {
@@ -1170,6 +1417,48 @@ watchExams(() => {
   if (!state.ready) return;
   void examRepository.list({ role: 'teacher' }).then(db => { state.exams = db.exams || []; renderHome(); }).catch(() => { state.exams = null; renderHome(); });
 });
+
+function syncDateInputBn(input) {
+  if (!input || input.type !== 'date') return;
+  input.setAttribute('lang', 'bn-BD');
+  const raw = String(input.value || '').trim();
+  const next = raw ? displayDate(raw) : '';
+  if (input.dataset.dateBn !== next) input.dataset.dateBn = next;
+}
+function syncAllDateInputs(root = document) {
+  root.querySelectorAll?.('input[type="date"]').forEach(syncDateInputBn);
+}
+if (typeof window !== 'undefined' && window.HTMLInputElement) {
+  const desc = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+  if (desc?.get && desc?.set && !window.HTMLInputElement.prototype.__apcDateBnWired) {
+    Object.defineProperty(window.HTMLInputElement.prototype, '__apcDateBnWired', { value: true });
+    Object.defineProperty(window.HTMLInputElement.prototype, 'value', {
+      configurable: true,
+      enumerable: true,
+      get() { return desc.get.call(this); },
+      set(val) {
+        desc.set.call(this, val);
+        if (this.type === 'date') syncDateInputBn(this);
+      }
+    });
+  }
+  document.addEventListener('input', event => { if (event.target?.type === 'date') syncDateInputBn(event.target); });
+  document.addEventListener('change', event => { if (event.target?.type === 'date') syncDateInputBn(event.target); });
+  syncAllDateInputs();
+  if (typeof MutationObserver === 'function' && document.body) {
+    new MutationObserver(mutations => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          if (node.matches?.('input[type="date"]')) syncDateInputBn(node);
+          else syncAllDateInputs(node);
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver(() => syncHeroArtMode()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  }
+  $('#darkModeToggle')?.addEventListener('change', () => setTimeout(syncHeroArtMode, 0));
+}
 
 // An existing device-bound session opens the panel without asking again.
 /* One door per panel: no route of ours leaves teacher.html for another panel. */

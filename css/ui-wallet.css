@@ -4226,4 +4226,1786 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
   .course-rich-toolbar button { flex: 0 0 auto; }
   .course-rich-reading { font-size: 1rem; line-height: 1.85; }
 }
+
+/* 26 ── Unified Staff Portal Theme: Admin · Manager · Payment (Teacher Brother) ── */
+body.admin-reference,
+body.manager-reference,
+body.pay-body {
+  background-color: var(--portal-canvas-bg);
 }
+
+.admin-shell > .app-topbar,
+.manager-shell > .app-topbar,
+.pay-shell > .app-topbar {
+  background-color: var(--pay-hero-a);
+  background-image: var(--pay-hero-gradient);
+  border-bottom: 1px solid var(--pay-hero-line);
+}
+
+.admin-shell > .admin-bottom::before,
+.manager-shell > .admin-bottom::before,
+.pay-shell > .admin-bottom::before {
+  border-radius: 22px 22px 0 0;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--portal-border));
+  border-bottom: 0;
+}
+
+/* Head Hero Cards (Admin, Manager, Payment) — matching Teacher Home Intro */
+.admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro,
+.manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro,
+#payCounterHome .home-dashboard-intro.payment-home-intro {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  min-height: 224px;
+  margin: 2px 0 16px;
+  padding: 16px 18px;
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 24px;
+  background-color: var(--pay-hero-a);
+  background-image: var(--portal-hero-bg);
+  background-size: cover;
+  background-position: center 44%;
+  box-shadow: var(--portal-card-shadow-lift);
+  color: var(--pay-on-hero);
+}
+
+.admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro::after,
+.manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro::after,
+#payCounterHome .home-dashboard-intro.payment-home-intro::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background-color: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 46px 46px;
+  border: 1px solid color-mix(in srgb, var(--pay-on-hero) 34%, transparent);
+  box-shadow: var(--portal-hero-chip-shadow);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro::after {
+  background-image: url('../assets/icons/ai-3d/dashboard.svg');
+}
+.manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro::after {
+  background-image: url('../assets/icons/ai-3d/staff.svg');
+}
+#payCounterHome .home-dashboard-intro.payment-home-intro::after {
+  background-image: url('../assets/icons/ai-3d/wallet.svg');
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+  min-height: 0;
+  margin-top: auto;
+}
+
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .admin-hero-title,
+#payCounterHome .payment-home-intro .admin-hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  min-height: 188px;
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-icon,
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .admin-hero-icon,
+#payCounterHome .payment-home-intro .admin-hero-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pay-on-hero) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pay-on-hero) 42%, transparent);
+  color: var(--pay-on-hero);
+  box-shadow: var(--portal-hero-chip-shadow);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-date-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 240px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pay-on-hero) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pay-on-hero) 38%, transparent);
+  color: var(--pay-on-hero);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: var(--portal-hero-chip-shadow);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-weekday-label {
+  color: var(--pay-on-hero);
+  font-weight: 700;
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-date-pill {
+  position: static;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pay-on-hero);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .admin-date-pill {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  max-width: 196px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pay-on-hero) 36%, transparent);
+  color: var(--pay-on-hero);
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .pay-portal-heading,
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .pay-portal-heading,
+#payCounterHome .payment-home-intro .pay-portal-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: auto;
+  padding-right: 76px;
+  min-width: 0;
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-advice {
+  margin: 2px 0 0;
+  max-width: 36ch;
+  color: color-mix(in srgb, var(--pay-on-hero) 92%, transparent);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.55;
+  text-shadow: var(--portal-hero-sub-shadow);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .pay-portal-kicker,
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .pay-portal-kicker,
+#payCounterHome .payment-home-intro .pay-portal-kicker {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pay-on-hero) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pay-on-hero) 32%, transparent);
+  color: var(--pay-on-hero);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-title h1,
+.manager-view[data-view-panel="dashboard"] .manager-home-intro h1,
+#payCounterHome .payment-home-intro .portal-hero-title {
+  margin: 0;
+  color: var(--pay-on-hero);
+  font-size: clamp(20px, 5.5vw, 25px);
+  font-weight: 750;
+  line-height: 1.32;
+  text-shadow: var(--portal-hero-text-shadow);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-welcome {
+  margin: 0;
+  color: var(--pay-on-hero-soft);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: var(--portal-hero-sub-shadow);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-home-intro .pay-portal-heading[data-hero-sub]::after,
+.manager-view[data-view-panel="dashboard"] .manager-home-intro .pay-portal-heading[data-hero-sub]::after,
+#payCounterHome .payment-home-intro .pay-portal-heading[data-hero-sub]::after {
+  content: attr(data-hero-sub);
+  display: block;
+  max-width: 34ch;
+  margin-top: 2px;
+  color: color-mix(in srgb, var(--pay-on-hero) 90%, transparent);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.55;
+  text-shadow: var(--portal-hero-sub-shadow);
+}
+
+/* Soft Summary Stat Grids Below Hero */
+.admin-view[data-view-panel="dashboard"] .admin-home-summary,
+.manager-view[data-view-panel="dashboard"] .manager-home-summary,
+.manager-view[data-view-panel="dashboard"] .manager-today-classes {
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid var(--portal-border);
+  border-radius: 20px;
+  background: var(--portal-surface);
+  box-shadow: var(--portal-card-shadow);
+}
+
+.admin-view[data-view-panel="dashboard"] .admin-stat-tile,
+.manager-view[data-view-panel="dashboard"] .admin-stat-tile {
+  border-radius: 16px;
+  border: 1px solid var(--portal-border);
+  background: var(--portal-surface-soft);
+  box-shadow: none;
+}
+
+/* Full-width Quick Access Hero Cards (Admin, Manager, Payment) */
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"],
+body.manager-reference #managerMoreHub,
+#payHomeCard .pay-home-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 6px 0 16px;
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile,
+body.manager-reference #managerMoreHub > .pay-tile {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 94px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 18px;
+  background: var(--portal-surface);
+  box-shadow: var(--portal-card-shadow);
+  text-align: left;
+  text-decoration: none;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .16s ease;
+}
+
+#payHomeCard .pay-home-actions > .pay-action-hero {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 94px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border: 1px solid var(--portal-border);
+  border-radius: 18px;
+  background: var(--portal-surface);
+  box-shadow: var(--portal-card-shadow);
+  color: var(--color-text);
+  text-align: left;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .16s ease;
+}
+
+#payHomeCard .pay-home-actions > .pay-action-hero:nth-child(2) {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card:nth-child(1),
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(1),
+body.manager-reference #managerMoreHub > .pay-tile:nth-child(1) {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+}
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card:nth-child(2),
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(2),
+body.manager-reference #managerMoreHub > .pay-tile:nth-child(2) {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
+}
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card:nth-child(3),
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(3),
+body.manager-reference #managerMoreHub > .pay-tile:nth-child(3) {
+  --tone: var(--tone-amber);
+  --tone-soft: var(--tone-amber-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(4),
+body.manager-reference #managerMoreHub > .pay-tile:nth-child(4) {
+  --tone: var(--tone-violet);
+  --tone-soft: var(--tone-violet-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(5) {
+  --tone: var(--tone-rose);
+  --tone-soft: var(--tone-rose-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(6) {
+  --tone: var(--tone-coral);
+  --tone-soft: var(--tone-coral-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(7) {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(8) {
+  --tone: var(--tone-blue);
+  --tone-soft: var(--tone-blue-soft);
+}
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile:nth-child(9) {
+  --tone: var(--tone-violet);
+  --tone-soft: var(--tone-violet-soft);
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile::before,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card::before,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile::before,
+body.manager-reference #managerMoreHub > .pay-tile::before,
+#payHomeCard .pay-home-actions > .pay-action-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile .admin-feature-label,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card .pay-tile-label,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile .pay-tile-label,
+body.manager-reference #managerMoreHub > .pay-tile .pay-tile-label,
+#payHomeCard .pay-home-actions .portal-action-title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.32;
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile .admin-feature-label[data-action-sub]::after,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card .pay-tile-label[data-action-sub]::after,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile .pay-tile-label[data-action-sub]::after,
+body.manager-reference #managerMoreHub > .pay-tile .pay-tile-label[data-action-sub]::after,
+#payHomeCard .pay-home-actions .portal-action-title[data-action-sub]::after {
+  content: attr(data-action-sub);
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile .admin-feature-icon,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card .pay-tile-icon,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile .pay-tile-icon,
+body.manager-reference #managerMoreHub > .pay-tile .pay-tile-icon,
+#payHomeCard .pay-home-actions .portal-action-art {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  margin: 0;
+  border-radius: 16px;
+  color: var(--tone);
+  background: var(--tone-soft);
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminFeatureGrid .admin-feature-tile .admin-feature-icon svg,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-portal-grid .admin-portal-card .pay-tile-icon svg,
+body.manager-reference .manager-view[data-view-panel="dashboard"] nav[aria-label="দ্রুত অ্যাক্সেস"] > .pay-tile .pay-tile-icon svg,
+body.manager-reference #managerMoreHub > .pay-tile .pay-tile-icon svg,
+#payHomeCard .pay-home-actions .portal-action-art svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Unified Sub-pages (.page-intro, .pay-back, .admin-card, .admin-more-item) */
+.admin-view > .page-intro,
+.manager-view > .page-intro {
+  margin-bottom: 14px;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.admin-view .pay-back,
+.manager-view .pay-back {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border);
+  background: var(--portal-surface);
+  color: var(--color-primary);
+  box-shadow: var(--portal-card-shadow);
+}
+
+.admin-view .admin-card,
+.manager-view .admin-card,
+.pay-panel .admin-card {
+  border-radius: 20px;
+  border: 1px solid var(--portal-border);
+  background: var(--portal-surface);
+  box-shadow: var(--portal-card-shadow);
+}
+
+/* 27 ── Manager Panel Full Teacher-Style Redesign (3D Hero + Action Cards + Toggle Workspaces) ── */
+body.manager-reference .manager-view[data-view-panel="dashboard"] .manager-home-summary,
+body.manager-reference .manager-view[data-view-panel="dashboard"] .manager-today-classes,
+body.manager-reference .manager-view[data-view-panel="dashboard"] > .pay-section-label {
+  display: none !important;
+}
+
+body.manager-reference .manager-view .teacher-home-intro,
+body.manager-reference .manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro,
+body.manager-reference .manager-view > .page-intro.manager-sub-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 0 !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  min-height: 212px !important;
+  margin: 2px 0 16px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 26px !important;
+  border: 1px solid var(--portal-hero-day-border) !important;
+  background-color: var(--portal-hero-day-bg) !important;
+  background-image: none !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+  color: var(--portal-hero-day-ink) !important;
+}
+
+body.manager-reference .manager-view .teacher-home-intro::after,
+body.manager-reference .manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro::after,
+body.manager-reference .manager-view > .page-intro.manager-sub-hero::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.manager-reference .manager-view .teacher-hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body.manager-reference .manager-view .teacher-hero-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+}
+
+body.manager-reference .manager-view .teacher-hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--portal-hero-day-scrim);
+}
+
+body.manager-reference .manager-view .teacher-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 212px !important;
+  padding: 16px 18px !important;
+}
+
+body.manager-reference .manager-view .teacher-hero-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+body.manager-reference .manager-view .teacher-hero-top-right {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+
+body.manager-reference .manager-view .teacher-home-intro .admin-hero-icon,
+body.manager-reference .manager-view .pay-back {
+  display: none !important;
+}
+
+body.manager-reference .manager-view .teacher-hero-glint {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--portal-hero-day-chip-bg);
+  border: 1px solid var(--portal-hero-day-chip-border);
+  color: var(--portal-hero-day-chip-ink);
+  box-shadow: var(--portal-hero-day-chip-shadow);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+body.manager-reference .manager-view .teacher-hero-date-pill,
+body.manager-reference .manager-view[data-view-panel="dashboard"] .manager-home-intro .admin-date-pill {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: var(--portal-hero-day-chip-bg) !important;
+  border: 1px solid var(--portal-hero-day-chip-border) !important;
+  color: var(--portal-hero-day-chip-ink) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  box-shadow: var(--portal-hero-day-chip-shadow) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+body.manager-reference .manager-view .teacher-hero-welcome {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  max-width: 62% !important;
+  margin-top: auto !important;
+  padding-right: 6px !important;
+  text-align: left !important;
+}
+
+body.manager-reference .manager-view .manager-hero-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+body.manager-reference .manager-view .teacher-home-intro h1,
+body.manager-reference .manager-view > .page-intro.manager-sub-hero h1 {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--portal-hero-day-ink) !important;
+  font-size: clamp(20px, 5.4vw, 24px) !important;
+  font-weight: 800 !important;
+  line-height: 1.32 !important;
+  text-align: left !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+body.manager-reference .manager-view h1[data-hero-title-ext]::after {
+  content: attr(data-hero-title-ext);
+}
+
+body.manager-reference .manager-view .teacher-hero-advice,
+body.manager-reference .manager-view > .page-intro:first-child p.teacher-hero-advice {
+  display: block !important;
+  margin: 0 !important;
+  max-width: 34ch !important;
+  color: var(--portal-hero-day-sub) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.58 !important;
+  text-align: left !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+/* Night Mode 3D Hero Cards on Manager Panel */
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-home-intro,
+html[data-theme="dark"] body.manager-reference .manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro,
+html[data-theme="dark"] body.manager-reference .manager-view > .page-intro.manager-sub-hero,
+body.manager-reference .manager-view .teacher-home-intro[data-hero-mode="night"],
+body.manager-reference .manager-view[data-view-panel="dashboard"] .home-dashboard-intro.manager-home-intro[data-hero-mode="night"],
+body.manager-reference .manager-view > .page-intro.manager-sub-hero[data-hero-mode="night"] {
+  background-color: var(--portal-hero-night-bg) !important;
+  border-color: var(--portal-hero-night-border) !important;
+  color: var(--portal-hero-night-ink) !important;
+}
+
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-hero-scene-scrim,
+body.manager-reference .manager-view [data-hero-mode="night"] .teacher-hero-scene-scrim {
+  background: var(--portal-hero-night-scrim) !important;
+}
+
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-home-intro h1,
+html[data-theme="dark"] body.manager-reference .manager-view > .page-intro.manager-sub-hero h1,
+body.manager-reference .manager-view [data-hero-mode="night"] h1 {
+  color: var(--portal-hero-night-ink) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-hero-advice,
+html[data-theme="dark"] body.manager-reference .manager-view > .page-intro:first-child p.teacher-hero-advice,
+body.manager-reference .manager-view [data-hero-mode="night"] .teacher-hero-advice,
+body.manager-reference .manager-view > .page-intro:first-child[data-hero-mode="night"] p.teacher-hero-advice {
+  color: var(--portal-hero-night-sub) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-hero-glint,
+html[data-theme="dark"] body.manager-reference .manager-view .teacher-hero-date-pill,
+html[data-theme="dark"] body.manager-reference .manager-view[data-view-panel="dashboard"] .manager-home-intro .admin-date-pill,
+body.manager-reference .manager-view [data-hero-mode="night"] .teacher-hero-glint,
+body.manager-reference .manager-view [data-hero-mode="night"] .teacher-hero-date-pill,
+body.manager-reference .manager-view[data-view-panel="dashboard"] .manager-home-intro[data-hero-mode="night"] .admin-date-pill {
+  background: var(--portal-hero-night-chip-bg) !important;
+  border-color: var(--portal-hero-night-chip-border) !important;
+  color: var(--portal-hero-night-chip-ink) !important;
+  box-shadow: var(--portal-hero-night-chip-shadow) !important;
+}
+
+/* Full-width Horizontal Action Cards across all Manager views (Left Text + Right 58x58 Icon) */
+body.manager-reference .teacher-home-actions,
+body.manager-reference .manager-action-stack,
+body.manager-reference #managerFinanceSegments,
+body.manager-reference [data-settings-hub="manager"] {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px !important;
+  margin: 6px 0 16px !important;
+}
+
+body.manager-reference .teacher-action-card,
+body.manager-reference .pay-tile.teacher-action-card {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 98px !important;
+  padding: 14px 16px !important;
+  overflow: hidden;
+  border: 1px solid var(--portal-border) !important;
+  border-radius: 18px !important;
+  background: var(--portal-surface) !important;
+  box-shadow: var(--portal-card-shadow) !important;
+  color: var(--color-text) !important;
+  text-align: left !important;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .16s ease;
+}
+
+/* When .pay-tile-icon precedes .pay-tile-label in DOM, order puts text on left (1) and icon on right (2) */
+body.manager-reference .teacher-action-card > .teacher-action-body,
+body.manager-reference .teacher-action-card > .pay-tile-label {
+  order: 1 !important;
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+body.manager-reference .teacher-action-card > .teacher-action-art,
+body.manager-reference .teacher-action-card > .pay-tile-icon {
+  order: 2 !important;
+  position: relative;
+  z-index: 1;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  color: var(--tone) !important;
+  background: var(--tone-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent) !important;
+}
+
+body.manager-reference .teacher-action-card > .teacher-action-art svg,
+body.manager-reference .teacher-action-card > .pay-tile-icon svg {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+body.manager-reference .teacher-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+
+body.manager-reference .teacher-action-card .teacher-action-title,
+body.manager-reference .teacher-action-card .pay-tile-label {
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.32 !important;
+  text-align: left !important;
+}
+
+body.manager-reference .teacher-action-card .teacher-action-title[data-action-sub]::after,
+body.manager-reference .teacher-action-card .pay-tile-label[data-action-sub]::after {
+  content: attr(data-action-sub);
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body.manager-reference .teacher-action-card > .academic-count {
+  position: absolute;
+  top: 10px;
+  right: 82px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 11px;
+  font-weight: 800;
+}
+body.manager-reference .teacher-action-card > .academic-count:empty {
+  display: none;
+}
+
+body.manager-reference .teacher-action-card:nth-child(6n+1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+body.manager-reference .teacher-action-card:nth-child(6n+2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+body.manager-reference .teacher-action-card:nth-child(6n+3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+body.manager-reference .teacher-action-card:nth-child(6n+4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+body.manager-reference .teacher-action-card:nth-child(6n+5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+body.manager-reference .teacher-action-card:nth-child(6n+6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
+
+body.manager-reference .teacher-action-card.is-accent,
+body.manager-reference .teacher-action-card:is(.active, .is-open, [aria-pressed="true"], [aria-expanded="true"]) {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--portal-border)) !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+}
+
+body.manager-reference .teacher-action-card.is-danger {
+  --tone: var(--color-danger);
+  --tone-soft: color-mix(in srgb, var(--color-danger) 12%, var(--portal-surface));
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--portal-border)) !important;
+}
+body.manager-reference .teacher-action-card.is-danger .teacher-action-title {
+  color: var(--color-danger) !important;
+}
+
+/* Default-hidden workspaces & forms across Manager views (open below clicked card) */
+body.manager-reference .manager-view[data-view-panel="students"]:not([data-students-open="1"]) #managerStudentsWorkspace,
+body.manager-reference .manager-view[data-view-panel="academic-records"]:not([data-academic-open="1"]) #managerAcademicRecordsWorkspace,
+body.manager-reference .manager-view[data-view-panel="classes"]:not([data-classes-open="list"]) #managerClassList,
+body.manager-reference .manager-view[data-view-panel="teachers"]:not([data-teachers-open="create"]) #managerTeacherAssignmentForm,
+body.manager-reference .manager-view[data-view-panel="teachers"]:not([data-teachers-open="list"]) #managerTeacherList,
+body.manager-reference .manager-view[data-view-panel="finance"]:not([data-finance-open="1"]) .manager-finance-overview,
+body.manager-reference .manager-view[data-view-panel="finance"]:not([data-finance-open="1"]) .manager-finance-segment,
+body.manager-reference .manager-view[data-view-panel="notices"]:not([data-notices-open="create"]) #managerNoticeForm,
+body.manager-reference .manager-view[data-view-panel="notices"]:not([data-notices-open="list"]) #managerNoticeList,
+body.manager-reference .manager-view[data-view-panel="routine-class"]:not([data-routine-open]) #managerRoutineDays,
+body.manager-reference .manager-view[data-view-panel="routine-class"]:not([data-routine-open="create"]) #managerRoutineForm,
+body.manager-reference .manager-view[data-view-panel="routine-class"]:not([data-routine-open="list"]) #managerRoutineList,
+body.manager-reference .manager-view[data-view-panel^="routine-"]:not([data-view-panel="routine-class"]):not([data-routine-child-open="list"]) .learning-list,
+body.manager-reference .manager-view[data-view-panel="courses"]:not([data-courses-open="editor"]) #managerCourseEditor,
+body.manager-reference .manager-view[data-view-panel="results"]:not([data-results-open="list"]) #managerResultList,
+body.manager-reference .manager-view[data-view-panel="reports"]:not([data-reports-open="builder"]) .rp-section,
+body.manager-reference .manager-view[data-view-panel="profile"]:not([data-profile-open="info"]) #managerOwnProfileCard,
+body.manager-reference .manager-view[data-view-panel="advice"]:not([data-advice-open="editor"]) #managerDailyAdvice {
+  display: none !important;
+}
+
+/* Manager Finance Hub: open each [data-finance-panel] directly below its [data-finance-segment] card */
+body.manager-reference .manager-view[data-view-panel="finance"].active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.manager-reference #managerFinanceSegments {
+  display: contents !important;
+}
+body.manager-reference .manager-view[data-view-panel="finance"] > .page-intro { order: 1; }
+body.manager-reference #managerFinanceSegments [data-finance-segment="collection"] { order: 10; }
+body.manager-reference .manager-view[data-view-panel="finance"] [data-finance-panel="collection"] { order: 11; }
+body.manager-reference #managerFinanceSegments [data-finance-segment="approval"] { order: 20; }
+body.manager-reference .manager-view[data-view-panel="finance"] [data-finance-panel="approval"] { order: 21; }
+body.manager-reference #managerFinanceSegments [data-finance-segment="due"] { order: 30; }
+body.manager-reference .manager-view[data-view-panel="finance"] [data-finance-panel="due"] { order: 31; }
+body.manager-reference #managerFinanceSegments [data-finance-segment="history"] { order: 40; }
+body.manager-reference .manager-view[data-view-panel="finance"] [data-finance-panel="history"] { order: 41; }
+body.manager-reference .manager-view[data-view-panel="finance"] .manager-finance-overview { order: 50; }
+
+/* Manager Multi-card Views: open each panel directly below its clicked action card */
+body.manager-reference .manager-view:is([data-view-panel="students"], [data-view-panel="academic-records"], [data-view-panel="teachers"], [data-view-panel="notices"], [data-view-panel="routine-class"], [data-view-panel="exams"], [data-view-panel="profile"]).active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.manager-reference .manager-view:is([data-view-panel="students"], [data-view-panel="academic-records"], [data-view-panel="teachers"], [data-view-panel="notices"], [data-view-panel="routine-class"], [data-view-panel="exams"], [data-view-panel="profile"]) > .page-intro {
+  order: 1;
+}
+body.manager-reference .manager-student-scopes,
+body.manager-reference #managerAcademicFilters,
+body.manager-reference #managerExamHub,
+body.manager-reference .manager-view:is([data-view-panel="teachers"], [data-view-panel="notices"], [data-view-panel="routine-class"], [data-view-panel="profile"]) > .manager-action-stack {
+  display: contents !important;
+}
+
+body.manager-reference .manager-student-scopes [data-student-scope="all"] { order: 10; }
+body.manager-reference .manager-student-scopes [data-student-scope="pending"] { order: 20; }
+body.manager-reference .manager-student-scopes [data-student-scope="approved"] { order: 30; }
+body.manager-reference .manager-student-scopes [data-student-scope="inactive"] { order: 40; }
+body.manager-reference .manager-student-scopes [data-student-scope="rejected"] { order: 50; }
+body.manager-reference .manager-view[data-view-panel="students"]:has([data-student-scope="all"][aria-pressed="true"]) #managerStudentsWorkspace { order: 11; }
+body.manager-reference .manager-view[data-view-panel="students"]:has([data-student-scope="pending"][aria-pressed="true"]) #managerStudentsWorkspace { order: 21; }
+body.manager-reference .manager-view[data-view-panel="students"]:has([data-student-scope="approved"][aria-pressed="true"]) #managerStudentsWorkspace { order: 31; }
+body.manager-reference .manager-view[data-view-panel="students"]:has([data-student-scope="inactive"][aria-pressed="true"]) #managerStudentsWorkspace { order: 41; }
+body.manager-reference .manager-view[data-view-panel="students"]:has([data-student-scope="rejected"][aria-pressed="true"]) #managerStudentsWorkspace { order: 51; }
+
+body.manager-reference #managerAcademicFilters [data-academic-scope="all"] { order: 10; }
+body.manager-reference #managerAcademicFilters [data-academic-scope="homework"] { order: 20; }
+body.manager-reference #managerAcademicFilters [data-academic-scope="suggestion"] { order: 30; }
+body.manager-reference #managerAcademicFilters [data-academic-scope="routine"] { order: 40; }
+body.manager-reference .manager-view[data-view-panel="academic-records"]:has([data-academic-scope="all"][aria-pressed="true"]) #managerAcademicRecordsWorkspace { order: 11; }
+body.manager-reference .manager-view[data-view-panel="academic-records"]:has([data-academic-scope="homework"][aria-pressed="true"]) #managerAcademicRecordsWorkspace { order: 21; }
+body.manager-reference .manager-view[data-view-panel="academic-records"]:has([data-academic-scope="suggestion"][aria-pressed="true"]) #managerAcademicRecordsWorkspace { order: 31; }
+body.manager-reference .manager-view[data-view-panel="academic-records"]:has([data-academic-scope="routine"][aria-pressed="true"]) #managerAcademicRecordsWorkspace { order: 41; }
+
+body.manager-reference .manager-view[data-view-panel="teachers"] [data-teachers-action="create"] { order: 10; }
+body.manager-reference #managerTeacherAssignmentForm { order: 11; }
+body.manager-reference .manager-view[data-view-panel="teachers"] [data-teachers-action="list"] { order: 20; }
+body.manager-reference #managerTeacherList { order: 21; }
+
+body.manager-reference .manager-view[data-view-panel="notices"] [data-notices-action="create"] { order: 10; }
+body.manager-reference #managerNoticeForm { order: 11; }
+body.manager-reference .manager-view[data-view-panel="notices"] [data-notices-action="list"] { order: 20; }
+body.manager-reference #managerNoticeList { order: 21; }
+
+body.manager-reference .manager-view[data-view-panel="routine-class"] [data-routine-action="create"] { order: 10; }
+body.manager-reference .manager-view[data-view-panel="routine-class"][data-routine-open="create"] #managerRoutineDays { order: 11; }
+body.manager-reference #managerRoutineForm { order: 12; }
+body.manager-reference .manager-view[data-view-panel="routine-class"] [data-routine-action="list"] { order: 20; }
+body.manager-reference .manager-view[data-view-panel="routine-class"][data-routine-open="list"] #managerRoutineDays { order: 21; }
+body.manager-reference #managerRoutineList { order: 22; }
+
+body.manager-reference #managerExamHub [data-manager-exam="upcoming"] { order: 10; }
+body.manager-reference #managerExamHub [data-manager-exam="live"] { order: 20; }
+body.manager-reference #managerExamHub [data-manager-exam="done"] { order: 30; }
+body.manager-reference #managerExamHub [data-manager-exam="instant"] { order: 40; }
+body.manager-reference #managerExamHub [data-manager-exam="papers"] { order: 50; }
+body.manager-reference #managerExamHub [data-manager-exam="recent"] { order: 60; }
+body.manager-reference #managerExamHub [data-manager-exam="results"] { order: 70; }
+body.manager-reference #managerExamHub [data-manager-exam="bank"] { order: 80; }
+body.manager-reference #managerExamHub [data-manager-exam="other"] { order: 90; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="upcoming"][aria-pressed="true"]) #managerExamWorkspace { order: 11; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="live"][aria-pressed="true"]) #managerExamWorkspace { order: 21; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="done"][aria-pressed="true"]) #managerExamWorkspace { order: 31; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="instant"][aria-pressed="true"]) #managerExamWorkspace { order: 41; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="papers"][aria-pressed="true"]) #managerExamWorkspace { order: 51; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="recent"][aria-pressed="true"]) #managerExamWorkspace { order: 61; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="results"][aria-pressed="true"]) #managerExamWorkspace { order: 71; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="bank"].is-open) #managerExamWorkspace { order: 81; }
+body.manager-reference .manager-view[data-view-panel="exams"]:has([data-manager-exam="other"].is-open) #managerExamWorkspace { order: 91; }
+
+body.manager-reference .manager-view[data-view-panel="profile"] [data-profile-action="info"] { order: 10; }
+body.manager-reference #managerOwnProfileCard { order: 11; }
+body.manager-reference .manager-view[data-view-panel="profile"] [data-profile-action="password"] { order: 20; }
+
+/* Manager Settings Hub: keep 5 action cards visible and open each group directly below its card */
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups],
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups][hidden] {
+  display: contents !important;
+}
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups] [data-settings-open="notification"] { order: 10; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-group="notification"] { order: 11; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups] [data-settings-open="app"] { order: 20; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-group="app"] { order: 21; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups] [data-settings-open="security"] { order: 30; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-group="security"] { order: 31; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups] [data-settings-open="data"] { order: 40; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-group="data"] { order: 41; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-groups] [data-settings-open="account"] { order: 50; }
+body.manager-reference [data-settings-hub="manager"] [data-settings-group="account"] { order: 51; }
+body.manager-reference [data-settings-hub="manager"] .settings-hub-back {
+  display: none !important;
+}
+body.manager-reference [data-settings-hub="manager"] [data-settings-group][hidden] {
+  display: none !important;
+}
+
+/* 29 — Admin Panel Redesign: 3D Hero Cards, Full-width Horizontal Action Cards & Default-Hidden Toggle Panels */
+body.admin-reference .admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro,
+body.admin-reference .admin-view > .page-intro.admin-sub-hero {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  gap: 0 !important;
+  aspect-ratio: 16 / 10;
+  min-height: 196px !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 24px !important;
+  border: 1px solid var(--portal-hero-day-border) !important;
+  background-color: var(--portal-hero-day-bg) !important;
+  background-image: none !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+  color: var(--portal-hero-day-ink) !important;
+}
+
+body.admin-reference .admin-view .admin-hero-icon,
+body.admin-reference .admin-view .pay-back,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-summary {
+  display: none !important;
+}
+
+body.admin-reference .admin-view .teacher-hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+body.admin-reference .admin-view .teacher-hero-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  display: block;
+}
+
+body.admin-reference .admin-view .teacher-hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--portal-hero-day-scrim);
+}
+
+body.admin-reference .admin-view .teacher-hero-content {
+  position: relative;
+  z-index: 3;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  flex: 1 1 auto !important;
+  padding: 16px 18px !important;
+  box-sizing: border-box !important;
+}
+
+body.admin-reference .admin-view .teacher-hero-top,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.admin-reference .admin-view .teacher-hero-top-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+body.admin-reference .admin-view .teacher-hero-date-pill,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-date-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-height: 30px !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  background: var(--portal-hero-day-chip-bg) !important;
+  border: 1px solid var(--portal-hero-day-chip-border) !important;
+  color: var(--portal-hero-day-chip-ink) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--portal-hero-day-chip-shadow) !important;
+}
+
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-date-pill {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+body.admin-reference .admin-view .teacher-hero-glint {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--portal-hero-day-chip-bg);
+  border: 1px solid var(--portal-hero-day-chip-border);
+  box-shadow: var(--portal-hero-day-chip-shadow);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+body.admin-reference .admin-view .teacher-hero-welcome,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-title {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  max-width: 62% !important;
+  margin-top: auto !important;
+  padding-right: 4px !important;
+  text-align: left !important;
+}
+
+body.admin-reference .admin-view .pay-portal-heading {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+body.admin-reference .admin-view .home-dashboard-intro h1,
+body.admin-reference .admin-view > .page-intro.admin-sub-hero h1 {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--portal-hero-day-ink) !important;
+  font-size: clamp(20px, 5.4vw, 24px) !important;
+  font-weight: 800 !important;
+  line-height: 1.32 !important;
+  text-align: left !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+body.admin-reference .admin-view .teacher-hero-welcome p,
+body.admin-reference .admin-view > .page-intro:first-child p:is(.admin-view-sub, .staff-page-sub, .data-page-sub, .profile-page-sub, .teacher-hero-advice),
+body.admin-reference .admin-view[data-view-panel="dashboard"] #adminHeroAdvice {
+  display: block !important;
+  margin: 0 !important;
+  max-width: 34ch !important;
+  color: var(--portal-hero-day-sub) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.58 !important;
+  text-align: left !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.admin-reference .admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro,
+html[data-theme="dark"] body.admin-reference .admin-view > .page-intro.admin-sub-hero,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .home-dashboard-intro.admin-home-intro[data-hero-mode="night"],
+body.admin-reference .admin-view > .page-intro.admin-sub-hero[data-hero-mode="night"] {
+  background-color: var(--portal-hero-night-bg) !important;
+  border-color: var(--portal-hero-night-border) !important;
+  color: var(--portal-hero-night-ink) !important;
+}
+
+html[data-theme="dark"] body.admin-reference .admin-view .teacher-hero-scene-scrim,
+body.admin-reference .admin-view [data-hero-mode="night"] .teacher-hero-scene-scrim {
+  background: var(--portal-hero-night-scrim) !important;
+}
+
+html[data-theme="dark"] body.admin-reference .admin-view .home-dashboard-intro h1,
+html[data-theme="dark"] body.admin-reference .admin-view > .page-intro.admin-sub-hero h1,
+body.admin-reference .admin-view [data-hero-mode="night"] h1 {
+  color: var(--portal-hero-night-ink) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.admin-reference .admin-view .teacher-hero-welcome p,
+html[data-theme="dark"] body.admin-reference .admin-view > .page-intro:first-child p:is(.admin-view-sub, .staff-page-sub, .data-page-sub, .profile-page-sub, .teacher-hero-advice),
+html[data-theme="dark"] body.admin-reference .admin-view[data-view-panel="dashboard"] #adminHeroAdvice,
+body.admin-reference .admin-view [data-hero-mode="night"] .teacher-hero-welcome p,
+body.admin-reference .admin-view > .page-intro:first-child[data-hero-mode="night"] p:is(.admin-view-sub, .staff-page-sub, .data-page-sub, .profile-page-sub, .teacher-hero-advice),
+body.admin-reference .admin-view[data-view-panel="dashboard"] [data-hero-mode="night"] #adminHeroAdvice {
+  color: var(--portal-hero-night-sub) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.admin-reference .admin-view .teacher-hero-glint,
+html[data-theme="dark"] body.admin-reference .admin-view .teacher-hero-date-pill,
+html[data-theme="dark"] body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro .admin-hero-date-chip,
+body.admin-reference .admin-view [data-hero-mode="night"] .teacher-hero-glint,
+body.admin-reference .admin-view [data-hero-mode="night"] .teacher-hero-date-pill,
+body.admin-reference .admin-view[data-view-panel="dashboard"] .admin-home-intro[data-hero-mode="night"] .admin-hero-date-chip {
+  background: var(--portal-hero-night-chip-bg) !important;
+  border-color: var(--portal-hero-night-chip-border) !important;
+  color: var(--portal-hero-night-chip-ink) !important;
+  box-shadow: var(--portal-hero-night-chip-shadow) !important;
+}
+
+/* Full-width Horizontal Action Cards across all Admin views (Left Text + Right 58x58 Icon) */
+body.admin-reference .teacher-home-actions,
+body.admin-reference .admin-action-stack,
+body.admin-reference #adminFeatureGrid,
+body.admin-reference .admin-portal-grid,
+body.admin-reference #adminSystemMenu,
+body.admin-reference #adminDataMenu,
+body.admin-reference #adminMoreMenu,
+body.admin-reference #rolesMatrix,
+body.admin-reference #securityPanels,
+body.admin-reference .admin-view[data-view-panel="settings"] .app-control-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px !important;
+  margin: 6px 0 14px !important;
+}
+
+body.admin-reference #adminSystemMenu,
+body.admin-reference #adminDataMenu,
+body.admin-reference #adminMoreMenu,
+body.admin-reference .staff-create-bar {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+body.admin-reference .teacher-action-card,
+body.admin-reference .pay-tile.teacher-action-card,
+body.admin-reference .admin-more-item.teacher-action-card,
+body.admin-reference #staffCreateButton.teacher-action-card {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 98px !important;
+  margin: 0 0 12px !important;
+  padding: 14px 16px !important;
+  overflow: hidden;
+  border: 1px solid var(--portal-border) !important;
+  border-radius: 18px !important;
+  background: var(--portal-surface) !important;
+  box-shadow: var(--portal-card-shadow) !important;
+  color: var(--color-text) !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .16s ease;
+}
+
+body.admin-reference :is(.teacher-home-actions, .admin-action-stack, #adminFeatureGrid, .admin-portal-grid, #adminSystemMenu, #adminDataMenu, #adminMoreMenu, #rolesMatrix, #securityPanels, .app-control-grid) > .teacher-action-card {
+  margin-bottom: 0 !important;
+}
+
+body.admin-reference .teacher-action-card > .teacher-action-body,
+body.admin-reference .teacher-action-card > .admin-more-copy,
+body.admin-reference .teacher-action-card > .admin-settings-door-copy,
+body.admin-reference .teacher-action-card > .pay-tile-label {
+  order: 1 !important;
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+body.admin-reference .teacher-action-card > .teacher-action-art,
+body.admin-reference .teacher-action-card > .admin-more-icon,
+body.admin-reference .teacher-action-card > .pay-tile-icon {
+  order: 2 !important;
+  position: relative;
+  z-index: 1;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  color: var(--tone) !important;
+  background: var(--tone-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent) !important;
+}
+
+body.admin-reference .teacher-action-card > :is(.teacher-action-art, .admin-more-icon, .pay-tile-icon) svg {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+body.admin-reference .teacher-action-card > .admin-menu-arrow,
+body.admin-reference .teacher-action-card > .admin-settings-door-chevron {
+  display: none !important;
+}
+
+body.admin-reference .teacher-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+
+body.admin-reference .teacher-action-card :is(.teacher-action-title, .pay-tile-label, .admin-more-copy strong) {
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.32 !important;
+  text-align: left !important;
+}
+
+body.admin-reference .teacher-action-card :is(.teacher-action-sub, .admin-more-copy small, .admin-settings-door-copy small) {
+  color: var(--color-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+body.admin-reference .teacher-action-card :is(.teacher-action-title, .pay-tile-label)[data-action-sub]::after {
+  content: attr(data-action-sub);
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body.admin-reference .teacher-action-card:nth-child(6n+1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+body.admin-reference .teacher-action-card:nth-child(6n+2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+body.admin-reference .teacher-action-card:nth-child(6n+3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+body.admin-reference .teacher-action-card:nth-child(6n+4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+body.admin-reference .teacher-action-card:nth-child(6n+5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+body.admin-reference .teacher-action-card:nth-child(6n+6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
+
+body.admin-reference .teacher-action-card.is-accent,
+body.admin-reference .teacher-action-card:is(.active, .is-open, [aria-pressed="true"], [aria-expanded="true"]) {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--portal-border)) !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+}
+
+/* Admin V2 Migration: open each .v2-migration-card right below its clicked action card */
+body.admin-reference .admin-view[data-view-panel="migration"].active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.admin-reference .admin-view[data-view-panel="migration"] .admin-action-stack,
+body.admin-reference #adminV2Migration {
+  display: contents !important;
+}
+body.admin-reference .admin-view[data-view-panel="migration"] > .page-intro { order: 1; }
+body.admin-reference [data-admin-migration-card="0"] { order: 10; }
+body.admin-reference #adminV2Migration .v2-migration-card:nth-of-type(1) { order: 11; }
+body.admin-reference [data-admin-migration-card="1"] { order: 20; }
+body.admin-reference #adminV2Migration .v2-migration-card:nth-of-type(2) { order: 21; }
+body.admin-reference #adminV2Migration .v2-migration-card:not(.is-open) {
+  display: none !important;
+}
+
+/* Admin Academics: open each section right below its clicked action card */
+body.admin-reference .admin-view[data-view-panel="academics"].active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.admin-reference .admin-view[data-view-panel="academics"] .admin-action-stack,
+body.admin-reference #adminAcademics {
+  display: contents !important;
+}
+body.admin-reference .admin-view[data-view-panel="academics"] > .page-intro { order: 1; }
+body.admin-reference [data-admin-academic-card="add"] { order: 10; }
+body.admin-reference #adminAcademics > .academics-tools,
+body.admin-reference #adminAcademics > [data-academic-status] { order: 11; }
+body.admin-reference [data-admin-academic-card="subjects"] { order: 20; }
+body.admin-reference #adminAcademics > .admin-card { order: 21; }
+body.admin-reference [data-admin-academic-card="mapping"] { order: 30; }
+body.admin-reference #adminAcademics > .exam-section-title,
+body.admin-reference #adminAcademics > .academics-class { order: 31; }
+body.admin-reference #adminAcademics:not([data-open-academic-card="add"]) > .academics-tools,
+body.admin-reference #adminAcademics:not([data-open-academic-card="subjects"]) > .admin-card,
+body.admin-reference #adminAcademics:not([data-open-academic-card="mapping"]) > .exam-section-title,
+body.admin-reference #adminAcademics:not([data-open-academic-card="mapping"]) > .academics-class {
+  display: none !important;
+}
+
+/* Admin Profile & Settings Hub: keep 5 action cards visible and open each group right below its card */
+body.admin-reference .admin-view[data-view-panel="profile"].active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+body.admin-reference [data-settings-hub="admin"],
+body.admin-reference [data-settings-hub="admin"] [data-settings-groups],
+body.admin-reference [data-settings-hub="admin"] [data-settings-groups][hidden] {
+  display: contents !important;
+}
+body.admin-reference .admin-view[data-view-panel="profile"] > .page-intro { order: 1; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-open="account"] { order: 10; }
+body.admin-reference #adminProfileCard { order: 11; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-group="account"] { order: 12; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-open="notification"] { order: 20; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-group="notification"] { order: 21; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-open="app"] { order: 30; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-group="app"] { order: 31; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-open="security"] { order: 40; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-group="security"] { order: 41; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-open="data"] { order: 50; }
+body.admin-reference [data-settings-hub="admin"] [data-settings-group="data"] { order: 51; }
+body.admin-reference .admin-view[data-view-panel="profile"]:not(:has([data-settings-group="account"]:not([hidden]))) #adminProfileCard,
+body.admin-reference [data-settings-hub="admin"] .settings-hub-back,
+body.admin-reference [data-settings-hub="admin"] [data-settings-group][hidden] {
+  display: none !important;
+}
+
+/* 30 — Payment Counter Panel Redesign: 3D Hero Cards, Full-width Horizontal Action Cards & Toggle-Below Panels */
+body.payment-reference .counter-page-title,
+body.payment-reference #payCounterHome > .hero-slider,
+body.payment-reference #payMoreCard,
+body.payment-reference #payHomeTitle {
+  display: none !important;
+}
+
+body.payment-reference #payHomeCard {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.payment-reference .pay-panel .home-dashboard-intro.payment-home-intro,
+body.payment-reference .pay-panel > .page-intro.payment-sub-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  gap: 0 !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  min-height: 212px !important;
+  margin: 2px 0 16px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 26px !important;
+  border: 1px solid var(--portal-hero-day-border) !important;
+  background-color: var(--portal-hero-day-bg) !important;
+  background-image: none !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+  color: var(--portal-hero-day-ink) !important;
+}
+
+body.payment-reference .pay-panel .home-dashboard-intro.payment-home-intro::before,
+body.payment-reference .pay-panel .home-dashboard-intro.payment-home-intro::after,
+body.payment-reference .pay-panel > .page-intro.payment-sub-hero::before,
+body.payment-reference .pay-panel > .page-intro.payment-sub-hero::after,
+body.payment-reference #payCounterHome .payment-home-intro .pay-portal-heading::after,
+body.payment-reference .pay-panel .admin-hero-icon {
+  display: none !important;
+  content: none !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+body.payment-reference .pay-panel .teacher-hero-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  display: block;
+}
+
+body.payment-reference .pay-panel .teacher-hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--portal-hero-day-scrim);
+}
+
+body.payment-reference .pay-panel .teacher-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 212px !important;
+  padding: 16px 18px !important;
+  box-sizing: border-box !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-top-right {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-inline-start: auto !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-date-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  background: var(--portal-hero-day-chip-bg) !important;
+  border: 1px solid var(--portal-hero-day-chip-border) !important;
+  color: var(--portal-hero-day-chip-ink) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  box-shadow: var(--portal-hero-day-chip-shadow) !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-glint {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  background: var(--portal-hero-day-chip-bg) !important;
+  border: 1px solid var(--portal-hero-day-chip-border) !important;
+  box-shadow: var(--portal-hero-day-chip-shadow) !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-welcome {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  max-width: 62% !important;
+  margin-top: auto !important;
+  text-align: left !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-welcome h1,
+body.payment-reference #payCounterHome .payment-home-intro .portal-hero-title {
+  margin: 0 !important;
+  color: var(--portal-hero-day-ink) !important;
+  font-size: clamp(20px, 5vw, 24px) !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+body.payment-reference .pay-panel .teacher-hero-welcome .teacher-hero-advice {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 !important;
+  color: var(--portal-hero-day-sub) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.55 !important;
+  text-shadow: var(--portal-hero-day-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.payment-reference .pay-panel .home-dashboard-intro.payment-home-intro,
+html[data-theme="dark"] body.payment-reference .pay-panel > .page-intro.payment-sub-hero {
+  background-color: var(--portal-hero-night-bg) !important;
+  border-color: var(--portal-hero-night-border) !important;
+  color: var(--portal-hero-night-ink) !important;
+}
+
+html[data-theme="dark"] body.payment-reference .pay-panel .teacher-hero-scene-scrim {
+  background: var(--portal-hero-night-scrim) !important;
+}
+
+html[data-theme="dark"] body.payment-reference .pay-panel .teacher-hero-welcome h1,
+html[data-theme="dark"] body.payment-reference #payCounterHome .payment-home-intro .portal-hero-title {
+  color: var(--portal-hero-night-ink) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.payment-reference .pay-panel .teacher-hero-welcome .teacher-hero-advice {
+  color: var(--portal-hero-night-sub) !important;
+  text-shadow: var(--portal-hero-night-text-shadow) !important;
+}
+
+html[data-theme="dark"] body.payment-reference .pay-panel .teacher-hero-date-pill,
+html[data-theme="dark"] body.payment-reference .pay-panel .teacher-hero-glint {
+  background: var(--portal-hero-night-chip-bg) !important;
+  border-color: var(--portal-hero-night-chip-border) !important;
+  color: var(--portal-hero-night-chip-ink) !important;
+  box-shadow: var(--portal-hero-night-chip-shadow) !important;
+}
+
+/* Full-width Horizontal Action Cards in Payment Counter */
+body.payment-reference .teacher-home-actions,
+body.payment-reference .pay-home-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px !important;
+  margin: 6px 0 14px !important;
+}
+
+body.payment-reference .teacher-action-card,
+body.payment-reference #payHomeCard .pay-home-actions .pay-action-hero.teacher-action-card {
+  --tone: var(--tone-mint);
+  --tone-soft: var(--tone-mint-soft);
+  position: relative;
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 98px !important;
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  overflow: hidden;
+  border: 1px solid var(--portal-border) !important;
+  border-radius: 18px !important;
+  background: var(--portal-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--portal-card-shadow) !important;
+  color: var(--color-text) !important;
+  text-align: left !important;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .16s ease;
+}
+
+body.payment-reference .teacher-action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(110% 130% at 100% 50%, var(--tone-soft), transparent 62%);
+}
+
+body.payment-reference .teacher-action-card > .teacher-action-body {
+  order: 1 !important;
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+body.payment-reference .teacher-action-card > .teacher-action-art {
+  order: 2 !important;
+  position: relative;
+  z-index: 1;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  color: var(--tone) !important;
+  background: var(--tone-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent) !important;
+}
+
+body.payment-reference .teacher-action-card > .teacher-action-art svg {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+body.payment-reference .teacher-action-card .teacher-action-title {
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.32 !important;
+  text-align: left !important;
+}
+
+body.payment-reference .teacher-action-card .teacher-action-title[data-action-sub]::after {
+  content: attr(data-action-sub);
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body.payment-reference .teacher-action-card:nth-child(6n+1) { --tone: var(--tone-mint); --tone-soft: var(--tone-mint-soft); }
+body.payment-reference .teacher-action-card:nth-child(6n+2) { --tone: var(--tone-blue); --tone-soft: var(--tone-blue-soft); }
+body.payment-reference .teacher-action-card:nth-child(6n+3) { --tone: var(--tone-amber); --tone-soft: var(--tone-amber-soft); }
+body.payment-reference .teacher-action-card:nth-child(6n+4) { --tone: var(--tone-violet); --tone-soft: var(--tone-violet-soft); }
+body.payment-reference .teacher-action-card:nth-child(6n+5) { --tone: var(--tone-rose); --tone-soft: var(--tone-rose-soft); }
+body.payment-reference .teacher-action-card:nth-child(6n+6) { --tone: var(--tone-coral); --tone-soft: var(--tone-coral-soft); }
+
+body.payment-reference .teacher-action-card.is-accent,
+body.payment-reference .teacher-action-card:is(.active, .is-open, [aria-pressed="true"], [aria-expanded="true"]) {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--portal-border)) !important;
+  box-shadow: var(--portal-card-shadow-lift) !important;
+}
+
+/* Default-hidden workspaces & Toggle-Below Ordering in Payment Counter */
+body.payment-reference #payCounterHome:not([data-pay-open="today-list"]) #payActivityCard,
+body.payment-reference #payStudentsPanel:not([data-pay-open="student-search"]) #paySearchCard,
+body.payment-reference #payStudentsPanel:not([data-pay-open="student-search"]) #payProfileCard,
+body.payment-reference #payEntryPanel:not([data-pay-open="payment-entry"]) #payEntryCard,
+body.payment-reference #payReportsPanel:not([data-pay-open="reports-builder"]) #payReportsCard {
+  display: none !important;
+}
+
+body.payment-reference #payCounterHome:not([hidden]),
+body.payment-reference #payEntryPanel:not([hidden]),
+body.payment-reference #payMorePanel:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+body.payment-reference #payHomeCard,
+body.payment-reference #payHomeCard .pay-home-actions,
+body.payment-reference #payEntryPanel > .pay-panel-actions,
+body.payment-reference [data-settings-hub="payment"],
+body.payment-reference [data-settings-hub="payment"] [data-settings-groups],
+body.payment-reference [data-settings-hub="payment"] [data-settings-groups][hidden] {
+  display: contents !important;
+}
+
+body.payment-reference #payCounterHome > .payment-home-intro,
+body.payment-reference #payEntryPanel > .page-intro,
+body.payment-reference #payMorePanel > .page-intro { order: 1; }
+
+body.payment-reference #payHomeCard [data-pay-section="students"] { order: 10; }
+body.payment-reference #payHomeCard [data-pay-toggle="today-list"] { order: 20; }
+body.payment-reference #payActivityCard { order: 21; }
+body.payment-reference #payClosingShortcut { order: 30; }
+
+body.payment-reference #payEntryPanel [data-pay-toggle="payment-entry"] { order: 10; }
+body.payment-reference #payEntryCard { order: 11; }
+body.payment-reference #payEntryPanel [data-pay-toggle="select-student"] { order: 20; }
+
+body.payment-reference [data-settings-hub="payment"] [data-settings-open="notification"] { order: 10; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-group="notification"] { order: 11; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-open="app"] { order: 20; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-group="app"] { order: 21; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-open="security"] { order: 30; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-group="security"] { order: 31; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-open="data"] { order: 40; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-group="data"] { order: 41; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-open="account"] { order: 50; }
+body.payment-reference [data-settings-hub="payment"] [data-settings-group="account"] { order: 51; }
+body.payment-reference [data-settings-hub="payment"] .settings-hub-back,
+body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidden] {
+  display: none !important;
+}
+}
+
+

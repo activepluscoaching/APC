@@ -62,7 +62,8 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   const scene = hero.querySelector('.teacher-hero-scene');
   const art = hero.querySelector('#teacherHeroArt');
   assert.ok(scene && art, 'the day/night classroom artwork is in the hero');
-  assert.equal(art.getAttribute('src'), 'assets/teacher-hero/teacher-hero-day.webp');
+  assert.equal(art.getAttribute('src'), 'assets/images/teacher-hero/welcome-day.webp');
+  assert.equal(art.getAttribute('data-hero-card'), 'welcome');
   assert.equal(art.getAttribute('width'), '828');
   assert.equal(art.getAttribute('height'), '462');
   assert.equal(scene.contains(art), true, 'the image is the scene background');
@@ -115,24 +116,36 @@ test('the hero is the picture: greeting and daily line sit inside the image card
   assert.match(sceneRule, /position:absolute/, 'the scene fills the card behind the text');
 });
 
-test('ক্লাস keeps two tabs and একাডেমিক কার্যক্রম is its own Home feature', () => {
+test('ক্লাস uses Home-style hero banner and three full-width action cards with primary data hidden', () => {
   const view = page.querySelector('#teacherClasses');
-  const tabs = [...view.querySelectorAll('.teacher-class-tabs [role="tab"]')];
-  assert.equal(tabs.length, 2, 'two tabs, not doors side by side');
-  assert.match(view.querySelector('.teacher-class-tabs').className, /teacher-submenu/,
-    'the tablist keeps the class the locked tests query');
-  assert.equal(view.querySelector('.teacher-class-tabs').getAttribute('role'), 'tablist');
-  assert.match(tabs[0].textContent, /ক্লাস ও বিষয়/);
-  assert.match(tabs[1].textContent, /রুটিন ও সময়সূচি/);
-  assert.equal(tabs[0].getAttribute('aria-selected'), 'true', 'the class list tab starts selected');
-  assert.equal(tabs[0].hasAttribute('data-teacher-view'), false, 'the list tab is not a route');
-  assert.equal(tabs[1].getAttribute('data-teacher-view'), 'routine-view');
-  assert.equal(tabs[0].getAttribute('aria-controls'), 'teacherClassPanel');
-  assert.ok(view.querySelector('#teacherClassPanel #teacherClassList'), 'the class list lives in the first tab panel');
-  assert.equal(view.querySelectorAll('.teacher-submenu .pay-tile').length, 0, 'no door tiles remain');
+  assert.ok(view.querySelector('.teacher-home-intro .teacher-hero-scene'), 'ক্লাস starts with the Home-style hero banner');
+  assert.equal(view.querySelector('#teacherClassesTitle')?.textContent.trim(), 'ক্লাস ও পাঠদান');
+  const cards = [...view.querySelectorAll('.teacher-classes-actions .teacher-action-card')];
+  assert.equal(cards.length, 3, 'three Home-style action cards');
+  assert.match(cards[0].textContent, /আমার ক্লাস ও বিষয়/);
+  assert.match(cards[0].textContent, /ট্যাপ করে এই ক্লাসের কাজে যান/);
+  assert.equal(cards[0].getAttribute('data-teacher-view'), 'homework');
+  assert.match(cards[1].textContent, /রুটিন ও সময়সূচি/);
+  assert.equal(cards[1].getAttribute('data-teacher-view'), 'routine-view');
+  assert.match(cards[2].textContent, /একাডেমিক কার্যক্রম/);
+  assert.equal(cards[2].getAttribute('data-teacher-view'), 'academic');
+  const panel = view.querySelector('#teacherClassPanel');
+  assert.ok(panel, 'class panel exists');
+  assert.equal(panel.hidden, true, 'primary class list data stays hidden');
+  assert.ok(view.querySelector('#teacherClassPanel #teacherClassList'), 'the class list remains mounted inside the hidden panel');
 
-  /* একাডেমিক কার্যক্রম left the ক্লাস screen: it is a feature card on Home. */
-  assert.doesNotMatch(view.innerHTML, /data-teacher-view="academic"/, 'no academic door inside ক্লাস');
+  const examsView = page.querySelector('#teacherOnlineExams');
+  assert.ok(examsView.querySelector('.teacher-home-intro .teacher-hero-scene [data-hero-card="exam"]'),
+    'পরীক্ষা starts with the Class-style 3D hero banner');
+  assert.equal(examsView.querySelector('#teacherOnlineExamsTitle')?.textContent.trim(), 'পরীক্ষা ও মূল্যায়ন');
+  const examCards = [...examsView.querySelectorAll('#teacherExamActions .teacher-action-card')];
+  assert.equal(examCards.length, 2, 'two full-width action cards on পরীক্ষা');
+  assert.equal(examCards[0].getAttribute('data-teacher-exam'), 'new-mcq');
+  assert.equal(examCards[1].getAttribute('data-teacher-exam'), 'home');
+  assert.equal(examsView.querySelectorAll('#teacherExamHub .day-tab').length, 4, 'four section chips below the action cards');
+  assert.equal(examsView.querySelector('.teacher-local-note')?.hidden, true, 'approval note is hidden by default');
+  assert.equal(examsView.querySelector('#teacherExamWorkspace')?.hidden, true, 'exam workspace is hidden by default');
+
   const hub = page.querySelector('#teacherHome .teacher-academic-hub');
   assert.ok(hub, 'Home carries the academic feature card');
   assert.equal(hub.getAttribute('data-teacher-view'), 'academic', 'the card opens the academic hub screen');
@@ -144,35 +157,42 @@ test('ক্লাস keeps two tabs and একাডেমিক কার্�
   assert.equal(page.querySelector('#teacherAcademicTitle').textContent.trim(), 'একাডেমিক কার্যক্রম',
     'the academic screen names itself after the feature');
 
-  const teacherJs = read('js/teacher.js');
-  assert.match(teacherJs, /function syncClassTabs/, 'the tab selection is managed in one place');
-  assert.match(teacherJs, /if \(panel === 'teacherClasses'\) syncClassTabs\('list'\)/,
-    'returning to ক্লাস always lands on the class list tab');
-
   const compiled = read('css/teacher-panel.css');
-  assert.match(compiled, /#teacherClasses \.teacher-class-tabs\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,
-    'the two tabs share one row');
-  assert.match(compiled, /#teacherClasses \.teacher-class-tab\.is-active,[^{]*\{[^}]*linear-gradient/,
-    'the active tab carries the brand gradient');
   assert.match(compiled, /#teacherHome \.teacher-academic-hub\{/, 'the Home hub card is styled');
 });
 
-test('the ক্লাস screen keeps every class row collapsed until it is tapped', () => {
+test('the ক্লাস screen renders full-width hero class cards with subject chips and 3D class artwork', () => {
   const teacherJs = read('js/teacher.js');
-  assert.match(teacherJs, /<details class="teacher-class-details">/, 'class rows are native disclosures');
-  assert.match(teacherJs, /<summary class="teacher-class-summary">/, 'the summary is the tap target');
-  assert.doesNotMatch(teacherJs, /<details class="teacher-class-details" open/,
-    'no class row is rendered open');
+  assert.match(teacherJs, /class="teacher-class-hero-main"/, 'class cards render hero main body');
+  assert.match(teacherJs, /class="teacher-class-subject-chip"/, 'subjects render as direct chips');
+  assert.match(teacherJs, /class="teacher-class-hero-art"/, 'class cards carry 3D class artwork');
   const compiled = read('css/teacher-panel.css');
-  assert.match(compiled, /teacher-class-details\[open\]>\.teacher-class-summary/, 'the open state is styled');
-  assert.match(compiled, /teacher-class-chevron/, 'the row shows an expand chevron');
+  assert.match(compiled, /teacher-class-hero-main/, 'the hero class card main column is styled');
+  assert.match(compiled, /teacher-class-subject-chip/, 'the subject chip is styled');
+  assert.match(compiled, /teacher-class-hero-art/, 'the 3D artwork box is styled');
   const classesView = page.querySelector('#teacherClasses');
   assert.ok(classesView.querySelector('#teacherClassCount'), 'the heading carries a count chip');
-  assert.doesNotMatch(classesView.textContent, /জন অনুমোদিত শিক্ষার্থী/,
-    'the static markup has no open class detail');
 });
 
 test('both hero illustrations ship at the card\'s 828×462 size, day and night', () => {
+  const heroSubjects = ['welcome', 'classroom', 'attendance', 'exam', 'homework', 'notice'];
+  for (const subject of heroSubjects) {
+    assert.ok(page.querySelector(`[data-hero-card="${subject}"]`), `teacher.html mounts the ${subject} 3D hero card`);
+    for (const mode of ['day', 'night']) {
+      const file = `assets/images/teacher-hero/${subject}-${mode}.webp`;
+      assert.ok(existsSync(path.join(root, file)), `${file} exists`);
+      const buffer = readFileSync(path.join(root, file));
+      assert.ok(buffer.length <= 100 * 1024, `${file} stays within the 100 KB mobile budget`);
+      assert.equal(buffer.toString('ascii', 0, 4), 'RIFF', `${file} is a RIFF container`);
+      assert.equal(buffer.toString('ascii', 8, 12), 'WEBP', `${file} is WebP`);
+      assert.equal(buffer.toString('ascii', 12, 16), 'VP8 ', `${file} is a lossy WebP`);
+      const start = buffer.indexOf(Buffer.from([0x9d, 0x01, 0x2a]));
+      assert.ok(start > 0, `${file} carries a VP8 frame header`);
+      const width = buffer.readUInt16LE(start + 3) & 0x3fff;
+      const height = buffer.readUInt16LE(start + 5) & 0x3fff;
+      assert.deepEqual([width, height], [828, 462], `${file} matches the markup's intrinsic size`);
+    }
+  }
   for (const mode of ['day', 'night']) {
     const file = `assets/teacher-hero/teacher-hero-${mode}.webp`;
     assert.ok(existsSync(path.join(root, file)), `${file} exists`);
@@ -194,6 +214,47 @@ test('both hero illustrations ship at the card\'s 828×462 size, day and night',
   assert.deepEqual([art.getAttribute('width'), art.getAttribute('height')], ['828', '462']);
   assert.ok(existsSync(path.join(root, 'assets/teacher-hero/README.md')),
     'the artwork rules (no sun/moon in the scene) are documented beside the files');
+});
+
+test('every teacher view has a full 3D hero card with daily advice, date pill, glint, and hidden top back button', () => {
+  const views = [...page.querySelectorAll('.teacher-view')];
+  assert.equal(views.length, 11, 'all 11 teacher views are audited');
+  for (const view of views) {
+    const hero = view.querySelector(':scope > .home-dashboard-intro.teacher-home-intro');
+    assert.ok(hero, `${view.id} starts with a full 3D Hero Card`);
+    assert.ok(hero.querySelector('.teacher-hero-scene img.teacher-hero-art[data-teacher-hero-art][data-hero-card]'),
+      `${view.id} hero card carries 3D artwork`);
+    assert.ok(hero.querySelector('.teacher-hero-scene .teacher-hero-scene-scrim'),
+      `${view.id} hero card carries readability scrim`);
+    assert.ok(hero.querySelector('.teacher-hero-scene .teacher-hero-scene-sheen'),
+      `${view.id} hero card carries sheen layer`);
+    const content = hero.querySelector(':scope > .teacher-hero-content');
+    assert.ok(content, `${view.id} hero card has .teacher-hero-content inside the card`);
+    assert.ok(content.querySelector('[data-teacher-hero-date]'),
+      `${view.id} hero card has a date pill`);
+    assert.ok(content.querySelector('.teacher-hero-glint'),
+      `${view.id} hero card has a sun/moon glint`);
+    const h1 = content.querySelector('.teacher-hero-welcome h1');
+    const advice = content.querySelector('.teacher-hero-welcome p.teacher-hero-advice');
+    assert.ok(h1 && h1.textContent.trim().length > 0, `${view.id} hero card has a heading inside the card`);
+    assert.ok(advice && advice.textContent.trim().length > 0, `${view.id} hero card has an advice line inside the card`);
+    const backBtn = hero.querySelector('.pay-back');
+    if (backBtn) {
+      assert.equal(backBtn.hidden, true, `${view.id} top back button is hidden`);
+    }
+  }
+  const moreCards = [...page.querySelectorAll('#teacherMore .teacher-more-actions .teacher-action-card')];
+  assert.equal(moreCards.length, 6, 'আরও has 6 full-width action cards');
+  assert.equal(page.querySelector('#teacherProfile > #teacherProfileCard')?.tagName, 'ARTICLE',
+    'আমার প্রোফাইল card sits directly on #teacherProfile outside the collapsed settings groups');
+});
+
+test('single-theme Tailwind tokens unify cards, inputs, empty states, and Bengali date fields across all screens', () => {
+  const compiled = read('css/teacher-panel.css');
+  assert.match(compiled, /html:not\(\[data-theme=dark\]\) \.teacher-reference\{[^}]*--color-bg:#f8fafc/,
+    'light theme uses the unified slate-50 page background');
+  assert.match(compiled, /input\[type=date\]\[data-date-bn\]:not\(\[data-date-bn=""\]\):not\(:focus\):before\{content:attr\(data-date-bn\)/,
+    'date inputs render their Bengali formatted date via data-date-bn');
 });
 
 test('the committed stylesheet is what the Tailwind build produces', { skip: !existsSync(path.join(root, 'node_modules/.bin/tailwindcss')) }, () => {

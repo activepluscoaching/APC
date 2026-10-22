@@ -1,4 +1,6 @@
 import { dhakaKey } from './time.js';
+import { DAILY_ADVICE_SEEDS, pickDailyAdvice, readAdviceCache } from './daily-advice.js';
+import { pickTeacherSectionAdvice } from './teacher-daily-advice.js';
 import { initExamManager } from './exam-manager.js';
 import { backupOverdue } from './storage-safety.js';
 import { studentRecordMarkup } from './student-record.js';
@@ -114,6 +116,7 @@ function persistStudents() { saveRoster(state.students); }
 
 async function enterPanel() {
   $('#adminShell').hidden = false;
+  syncAdminHeroCards();
   // The capability set follows the role stored in the account record — the
   // existing role system is never modified, only read.
   const account = await readStaffAccount('admin');
@@ -144,10 +147,14 @@ async function enterPanel() {
   const route = routeFromHash(window.location.hash);
   setView(route && access.allowsView(route) ? route : state.activeView);
   const welcome = $('#adminWelcome');
+  const adminName = String(account?.fullName || '').trim();
   if (welcome) {
-    const adminName = String(account?.fullName || '').trim();
     welcome.textContent = adminName ? `স্বাগতম, ${adminName}` : 'স্বাগতম, এডমিন';
-    welcome.hidden = false;
+    welcome.hidden = true;
+  }
+  const dashTitle = $('#dashTitle');
+  if (dashTitle) {
+    dashTitle.textContent = adminName ? `স্বাগতম, ${adminName}` : 'স্বাগতম, এডমিন';
   }
   /* First-run provisioning of the other staff accounts. The one-time credential
      dialog it used to open was retired with the old login flow; nothing is shown,
@@ -176,13 +183,75 @@ const seatFor = view => VIEW_SEAT[view] || view;
  * view is not in the DOM — this is the route guard behind every menu item,
  * shortcut, tile and hash link.
  */
+function resetAdminTogglePanels(scope = document) {
+  scope.querySelectorAll('[data-admin-section-toggle], [data-admin-student-card], [data-role-toggle], [data-security-toggle], [data-admin-migration-card], [data-admin-academic-card]').forEach(btn => {
+    btn.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+  scope.querySelectorAll('[data-admin-section-panel], #adminStudentsDirectoryPanel, [data-role-panel], [data-security-panel]').forEach(panel => {
+    panel.hidden = true;
+  });
+  scope.querySelectorAll('#adminV2Migration .v2-migration-card').forEach(card => {
+    card.classList.remove('is-open');
+  });
+  const academicsRoot = scope.querySelector('#adminAcademics');
+  if (academicsRoot) delete academicsRoot.dataset.openAcademicCard;
+}
+
+function syncAdminHeroCards() {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') === 'dark' || root.classList.contains('dark') || document.body?.classList.contains('dark');
+  const mode = isDark ? 'night' : 'day';
+  const glintHref = isDark ? 'assets/icons/ai-3d/moon.svg' : 'assets/icons/ai-3d/sun.svg';
+  const today = new Date();
+  let wd = '';
+  try {
+    wd = new Intl.DateTimeFormat('bn-BD', { timeZone: 'Asia/Dhaka', weekday: 'long' }).format(today);
+  } catch {
+    wd = new Intl.DateTimeFormat('bn-BD', { weekday: 'long' }).format(today);
+  }
+  const fullDateLabel = `${wd} · ${dateLabel(today)}`;
+
+  $$('[data-home-intro]').forEach(card => {
+    card.dataset.heroMode = mode;
+  });
+  $$('[data-admin-hero-art]').forEach(img => {
+    const heroCard = img.dataset.heroCard || 'welcome';
+    const nextSrc = `assets/images/teacher-hero/${heroCard}-${mode}.webp`;
+    if (img.getAttribute('src') !== nextSrc) img.setAttribute('src', nextSrc);
+    img.dataset.mode = mode;
+  });
+  $$('[data-admin-hero-glint]').forEach(glint => {
+    if (glint.getAttribute('href') !== glintHref) glint.setAttribute('href', glintHref);
+  });
+  $$('[data-admin-hero-date]').forEach(node => {
+    node.textContent = fullDateLabel;
+  });
+  const weekdayEl = $('#adminTodayWeekday');
+  if (weekdayEl) weekdayEl.textContent = wd ? `${wd} · ` : '';
+  const todayEl = $('#adminTodayDate');
+  if (todayEl) todayEl.textContent = dateLabel(today);
+  $$('[data-admin-hero-advice]').forEach(welcomeBox => {
+    const key = welcomeBox.dataset.adminHeroAdvice || 'admin-dashboard';
+    if (key === 'admin-dashboard') return;
+    const p = welcomeBox.querySelector('p');
+    const line = pickTeacherSectionAdvice(key);
+    if (p && line) p.textContent = line;
+  });
+}
+
 function setView(view) {
   const target = String(view || '').trim();
   if (!access.allowsView(target)) return false;
   if (!$$('.admin-view').some(panel => panel.dataset.viewPanel === target)) return false;
   state.activeView = target;
   $('#adminMain')?.classList.toggle('is-staff-view', target === 'staff');
-  $$('.admin-view').forEach(panel => panel.classList.toggle('active', panel.dataset.viewPanel === target));
+  $$('.admin-view').forEach(panel => {
+    const active = panel.dataset.viewPanel === target;
+    panel.classList.toggle('active', active);
+    if (active) resetAdminTogglePanels(panel);
+  });
+  syncAdminHeroCards();
   const seat = seatFor(target);
   $$('.admin-bottom-item').forEach(item => {
     const active = item.dataset.adminView === seat;
@@ -225,6 +294,18 @@ function navigate(view, source) {
   if (!setView(target)) return false;
   // Fresh data every activation — never a stale snapshot from an earlier visit.
   refreshView(target);
+  const activePanel = $('.admin-view.active');
+  if (activePanel) resetAdminTogglePanels(activePanel);
+  if (target === 'students' && source?.dataset?.studentScope === 'pending') {
+    const pendingCard = $('[data-admin-student-card="pending"]');
+    const stuPanel = $('#adminStudentsDirectoryPanel');
+    if (pendingCard && stuPanel) {
+      pendingCard.classList.add('is-open');
+      pendingCard.setAttribute('aria-expanded', 'true');
+      pendingCard.after(stuPanel);
+      stuPanel.hidden = false;
+    }
+  }
   if (source?.matches?.('.admin-more-item, .admin-more-back, .admin-bottom-item')) {
     const heading = $('.admin-view.active h1');
     heading?.setAttribute('tabindex', '-1');
@@ -276,8 +357,26 @@ function renderDashboard() {
       : '';
   }
   const today = new Date();
+  const dateKey = dhakaKey(today);
+  const weekdayNode = $('#adminTodayWeekday');
+  if (weekdayNode) {
+    try {
+      const wd = new Intl.DateTimeFormat('bn-BD', { timeZone: 'Asia/Dhaka', weekday: 'long' }).format(today);
+      weekdayNode.textContent = `${wd} · `;
+    } catch {
+      const wd = new Intl.DateTimeFormat('bn-BD', { weekday: 'long' }).format(today);
+      weekdayNode.textContent = `${wd} · `;
+    }
+  }
   $('#adminTodayDate').textContent = dateLabel(today);
-  $('#adminTodayDate').dateTime = dhakaKey(today);
+  $('#adminTodayDate').dateTime = dateKey;
+  const adviceNode = $('#adminHeroAdvice');
+  if (adviceNode) {
+    const items = readAdviceCache()?.items || DAILY_ADVICE_SEEDS;
+    const picked = pickDailyAdvice(items, dateKey);
+    if (picked?.text) adviceNode.textContent = picked.text;
+  }
+  syncAdminHeroCards();
 }
 
 /* ---------- Students ---------- */
@@ -733,7 +832,7 @@ function renderRoles() {
   const host = $('#rolesMatrix');
   if (!host) return;
   const counts = state.staffCounts.byRole || {};
-  host.innerHTML = ROLE_ORDER.map(role => {
+  host.innerHTML = ROLE_ORDER.map((role, index) => {
     const capabilities = ROLE_CAPABILITIES[role] || [];
     const staffRole = role === 'payment' ? 'cash-counter' : role;
     const meta = STAFF_ROLE_META[staffRole];
@@ -741,14 +840,23 @@ function renderRoles() {
     const chips = Object.keys(CAPABILITY_LABELS).map(capability => `
       <li class="${capabilities.includes(capability) ? '' : 'is-denied'}">${escapeHtml(CAPABILITY_LABELS[capability])}</li>`).join('');
     const staffCount = role === 'student' ? state.students.length : (counts[staffRole] ?? 0);
+    const countText = `${role === 'student' ? bn(state.students.length) : bn(staffCount)} ${role === 'student' ? 'জন শিক্ষার্থী' : 'জন স্টাফ'}`;
+    const subText = `${ROLE_SUMMARY[role] || ''} (${countText})`;
+    const iconName = ROLE_ICONS[role] || 'shield';
     return `
-      <article class="admin-card role-card">
+      <button class="teacher-action-card${index === 0 ? ' is-accent' : ''}" type="button" data-role-toggle="${escapeHtml(role)}" aria-expanded="false">
+        <span class="teacher-action-body">
+          <span class="teacher-action-title pay-tile-label" data-action-sub="${escapeHtml(subText)}">${escapeHtml(label)} রোল ও অনুমতি</span>
+        </span>
+        <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup(iconName, 'apc-color-icon', { variant: 'color' })}</span>
+      </button>
+      <article class="admin-card role-card admin-toggle-panel" data-role-panel="${escapeHtml(role)}" hidden>
         <header class="admin-card-head">
           <div>
             <p class="eyebrow">${escapeHtml(role === 'student' ? 'Student' : meta ? meta.label : role)}</p>
             <h2>${escapeHtml(label)}</h2>
           </div>
-          <span class="badge ${role === 'admin' ? 'badge-approved' : 'badge-pending'}">${role === 'student' ? bn(state.students.length) : bn(staffCount)} ${role === 'student' ? 'জন শিক্ষার্থী' : 'জন স্টাফ'}</span>
+          <span class="badge ${role === 'admin' ? 'badge-approved' : 'badge-pending'}">${countText}</span>
         </header>
         <div class="role-head">
           <span class="role-icon" aria-hidden="true"></span>
@@ -1060,7 +1168,13 @@ async function renderSecurity() {
     ['শিক্ষার্থী আইডি বনাম স্টাফ আইডি', escapeHtml(STAFF_DIRECTORY_RULES.studentIdNote)]
   ];
   host.innerHTML = `
-    <article class="admin-card">
+    <button class="teacher-action-card is-accent" type="button" data-security-toggle="owner" aria-expanded="false">
+      <span class="teacher-action-body">
+        <span class="teacher-action-title pay-tile-label" data-action-sub="সিস্টেম মালিক, সেশন মেয়াদ ও পাসওয়ার্ড নীতিমালা দেখুন">এডমিন পরিচয় ও সিস্টেম সুরক্ষা</span>
+      </span>
+      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('shield', 'apc-color-icon', { variant: 'color' })}</span>
+    </button>
+    <article class="admin-card admin-toggle-panel" data-security-panel="owner" hidden>
       <header class="admin-card-head">
         <div><p class="eyebrow">সিস্টেম মালিক</p><h2>এডমিন পরিচয় ও সুরক্ষা</h2></div>
         <span class="badge badge-approved">সুরক্ষিত</span>
@@ -1070,7 +1184,13 @@ async function renderSecurity() {
           <div class="security-row"><div><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div></div>`).join('')}
       </div>
     </article>
-    <article class="admin-card">
+    <button class="teacher-action-card" type="button" data-security-toggle="password" aria-expanded="false">
+      <span class="teacher-action-body">
+        <span class="teacher-action-title pay-tile-label" data-action-sub="সাময়িক পাসওয়ার্ডে থাকা স্টাফ অ্যাকাউন্ট (${bn(passwordDue.length)} জন) ও রিসেট নিয়ন্ত্রণ">পাসওয়ার্ড বদল বাকি তালিকা</span>
+      </span>
+      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('lock', 'apc-color-icon', { variant: 'color' })}</span>
+    </button>
+    <article class="admin-card admin-toggle-panel" data-security-panel="password" hidden>
       <header class="admin-card-head">
         <div><p class="eyebrow">পাসওয়ার্ড সুরক্ষা</p><h2>পাসওয়ার্ড বদল বাকি</h2></div>
         <span class="badge ${passwordDue.length ? 'badge-pending' : 'badge-approved'}">${bn(passwordDue.length)} জন</span>
@@ -1089,7 +1209,13 @@ async function renderSecurity() {
       : '<p class="admin-empty">সব অ্যাকাউন্টের পাসওয়ার্ড হালনাগাদ — বকেয়া কিছু নেই।</p>'}
       <p class="finance-hint">অ্যাডমিন রিসেট করলে নতুন পাসওয়ার্ড সাময়িক থাকে: সংশ্লিষ্ট স্টাফ প্রথম লগইনে তা বদলাতে বাধ্য থাকে। পাসওয়ার্ড কখনো দেখানো হয় না।</p>
     </article>
-    <article class="admin-card">
+    <button class="teacher-action-card" type="button" data-security-toggle="protected" aria-expanded="false">
+      <span class="teacher-action-body">
+        <span class="teacher-action-title pay-tile-label" data-action-sub="মুছে ফেলা ও নিষ্ক্রিয় করা থেকে সুরক্ষিত সিস্টেম অ্যাকাউন্ট (${bn(protectedStaff.length)} টি)">সুরক্ষিত অ্যাকাউন্ট তালিকা</span>
+      </span>
+      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('verified', 'apc-color-icon', { variant: 'color' })}</span>
+    </button>
+    <article class="admin-card admin-toggle-panel" data-security-panel="protected" hidden>
       <header class="admin-card-head">
         <div><p class="eyebrow">সুরক্ষিত অ্যাকাউন্ট</p><h2>সুরক্ষিত অ্যাকাউন্ট</h2></div>
         <span class="badge badge-approved">${bn(protectedStaff.length)} টি</span>
@@ -1104,7 +1230,13 @@ async function renderSecurity() {
           </div>`).join('') || '<p class="admin-empty">কোনো সুরক্ষিত অ্যাকাউন্ট পাওয়া যায়নি।</p>'}
       </div>
     </article>
-    <article class="admin-card">
+    <button class="teacher-action-card" type="button" data-security-toggle="boundaries" aria-expanded="false">
+      <span class="teacher-action-body">
+        <span class="teacher-action-title pay-tile-label" data-action-sub="ক্যাশ কাউন্টার, ম্যানেজার ও শিক্ষকের নির্ধারিত কর্মপরিধি দেখুন">দৈনন্দিন কাজের রোল সীমা</span>
+      </span>
+      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('staff', 'apc-color-icon', { variant: 'color' })}</span>
+    </button>
+    <article class="admin-card admin-toggle-panel" data-security-panel="boundaries" hidden>
       <header class="admin-card-head">
         <div><p class="eyebrow">ভূমিকার সীমা</p><h2>দৈনন্দিন কাজের মালিকানা</h2></div>
       </header>
@@ -1143,19 +1275,24 @@ const ADMIN_SETTINGS_DOOR_HINTS = Object.freeze({
 function paintAdminSettingsDoors() {
   const nav = document.querySelector('[data-settings-hub="admin"] [data-settings-groups]');
   if (!nav) return;
-  nav.querySelectorAll('[data-settings-open]').forEach(door => {
+  nav.querySelectorAll('[data-settings-open]').forEach((door, index) => {
     if (door.dataset.doorPainted === '1') return;
     door.dataset.doorPainted = '1';
-    door.classList.add('admin-settings-door');
+    door.classList.add('admin-settings-door', 'teacher-action-card');
+    if (index === 0) door.classList.add('is-accent');
+    const iconHost = door.querySelector('.pay-tile-icon');
+    if (iconHost) iconHost.classList.add('teacher-action-art');
     const label = door.querySelector('.pay-tile-label');
     if (label) {
+      label.classList.add('teacher-action-title');
       const copy = document.createElement('span');
-      copy.className = 'admin-settings-door-copy';
+      copy.className = 'admin-settings-door-copy teacher-action-body';
       label.replaceWith(copy);
       copy.append(label);
       const hint = ADMIN_SETTINGS_DOOR_HINTS[door.dataset.settingsOpen];
       if (hint) {
         const small = document.createElement('small');
+        small.className = 'teacher-action-sub';
         small.textContent = hint;
         copy.append(small);
       }
@@ -1163,6 +1300,7 @@ function paintAdminSettingsDoors() {
     const chevron = document.createElement('span');
     chevron.className = 'admin-settings-door-chevron';
     chevron.setAttribute('aria-hidden', 'true');
+    chevron.hidden = true;
     chevron.innerHTML = iconMarkup('chevron-right', 'apc-icon-svg');
     door.append(chevron);
   });
@@ -1191,6 +1329,9 @@ async function renderAdminProfile() {
   if ($('#adminProfileUserId')) $('#adminProfileUserId').textContent = account?.username || '—';
 
   const displayName = account?.fullName || 'এডমিন';
+  const adminName = String(account?.fullName || '').trim();
+  if ($('#dashTitle')) $('#dashTitle').textContent = adminName ? `স্বাগতম, ${adminName}` : 'স্বাগতম, এডমিন';
+  if ($('#adminWelcome')) $('#adminWelcome').textContent = adminName ? `স্বাগতম, ${adminName}` : 'স্বাগতম, এডমিন';
   const initials = initialsOf(displayName);
   host.innerHTML = `
     <div class="admin-profile-hero">
@@ -1272,6 +1413,8 @@ const VIEW_REFRESHERS = {
   backup: () => renderBackup(),
   audit: () => renderGradeAudit(),
   security: () => renderSecurity(),
+  academics: () => renderAcademics(),
+  migration: () => renderMigration(),
   /* Arriving on the profile always lands on the settings menu: a group
      opened on an earlier visit must not still be open ("the part I
      clicked before is still showing" — the reported dead end). */
@@ -1323,6 +1466,153 @@ $('#btnSaveBroadcast')?.addEventListener('click', saveBroadcastFromForm);
 $('#btnSaveMaintenance')?.addEventListener('click', saveMaintenanceFromForm);
 
 $('#adminExitButton')?.addEventListener('click', exitPanel);
+$('#adminMoreLogoutButton')?.addEventListener('click', exitPanel);
+
+try {
+  const heroThemeObserver = new MutationObserver(() => syncAdminHeroCards());
+  if (document.documentElement) {
+    heroThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  }
+  if (document.body) {
+    heroThemeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  }
+} catch {}
+
+$('#adminMain')?.addEventListener('click', event => {
+  const sectionToggle = event.target.closest('[data-admin-section-toggle]');
+  if (sectionToggle) {
+    const key = sectionToggle.dataset.adminSectionToggle;
+    const viewEl = sectionToggle.closest('.admin-view') || document;
+    const panel = viewEl.querySelector(`[data-admin-section-panel="${key}"]`);
+    if (!panel) return;
+    const wasOpen = sectionToggle.classList.contains('is-open') && !panel.hidden;
+    viewEl.querySelectorAll('[data-admin-section-toggle]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    viewEl.querySelectorAll('[data-admin-section-panel]').forEach(sec => {
+      sec.hidden = true;
+    });
+    if (!wasOpen) {
+      sectionToggle.classList.add('is-open');
+      sectionToggle.setAttribute('aria-expanded', 'true');
+      if (sectionToggle.closest('.admin-action-stack')) {
+        sectionToggle.after(panel);
+      }
+      panel.hidden = false;
+      if (sectionToggle.dataset.adminReportFocus === 'preview') {
+        const previewBtn = panel.querySelector('.rc-actions button[type="submit"], .rc-download');
+        previewBtn?.focus?.({ preventScroll: true });
+      }
+    }
+    return;
+  }
+
+  const studentCard = event.target.closest('[data-admin-student-card]');
+  if (studentCard) {
+    const scope = studentCard.dataset.adminStudentCard || 'all';
+    const panel = $('#adminStudentsDirectoryPanel');
+    if (!panel) return;
+    const wasOpen = studentCard.classList.contains('is-open') && !panel.hidden;
+    $$('[data-admin-student-card]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    if (wasOpen) {
+      panel.hidden = true;
+      return;
+    }
+    state.filter = scope;
+    $$('#studentFilterChips .chip').forEach(chip => chip.classList.toggle('active', chip.dataset.studentFilter === scope));
+    renderStudents();
+    studentCard.classList.add('is-open');
+    studentCard.setAttribute('aria-expanded', 'true');
+    studentCard.after(panel);
+    panel.hidden = false;
+    return;
+  }
+
+  const roleToggle = event.target.closest('[data-role-toggle]');
+  if (roleToggle) {
+    const role = roleToggle.dataset.roleToggle;
+    const panel = $(`#rolesMatrix [data-role-panel="${role}"]`);
+    if (!panel) return;
+    const wasOpen = !panel.hidden;
+    $$('#rolesMatrix [data-role-toggle]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    $$('#rolesMatrix [data-role-panel]').forEach(sec => {
+      sec.hidden = true;
+    });
+    if (!wasOpen) {
+      roleToggle.classList.add('is-open');
+      roleToggle.setAttribute('aria-expanded', 'true');
+      panel.hidden = false;
+    }
+    return;
+  }
+
+  const securityToggle = event.target.closest('[data-security-toggle]');
+  if (securityToggle) {
+    const key = securityToggle.dataset.securityToggle;
+    const panel = $(`#securityPanels [data-security-panel="${key}"]`);
+    if (!panel) return;
+    const wasOpen = !panel.hidden;
+    $$('#securityPanels [data-security-toggle]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    $$('#securityPanels [data-security-panel]').forEach(sec => {
+      sec.hidden = true;
+    });
+    if (!wasOpen) {
+      securityToggle.classList.add('is-open');
+      securityToggle.setAttribute('aria-expanded', 'true');
+      panel.hidden = false;
+    }
+    return;
+  }
+
+  const migrationCard = event.target.closest('[data-admin-migration-card]');
+  if (migrationCard) {
+    const idx = Number(migrationCard.dataset.adminMigrationCard || 0);
+    const cards = $$('#adminV2Migration .v2-migration-card');
+    const targetCard = cards[idx];
+    if (!targetCard) return;
+    const wasOpen = targetCard.classList.contains('is-open');
+    $$('[data-admin-migration-card]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    cards.forEach(c => c.classList.remove('is-open'));
+    if (!wasOpen) {
+      migrationCard.classList.add('is-open');
+      migrationCard.setAttribute('aria-expanded', 'true');
+      targetCard.classList.add('is-open');
+    }
+    return;
+  }
+
+  const academicCard = event.target.closest('[data-admin-academic-card]');
+  if (academicCard) {
+    const key = academicCard.dataset.adminAcademicCard || '';
+    const root = $('#adminAcademics');
+    if (!root) return;
+    const wasOpen = root.dataset.openAcademicCard === key;
+    $$('[data-admin-academic-card]').forEach(btn => {
+      btn.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    if (wasOpen) {
+      delete root.dataset.openAcademicCard;
+    } else {
+      academicCard.classList.add('is-open');
+      academicCard.setAttribute('aria-expanded', 'true');
+      root.dataset.openAcademicCard = key;
+    }
+  }
+});
 /* Bottom-bar tabs and "More" menu rows are rebuilt by the permission model
    (js/admin-panel-ui.js) and call `navigate` themselves; the markup-driven
    shortcuts below are wired once. */

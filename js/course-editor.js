@@ -89,10 +89,10 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
       const subject = String(subjectName || '').normalize('NFC').trim().toLocaleLowerCase();
       const assignments = listTeacherAssignments(teacherUser).filter(item => item.className === className
         && item.subjects.some(name => String(name).normalize('NFC').trim().toLocaleLowerCase() === subject));
-      return [...new Set(assignments.map(item => item.group || ''))].map(value => ({ value, label: value || 'সব batch / পুরো শ্রেণি' }));
+      return [...new Set(assignments.map(item => item.group || ''))].map(value => ({ value, label: value || 'সব ব্যাচ / পুরো শ্রেণি' }));
     }
     const groups = [...new Set(loadRoster().filter(item => item.className === className && item.status !== 'rejected').map(item => item.group).filter(Boolean))];
-    return [{ value: '', label: 'সব batch / পুরো শ্রেণি' }, ...groups.map(value => ({ value, label: value }))];
+    return [{ value: '', label: 'সব ব্যাচ / পুরো শ্রেণি' }, ...groups.map(value => ({ value, label: value }))];
   }
   function teacherMaySee(record, className, subjectName) {
     return role !== 'teacher' || isTeacherAssignedSubject(teacherUser, className, subjectName, record.group || '');
@@ -158,13 +158,13 @@ export function initCourseEditor({ mount, role = 'teacher', actor = '', toast = 
     root.innerHTML = `
       <div class="course-manage">
         <form class="course-manage-form admin-card" data-course-form>
-          <header class="admin-card-head"><div><p class="eyebrow">শেখার লাইব্রেরি</p>
+          <header class="admin-card-head"><div><p class="eyebrow">উপকরণ</p>
             <h2>${record ? 'কনটেন্ট সম্পাদনা' : 'নতুন কনটেন্ট'}</h2></div>
             ${record ? '<button class="mini-btn" type="button" data-course-cancel>নতুন কিছু লিখুন</button>' : ''}</header>
           ${classes.length ? '' : '<p class="admin-empty">আপনার জন্য এখনো কোনো ক্লাস বরাদ্দ হয়নি — ম্যানেজার থেকে ক্লাস ও বিষয় নিন।</p>'}
           <label>ক্লাস<select name="className"${classes.length ? '' : ' disabled'}>${classes.map(item => `<option value="${esc(item.name)}"${item.name === className ? ' selected' : ''}>${esc(item.name)}</option>`).join('')}</select></label>
           <label>বিষয়<select name="subject"${subjects.length ? '' : ' disabled'}>${subjects.map(name => `<option value="${esc(name)}"${name === pickedSubject ? ' selected' : ''}>${esc(name)}</option>`).join('')}</select></label>
-          <label>Batch / Group<select name="group"${scopes.length ? '' : ' disabled'}>${scopes.map(item => `<option value="${esc(item.value)}"${item.value === pickedGroup ? ' selected' : ''}>${esc(item.label)}</option>`).join('')}</select></label>
+          <label>ব্যাচ / গ্রুপ<select name="group"${scopes.length ? '' : ' disabled'}>${scopes.map(item => `<option value="${esc(item.value)}"${item.value === pickedGroup ? ' selected' : ''}>${esc(item.label)}</option>`).join('')}</select></label>
           <label>ধরন<select name="type">${typeOptions(record ? typeOf(record) : 'lesson')}</select></label>
           <label>চ্যাপ্টার<select name="chapterId"${isChapter ? ' disabled' : ''}>
             <option value="">চ্যাপ্টার ছাড়া</option>

@@ -84,9 +84,16 @@ function renderHub(root, menuSelector, panelView, catalogue, access, onNavigate)
     const entry = catalogue.find(candidate => candidate.view === item.dataset.adminView);
     if (!entry) { item.remove(); return; }
     if (entry.capability && !access.has(entry.capability)) { item.remove(); return; }
-    paintIcon(item.querySelector('.admin-more-icon'), ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-more-icon-svg apc-icon-svg');
+    item.classList.add('teacher-action-card');
+    const iconHost = item.querySelector('.admin-more-icon');
+    if (iconHost) iconHost.classList.add('teacher-action-art', 'pay-tile-icon');
+    const copyHost = item.querySelector('.admin-more-copy');
+    if (copyHost) copyHost.classList.add('teacher-action-body');
+    paintIcon(iconHost, ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-more-icon-svg apc-icon-svg');
     const label = item.querySelector('.admin-more-copy strong');
     const hint = item.querySelector('.admin-more-copy small');
+    if (label) label.classList.add('teacher-action-title');
+    if (hint) hint.classList.add('teacher-action-sub');
     if (label && entry.label && !label.textContent.trim()) label.textContent = entry.label;
     if (hint && entry.hint && !hint.textContent.trim()) hint.textContent = entry.hint;
     /* Bind exactly once per item: these rows live in static markup and the
@@ -110,45 +117,33 @@ function renderHub(root, menuSelector, panelView, catalogue, access, onNavigate)
 function renderFeatureGrid(container, entries, onNavigate) {
   if (!container) return [];
   container.replaceChildren();
-  const subs = {
-    students: 'নতুন আবেদন দেখুন ও অনুমোদন দিন',
-    staff: 'স্টাফ অ্যাকাউন্ট ও ভূমিকা',
-    reports: 'রিপোর্ট ও সারাংশ',
-    settings: 'অ্যাপ ও সিস্টেম সেটিংস',
-    security: 'সুরক্ষা ও অ্যাক্সেস',
-    data: 'ডেটা ও ব্যাকআপ',
-    backup: 'ব্যাকআপ এক্সপোর্ট'
-  };
   const tiles = entries.map((entry, index) => {
     const tile = document.createElement('button');
     tile.type = 'button';
-    tile.className = 'admin-action-card';
+    tile.className = 'pay-tile admin-feature-tile teacher-action-card is-accent';
     tile.dataset.adminView = entry.view;
     if (entry.capability) tile.dataset.adminCap = entry.capability;
     if (entry.action) tile.dataset.adminAction = entry.action;
-    if (entry.studentScope) tile.dataset.studentScope = entry.studentScope;
+    if (entry.scope) tile.dataset.studentScope = entry.scope;
+    // Staggered entrance, cheap and transform-only.
     tile.style.setProperty('--tile-index', String(index));
 
-    const body = document.createElement('span');
-    body.className = 'admin-action-body';
-    const title = document.createElement('span');
-    title.className = 'admin-action-title';
-    title.textContent = entry.label;
-    const sub = document.createElement('span');
-    sub.className = 'admin-action-sub';
-    sub.textContent = entry.sub || subs[entry.view] || 'বিস্তারিত দেখুন';
-    body.append(title, sub);
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'pay-tile-icon admin-feature-icon teacher-action-art';
+    iconWrap.append(iconElement(ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon, 'admin-feature-icon-svg apc-icon-svg'));
 
-    const art = document.createElement('span');
-    art.className = 'admin-action-art';
-    art.setAttribute('aria-hidden', 'true');
-    art.append(iconElement(ADMIN_BOTTOM_ICONS[entry.icon] || entry.icon || 'dashboard', 'admin-action-art-svg apc-icon-svg'));
+    const label = document.createElement('span');
+    label.className = 'pay-tile-label admin-feature-label teacher-action-title';
+    label.textContent = entry.label;
+    label.dataset.actionSub = entry.sub || entry.hint || 'নতুন ও অপেক্ষমাণ শিক্ষার্থীদের নিবন্ধন আবেদন যাচাই ও অনুমোদন করুন';
 
-    tile.append(body, art);
+    tile.append(iconWrap, label);
     tile.addEventListener('click', () => onNavigate(entry.view, tile));
     container.append(tile);
     return tile;
   });
+  // An odd last tile spans the row so the grid never ends with a hole.
+  if (tiles.length % 2 === 1) tiles.at(-1)?.classList.add('is-wide');
   container.hidden = tiles.length === 0;
   return tiles;
 }
@@ -177,11 +172,7 @@ export function initAdminPanelShell({ access, onNavigate } = {}) {
   const tiles = renderFeatureGrid(document.querySelector('#adminFeatureGrid'), tileEntries, navigate);
 
   // System overview title uses the same icon language as the navigation.
-  // Keep initial letter if present; only paint when empty.
-  const heroIcon = document.querySelector('.admin-hero-icon');
-  if (heroIcon && !heroIcon.querySelector('#adminHomeInitial') && !heroIcon.textContent.trim()) {
-    paintIcon(heroIcon, 'dashboard', 'admin-hero-icon-svg apc-icon-svg');
-  }
+  paintIcon(document.querySelector('.admin-hero-icon'), 'dashboard', 'admin-hero-icon-svg apc-icon-svg');
 
   // Hero summary tiles, in document order (see admin.html).
   const heroIcons = ['students', 'staff', 'data', 'security'];

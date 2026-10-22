@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { TEACHER_DAILY_ADVICE, pickTeacherAdvice } from '../js/teacher-daily-advice.js';
+import { TEACHER_DAILY_ADVICE, TEACHER_SECTION_ADVICE, pickTeacherAdvice, pickTeacherSectionAdvice } from '../js/teacher-daily-advice.js';
 import { quoteDateKey, quoteDayNumber } from '../js/daily-quote.js';
 
 test('the teacher advice library is a clean, Bengali, de-duplicated set', () => {
@@ -17,7 +17,7 @@ test('the teacher advice library is a clean, Bengali, de-duplicated set', () => 
   const html = readFileSync(new URL('../teacher.html', import.meta.url), 'utf8');
   /* The warm line may also carry Tailwind utilities (layout lives on the
      element now); only its text has to stay the library head. */
-  const warm = html.match(/<p class="teacher-hero-warm[^"]*">([^<]+)<\/p>/);
+  const warm = html.match(/<p class="teacher-hero-warm[^"]*"[^>]*>([^<]+)<\/p>/);
   assert.ok(warm, 'the hero keeps a warm-line element');
   assert.equal(warm[1].trim(), TEACHER_DAILY_ADVICE[0], 'the static fallback matches advice[0]');
 });
@@ -52,4 +52,24 @@ test('the rotation walks every line instead of repeating a subset', () => {
     seen.add(pickTeacherAdvice(start + offset * 24 * 60 * 60 * 1000));
   }
   assert.equal(seen.size, TEACHER_DAILY_ADVICE.length, 'over one cycle every advice line appears');
+});
+
+test('every hero card section has its own Bengali daily-rotating advice bank', () => {
+  const dayOne = Date.parse('2026-10-21T00:00:00Z');
+  const dayTwo = dayOne + 24 * 60 * 60 * 1000;
+  for (const [section, list] of Object.entries(TEACHER_SECTION_ADVICE)) {
+    assert.ok(Array.isArray(list) && list.length >= 2, `${section} has at least 2 daily advice lines`);
+    assert.equal(new Set(list).size, list.length, `${section} has no duplicate advice lines`);
+    for (const line of list) {
+      assert.equal(typeof line, 'string');
+      assert.ok(line.trim().length > 0, `${section} has no empty advice`);
+      assert.doesNotMatch(line, /[A-Za-z]/, `${section} advice is 100% Bengali`);
+      assert.match(line, /[ঀ-৿]/, `${section} advice contains Bengali script`);
+    }
+    assert.notEqual(
+      pickTeacherSectionAdvice(section, dayOne),
+      pickTeacherSectionAdvice(section, dayTwo),
+      `${section} rotates to a new advice line tomorrow`
+    );
+  }
 });

@@ -1,5 +1,8 @@
 import { iconMarkup } from './icons.js';
-import { listNotifications, SECTION_LABEL } from './notification-store.js';
+import {
+  listNotifications, markRead, notificationSettings,
+  saveNotificationSettings, unreadNotifications, SECTION_LABEL
+} from './notification-store.js';
 /* Settings → Notification Settings.
 
    One screen owns every notification choice a person has:
@@ -47,9 +50,34 @@ function whenText(record) {
 }
 
 function ready() {
-  if (controller) return controller;
-  controller = window.apcNotifications || null;
+  if (window.apcNotifications) controller = window.apcNotifications;
   return controller;
+}
+
+function fallbackViewerKey() {
+  const api = ready();
+  if (typeof api?.viewerKey === 'function') return api.viewerKey();
+  const path = String(window.location?.pathname || '').toLowerCase();
+  if (path.endsWith('teacher.html')) return 'staff:teacher.apc';
+  if (path.endsWith('admin.html')) return 'staff:admin.apc';
+  if (path.endsWith('manager.html')) return 'staff:manager.apc';
+  if (path.endsWith('payment.html')) return 'staff:payment.apc';
+  try {
+    const raw = window.localStorage?.getItem('activePlus.account.v1');
+    const acc = raw ? JSON.parse(raw) : null;
+    const id = acc?.student?.id || acc?.studentId || acc?.username || '';
+    if (id) return `student:${id}`;
+  } catch { /* fallback */ }
+  return 'staff:teacher.apc';
+}
+
+function fallbackPermission() {
+  try {
+    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification?.permission) {
+      return window.Notification.permission;
+    }
+  } catch { /* headless */ }
+  return 'unsupported';
 }
 
 /* The notification engine is started by the page shell (js/realtime-sync-entry.js
@@ -94,15 +122,20 @@ function historyRows(records) {
 function paint() {
   if (!root) return;
   const api = ready();
-  if (!api) {
-    root.innerHTML = '<p class="admin-empty">নোটিফিকেশন সিস্টেম চালু হচ্ছে…</p>';
-    return;
-  }
-  const settings = api.settings ? api.settings() : { enabled: true, sound: true, background: true, inApp: true };
-  const permission = typeof api.permission === 'function' ? api.permission() : 'unsupported';
+  const vKey = fallbackViewerKey();
+  const settings = api?.settings
+    ? api.settings()
+    : notificationSettings(vKey);
+  const permission = typeof api?.permission === 'function'
+    ? api.permission()
+    : fallbackPermission();
   const state = PERMISSION_COPY[permission] || PERMISSION_COPY.unsupported;
-  const unread = typeof api.unread === 'function' ? api.unread() : 0;
-  const records = typeof api.records === 'function' ? api.records() : listNotifications('');
+  const unread = typeof api?.unread === 'function'
+    ? api.unread()
+    : unreadNotifications(vKey).length;
+  const records = typeof api?.records === 'function'
+    ? api.records()
+    : listNotifications(vKey);
   const off = settings.enabled === false;
 
   root.innerHTML =
@@ -174,7 +207,6 @@ export function initNotificationSettings({ mount } = {}) {
     const input = event.target;
     if (!input?.id) return;
     const api = ready();
-    if (!api?.saveSettings) return;
     const patch = {
       noticeMasterToggle: { enabled: input.checked },
       noticeBackgroundToggle: { background: input.checked },
@@ -182,17 +214,26 @@ export function initNotificationSettings({ mount } = {}) {
       noticeSoundToggle: { sound: input.checked }
     }[input.id];
     if (!patch) return;
-    const next = api.saveSettings(patch);
+    const next = api?.saveSettings
+      ? api.saveSettings(patch)
+      : saveNotificationSettings(fallbackViewerKey(), patch);
     if (input.id === 'noticeMasterToggle' && next.enabled) {
       // First enable asks the browser — never before the person asked.
-      if (typeof api.enable === 'function') void api.enable().then(() => paint());
+      if (typeof api?.enable === 'function') void api.enable().then(() => paint());
+      else paint();
       return;
     }
     paint();
   });
 
   root.addEventListener('click', async event => {
-    const api = ready();
+    let api = ready();
+    if (!api) {
+      try {
+        const mod = await import('./notifications.js');
+        api = mod.initNotifications?.() || ready();
+      } catch { /* fallback */ }
+    }
     if (event.target.closest('[data-notice-permission]')) {
       if (typeof api?.enable === 'function') { await api.enable(); paint(); }
       else if (typeof window.apcNoticeCenter?.showInfo === 'function') window.apcNoticeCenter.showInfo('unsupported');
@@ -205,6 +246,11 @@ export function initNotificationSettings({ mount } = {}) {
     }
     if (event.target.closest('[data-notice-read-all-settings]')) {
       if (typeof api?.markAllRead === 'function') api.markAllRead();
+      else {
+        const vKey = fallbackViewerKey();
+        const keys = unreadNotifications(vKey).map(r => r.key);
+        if (keys.length) markRead(vKey, keys);
+      }
       paint();
       return;
     }

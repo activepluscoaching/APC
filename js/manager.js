@@ -29,6 +29,7 @@ import { normalizeClassId, normalizeSectionId } from './class-key.js';
 import { listClasses } from './academics.js';
 import { noticeCategory, noticeCategoryInfo } from './notification-rules.js';
 import { mountReports, refreshReports } from './reports.js';
+import { pickTeacherSectionAdvice } from './teacher-daily-advice.js';
 
 registerServiceWorker();
 initFixedShell();
@@ -77,6 +78,7 @@ let financeSegment = 'collection', academicScope = 'all', academicClass = 'all';
    deep-link into its own screens instead of rendering a second copy. */
 let examWorkspaceOpen = null;
 let managerExamScreen = '';
+let managerExamTileKey = '';
 const EXAM_SCREENS = Object.freeze({
   bank: 'bank', upcoming: 'upcoming', done: 'archive', papers: 'archive',
   live: 'home', instant: 'home', recent: 'home', results: 'home', other: 'home'
@@ -92,11 +94,59 @@ function paintManagerExam() {
   const workspace = $('#managerExamWorkspace');
   if (!hub || !workspace) return;
   const open = Boolean(managerExamScreen);
-  hub.hidden = open;
+  hub.hidden = false;
   workspace.hidden = !open;
+  $$('#managerExamHub [data-manager-exam]').forEach(btn => {
+    const active = open && (btn.dataset.managerExam === managerExamTileKey || (!managerExamTileKey && EXAM_SCREENS[btn.dataset.managerExam] === managerExamScreen));
+    btn.classList.toggle('is-open', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
   if (open) {
     ensureExamWorkspace();
     examWorkspaceOpen?.(managerExamScreen);
+  }
+}
+function syncManagerHeroCards() {
+  const now = new Date();
+  let hour = 12;
+  try {
+    hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(now));
+  } catch {
+    hour = now.getHours();
+  }
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDay = !isDark && hour >= 6 && hour < 18;
+  const mode = isDay ? 'day' : 'night';
+  let weekday = '';
+  try {
+    weekday = new Intl.DateTimeFormat('bn-BD', { timeZone: 'Asia/Dhaka', weekday: 'long' }).format(now);
+  } catch {
+    weekday = new Intl.DateTimeFormat('bn-BD', { weekday: 'long' }).format(now);
+  }
+  const today = dateLabel(now);
+  const datePillText = `${weekday ? `${weekday} · ` : ''}${today}`;
+  $$('[data-manager-hero-date]').forEach(node => { node.textContent = datePillText; });
+  $$('[data-home-intro]').forEach(intro => { intro.dataset.heroMode = mode; });
+  $$('[data-manager-hero-art]').forEach(img => {
+    const card = img.dataset.heroCard || 'welcome';
+    const nextSrc = `assets/images/teacher-hero/${card}-${mode}.webp`;
+    if (img.getAttribute('src') !== nextSrc) img.setAttribute('src', nextSrc);
+    img.dataset.mode = mode;
+  });
+  $$('[data-manager-hero-glint]').forEach(glint => {
+    const nextHref = `assets/icons/ai-3d/${mode === 'night' ? 'moon' : 'sun'}.svg`;
+    if (glint.getAttribute('href') !== nextHref) glint.setAttribute('href', nextHref);
+    const glintSvg = glint.closest('svg');
+    if (glintSvg) glintSvg.setAttribute('data-icon', mode === 'night' ? 'moon' : 'sun');
+  });
+  $$('[data-manager-hero-advice]').forEach(node => {
+    const key = node.dataset.managerHeroAdvice || 'dashboard';
+    node.textContent = pickTeacherSectionAdvice(key);
+  });
+  const homeTitle = $('#managerHomeTitle');
+  if (homeTitle) {
+    const name = String(managerAccount?.fullName || '').trim();
+    homeTitle.textContent = name ? `স্বাগতম, ${name}` : 'স্বাগতম, ম্যানেজার';
   }
 }
 const scopeLabel = Object.freeze({ all: 'সব', pending: 'নিবন্ধন অপেক্ষমাণ', approved: 'সক্রিয়', inactive: 'নিষ্ক্রিয়', rejected: 'বাতিল' });
@@ -142,6 +192,7 @@ function renderView(view) {
   // before the panels render, so a renderer that ever fails can still not send
   // the next refresh back to the dashboard.
   rememberRoute(view);
+  syncManagerHeroCards();
   if (view === 'dashboard') renderDashboard();
   if (view === 'students') { expandedStudentId = null; renderStudents(); }
   if (view === 'academic') renderAcademic();
@@ -176,9 +227,9 @@ function renderDashboard() {
   const totalToday = todayPayments.reduce((sum, tx) => addTaka(sum, tx.amount), 0);
   const todayKey = routineDayForToday();
   const todaysClasses = routine[todayKey]?.classes?.length || 0;
-  safeSetText('#managerToday', today);
   safeSetText('#mgrTotalStudents', bn(students.length)); safeSetText('#mgrActiveStudents', bn(approved.length));
   safeSetText('#mgrTodayCollection', money(totalToday)); safeSetText('#mgrTodayClasses', bn(todaysClasses));
+  syncManagerHeroCards();
 }
 function routineDayForToday(date = new Date()) {
   const key = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', weekday: 'short' }).format(date).toLowerCase();
@@ -741,8 +792,10 @@ function renderResults() {
 }
 function renderProfile() {
   const account = managerAccount || {};
-  $('#managerProfileCard').innerHTML = `<div class="manager-profile-list"><div><small>নাম</small><strong>${escapeHtml(account.fullName || 'Manager')}</strong></div><div><small>ইউজারনেম</small><strong>${escapeHtml(account.username || '—')}</strong></div><div><small>যোগাযোগ</small><strong>${escapeHtml(account.mobile || '—')}</strong></div><div><small>ইমেইল</small><strong>${escapeHtml(account.email || '—')}</strong></div><div><small>ভূমিকা</small><strong>ম্যানেজার — পরিচালনা নিয়ন্ত্রক</strong></div><div><small>অ্যাকাউন্টের অবস্থা</small><strong>${escapeHtml(({ active: 'সক্রিয়', suspended: 'স্থগিত', inactive: 'নিষ্ক্রিয়' }[account.status || account.accountStatus] || account.status || account.accountStatus || 'সক্রিয়'))}</strong></div></div>`;
-  $('#managerProfileCard').insertAdjacentHTML('beforeend', '<div class="row-actions"><button class="admin-btn ghost" type="button" data-profile-edit>নিজের তথ্য সম্পাদনা</button></div>');
+  const markup = `<div class="manager-profile-list"><div><small>নাম</small><strong>${escapeHtml(account.fullName || 'Manager')}</strong></div><div><small>ইউজারনেম</small><strong>${escapeHtml(account.username || '—')}</strong></div><div><small>যোগাযোগ</small><strong>${escapeHtml(account.mobile || '—')}</strong></div><div><small>ইমেইল</small><strong>${escapeHtml(account.email || '—')}</strong></div><div><small>ভূমিকা</small><strong>ম্যানেজার — পরিচালনা নিয়ন্ত্রক</strong></div><div><small>অ্যাকাউন্টের অবস্থা</small><strong>${escapeHtml(({ active: 'সক্রিয়', suspended: 'স্থগিত', inactive: 'নিষ্ক্রিয়' }[account.status || account.accountStatus] || account.status || account.accountStatus || 'সক্রিয়'))}</strong></div></div><div class="row-actions"><button class="admin-btn ghost" type="button" data-profile-edit>নিজের তথ্য সম্পাদনা</button></div>`;
+  if ($('#managerProfileCard')) $('#managerProfileCard').innerHTML = markup;
+  if ($('#managerOwnProfileCard')) $('#managerOwnProfileCard').innerHTML = markup;
+  syncManagerHeroCards();
 }
 async function loadOperationalData() {
   students = loadRoster(); notices = loadNotices(); routine = loadRoutine();
@@ -921,28 +974,118 @@ async function changeRoutine(index) {
 /* আরও markup is static in manager.html (#managerMoreHub). Do not inject rows. */
 document.addEventListener('click', event => {
   const examTile = event.target.closest('[data-manager-exam]');
-  if (!examTile) return;
-  managerExamScreen = EXAM_SCREENS[examTile.dataset.managerExam] || 'home';
-  renderView('exams');
+  if (examTile) {
+    const key = examTile.dataset.managerExam || '';
+    const nextScreen = EXAM_SCREENS[key] || 'home';
+    const alreadyOpen = Boolean(managerExamScreen && managerExamTileKey === key);
+    if (alreadyOpen) {
+      managerExamScreen = '';
+      managerExamTileKey = '';
+    } else {
+      managerExamScreen = nextScreen;
+      managerExamTileKey = key;
+    }
+    renderView('exams');
+    return;
+  }
+  const moreAction = event.target.closest('[data-more-action]');
+  if (moreAction) {
+    const kind = moreAction.dataset.moreAction;
+    if (kind === 'password') openStaffPasswordDialog({ role: 'manager', mode: 'change' });
+    if (kind === 'logout') { clearStaffSession('manager'); goToLoginPage(); }
+    return;
+  }
+  const profileAction = event.target.closest('[data-profile-action]');
+  if (profileAction) {
+    const kind = profileAction.dataset.profileAction;
+    if (kind === 'password') {
+      openStaffPasswordDialog({ role: 'manager', mode: 'change' });
+      return;
+    }
+    const panel = $('.manager-view[data-view-panel="profile"]');
+    if (panel) {
+      const next = panel.dataset.profileOpen === kind ? '' : kind;
+      if (next) panel.dataset.profileOpen = next;
+      else delete panel.dataset.profileOpen;
+      $$('[data-profile-action]').forEach(btn => {
+        const active = Boolean(next && btn.dataset.profileAction === next);
+        btn.classList.toggle('is-open', active);
+        btn.setAttribute('aria-expanded', active ? 'true' : 'false');
+      });
+    }
+    return;
+  }
+  const toggleConfig = [
+    ['[data-classes-action]', 'classes', 'classesOpen', 'classesAction'],
+    ['[data-teachers-action]', 'teachers', 'teachersOpen', 'teachersAction'],
+    ['[data-notices-action]', 'notices', 'noticesOpen', 'noticesAction'],
+    ['[data-routine-action]', 'routine-class', 'routineOpen', 'routineAction'],
+    ['[data-routine-child-action]', null, 'routineChildOpen', 'routineChildAction'],
+    ['[data-courses-action]', 'courses', 'coursesOpen', 'coursesAction'],
+    ['[data-results-action]', 'results', 'resultsOpen', 'resultsAction'],
+    ['[data-reports-action]', 'reports', 'reportsOpen', 'reportsAction'],
+    ['[data-advice-action]', 'advice', 'adviceOpen', 'adviceAction']
+  ];
+  for (const [selector, viewKey, dataProp, btnProp] of toggleConfig) {
+    const btn = event.target.closest(selector);
+    if (!btn) continue;
+    const panel = viewKey ? $(`.manager-view[data-view-panel="${viewKey}"]`) : btn.closest('.manager-view');
+    if (!panel) return;
+    const val = btn.dataset[btnProp] || '1';
+    const next = panel.dataset[dataProp] === val ? '' : val;
+    if (next) panel.dataset[dataProp] = next;
+    else delete panel.dataset[dataProp];
+    panel.querySelectorAll(selector).forEach(item => {
+      const active = Boolean(next && item.dataset[btnProp] === next);
+      item.classList.toggle('is-open', active);
+      item.setAttribute('aria-expanded', active ? 'true' : 'false');
+    });
+    return;
+  }
 });
 $$('[data-manager-view]').forEach(button => button.addEventListener('click', () => {
   const view = button.dataset.managerView;
-  if (view === 'exams') managerExamScreen = '';
+  if (view === 'exams') { managerExamScreen = ''; managerExamTileKey = ''; }
   if (!normalizeView(view)) return;
   /* A shortcut may carry its own filter (dashboard → অনুমোদন opens শিক্ষার্থী
      already filtered to the pending queue). */
-  if (button.dataset.studentScope) studentScope = button.dataset.studentScope;
-  if (button.dataset.financeSegment) financeSegment = button.dataset.financeSegment;
+  const studentsPanel = $('.manager-view[data-view-panel="students"]');
+  const financePanel = $('.manager-view[data-view-panel="finance"]');
+  if (button.dataset.studentScope) {
+    studentScope = button.dataset.studentScope;
+    if (studentsPanel) studentsPanel.dataset.studentsOpen = '1';
+  } else if (view === 'students' && studentsPanel) {
+    delete studentsPanel.dataset.studentsOpen;
+  }
+  if (button.dataset.financeSegment) {
+    financeSegment = button.dataset.financeSegment;
+    if (financePanel) financePanel.dataset.financeOpen = '1';
+  } else if (view === 'finance' && financePanel) {
+    delete financePanel.dataset.financeOpen;
+  }
   renderView(view);
   pressTiles('[data-student-scope]', item => item.dataset.studentScope === studentScope);
   pressTiles('[data-finance-segment]', item => item.dataset.financeSegment === financeSegment);
 }));
-$('#managerStudentSearch').addEventListener('input', () => { expandedStudentId = null; renderStudents(); });
-$('#managerStudentSearch').addEventListener('search', () => { expandedStudentId = null; renderStudents(); });
-$$('[data-student-scope]').forEach(button => button.addEventListener('click', () => {
-  studentScope = button.dataset.studentScope;
+$('#managerStudentSearch').addEventListener('input', () => {
+  const studentsPanel = $('.manager-view[data-view-panel="students"]');
+  if (studentsPanel) studentsPanel.dataset.studentsOpen = '1';
   expandedStudentId = null;
-  pressTiles('[data-student-scope]', item => item === button); renderStudents();
+  renderStudents();
+});
+$('#managerStudentSearch').addEventListener('search', () => { expandedStudentId = null; renderStudents(); });
+$$('.manager-view[data-view-panel="students"] [data-student-scope]').forEach(button => button.addEventListener('click', () => {
+  const studentsPanel = $('.manager-view[data-view-panel="students"]');
+  const nextScope = button.dataset.studentScope;
+  const alreadyOpen = Boolean(studentsPanel?.dataset.studentsOpen === '1' && studentScope === nextScope);
+  studentScope = nextScope;
+  expandedStudentId = null;
+  if (studentsPanel) {
+    if (alreadyOpen) delete studentsPanel.dataset.studentsOpen;
+    else studentsPanel.dataset.studentsOpen = '1';
+  }
+  pressTiles('[data-student-scope]', item => Boolean(studentsPanel?.dataset.studentsOpen === '1' && item === button));
+  renderStudents();
 }));
 function handleStudentAction(button) {
   const student = students.find(row => row.id === button.dataset.id); if (!student) return;
@@ -1066,8 +1209,13 @@ document.addEventListener('click', event => {
   if (card) {
     const target = ACADEMIC_SECTIONS[card.dataset.academicSection];
     if (target) {
-      if (target.scope) academicScope = target.scope;
+      if (target.scope) {
+        academicScope = target.scope;
+        const recPanel = $('.manager-view[data-view-panel="academic-records"]');
+        if (recPanel) recPanel.dataset.academicOpen = '1';
+      }
       managerExamScreen = target.screen || (target.view === 'exams' ? '' : managerExamScreen);
+      managerExamTileKey = target.screen || '';
       renderView(target.view);
       pressTiles('[data-academic-scope]', item => item.dataset.academicScope === academicScope);
     }
@@ -1077,13 +1225,39 @@ document.addEventListener('click', event => {
 });
 $('#managerAcademicFilters').addEventListener('click', event => {
   const chip = event.target.closest('[data-academic-scope]'); if (!chip) return;
-  academicScope = chip.dataset.academicScope;
-  pressTiles('[data-academic-scope]', item => item === chip);
+  const recPanel = $('.manager-view[data-view-panel="academic-records"]');
+  const nextScope = chip.dataset.academicScope;
+  const alreadyOpen = Boolean(recPanel?.dataset.academicOpen === '1' && academicScope === nextScope);
+  academicScope = nextScope;
+  if (recPanel) {
+    if (alreadyOpen) delete recPanel.dataset.academicOpen;
+    else recPanel.dataset.academicOpen = '1';
+  }
+  pressTiles('[data-academic-scope]', item => Boolean(recPanel?.dataset.academicOpen === '1' && item === chip));
   renderAcademicRecords();
 });
-['managerAcademicSearch', 'managerAcademicClass'].forEach(id => $('#' + id).addEventListener(id.includes('Search') ? 'input' : 'change', renderAcademicRecords));
-$$('[data-finance-segment]').forEach(button => button.addEventListener('click', () => { financeSegment = button.dataset.financeSegment; renderFinance(); }));
-$('#managerFinanceApprovalLink')?.addEventListener('click', () => { financeSegment = 'approval'; renderFinance(); });
+['managerAcademicSearch', 'managerAcademicClass'].forEach(id => $('#' + id).addEventListener(id.includes('Search') ? 'input' : 'change', () => {
+  const recPanel = $('.manager-view[data-view-panel="academic-records"]');
+  if (recPanel) recPanel.dataset.academicOpen = '1';
+  renderAcademicRecords();
+}));
+$$('[data-finance-segment]').forEach(button => button.addEventListener('click', () => {
+  const finPanel = $('.manager-view[data-view-panel="finance"]');
+  const nextSeg = button.dataset.financeSegment;
+  const alreadyOpen = Boolean(finPanel?.dataset.financeOpen === '1' && financeSegment === nextSeg);
+  financeSegment = nextSeg;
+  if (finPanel) {
+    if (alreadyOpen) delete finPanel.dataset.financeOpen;
+    else finPanel.dataset.financeOpen = '1';
+  }
+  renderFinance();
+}));
+$('#managerFinanceApprovalLink')?.addEventListener('click', () => {
+  const finPanel = $('.manager-view[data-view-panel="finance"]');
+  if (finPanel) finPanel.dataset.financeOpen = '1';
+  financeSegment = 'approval';
+  renderFinance();
+});
 $('#managerDueSearch')?.addEventListener('input', renderFinance);
 $('#managerDueClass')?.addEventListener('change', renderFinance);
 $('#managerRoutineDays').addEventListener('click', event => { const button = event.target.closest('[data-routine-day]'); if (!button) return; routineDay = button.dataset.routineDay; renderRoutine(); });
@@ -1222,19 +1396,26 @@ async function enterManager() {
   // পড়াশোনা পরিচালনা করুন: the same content library the Teacher writes into.
   await mountCourseEditor();
   await mountReports($('#managerReports'), { panel: 'manager' });
-  mountProfileSelfEdit({
-    role: 'manager',
-    card: '#managerProfileCard',
-    current: () => managerAccount,
-    render: async () => {
-      try {
-        const fresh = await readStaffAccount('manager');
-        if (fresh) managerAccount = fresh;
-      } catch { /* keep the current card */ }
-      renderProfile();
-    },
-    toast: message => toast(message)
-  });
+  for (const cardSelector of ['#managerProfileCard', '#managerOwnProfileCard']) {
+    mountProfileSelfEdit({
+      role: 'manager',
+      card: cardSelector,
+      current: () => managerAccount,
+      render: async () => {
+        try {
+          const fresh = await readStaffAccount('manager');
+          if (fresh) managerAccount = fresh;
+        } catch { /* keep the current card */ }
+        renderProfile();
+      },
+      toast: message => toast(message)
+    });
+  }
+  if (typeof MutationObserver === 'function' && document.documentElement) {
+    const obs = new MutationObserver(() => syncManagerHeroCards());
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+  syncManagerHeroCards();
   watchOwnPanelSession('manager');
 }
 /** The content editor is mounted once and only painted when its page opens. */

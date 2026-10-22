@@ -170,7 +170,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 397;
+const CACHE_VERSION = 406;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -303,6 +303,7 @@ const APP_SHELL = [
   './sync/cloud-read-gateway.js',
   './sync/cloud-read.js',
   './js/app-entry.js',
+  './js/cache-refresh.js',
   './js/student-features.js',
   './js/student-hubs.js',
   './js/local-write-mark.js',
@@ -378,6 +379,18 @@ const APP_SHELL = [
   './assets/icons/app-logo.png',
   './assets/teacher-hero/teacher-hero-day.webp',
   './assets/teacher-hero/teacher-hero-night.webp',
+  './assets/images/teacher-hero/welcome-day.webp',
+  './assets/images/teacher-hero/welcome-night.webp',
+  './assets/images/teacher-hero/classroom-day.webp',
+  './assets/images/teacher-hero/classroom-night.webp',
+  './assets/images/teacher-hero/attendance-day.webp',
+  './assets/images/teacher-hero/attendance-night.webp',
+  './assets/images/teacher-hero/exam-day.webp',
+  './assets/images/teacher-hero/exam-night.webp',
+  './assets/images/teacher-hero/homework-day.webp',
+  './assets/images/teacher-hero/homework-night.webp',
+  './assets/images/teacher-hero/notice-day.webp',
+  './assets/images/teacher-hero/notice-night.webp',
   './js/appearance.js',
   './js/appearance-boot.js',
   './js/theme-logos.js',

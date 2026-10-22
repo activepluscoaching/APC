@@ -467,4 +467,111 @@ test('the exam seat lands on one CTA and four doors, not a nine-tile shelf', asy
   assert.equal($('#teacherExamWorkspace [data-quick-step="2"]').hidden, false, 'questions from both entry modes validate');
 });
 
+test('unified Bengali labels, local date display, and single-badge class nav dot', async () => {
+  ctx.click($('.admin-bottom [data-teacher-view="home"]'));
+  await settle();
+  const hwHero = $('#teacherHome [data-new-activity="homework"]');
+  assert.doesNotMatch(hwHero.textContent, /হোমওয়ার্ক|হোমওয়ার্ক/u, 'homework card uses বাড়ির কাজ');
+  assert.match(hwHero.textContent, /বাড়ির কাজ/u);
+
+  // Open homework modal and verify date input has Bengali date attribute & lang="bn-BD"
+  ctx.click(hwHero);
+  await settle();
+  const dateInput = $('#teacherActivityForm input[type="date"]');
+  assert.ok(dateInput, 'date input exists in homework form');
+  assert.equal(dateInput.getAttribute('lang'), 'bn-BD');
+  assert.ok((dateInput.dataset.dateBn || '').length > 0 && !/\d{1,2}\/\d{1,2}\/\d{4}/.test(dateInput.dataset.dateBn),
+    'date field carries a Bengali-friendly formatted date');
+  ctx.click($('#teacherModalClose'));
+  await settle();
+
+  // Verify ক্লাস bottom nav never shows two visible .nav-dot badges at once
+  const routineDot = $('#navDot-routine');
+  const academicDot = $('#navDot-academic');
+  assert.equal(!routineDot.hidden && !academicDot.hidden, false,
+    'ক্লাস nav seat never displays two badges simultaneously');
+
+  // Verify পরীক্ষা note uses ম্যানেজার and question bank placeholder is in Bengali
+  ctx.click($('.admin-bottom [data-teacher-view="online-exams"]'));
+  await settle();
+  assert.doesNotMatch($('#teacherOnlineExams > .teacher-local-note').textContent, /\bManager\b/);
+  assert.match($('#teacherOnlineExams > .teacher-local-note').textContent, /ম্যানেজার/);
+  ctx.click($('#teacherExamHub [data-teacher-exam="bank"]'));
+  await settle();
+  const bankSearch = $('#teacherExamWorkspace [data-bank-filters] input[name="query"]');
+  if (bankSearch) {
+    assert.doesNotMatch(bankSearch.placeholder, /QUESTION-0007/);
+    assert.match(bankSearch.placeholder, /প্রশ্ন কোড/);
+  }
+
+  // Runtime audit of all 11 Hero Cards, আরও actions, আমার প্রোফাইল vs সেটিংস, and পাসওয়ার্ড পরিবর্তন
+  for (const viewEl of $$('.teacher-view')) {
+    const hero = viewEl.querySelector(':scope > .home-dashboard-intro.teacher-home-intro');
+    assert.ok(hero, `${viewEl.id} has a 3D Hero Card at runtime`);
+    const datePill = hero.querySelector('[data-teacher-hero-date]');
+    assert.ok(datePill && datePill.textContent.trim().length > 0, `${viewEl.id} Hero Card date pill is populated`);
+    const advice = hero.querySelector('.teacher-hero-advice');
+    assert.ok(advice && advice.textContent.trim().length > 0, `${viewEl.id} Hero Card daily advice is populated`);
+    const backBtn = hero.querySelector('.pay-back');
+    if (backBtn) assert.equal(backBtn.hidden, true, `${viewEl.id} top back button stays hidden`);
+  }
+
+  ctx.click($('.admin-bottom [data-teacher-view="more"]'));
+  await settle();
+  assert.equal($('#teacherMore').hidden, false);
+  ctx.click($('#teacherMore [data-more-open="profile"]'));
+  await settle();
+  assert.equal($('#teacherProfile').hidden, false);
+  assert.equal($('#teacherProfile').dataset.profileMode, 'profile');
+  assert.equal(nfc($('#teacherProfileTitle').textContent), nfc('আমার প্রোফাইল'));
+  assert.ok($('#teacherProfileCard [data-profile-edit]'), 'আমার প্রোফাইল shows edit profile button');
+  assert.ok($('#teacherProfileCard [data-more-action="password"]'), 'আমার প্রোফাইল shows password change button');
+
+  ctx.click($('.admin-bottom [data-teacher-view="more"]'));
+  await settle();
+  ctx.click($('#teacherMore [data-more-action="settings"]'));
+  await settle();
+  assert.equal($('#teacherProfile').hidden, false);
+  assert.equal($('#teacherProfile').dataset.profileMode, 'settings');
+  assert.equal($('#teacherProfile').dataset.settingsTab, 'all');
+  assert.equal(nfc($('#teacherProfileTitle').textContent), nfc('সেটিংস ও নোটিফিকেশন'));
+
+  // Audit Notification Settings & Settings Action Cards inside সেটিংস ও নোটিফিকেশন
+  const settingsNav = $('#teacherSettingsHub [data-settings-groups]');
+  assert.ok(settingsNav && !settingsNav.hidden, 'settings action card menu is visible by default');
+  assert.equal($$('#teacherSettingsHub [data-settings-groups] .teacher-action-card').length, 5, 'settings menu uses 5 full-width .teacher-action-card cards');
+  assert.ok($$('#teacherSettingsHub [data-settings-groups] .teacher-action-card').every(c => !c.classList.contains('pay-tile')), 'settings action cards never carry .pay-tile column layout');
+  assert.ok($$('#teacherSettingsHub [data-settings-group]').every(g => g.hidden), 'all settings groups are hidden by default like ক্লাস and পরীক্ষা');
+  assert.equal($('#teacherSettingsTabs').hidden, true, 'duplicate bottom chip bar is hidden');
+
+  const notifMount = $('#notificationSettings');
+  assert.ok(notifMount, 'notification settings mount exists');
+  assert.doesNotMatch(notifMount.textContent, /নোটিফিকেশন সিস্টেম চালু হচ্ছে/, 'notification settings never hangs on loading message');
+  const notifToggles = $$('#notificationSettings input[type="checkbox"]').map(i => i.id);
+  assert.deepEqual(notifToggles, ['noticeMasterToggle', 'noticeBackgroundToggle', 'noticeInAppToggle', 'noticeSoundToggle']);
+  assert.ok($('#notificationSettings [data-notice-preview]'), 'notification preview button exists');
+  assert.ok($('#notificationSettings [data-notice-read-all-settings]'), 'notification mark-all-read button exists');
+  assert.ok($('#notificationSettings .notice-history-list'), 'notification history list exists');
+
+  ctx.click($('#teacherSettingsHub [data-settings-open="notification"]'));
+  await settle();
+  assert.equal($('#teacherSettingsHub [data-settings-group="notification"]').hidden, false, 'clicking নোটিফিকেশন card opens notification group below');
+  ctx.click($('#teacherSettingsHub [data-settings-open="notification"]'));
+  await settle();
+  assert.equal($('#teacherSettingsHub [data-settings-group="notification"]').hidden, true, 'clicking নোটিফিকেশন card again closes notification group');
+  assert.ok($$('#teacherSettingsHub [data-settings-group]').every(g => g.hidden), 'all settings groups hide again');
+
+  // Audit remaining views for full-width .teacher-action-card cards & hidden primary data by default
+  assert.equal($$('#teacherOnlineExams .teacher-action-card').length, 6, 'পরীক্ষা uses 6 full-width action cards');
+  assert.equal($$('#teacherAcademic .teacher-action-card').length, 6, 'একাডেমিক uses 6 full-width action cards');
+  assert.equal($$('#teacherRecords .teacher-action-card').length, 2, 'রেকর্ডস uses 2 full-width action cards');
+  assert.equal($$('#teacherNotice .teacher-action-card').length, 2, 'নোটিশ uses 2 full-width action cards');
+  assert.equal($$('#teacherRoutine .teacher-action-card').length, 2, 'রুটিন uses 2 full-width action cards');
+  assert.equal($$('#teacherAcademicReports .teacher-action-card').length, 2, 'রিপোর্ট uses 2 full-width action cards');
+  assert.equal($$('#teacherCourses .teacher-action-card').length, 3, 'উপকরণ uses 3 full-width action cards');
+
+  ctx.click($('.admin-bottom [data-teacher-view="home"]'));
+  await settle();
+});
+
 after(() => ctx?.window.close());

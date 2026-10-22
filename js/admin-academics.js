@@ -53,7 +53,7 @@ function render() {
     </div>
     <p class="academics-status" data-academic-status role="status" hidden></p>
     <article class="admin-card">
-      <header class="admin-card-head"><div><p class="eyebrow">Subjects</p><h2>বিষয়গুলো</h2></div><small>${bn(activeSubjects.length)} / ${bn(subjects.length)} চালু</small></header>
+      <header class="admin-card-head"><div><p class="eyebrow">পাঠ্য বিষয়</p><h2>বিষয়গুলো</h2></div><small>${bn(activeSubjects.length)} / ${bn(subjects.length)} চালু</small></header>
       <div class="academics-chips">${subjectRows || '<p class="admin-empty">এখনো কোনো বিষয় নেই।</p>'}</div>
       <p class="form-note">বন্ধ করলে নতুন পরীক্ষা, রুটিন বা শিক্ষক বরাদ্দে বিষয়টি আর দেখা যাবে না — পুরোনো পরীক্ষা, ফলাফল ও রেকর্ড অক্ষত থাকবে।</p>
     </article>

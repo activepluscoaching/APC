@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=397"></script>
-  <script src="js/app-entry.js?v=397" data-entry="payment"></script>
-  <script type="module" src="js/payment.js?v=397"></script>
-  <script type="module" src="js/home-hero-entry.js?v=397"></script>
-  <script src="js/topbar-connectivity.js?v=397" defer></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=397"></script>
-  <script src="js/appearance-boot.js?v=397"></script>
-  <script src="js/theme-logos.js?v=397"></script>
+  <script src="js/sanitize-url.js?v=406"></script>
+  <script src="js/app-entry.js?v=406" data-entry="payment"></script>
+  <script type="module" src="js/payment.js?v=406"></script>
+  <script type="module" src="js/home-hero-entry.js?v=406"></script>
+  <script src="js/topbar-connectivity.js?v=406" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=406"></script>
+  <script src="js/appearance-boot.js?v=406"></script>
+  <script src="js/theme-logos.js?v=406"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#0e7a55">
   <meta name="description" content="Active Plus Coaching পেমেন্ট রিসিভ প্যানেল — আজকের লেনদেন, সীমিত পরিচয়ের সার্চ ও সহজ পেমেন্ট গ্রহণ।">
@@ -32,117 +32,215 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=397">
-  <link rel="stylesheet" href="css/ui-layout.css?v=397">
-  <link rel="stylesheet" href="css/ui-components.css?v=397">
-  <link rel="stylesheet" href="css/ui-forms.css?v=397">
-  <link rel="stylesheet" href="css/ui-features.css?v=397">
-  <link rel="stylesheet" href="css/notice-board.css?v=397">
-  <link rel="stylesheet" href="css/ui-status.css?v=397">
-  <link rel="stylesheet" href="css/ui-auth.css?v=397">
-  <link rel="stylesheet" href="css/app-polish.css?v=397">
-  <link rel="stylesheet" href="css/student-record.css?v=397">
-  <link rel="stylesheet" href="css/exam-archive.css?v=397">
-  <link rel="stylesheet" href="css/academics.css?v=397">
-  <link rel="stylesheet" href="css/notifications.css?v=397">
-  <link rel="stylesheet" href="css/course-hub.css?v=397">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=397">
-  <script type="module" src="js/ui-accessibility.js?v=397"></script>
-  <script src="js/launch-screen.js?v=397" defer></script>
+  <link rel="stylesheet" href="css/foundation.css?v=406">
+  <link rel="stylesheet" href="css/ui-layout.css?v=406">
+  <link rel="stylesheet" href="css/ui-components.css?v=406">
+  <link rel="stylesheet" href="css/ui-forms.css?v=406">
+  <link rel="stylesheet" href="css/ui-features.css?v=406">
+  <link rel="stylesheet" href="css/notice-board.css?v=406">
+  <link rel="stylesheet" href="css/ui-status.css?v=406">
+  <link rel="stylesheet" href="css/ui-auth.css?v=406">
+  <link rel="stylesheet" href="css/app-polish.css?v=406">
+  <link rel="stylesheet" href="css/student-record.css?v=406">
+  <link rel="stylesheet" href="css/exam-archive.css?v=406">
+  <link rel="stylesheet" href="css/academics.css?v=406">
+  <link rel="stylesheet" href="css/notifications.css?v=406">
+  <link rel="stylesheet" href="css/course-hub.css?v=406">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=406">
+  <script type="module" src="js/ui-accessibility.js?v=406"></script>
+  <script src="js/launch-screen.js?v=406" defer></script>
 </head>
-<body class="pay-body">
+<body class="pay-body payment-reference">
   <div class="pay-shell" id="payShell" hidden>
     <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="payExitButton" type="button" title="লগআউট" aria-label="লগআউট"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div></header>
     <main class="pay-main pay-counter-minimal" id="paymentMain">
-      <div class="counter-page-title"><div><h1 id="counterViewTitle">আজকের লেনদেন</h1></div><p id="payCurrentDate" class="finance-hint"></p></div>
+      <div class="counter-page-title" hidden><div><h1 id="counterViewTitle">আজকের লেনদেন</h1></div><p id="payCurrentDate" class="finance-hint"></p></div>
       <p id="payLoadError" class="finance-error" role="alert" hidden></p>
 
-      <!-- হোম — the counter&rsquo;s own day: today&rsquo;s entries and the closing shortcut. -->
+      <!-- হোম — the counter’s own day: today’s entries and the closing shortcut. -->
       <section class="pay-panel" data-pay-panel="home" id="payCounterHome" aria-labelledby="payHomeTitle">
-        <section class="hero-slider" data-home-hero></section>
+        <section class="hero-slider" data-home-hero hidden></section>
+        <div class="home-dashboard-intro payment-home-intro teacher-home-intro" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-pay-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="পেমেন্ট কাউন্টার হোমের থ্রিডি চিত্র" width="828" height="462" fetchpriority="high" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <span class="admin-hero-icon" aria-hidden="true" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-pay-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-pay-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="admin-hero-title teacher-hero-welcome" data-pay-hero-advice="finance">
+              <div class="pay-portal-heading" data-hero-sub="শিক্ষার্থী যাচাই, দ্রুত ফি আদায়, ডিজিটাল রসিদ ও দিনশেষের ক্লোজিং হিসাব।">
+                <p class="pay-portal-kicker" hidden>পেমেন্ট কাউন্টার</p>
+                <p class="portal-hero-title" id="payHeroWelcomeTitle">স্বাগতম, পেমেন্ট কাউন্টার</p>
+                <p class="teacher-hero-advice">প্রতিদিনের নগদ ও অনলাইন ফি আদায়ের হিসাব দিনশেষে মিলিয়ে রাখলে লেজার সবসময় নির্ভুল থাকে।</p>
+              </div>
+            </div>
+          </div>
+        </div>
         <section class="admin-card pay-home-card" id="payHomeCard">
-          <h2 id="payHomeTitle">আজকের কাউন্টার</h2>
-          
-          <div class="pay-home-actions">
-            <button class="admin-btn primary" type="button" data-pay-section="students">নতুন পেমেন্ট নিন</button>
-            <button class="admin-btn ghost" type="button" id="payClosingShortcut">আজকের ক্লোজিং</button>
+          <h2 id="payHomeTitle" hidden>আজকের কাউন্টার</h2>
+          <div class="pay-home-actions teacher-home-actions">
+            <button class="admin-btn primary pay-action-hero teacher-action-card is-accent" type="button" data-pay-section="students"><span class="portal-action-body teacher-action-body"><span class="portal-action-title teacher-action-title pay-tile-label" data-action-sub="শিক্ষার্থী যাচাই করে ফি আদায় ও রসিদ প্রদান করুন">নতুন পেমেন্ট নিন</span></span><span class="portal-action-art teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+            <button class="admin-btn ghost pay-action-hero teacher-action-card" type="button" data-pay-toggle="today-list" aria-expanded="false"><span class="portal-action-body teacher-action-body"><span class="portal-action-title teacher-action-title pay-tile-label" data-action-sub="আজকের গৃহীত সকল ফি, ট্রানজেকশন নম্বর ও রসিদের তালিকা দেখুন">আজকের লেনদেন দেখুন</span></span><span class="portal-action-art teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="receipt" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/receipt.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+            <button class="admin-btn ghost pay-action-hero teacher-action-card" type="button" id="payClosingShortcut"><span class="portal-action-body teacher-action-body"><span class="portal-action-title teacher-action-title pay-tile-label" data-action-sub="দিনশেষের আদায় ও কাউন্টার ক্লোজিং বিবরণী দেখুন">আজকের ক্লোজিং</span></span><span class="portal-action-art teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
           </div>
         </section>
         <section class="admin-card pay-activity-card" id="payActivityCard" aria-labelledby="payTodayTitle">
-                        <header class="admin-card-head"><h2 id="payTodayTitle">আজকের লেনদেন</h2><button class="pay-activity-refresh" type="button" id="payActivityRefresh" aria-label="আজকের তালিকা হালনাগাদ করুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="refresh" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/sync.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></header>
-                        <div id="payTodayList" class="pay-activity-list"><p class="admin-empty">আজকের লেনদেন লোড হচ্ছে…</p></div>
-                      </section>
+          <header class="admin-card-head"><h2 id="payTodayTitle">আজকের লেনদেন</h2><button class="pay-activity-refresh" type="button" id="payActivityRefresh" aria-label="আজকের তালিকা হালনাগাদ করুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="refresh" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/sync.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></header>
+          <div id="payTodayList" class="pay-activity-list"><p class="admin-empty">আজকের লেনদেন লোড হচ্ছে…</p></div>
+        </section>
       </section>
 
       <!-- শিক্ষার্থী — identity-only search and verification. -->
       <section class="pay-panel" data-pay-panel="students" id="payStudentsPanel" aria-label="শিক্ষার্থী যাচাই" hidden>
+        <div class="page-intro home-dashboard-intro teacher-home-intro payment-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-pay-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="শিক্ষার্থী যাচাইয়ের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-pay-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-pay-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-pay-hero-advice="students">
+              <h1>শিক্ষার্থী যাচাই ও অনুসন্ধান</h1>
+              <p class="teacher-hero-advice">নতুন নিবন্ধনের আবেদন যাচাইয়ের সময় শ্রেণি, মোবাইল নম্বর ও মাসিক ফি ভালোভাবে মিলিয়ে নিন।</p>
+            </div>
+          </div>
+        </div>
+        <div class="teacher-home-actions pay-panel-actions">
+          <button class="teacher-action-card is-accent" type="button" data-pay-toggle="student-search" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নাম, আইডি, রোল অথবা মোবাইল নম্বর দিয়ে শিক্ষার্থী খুঁজুন ও নির্বাচন করুন">শিক্ষার্থী সার্চ ও যাচাই করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </div>
         <section class="admin-card pay-search-card" id="paySearchCard" aria-labelledby="paySearchTitle">
-                        <h2 id="paySearchTitle">ইউনিভার্সাল সার্চ</h2>
-                        <label for="payStudentSearch">নাম, ID, রোল অথবা শিক্ষার্থী/অভিভাবকের মোবাইল</label>
-                        <div class="finance-search-input pay-search-input"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="payStudentSearch" type="search" placeholder="নাম / ID / রোল / মোবাইল" autocomplete="off" aria-controls="paySearchResults" aria-describedby="paySearchHint"><button class="student-search-clear" type="button" id="paySearchClear" aria-label="সার্চ মুছুন" hidden>✕</button></div>
-                        <p id="paySearchHint" class="finance-hint">সার্চ করে শিক্ষার্থী নির্বাচন করুন, তারপর পেমেন্ট নিন।</p>
-                        <p id="paySearchStatus" class="finance-hint" role="status" aria-live="polite"></p>
-                        <div id="paySearchResults" class="fee-search-results"></div>
-                      </section>
+          <h2 id="paySearchTitle">ইউনিভার্সাল সার্চ</h2>
+          <label for="payStudentSearch">নাম, ID, রোল অথবা শিক্ষার্থী/অভিভাবকের মোবাইল</label>
+          <div class="finance-search-input pay-search-input"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="payStudentSearch" type="search" placeholder="নাম / ID / রোল / মোবাইল" autocomplete="off" aria-controls="paySearchResults" aria-describedby="paySearchHint"><button class="student-search-clear" type="button" id="paySearchClear" aria-label="সার্চ মুছুন" hidden>✕</button></div>
+          <p id="paySearchHint" class="finance-hint">সার্চ করে শিক্ষার্থী নির্বাচন করুন, তারপর পেমেন্ট নিন।</p>
+          <p id="paySearchStatus" class="finance-hint" role="status" aria-live="polite"></p>
+          <div id="paySearchResults" class="fee-search-results"></div>
+        </section>
         <section class="admin-card" id="payProfileCard" aria-labelledby="paySelectedTitle" hidden>
-                        <h2 id="paySelectedTitle">নির্বাচিত শিক্ষার্থী</h2>
-                        
-                        <div id="payQuickProfile" class="counter-student-brief"></div>
-                              </section>
+          <h2 id="paySelectedTitle">নির্বাচিত শিক্ষার্থী</h2>
+          <div id="payQuickProfile" class="counter-student-brief"></div>
+        </section>
       </section>
 
       <!-- পেমেন্ট — one entry form; the receipt opens over whatever is on screen. -->
       <section class="pay-panel" data-pay-panel="payment" id="payEntryPanel" aria-label="পেমেন্ট এন্ট্রি" hidden>
+        <div class="page-intro home-dashboard-intro teacher-home-intro payment-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-pay-hero-art data-hero-card="attendance" src="assets/images/teacher-hero/attendance-day.webp" alt="পেমেন্ট এন্ট্রির থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-pay-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-pay-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-pay-hero-advice="finance">
+              <h1>পেমেন্ট এন্ট্রি ও রসিদ</h1>
+              <p class="teacher-hero-advice">অনুমোদনের অপেক্ষায় থাকা পেমেন্ট রিকোয়েস্ট যাচাই করে দ্রুত রসিদ নিশ্চিত করুন।</p>
+            </div>
+          </div>
+        </div>
+        <div class="teacher-home-actions pay-panel-actions">
+          <button class="teacher-action-card is-accent" type="button" data-pay-toggle="payment-entry" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নির্বাচিত শিক্ষার্থীর ফি জমা নিন এবং তাৎক্ষণিক ডিজিটাল রসিদ তৈরি করুন">পেমেন্ট ফর্ম ও ফি এন্ট্রি</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-pay-toggle="select-student"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="অন্য কোনো শিক্ষার্থীর ফি নিতে শিক্ষার্থী যাচাই পেইজে যান">শিক্ষার্থী নির্বাচন বা পরিবর্তন করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </div>
         <section class="admin-card" id="payEntryCard" aria-labelledby="payEntryTitle">
-                        <h2 id="payEntryTitle">পেমেন্ট এন্ট্রি</h2>
-                        <p id="payEntryStudent" class="finance-hint">কোনো শিক্ষার্থী নির্বাচিত নেই — শিক্ষার্থী বিভাগে সার্চ করে যাচাই করুন।</p>
-                        <button class="admin-btn ghost" type="button" id="payEntrySearch" data-pay-section="students">শিক্ষার্থী নির্বাচন করুন</button>
-                        <form id="payCollectionForm" class="fee-form pay-form" hidden>
-                                          <input id="payStudent" type="hidden">
-                                          <label for="payFeeAmount">টাকার পরিমাণ *</label>
-                                          <input id="payFeeAmount" type="text" inputmode="numeric" autocomplete="off" required maxlength="8" placeholder="টাকার পরিমাণ লিখুন">
-                                          <div class="form-grid-2">
-                                            <div><label for="payFeeType">ফি এর ধরন *</label><select id="payFeeType" required></select></div>
-                                            <div><label for="payFeeMonth">মাস *</label><select id="payFeeMonth" required></select></div>
-                                          </div>
-                                          <label for="payFeeMethod">পেমেন্ট মাধ্যম *</label><select id="payFeeMethod" required></select>
-                                          <label for="payFeeTrxId">পেমেন্ট মাধ্যমের রেফারেন্স (ঐচ্ছিক)</label><input id="payFeeTrxId" type="text" maxlength="120" autocomplete="off">
-                                          <p id="paySaveError" class="finance-error" role="alert" hidden></p>
-                                          <div class="pay-form-actions"><button id="payCancelButton" class="admin-btn ghost" type="button">বাতিল</button><button id="paySaveButton" class="admin-btn primary" type="submit"><span id="paySaveLabel">পেমেন্ট সংরক্ষণ করুন</span></button></div>
-                                        </form>
-                      </section>
+          <h2 id="payEntryTitle">পেমেন্ট এন্ট্রি</h2>
+          <p id="payEntryStudent" class="finance-hint">কোনো শিক্ষার্থী নির্বাচিত নেই — শিক্ষার্থী বিভাগে সার্চ করে যাচাই করুন।</p>
+          <button class="admin-btn ghost" type="button" id="payEntrySearch" data-pay-section="students">শিক্ষার্থী নির্বাচন করুন</button>
+          <form id="payCollectionForm" class="fee-form pay-form" hidden>
+            <input id="payStudent" type="hidden">
+            <label for="payFeeAmount">টাকার পরিমাণ *</label>
+            <input id="payFeeAmount" type="text" inputmode="numeric" autocomplete="off" required maxlength="8" placeholder="টাকার পরিমাণ লিখুন">
+            <div class="form-grid-2">
+              <div><label for="payFeeType">ফি এর ধরন *</label><select id="payFeeType" required></select></div>
+              <div><label for="payFeeMonth">মাস *</label><select id="payFeeMonth" required></select></div>
+            </div>
+            <label for="payFeeMethod">পেমেন্ট মাধ্যম *</label><select id="payFeeMethod" required></select>
+            <label for="payFeeTrxId">পেমেন্ট মাধ্যমের রেফারেন্স (ঐচ্ছিক)</label><input id="payFeeTrxId" type="text" maxlength="120" autocomplete="off">
+            <p id="paySaveError" class="finance-error" role="alert" hidden></p>
+            <div class="pay-form-actions"><button id="payCancelButton" class="admin-btn ghost" type="button">বাতিল</button><button id="paySaveButton" class="admin-btn primary" type="submit"><span id="paySaveLabel">পেমেন্ট সংরক্ষণ করুন</span></button></div>
+          </form>
+        </section>
       </section>
 
       <!-- রিপোর্ট — the existing counter report centre lives on. -->
       <section class="pay-panel" data-pay-panel="reports" id="payReportsPanel" aria-label="পেমেন্ট রিপোর্ট" hidden>
+        <div class="page-intro home-dashboard-intro teacher-home-intro payment-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-pay-hero-art data-hero-card="exam" src="assets/images/teacher-hero/exam-day.webp" alt="পেমেন্ট রিপোর্টের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-pay-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-pay-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-pay-hero-advice="reports">
+              <h1>পেমেন্ট ও কাউন্টার রিপোর্ট</h1>
+              <p class="teacher-hero-advice">স্বচ্ছ ও নিয়মিত হিসাব রক্ষণ প্রতিষ্ঠানের আর্থিক শৃঙ্খলা ও বিশ্বাসযোগ্যতা অটুট রাখে।</p>
+            </div>
+          </div>
+        </div>
+        <div class="teacher-home-actions pay-panel-actions">
+          <button class="teacher-action-card is-accent" type="button" data-pay-toggle="reports-builder" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="দৈনিক আদায়, মাসিক হিসাব ও কাউন্টার ক্লোজিং রিপোর্ট তৈরি ও PDF ডাউনলোড করুন">পেমেন্ট রিপোর্ট তৈরি ও প্রিন্ট</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </div>
         <section class="admin-card counter-reports-card" id="payReportsCard" aria-labelledby="counterReportsTitle" hidden>
-                        <h2 id="counterReportsTitle">পেমেন্ট-সংক্রান্ত রিপোর্ট</h2>
-                        
-                        <div id="paymentReports"></div>
-                      </section>
+          <h2 id="counterReportsTitle">পেমেন্ট-সংক্রান্ত রিপোর্ট</h2>
+          <div id="paymentReports"></div>
+        </section>
       </section>
 
       <section class="pay-panel" data-pay-panel="more" id="payMorePanel" aria-labelledby="payMoreTitle" hidden>
-                    <section class="admin-card" id="payMoreCard">
-                      <h2 id="payMoreTitle">আরও</h2>
-                      
-                    </section>
-                    <div class="settings-hub" data-settings-hub="payment">
-                      <div class="profile-section" data-settings-group="account">
-                        
-                        <div class="settings-list">
-                          <div class="settings-info" data-settings-row="profile"><span class="settings-copy"><strong>কাউন্টার</strong><small id="payMoreUser">—</small></span></div>
-                          <button type="button" class="settings-row-link" data-settings-row="logout" id="payMoreLogout"><span class="settings-icon danger" aria-hidden="true"></span><span class="settings-copy"><strong>লগআউট</strong><small>এই ডিভাইস থেকে সেশন শেষ করুন</small></span></button>
-                        </div>
-                      </div>
-                      <div class="profile-section" data-settings-group="notification"></div>
-                      <div class="profile-section" data-settings-group="app"></div>
-                      <div class="profile-section" data-settings-group="security"></div>
-                      <div class="profile-section" data-settings-group="data"></div>
-                    </div>
-                  </section>
+        <div class="page-intro home-dashboard-intro teacher-home-intro payment-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-pay-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="কাউন্টার আরও ও সেটিংসের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-pay-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-pay-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-pay-hero-advice="more">
+              <h1 id="payMoreTitle">আরও ও কাউন্টার সেটিংস</h1>
+              <p class="teacher-hero-advice">আপনার প্রোফাইল, পাসওয়ার্ড, রিপোর্ট ও অ্যাপ সেটিংস এখান থেকে সহজেই পরিচালনা ও হালনাগাদ করুন।</p>
+            </div>
+          </div>
+        </div>
+        <section class="admin-card" id="payMoreCard" hidden></section>
+        <div class="settings-hub" data-settings-hub="payment">
+          <div class="profile-section" data-settings-group="account">
+            <div class="settings-list">
+              <div class="settings-info" data-settings-row="profile"><span class="settings-copy"><strong>কাউন্টার</strong><small id="payMoreUser">—</small></span></div>
+              <button type="button" class="settings-row-link" data-settings-row="logout" id="payMoreLogout"><span class="settings-icon danger" aria-hidden="true"></span><span class="settings-copy"><strong>লগআউট</strong><small>এই ডিভাইস থেকে সেশন শেষ করুন</small></span></button>
+            </div>
+          </div>
+          <div class="profile-section" data-settings-group="notification"></div>
+          <div class="profile-section" data-settings-group="app"></div>
+          <div class="profile-section" data-settings-group="security"></div>
+          <div class="profile-section" data-settings-group="data"></div>
+        </div>
+      </section>
     </main>
-    <nav class="admin-bottom" aria-label="পেমেন্ট কাউন্টার navigation"><button class="admin-bottom-item active" type="button" data-pay-section="home" aria-current="page"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span>হোম</span></button><button class="admin-bottom-item" type="button" data-pay-section="students"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span>শিক্ষার্থী</span></button><button class="admin-bottom-item" type="button" data-pay-section="payment"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span>পেমেন্ট</span></button><button class="admin-bottom-item" type="button" data-pay-section="reports"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span>রিপোর্ট</span></button><button class="admin-bottom-item" type="button" data-pay-section="more"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="more" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/more.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span>আরও</span></button></nav>
+    <nav class="admin-bottom" aria-label="পেমেন্ট কাউন্টার নেভিগেশন"><button class="admin-bottom-item active" type="button" data-pay-section="home" aria-current="page"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">হোম</span></button><button class="admin-bottom-item" type="button" data-pay-section="students"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">শিক্ষার্থী</span></button><button class="admin-bottom-item" type="button" data-pay-section="payment"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">পেমেন্ট</span></button><button class="admin-bottom-item" type="button" data-pay-section="reports"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">রিপোর্ট</span></button><button class="admin-bottom-item" type="button" data-pay-section="more"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="more" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/more.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">আরও</span></button></nav>
   </div>
   <div class="admin-modal-backdrop" id="payReceiptBackdrop" hidden>
     <div class="admin-modal pay-receipt-modal" role="dialog" aria-modal="true" aria-labelledby="payReceiptTitle">
@@ -152,7 +250,7 @@
     </div>
   </div>
   <div class="pay-toast" id="payToast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="js/theme-entry.js?v=397"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=397"></script>
+  <script type="module" src="js/theme-entry.js?v=406"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=406"></script>
 </body>
 </html>

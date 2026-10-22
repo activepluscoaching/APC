@@ -170,7 +170,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 406;
+const CACHE_VERSION = 407;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -235,6 +235,15 @@ const APP_SHELL = [
   './assets/icons/ai-3d/download.svg',
   './assets/icons/ai-3d/edit.svg',
   './assets/icons/ai-3d/exam.svg',
+  './assets/icons/ai-3d/exam.png',
+  './assets/icons/ai-3d/book.png',
+  './assets/icons/ai-3d/calendar.png',
+  './assets/icons/ai-3d/wallet.png',
+  './assets/icons/ai-3d/approvals.svg',
+  './assets/icons/ai-3d/verified.svg',
+  './assets/icons/ai-3d/courses.svg',
+  './assets/icons/ai-3d/homework.svg',
+  './assets/icons/ai-3d/question-bank.svg',
   './assets/icons/ai-3d/eye.svg',
   './assets/icons/ai-3d/filter.svg',
   './assets/icons/ai-3d/fingerprint.svg',
@@ -541,12 +550,15 @@ button{padding:11px 14px;border:1px solid #315efb;border-radius:12px;background:
 </section></body></html>`;
 
 async function cachedResponse(request) {
-  const exact = await caches.match(request);
+  const cache = await caches.open(CACHE_NAME);
+  const exact = (await cache.match(request)) || (await caches.match(request));
   if (exact) return exact;
   try {
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) return null;
-    return (await caches.match(url.pathname)) || null;   // ignore a ?v= cache-buster
+    const requestedVersion = Number(url.searchParams.get('v'));
+    if (Number.isSafeInteger(requestedVersion) && requestedVersion > CACHE_VERSION) return null;
+    return (await cache.match(url.pathname)) || (await caches.match(url.pathname)) || null;   // ignore a ?v= cache-buster
   } catch { return null; }
 }
 
@@ -574,12 +586,24 @@ async function fillCache(cache, urls) {
   async function worker() {
     while (queue.length) {
       const url = queue.shift();
-      try { await cache.add(url); } catch { failed.push(url); }
+      try {
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (cacheable(res)) await cache.put(url, res);
+        else await cache.add(url);
+      } catch {
+        try { await cache.add(url); } catch { failed.push(url); }
+      }
     }
   }
   await Promise.all(Array.from({ length: PRECACHE_CONCURRENCY }, worker));
   return failed;
 }
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING' || event.data === 'SKIP_WAITING') {
+    void self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
@@ -636,7 +660,7 @@ function timedFetch(request) {
     const timer = setTimeout(() => reject(new Error('nav-timeout')), NAV_TIMEOUT_MS);
     // The real fetch keeps running past the ceiling; its result simply lands
     // too late to be used, so nothing half-written is ever cached here.
-    fetch(request).then(
+    fetch(request, { cache: 'no-cache' }).then(
       response => { clearTimeout(timer); resolve(response); },
       error => { clearTimeout(timer); reject(error); }
     );

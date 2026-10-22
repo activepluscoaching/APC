@@ -293,12 +293,12 @@ export function nextBirthdayBoundary(now = nowEpoch()) {
 
 const BIRTHDAY_STAFF = Object.freeze(['admin', 'manager', 'teacher']);
 
-export function birthdayAdvanceItems(students, viewer, now = nowEpoch()) {
+function staffBirthdayItems(students, viewer, now = nowEpoch(), advance = false) {
   if (viewer?.kind !== 'staff' || !BIRTHDAY_STAFF.includes(text(viewer.role))) return [];
   const current = new Date(Number(now) || nowEpoch());
   if (!Number.isFinite(current.getTime())) return [];
-  const tomorrow = new Date(current.getTime() + 86400000);
-  const year = dhakaParts(tomorrow).year;
+  const targetDate = advance ? new Date(current.getTime() + 86400000) : current;
+  const year = dhakaParts(targetDate).year;
   const assigned = Array.isArray(viewer.assignedClasses)
     ? new Set(viewer.assignedClasses.map(scopeKey).filter(Boolean))
     : null;
@@ -306,19 +306,17 @@ export function birthdayAdvanceItems(students, viewer, now = nowEpoch()) {
   for (const student of Array.isArray(students) ? students : []) {
     if (!isObject(student) || student.status === 'rejected') continue;
     const id = text(student.id);
-    if (!id || !isStudentBirthday(student.birthDate, tomorrow.getTime())) continue;
-    if (text(viewer.role) === 'teacher') {
-      if (!assigned?.size || !assigned.has(scopeKey(student.className))) continue;
-    }
+    if (!id || !isStudentBirthday(student.birthDate, targetDate.getTime())) continue;
+    if (advance && text(viewer.role) === 'teacher' && (!assigned?.size || !assigned.has(scopeKey(student.className)))) continue;
     const name = text(student.name) || text(student.nameEn) || 'নাম নেই';
     const place = [text(student.className), text(student.group)].filter(Boolean).join(' • ');
     items.push({
-      key: `birthday-soon:${id}:${year}`,
+      key: `${advance ? 'birthday-soon' : 'birthday-today'}:${id}:${year}`,
       source: 'students',
       sourceId: id,
-      kind: 'birthday-soon',
-      target: 'students',
-      title: 'আগামীকাল জন্মদিন',
+      kind: advance ? 'birthday-soon' : 'birthday',
+      target: text(viewer.role) === 'teacher' ? 'classes' : 'students',
+      title: advance ? 'আগামীকাল জন্মদিন' : `আজ জন্মদিন — ${name}`,
       body: `${place ? `${place} — ` : ''}${name}`,
       at: Number(now) || nowEpoch(),
       audience: 'এডমিন, ম্যানেজার ও শিক্ষক'
@@ -326,6 +324,12 @@ export function birthdayAdvanceItems(students, viewer, now = nowEpoch()) {
   }
   return items;
 }
+
+export const birthdayAdvanceItems = (students, viewer, now = nowEpoch()) =>
+  staffBirthdayItems(students, viewer, now, true);
+
+export const birthdayTodayStaffItems = (students, viewer, now = nowEpoch()) =>
+  staffBirthdayItems(students, viewer, now, false);
 
 export function nextHomeworkBoundary(teachingDb, viewer, now = nowEpoch()) {
   const timestamp = Number(now);
@@ -566,6 +570,7 @@ export function notificationFeed({ notices = [], config = null, examDb = null, t
   items.push(...examReviewItems(examDb, viewer));
   items.push(...teacherExamItems(examDb, viewer));
   items.push(...birthdayItems(viewer, now));
+  items.push(...birthdayTodayStaffItems(students, viewer, now));
   items.push(...birthdayAdvanceItems(students, viewer, now));
   // Items this person cleared from the list stay cleared on this device.
   const hidden = new Set(Array.isArray(cleared) ? cleared : []);
@@ -632,8 +637,6 @@ export function planInAppAlerts({ feed = [], known = [], shown = null, initialis
   const show = initialise
     ? items.filter(item => item.actionable || ALWAYS_CURRENT.has(item.kind))
     : items.filter(item => !before.has(item.key));
-  // A new baseline remembers everything current; otherwise receipts are only
-  // added when the card really shows an item (markInAppShown), here just pruned.
   const record = initialise ? [...keep] : [...before].filter(key => keep.has(key));
   return { show: sortNewestFirst(show), record };
 }
@@ -649,8 +652,6 @@ export function pushPayload(item) {
       collection: text(item?.source) || 'notices',
       id: text(item?.sourceId),
       key: text(item?.key),
-      // No `url`: which page opens is the device's own decision (its panel hint
-      // in the service worker), so no payload can send it into another panel.
       kind: text(item?.kind)
     }
   };

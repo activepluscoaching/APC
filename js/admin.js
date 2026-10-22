@@ -1079,17 +1079,102 @@ function backupFileName() {
   return `APC-backup-${new Date().toISOString().slice(0, 10)}.json`;
 }
 
+const BACKUP_SECRET = 'active-plus-backup-aes-256-gcm-v2-institutional-seal';
+const BACKUP_PBKDF2_ITERATIONS = 100000;
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function base64ToBytes(text) {
+  const binary = atob(String(text || ''));
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
+async function deriveBackupCryptoKey(saltBytes, usages) {
+  const subtle = globalThis.crypto?.subtle || window.crypto?.subtle;
+  const baseKey = await subtle.importKey(
+    'raw',
+    new TextEncoder().encode(BACKUP_SECRET),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: BACKUP_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    usages
+  );
+}
+
+async function encryptBackupPayload(data, createdAt = new Date().toISOString()) {
+  const cryptoApi = globalThis.crypto || window.crypto;
+  const salt = cryptoApi.getRandomValues(new Uint8Array(16));
+  const iv = cryptoApi.getRandomValues(new Uint8Array(12));
+  const key = await deriveBackupCryptoKey(salt, ['encrypt']);
+  const encoded = new TextEncoder().encode(JSON.stringify(data));
+  const cipherBuffer = await cryptoApi.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+  return {
+    kind: 'active-plus-backup',
+    version: 2,
+    encrypted: true,
+    algorithm: 'AES-256-GCM',
+    kdf: 'PBKDF2-SHA256',
+    iterations: BACKUP_PBKDF2_ITERATIONS,
+    createdAt,
+    salt: bytesToBase64(salt),
+    iv: bytesToBase64(iv),
+    ciphertext: bytesToBase64(new Uint8Array(cipherBuffer))
+  };
+}
+
+async function decryptBackupPayload(payload) {
+  if (!payload || payload.kind !== 'active-plus-backup') {
+    throw new Error('INVALID_BACKUP_KIND');
+  }
+  if (payload.encrypted === true || payload.version === 2) {
+    if (typeof payload.salt !== 'string' || typeof payload.iv !== 'string' || typeof payload.ciphertext !== 'string') {
+      throw new Error('INVALID_ENCRYPTED_BACKUP');
+    }
+    const salt = base64ToBytes(payload.salt);
+    const iv = base64ToBytes(payload.iv);
+    const cipherBytes = base64ToBytes(payload.ciphertext);
+    if (salt.length < 8 || iv.length !== 12 || cipherBytes.length <= 16) {
+      throw new Error('INVALID_ENCRYPTED_BACKUP');
+    }
+    const key = await deriveBackupCryptoKey(salt, ['decrypt']);
+    const cryptoApi = globalThis.crypto || window.crypto;
+    const plainBuffer = await cryptoApi.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipherBytes);
+    const data = JSON.parse(new TextDecoder().decode(plainBuffer));
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('INVALID_DECRYPTED_DATA');
+    }
+    return data;
+  }
+  if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  throw new Error('INVALID_BACKUP_DATA');
+}
+
 async function exportBackup() {
   if (!access.has(CAPABILITIES.BACKUP_MANAGE)) {
     toast('ব্যাকআপ শুধু অ্যাডমিন নিতে পারবেন।');
     return;
   }
-  const payload = { kind: 'active-plus-backup', version: 1, createdAt: new Date().toISOString(), data: {} };
+  const data = {};
   for (const key of BACKUP_KEYS) {
     const raw = window.localStorage.getItem(key);
-    if (raw !== null) payload.data[key] = raw;
+    if (raw !== null) data[key] = raw;
   }
   try {
+    const payload = await encryptBackupPayload(data);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1101,7 +1186,7 @@ async function exportBackup() {
     URL.revokeObjectURL(url);
     writeJSON(BACKUP_STAMP_KEY, new Date().toISOString());
     renderBackup();
-    toast('ব্যাকআপ ডাউনলোড শুরু হয়েছে');
+    toast('এনক্রিপ্টেড ব্যাকআপ ডাউনলোড শুরু হয়েছে');
   } catch {
     toast('ব্যাকআপ তৈরি করা যায়নি — ব্রাউজারের ডাউনলোড অনুমতি পরীক্ষা করুন।');
   }
@@ -1121,11 +1206,22 @@ async function restoreBackup(file) {
     if (status) status.textContent = 'এটি সঠিক ব্যাকআপ ফাইল নয় (JSON পড়া যায়নি)।';
     return;
   }
-  if (payload?.kind !== 'active-plus-backup' || !payload.data || typeof payload.data !== 'object') {
+  if (payload?.kind !== 'active-plus-backup') {
     if (status) status.textContent = 'এই ফাইলটি Active Plus ব্যাকআপ নয়।';
     return;
   }
-  const keys = Object.keys(payload.data);
+  let backupData;
+  try {
+    backupData = await decryptBackupPayload(payload);
+  } catch {
+    if (status) {
+      status.textContent = payload?.encrypted || payload?.version === 2
+        ? 'ব্যাকআপ ফাইলটি ক্ষতিগ্রস্ত বা পরিবর্তিত হয়েছে (ডিক্রিপ্ট করা যায়নি)।'
+        : 'এই ফাইলটি Active Plus ব্যাকআপ নয়।';
+    }
+    return;
+  }
+  const keys = Object.keys(backupData);
   openModal('Backup & Restore', 'ব্যাকআপ ফিরিয়ে আনবেন?', `
     <p class="staff-confirm-copy">এই ফাইলে <strong>${bn(keys.length)}</strong>টি সংগ্রহ আছে (${escapeHtml(String(payload.createdAt || '').slice(0, 10))})। রিস্টোর করলে বর্তমান ডেটা এই তথ্য দিয়ে বদলে যাবে।</p>
     <div class="modal-actions">
@@ -1135,7 +1231,7 @@ async function restoreBackup(file) {
   $('#adminModalBody [data-modal-action="restore"]')?.addEventListener('click', async () => {
     closeModal();
     try {
-      for (const [key, value] of Object.entries(payload.data)) {
+      for (const [key, value] of Object.entries(backupData)) {
         if (BACKUP_KEYS.includes(key)) window.localStorage.setItem(key, String(value));
       }
     } catch {
@@ -1213,7 +1309,7 @@ async function renderSecurity() {
       <span class="teacher-action-body">
         <span class="teacher-action-title pay-tile-label" data-action-sub="মুছে ফেলা ও নিষ্ক্রিয় করা থেকে সুরক্ষিত সিস্টেম অ্যাকাউন্ট (${bn(protectedStaff.length)} টি)">সুরক্ষিত অ্যাকাউন্ট তালিকা</span>
       </span>
-      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('verified', 'apc-color-icon', { variant: 'color' })}</span>
+      <span class="teacher-action-art pay-tile-icon" aria-hidden="true">${iconMarkup('approval', 'apc-color-icon', { variant: 'color' })}</span>
     </button>
     <article class="admin-card admin-toggle-panel" data-security-panel="protected" hidden>
       <header class="admin-card-head">
@@ -1736,6 +1832,12 @@ $('#backupExportButton')?.addEventListener('click', exportBackup);
 
 $('#backupFileInput')?.addEventListener('change', event => {
   restoreBackup(event.target.files?.[0]);
+});
+
+$('#backupRestoreButton')?.addEventListener('click', () => {
+  const input = $('#backupFileInput');
+  if (input?.files?.[0]) restoreBackup(input.files[0]);
+  else input?.click();
 });
 
 $('#factoryResetButton')?.addEventListener('click', openFactoryReset);

@@ -12,7 +12,9 @@ export function iconMarkup(name, className = 'apc-icon-svg', options = {}) {
   const key = String(name).replace(/^icon-/, '');
   const variant = options.variant || (compactClass.test(String(className)) ? 'glyph' : 'color');
   const artwork = iconArtwork(key, variant);
-  const classes = `${className || ''} apc-${artwork.style}-icon`.trim();
+  const styleClass = `apc-${artwork.style}-icon`;
+  const baseClass = String(className || '').trim();
+  const classes = baseClass.split(/\s+/).includes(styleClass) ? baseClass : `${baseClass} ${styleClass}`.trim();
   return `<svg class="${escape(classes)}" data-icon="${escape(key)}" data-icon-set="${ICON_SET}" data-icon-version="${ICON_SET_VERSION}" data-icon-style="${artwork.style}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${artwork.markup}</svg>`;
 }
 export function iconElement(name, className, options) {
@@ -22,7 +24,8 @@ export function iconElement(name, className, options) {
 }
 export function paintIcon(container, name, className, options) {
   if (!container) return null;
-  const compact = container.closest?.('.nav-chip,.app-topbar-icon,.admin-hero-icon,.tile-icon,.admin-stat-icon,.input-wrap,.admin-btn,.mini-btn');
+  const isActionCard = container.closest?.('.teacher-action-card,.pay-tile,.more-menu-row,.admin-more-item,.settings-row-link,.settings-toggle');
+  const compact = !isActionCard && container.closest?.('.nav-chip,.app-topbar-icon,.admin-hero-icon,.tile-icon,.admin-stat-icon,.input-wrap,.admin-btn,.mini-btn');
   container.replaceChildren(iconElement(name, className, options || (compact ? { variant: 'glyph' } : undefined)));
   return container;
 }

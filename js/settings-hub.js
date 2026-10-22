@@ -106,10 +106,11 @@ function toggleRow({ key, iconName, tone, label, hint, checked, onChange }) {
   return label_;
 }
 
-function infoRow({ key, label, hint, value }) {
+function infoRow({ key, iconName, tone, label, hint, value }) {
   const node = document.createElement('div');
   node.className = 'settings-info';
   node.dataset.settingsRow = key;
+  if (iconName) node.append(icon(iconName, tone));
   const copy = element('span', 'settings-copy');
   copy.append(element('strong', '', label), element('small', '', hint));
   node.append(copy);
@@ -211,25 +212,50 @@ export function mountSettingsHub({ mount, role = 'student', actions = {}, sessio
 
     if (group.key === 'security') {
       if (!present(section, 'device')) {
-        list().append(infoRow({ key: 'device', label: 'এই ডিভাইস', hint: 'লগইন এই ডিভাইসেই বাঁধা থাকে', value: session?.device || 'বিশ্বস্ত' }));
+        list().append(infoRow({ key: 'device', iconName: 'smartphone', tone: 'mint', label: 'এই ডিভাইস', hint: 'লগইন এই ডিভাইসেই বাঁধা থাকে', value: session?.device || 'বিশ্বস্ত' }));
       }
       if (!present(section, 'session')) {
-        list().append(infoRow({ key: 'session', label: 'সেশন', hint: session?.hint || 'ডিভাইস-বাউন্ড সেশন', value: session?.value || '—' }));
+        list().append(infoRow({ key: 'session', iconName: 'lock', tone: 'purple', label: 'সেশন', hint: session?.hint || 'ডিভাইস-বাউন্ড সেশন', value: session?.value || '—' }));
       }
       if (!present(section, 'password-policy') && session?.password) {
-        list().append(infoRow({ key: 'password-policy', label: 'পাসওয়ার্ড নীতি', hint: session.password }));
+        list().append(infoRow({ key: 'password-policy', iconName: 'shield', tone: 'mint', label: 'পাসওয়ার্ড নীতি', hint: session.password }));
       }
     }
 
     if (group.key === 'data') {
       if (!present(section, 'offline')) {
-        list().append(infoRow({ key: 'offline', label: 'অফলাইন ডেটা', hint: 'ইন্টারনেট ছাড়াও সব কাজ এই ডিভাইসে সংরক্ষিত থাকে', value: 'এই ডিভাইসে' }));
+        list().append(infoRow({ key: 'offline', iconName: 'offline-data', tone: 'mint', label: 'অফলাইন ডেটা', hint: 'ইন্টারনেট ছাড়াও সব কাজ এই ডিভাইসে সংরক্ষিত থাকে', value: 'এই ডিভাইসে' }));
       }
       if (!present(section, 'storage')) {
-        list().append(infoRow({ key: 'storage', label: 'সংরক্ষিত আকার', hint: 'অ্যাপের ডেটা — এই ডিভাইসে', value: storedSize() }));
+        list().append(infoRow({ key: 'storage', iconName: 'data', tone: 'green', label: 'সংরক্ষিত আকার', hint: 'অ্যাপের ডেটা — এই ডিভাইসে', value: storedSize() }));
       }
     }
   }
+
+  const EXISTING_ROW_ICONS = {
+    profile: 'user',
+    password: 'lock',
+    logout: 'logout',
+    install: 'smartphone',
+    theme: 'moon',
+    device: 'smartphone',
+    session: 'lock',
+    'password-policy': 'shield',
+    offline: 'offline-data',
+    storage: 'data'
+  };
+  root.querySelectorAll('[data-settings-row]').forEach(rowEl => {
+    const key = rowEl.dataset.settingsRow || '';
+    const iconName = EXISTING_ROW_ICONS[key];
+    if (!iconName) return;
+    const iconSlot = rowEl.querySelector('.settings-icon');
+    if (iconSlot && !iconSlot.querySelector('svg')) {
+      iconSlot.append(iconElement(iconName, 'apc-icon-svg'));
+    }
+    if (rowEl.classList.contains('settings-row-link') && rowEl.querySelectorAll('.settings-icon').length === 1) {
+      rowEl.append(icon('chevron-right'));
+    }
+  });
 
   paintGroupHub(root);
   return { groups: SETTINGS_GROUPS.map(group => group.key), mounted: true };

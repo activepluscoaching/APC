@@ -30,6 +30,7 @@ import { listClasses } from './academics.js';
 import { noticeCategory, noticeCategoryInfo } from './notification-rules.js';
 import { mountReports, refreshReports } from './reports.js';
 import { pickTeacherSectionAdvice } from './teacher-daily-advice.js';
+import { iconMarkup } from './icons.js';
 
 registerServiceWorker();
 initFixedShell();
@@ -766,7 +767,7 @@ function renderRoutine() {
   // must not depend on visiting the unrelated Classes screen first.
   renderRoutineClassOptions();
   if ($('#managerRoutineDays')) {
-    $('#managerRoutineDays').innerHTML = WEEK_DAYS.map(day => `<button type="button" class="pay-tile" data-routine-day="${day}" aria-pressed="${day === routineDay ? 'true' : 'false'}"><span class="pay-tile-label">${dayLabel[day] || day}</span></button>`).join('');
+    $('#managerRoutineDays').innerHTML = WEEK_DAYS.map(day => `<button type="button" class="pay-tile" data-routine-day="${day}" aria-pressed="${day === routineDay ? 'true' : 'false'}"><span class="pay-tile-icon" aria-hidden="true">${iconMarkup('calendar', 'apc-color-icon', { variant: 'color' })}</span><span class="pay-tile-label">${dayLabel[day] || day}</span></button>`).join('');
   }
   if ($('#managerRoutineDayTitle')) $('#managerRoutineDayTitle').textContent = `${dayLabel[routineDay] || routineDay} — রুটিনে ক্লাস যোগ করুন`;
   const rows = routine[routineDay]?.classes || [];

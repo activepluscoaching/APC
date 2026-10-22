@@ -2,15 +2,15 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <script src="js/sanitize-url.js?v=408"></script>
-  <script src="js/cache-refresh.js?v=408"></script>
-  <script src="js/app-entry.js?v=408" data-entry="manager"></script>
-  <script type="module" src="js/manager.js?v=408"></script>
-  <script type="module" src="js/advice-admin-entry.js?v=408"></script>
-  <script src="js/topbar-connectivity.js?v=408" defer=""></script>
-  <script type="module" src="js/realtime-sync-entry.js?v=408"></script>
-  <script src="js/appearance-boot.js?v=408"></script>
-  <script src="js/theme-logos.js?v=408"></script>
+  <script src="js/sanitize-url.js?v=412"></script>
+  <script src="js/cache-refresh.js?v=412"></script>
+  <script src="js/app-entry.js?v=412" data-entry="manager"></script>
+  <script type="module" src="js/manager.js?v=412"></script>
+  <script type="module" src="js/advice-admin-entry.js?v=412"></script>
+  <script src="js/topbar-connectivity.js?v=412" defer=""></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=412"></script>
+  <script src="js/appearance-boot.js?v=412"></script>
+  <script src="js/theme-logos.js?v=412"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e7a55">
   <meta name="description" content="Active Plus Coaching ম্যানেজার প্যানেল">
@@ -27,23 +27,23 @@
        HTML and fetches them in parallel, instead of a render-blocking serial
        waterfall (design-system.css first, its imports one round-trip later).
        tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
-  <link rel="stylesheet" href="css/foundation.css?v=408">
-  <link rel="stylesheet" href="css/ui-layout.css?v=408">
-  <link rel="stylesheet" href="css/ui-components.css?v=408">
-  <link rel="stylesheet" href="css/ui-forms.css?v=408">
-  <link rel="stylesheet" href="css/ui-features.css?v=408">
-  <link rel="stylesheet" href="css/notice-board.css?v=408">
-  <link rel="stylesheet" href="css/ui-status.css?v=408">
-  <link rel="stylesheet" href="css/ui-auth.css?v=408">
-  <link rel="stylesheet" href="css/app-polish.css?v=408">
-  <link rel="stylesheet" href="css/student-record.css?v=408">
-  <link rel="stylesheet" href="css/exam-archive.css?v=408">
-  <link rel="stylesheet" href="css/academics.css?v=408">
-  <link rel="stylesheet" href="css/notifications.css?v=408">
-  <link rel="stylesheet" href="css/course-hub.css?v=408">
-  <link rel="stylesheet" href="css/ui-wallet.css?v=408">
-  <script type="module" src="js/ui-accessibility.js?v=408"></script>
-  <script src="js/launch-screen.js?v=408" defer=""></script>
+  <link rel="stylesheet" href="css/foundation.css?v=412">
+  <link rel="stylesheet" href="css/ui-layout.css?v=412">
+  <link rel="stylesheet" href="css/ui-components.css?v=412">
+  <link rel="stylesheet" href="css/ui-forms.css?v=412">
+  <link rel="stylesheet" href="css/ui-features.css?v=412">
+  <link rel="stylesheet" href="css/notice-board.css?v=412">
+  <link rel="stylesheet" href="css/ui-status.css?v=412">
+  <link rel="stylesheet" href="css/ui-auth.css?v=412">
+  <link rel="stylesheet" href="css/app-polish.css?v=412">
+  <link rel="stylesheet" href="css/student-record.css?v=412">
+  <link rel="stylesheet" href="css/exam-archive.css?v=412">
+  <link rel="stylesheet" href="css/academics.css?v=412">
+  <link rel="stylesheet" href="css/notifications.css?v=412">
+  <link rel="stylesheet" href="css/course-hub.css?v=412">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=412">
+  <script type="module" src="js/ui-accessibility.js?v=412"></script>
+  <script src="js/launch-screen.js?v=412" defer=""></script>
 </head>
 <body class="manager-reference">
   <div class="manager-boot-screen" id="managerBootScreen" role="status" aria-live="polite">
@@ -133,7 +133,7 @@
           <div class="manager-hero-heading-row"><h1 id="mgrStudentsTitle">শিক্ষার্থী ব্যবস্থাপনা</h1></div>
           <p class="teacher-hero-advice" data-manager-hero-advice="students">সক্রিয় ও অপেক্ষমাণ শিক্ষার্থীদের তালিকা প্রতিদিন একবার যাচাই করার অভ্যাস গড়ুন।</p>
         </div>
-      </div></div><nav class="pay-grid is-3 manager-student-scopes teacher-home-actions manager-action-stack" aria-label="শিক্ষার্থী অবস্থা"><button class="pay-tile teacher-action-card is-accent" type="button" data-student-scope="all" aria-pressed="true"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="সক্রিয়, অপেক্ষমাণ ও অন্যান্য সব শিক্ষার্থীর তালিকা দেখুন">সব</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="pending" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="pending-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/pending-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="নতুন ভর্তি আবেদন যাচাই, অনুমোদন বা বাতিল করুন">নিবন্ধন অপেক্ষমাণ</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="approved" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="approval" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/approval.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="বর্তমানে অধ্যয়নরত সক্রিয় শিক্ষার্থীদের প্রোফাইল ও ফি দেখুন">সক্রিয়</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="inactive" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="inactive-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/inactive-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="সাময়িকভাবে বিরতিতে থাকা শিক্ষার্থীদের তথ্য দেখুন">নিষ্ক্রিয়</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="rejected" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="rejected-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/rejected-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="বাতিল হওয়া নিবন্ধন আবেদনের ইতিহাস দেখুন">বাতিল</span></button></nav><div id="managerStudentsWorkspace" class="manager-students-workspace"><div class="manager-student-pending-banner" role="status"><div><span class="manager-section-eyebrow">ভর্তি কার্যক্রম</span><strong>অপেক্ষমাণ আবেদন</strong></div><span class="manager-student-pending-count badge badge-pending" id="managerPendingBadge">০ অপেক্ষমাণ</span></div><label class="manager-search manager-student-search">নাম, শিক্ষার্থী আইডি বা মোবাইল দিয়ে খুঁজুন<input id="managerStudentSearch" type="search" placeholder="নাম বা শিক্ষার্থী আইডি দিয়ে খুঁজুন…" autocomplete="off"></label><section class="manager-student-pending-panel" aria-labelledby="managerPendingTitle"><div class="manager-section-heading"><h2 id="managerPendingTitle">অপেক্ষমাণ আবেদন</h2><span>নিবন্ধন পর্যালোচনা</span></div><div id="managerStudentQueue" class="manager-record-list" aria-live="polite"></div></section><div class="manager-section-heading manager-student-roster-heading"><h2 id="managerStudentRosterTitle">শিক্ষার্থী তালিকা</h2></div><div id="managerStudentList" class="manager-record-list"></div></div></section>
+      </div></div><nav class="pay-grid is-3 manager-student-scopes teacher-home-actions manager-action-stack" aria-label="শিক্ষার্থী অবস্থা"><button class="pay-tile teacher-action-card is-accent" type="button" data-student-scope="all" aria-pressed="true"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="সক্রিয়, অপেক্ষমাণ ও অন্যান্য সব শিক্ষার্থীর তালিকা দেখুন">সব</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="pending" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="pending-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/pending-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="নতুন ভর্তি আবেদন যাচাই, অনুমোদন বা বাতিল করুন">নিবন্ধন অপেক্ষমাণ</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="approved" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="approval" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/approval.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="বর্তমানে অধ্যয়নরত সক্রিয় শিক্ষার্থীদের প্রোফাইল ও ফি দেখুন">সক্রিয়</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="inactive" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="inactive-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/inactive-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="সাময়িকভাবে বিরতিতে থাকা শিক্ষার্থীদের তথ্য দেখুন">নিষ্ক্রিয়</span></button><button class="pay-tile teacher-action-card" type="button" data-student-scope="rejected" aria-pressed="false"><span class="pay-tile-icon teacher-action-art"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="rejected-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/rejected-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"></image></svg></span><span class="pay-tile-label teacher-action-title" data-action-sub="বাতিল হওয়া নিবন্ধন আবেদনের ইতিহাস দেখুন">বাতিল</span></button></nav><div id="managerStudentsWorkspace" class="manager-students-workspace"><div class="manager-student-pending-banner" role="status"><div><span class="manager-section-eyebrow">ভর্তি কার্যক্রম</span><strong>অনুমোদনের অপেক্ষায়</strong></div><span class="manager-student-pending-count badge badge-pending" id="managerPendingBadge">০ অপেক্ষমাণ</span></div><label class="manager-search manager-student-search">নাম, শিক্ষার্থী আইডি বা মোবাইল দিয়ে খুঁজুন<input id="managerStudentSearch" type="search" placeholder="নাম বা শিক্ষার্থী আইডি দিয়ে খুঁজুন…" autocomplete="off"></label><section class="manager-student-pending-panel" aria-labelledby="managerPendingTitle"><div class="manager-section-heading"><h2 id="managerPendingTitle">অনুমোদনের অপেক্ষায়</h2><span>নিবন্ধন পর্যালোচনা</span></div><div id="managerStudentQueue" class="manager-record-list" aria-live="polite"></div></section><div class="manager-section-heading manager-student-roster-heading"><h2 id="managerStudentRosterTitle">শিক্ষার্থী তালিকা</h2></div><div id="managerStudentList" class="manager-record-list"></div></div></section>
 
 
 <section class="manager-view" data-view-panel="academic" aria-labelledby="mgrAcademicTitle"><div class="page-intro home-dashboard-intro teacher-home-intro manager-sub-hero" data-home-intro="" data-hero-mode="day">
@@ -673,9 +673,9 @@
       <div class="admin-modal-body" id="managerModalBody"></div>
     </section>
   </div>
-  <script type="module" src="js/theme-entry.js?v=408"></script>
-  <script type="module" src="js/pull-to-refresh.js?v=408"></script>
-  <script type="module" src="js/class-chat-head.js?v=408"></script>
+  <script type="module" src="js/theme-entry.js?v=412"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=412"></script>
+  <script type="module" src="js/class-chat-head.js?v=412"></script>
 
 
 </body></html>

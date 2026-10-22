@@ -29,7 +29,8 @@ import { chooseStaffCopy, chooseStudentCopy, sameStudentRecord, loginIdOf, match
 import { reportSyncConflict, reportSyncError, setSyncStatus, markSyncSuccess } from './sync-status.js';
 import { unsafeKeyPath, isRtdbKey } from './rtdb-keys.js';
 import { isPasswordRecord, verifyPassword } from './password-hash.js';
-import { normalizeUsername, contactNumber } from './account-policy.js';
+import { normalizeUsername, contactNumber, normalizeEmail } from './account-policy.js';
+import { dhakaYYMMDD, formatStudentId, maxExistingDailySerial, MAX_DAILY_STUDENTS, DAILY_LIMIT_ERROR } from './idGenerator.js';
 import { TEACHER_ASSIGNMENTS_KEY } from './teacher-assignments.js';
 import { STAFF_DIRECTORY_KEY } from './staff-directory.js';
 import { encodeUsernameRegistry, decodeUsernameRegistry, encodeUsernameKey } from './username-sync-codec.js';
@@ -41,6 +42,10 @@ const lastRemote = new Map();
 const STAFF_ROOT = DB_ROOT + '/staffAccounts';
 const DIRECTORY_ROOT = DB_ROOT + '/staffDirectory';
 const USERNAMES_ROOT = DB_ROOT + '/usernames';
+const MOBILE_INDEX_ROOT = DB_ROOT + '/mobileIndex';
+const EMAIL_INDEX_ROOT = DB_ROOT + '/emailIndex';
+const DAILY_COUNTERS_ROOT = DB_ROOT + '/dailyStudentCounters';
+const NOTIFICATIONS_ROOT = DB_ROOT + '/notifications';
 /* Institution-wide markers (is the one-time Admin initialization complete?). */
 const SYSTEM_ROOT = DB_ROOT + '/system';
 const STUDENT_ROOT = DB_ROOT + '/studentAccount'; // read-only legacy migration
@@ -62,12 +67,24 @@ let partialRetry = null;
 let lastPartialRetry = 0;
 
 function notifyRemote(key, collection) {
-  const event = new window.StorageEvent('storage', {
-    key, newValue: localStorage.getItem(key), storageArea: localStorage,
-    url: location.href
-  });
-  Object.defineProperty(event, 'apcRemote', { value: true });
-  window.dispatchEvent(event);
+  try {
+    const event = new window.StorageEvent('storage', {
+      key, newValue: localStorage.getItem(key), storageArea: localStorage,
+      url: location.href
+    });
+    Object.defineProperty(event, 'apcRemote', { value: true });
+    window.dispatchEvent(event);
+  } catch {
+    try {
+      const fallbackEvent = new Event('storage');
+      Object.defineProperties(fallbackEvent, {
+        key: { value: key },
+        newValue: { value: localStorage.getItem(key) },
+        apcRemote: { value: true }
+      });
+      window.dispatchEvent(fallbackEvent);
+    } catch { /* apc-sync-updated below always notifies listeners */ }
+  }
   window.dispatchEvent(new CustomEvent('apc-sync-updated', { detail: { collection, key } }));
 }
 
@@ -105,6 +122,11 @@ function clearConflict(code) {
   paintSyncStatus();
 }
 
+function isPermissionDenied(error) {
+  const detail = `${error?.code || ''} ${error?.name || ''} ${error?.message || ''}`.toLowerCase();
+  return /permission[-_ ]denied/.test(detail);
+}
+
 function onValue(node, callback) {
   const generation = syncGeneration;
   const unsubscribe = firebaseOnValue(node, snapshot => {
@@ -114,6 +136,47 @@ function onValue(node, callback) {
     }).catch(syncError);
   }, error => {
     if (!syncEnabled || generation !== syncGeneration) return;
+    syncFailed = true;
+    syncError(error);
+  });
+  subscriptions.add(unsubscribe);
+  return unsubscribe;
+}
+
+/**
+ * Subscribe to a newly introduced auxiliary RTDB node without turning core
+ * sync red if the live Firebase project has not yet deployed rules for it.
+ */
+function onOptionalValue(node, callback, { label = 'optional', onPermissionDenied = null } = {}) {
+  const generation = syncGeneration;
+  let unsubscribe = null;
+  unsubscribe = firebaseOnValue(node, snapshot => {
+    if (!syncEnabled || generation !== syncGeneration) return;
+    Promise.resolve().then(() => {
+      if (syncEnabled && generation === syncGeneration) return callback(snapshot);
+    }).catch(error => {
+      if (isPermissionDenied(error)) {
+        onPermissionDenied?.(error);
+        console.warn(`[Active Plus] Optional RTDB node rules not yet deployed (${label}); keeping core sync active.`);
+        if (unsubscribe) {
+          subscriptions.delete(unsubscribe);
+          try { unsubscribe(); } catch {}
+        }
+        return;
+      }
+      syncError(error);
+    });
+  }, error => {
+    if (!syncEnabled || generation !== syncGeneration) return;
+    if (isPermissionDenied(error)) {
+      onPermissionDenied?.(error);
+      console.warn(`[Active Plus] Optional RTDB node rules not yet deployed (${label}); keeping core sync active.`);
+      if (unsubscribe) {
+        subscriptions.delete(unsubscribe);
+        try { unsubscribe(); } catch {}
+      }
+      return;
+    }
     syncFailed = true;
     syncError(error);
   });
@@ -737,8 +800,11 @@ function listenExamDb() {
 const RECORD_COLLECTIONS = [...SYNCABLE.filter(name => name !== 'exams' && name !== 'classChat'), 'teacherAssignments'];
 const recordBridges = new Map();
 const CLASSCHAT_ROOT = DB_ROOT + '/classChat';
+const CLASSCHAT_FALLBACK_ROOT = DB_ROOT + '/routine/__apcClassChatRelayV1';
 let classChatQueue = Promise.resolve();
 let classChatRelayModulePromise = null;
+let classChatRulesBlocked = false;
+let classChatFallbackListening = false;
 
 function loadClassChatRelayModule() {
   classChatRelayModulePromise ??= import('./class-chat-relay.js').catch(error => {
@@ -748,37 +814,76 @@ function loadClassChatRelayModule() {
   return classChatRelayModulePromise;
 }
 
+function listenClassChatFallback() {
+  if (classChatFallbackListening || !syncEnabled) return;
+  classChatFallbackListening = true;
+  onOptionalValue(ref(getDatabase(firebaseApp), CLASSCHAT_FALLBACK_ROOT), snap => {
+    const raw = snap.exists() ? (snap.val()?.entries || null) : null;
+    return syncClassChat(raw).catch(error => {
+      console.warn('[Active Plus] class chat fallback relay listener failed', error);
+    });
+  }, { label: 'classChatFallback' });
+}
+
+async function runClassChatCycleOnce(preloadedSnapshot, live) {
+  const { syncClassChatRelayCycle } = await loadClassChatRelayModule();
+  if (!live()) return;
+  const db = getDatabase(firebaseApp);
+  const usingFallback = classChatRulesBlocked;
+  const node = ref(db, usingFallback ? CLASSCHAT_FALLBACK_ROOT : CLASSCHAT_ROOT);
+  await syncClassChatRelayCycle({
+    storage: localStorage,
+    rawSetItem,
+    notifyLocalUpdate: () => notifyRemote(KEYS.classChat, 'classChat'),
+    readCloudSnapshot: async () => {
+      if (preloadedSnapshot !== undefined) return preloadedSnapshot;
+      const snap = await get(node);
+      if (!live()) throw new Error('session-ended');
+      markSyncSuccess('read');
+      if (!snap.exists()) return null;
+      return usingFallback ? (snap.val()?.entries || null) : snap.val();
+    },
+    runCloudTransaction: async updater => {
+      if (!live()) throw new Error('session-ended');
+      const result = await runTransaction(node, current => {
+        if (!live()) return;
+        if (!usingFallback) return updater(current);
+        const curEntries = current && typeof current === 'object' ? (current.entries || null) : null;
+        const nextEntries = updater(curEntries);
+        if (nextEntries === null) return null;
+        return { _syncKind: 'chat-relay', updatedAt: Date.now(), entries: nextEntries };
+      }, { applyLocally: false });
+      if (!live()) throw new Error('session-ended');
+      markSyncSuccess('write');
+      const val = result.snapshot.val();
+      return usingFallback ? (val?.entries || null) : val;
+    }
+  });
+}
+
 function syncClassChat(preloadedSnapshot = undefined) {
   const generation = syncGeneration;
   const live = () => syncEnabled && generation === syncGeneration;
   if (!live()) return Promise.resolve();
   const work = classChatQueue.catch(() => {}).then(async () => {
     if (!live()) return;
-    const { syncClassChatRelayCycle } = await loadClassChatRelayModule();
-    if (!live()) return;
-    const node = ref(getDatabase(firebaseApp), CLASSCHAT_ROOT);
-    await syncClassChatRelayCycle({
-      storage: localStorage,
-      rawSetItem,
-      notifyLocalUpdate: () => notifyRemote(KEYS.classChat, 'classChat'),
-      readCloudSnapshot: async () => {
-        if (preloadedSnapshot !== undefined) return preloadedSnapshot;
-        const snap = await get(node);
-        if (!live()) throw new Error('session-ended');
-        markSyncSuccess('read');
-        return snap.exists() ? snap.val() : null;
-      },
-      runCloudTransaction: async updater => {
-        if (!live()) throw new Error('session-ended');
-        const result = await runTransaction(node, current => {
-          if (!live()) return;
-          return updater(current);
-        }, { applyLocally: false });
-        if (!live()) throw new Error('session-ended');
-        markSyncSuccess('write');
-        return result.snapshot.val();
+    try {
+      await runClassChatCycleOnce(preloadedSnapshot, live);
+    } catch (error) {
+      if (!classChatRulesBlocked && isPermissionDenied(error)) {
+        classChatRulesBlocked = true;
+        listenClassChatFallback();
+        try {
+          await runClassChatCycleOnce(undefined, live);
+          return;
+        } catch (fallbackErr) {
+          if (isPermissionDenied(fallbackErr)) return;
+          throw fallbackErr;
+        }
       }
-    });
+      if (isPermissionDenied(error)) return;
+      throw error;
+    }
   });
   classChatQueue = work;
   return work;
@@ -791,10 +896,21 @@ const pushClassChat = () => {
 };
 
 function listenClassChat() {
-  onValue(ref(getDatabase(firebaseApp), CLASSCHAT_ROOT), snap => {
+  if (classChatRulesBlocked) {
+    listenClassChatFallback();
+    return;
+  }
+  onOptionalValue(ref(getDatabase(firebaseApp), CLASSCHAT_ROOT), snap => {
     return syncClassChat(snap.exists() ? snap.val() : null).catch(error => {
       console.warn('[Active Plus] class chat relay listener failed', error);
     });
+  }, {
+    label: 'classChat',
+    onPermissionDenied: () => {
+      classChatRulesBlocked = true;
+      listenClassChatFallback();
+      void syncClassChat().catch(() => {});
+    }
   });
 }
 
@@ -1095,18 +1211,25 @@ export async function resetCloudDatabase() {
   try {
     await ensureCloudAuth();
     const db = getDatabase(firebaseApp);
-    const drop = async path => {
+    const drop = async (path, { optional = false } = {}) => {
       try {
         await set(ref(db, path), null);
         cleared.push(path);
       } catch (error) {
+        if (optional && isPermissionDenied(error)) return;
         failed.push({ path, reason: error?.code || error?.message || 'write-failed' });
       }
     };
-    for (const name of RESET_COLLECTIONS) await drop(`${DB_ROOT}/${name}`);
+    for (const name of RESET_COLLECTIONS) {
+      await drop(`${DB_ROOT}/${name}`, { optional: name === 'classChat' });
+    }
     await drop(`${EXAMDB_ROOT}/exams`);
     await drop(`${EXAMDB_ROOT}/attempts`);
     await drop(USERNAMES_ROOT);
+    await drop(MOBILE_INDEX_ROOT, { optional: true });
+    await drop(EMAIL_INDEX_ROOT, { optional: true });
+    await drop(DAILY_COUNTERS_ROOT, { optional: true });
+    await drop(NOTIFICATIONS_ROOT, { optional: true });
     await drop(DIRECTORY_ROOT);
     /* Student login records: the rules allow deletion per login key, not of
        the parent — enumerate, then remove one by one. */
@@ -1126,6 +1249,678 @@ export async function resetCloudDatabase() {
   } catch (error) {
     syncError(error);
     return { ok: false, reason: 'reset-failed', error, cleared, failed };
+  }
+}
+
+function hasReviewerLocalSession() {
+  for (const role of ['admin', 'manager']) {
+    const spec = STAFF_ACCOUNTS[role];
+    if (!spec) continue;
+    try {
+      if (window.sessionStorage?.getItem(spec.sessionKey) || window.localStorage?.getItem(spec.sessionKey)) {
+        return true;
+      }
+    } catch { /* ignore blocked storage */ }
+  }
+  return false;
+}
+
+function mergeRegistrationNotificationLists(localItems, remoteMap) {
+  const byId = new Map();
+  for (const item of Array.isArray(localItems) ? localItems : []) {
+    if (item && typeof item === 'object' && item.id && item.studentId) {
+      byId.set(item.id, { ...item });
+    }
+  }
+  if (remoteMap && typeof remoteMap === 'object') {
+    for (const [key, remote] of Object.entries(remoteMap)) {
+      if (!remote || typeof remote !== 'object' || !remote.studentId) continue;
+      const id = String(remote.id || key);
+      const prev = byId.get(id);
+      const read = Boolean(prev?.read || remote.read);
+      byId.set(id, {
+        ...(prev || {}),
+        ...remote,
+        id,
+        read,
+        ...(prev?.readAt && !remote.readAt ? { readAt: prev.readAt } : {}),
+        ...(prev?.readBy && !remote.readBy ? { readBy: prev.readBy } : {})
+      });
+    }
+  }
+  return [...byId.values()].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+}
+
+let notificationsRulesBlocked = false;
+
+async function syncRegistrationNotifications() {
+  if (!syncEnabled || !hasReviewerLocalSession() || notificationsRulesBlocked) return;
+  const generation = syncGeneration;
+  const db = getDatabase(firebaseApp);
+  let snap;
+  try {
+    snap = await get(ref(db, NOTIFICATIONS_ROOT));
+  } catch (error) {
+    if (isPermissionDenied(error)) {
+      notificationsRulesBlocked = true;
+      console.warn('[Active Plus] notifications RTDB rules not yet deployed; deriving registration alerts from synced students.');
+      return;
+    }
+    throw error;
+  }
+  if (!syncEnabled || generation !== syncGeneration) return;
+  const remote = snap.exists() ? snap.val() : {};
+  const local = readLocal(KEYS.registrationNotifications) || [];
+  const merged = mergeRegistrationNotificationLists(local, remote);
+  remoteWrite(KEYS.registrationNotifications, merged, 'registrationNotifications');
+  for (const item of merged) {
+    const remoteItem = remote?.[item.id];
+    if (!remoteItem || (item.read && !remoteItem.read)) {
+      try {
+        await set(ref(db, `${NOTIFICATIONS_ROOT}/${item.id}`), item);
+      } catch { /* best-effort push of local read state */ }
+    }
+  }
+}
+
+function listenRegistrationNotifications() {
+  if (!hasReviewerLocalSession() || notificationsRulesBlocked) return;
+  onOptionalValue(ref(getDatabase(firebaseApp), NOTIFICATIONS_ROOT), snapshot => {
+    const remote = snapshot.exists() ? snapshot.val() : {};
+    const local = readLocal(KEYS.registrationNotifications) || [];
+    const merged = mergeRegistrationNotificationLists(local, remote);
+    remoteWrite(KEYS.registrationNotifications, merged, 'registrationNotifications');
+  }, {
+    label: 'notifications',
+    onPermissionDenied: () => { notificationsRulesBlocked = true; }
+  });
+}
+
+function randomHexSuffix(byteLength = 6) {
+  const bytes = new Uint8Array(byteLength);
+  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Obtain authoritative server epoch milliseconds via RTDB ServerValue.TIMESTAMP. */
+export async function getServerTimeMs() {
+  if (!LEGACY_CLOUD_ENABLED || !navigator.onLine) return Date.now();
+  try {
+    await ensureCloudAuth();
+  } catch {
+    return Date.now();
+  }
+  const db = getDatabase(firebaseApp);
+  const probeKey = `clock-${randomHexSuffix(6)}`;
+  const probeRef = ref(db, `${SYSTEM_ROOT}/connectivityProbe/${probeKey}`);
+  try {
+    await set(probeRef, { at: { '.sv': 'timestamp' } });
+    const snap = await get(probeRef);
+    const serverAt = Number(snap.val()?.at);
+    if (Number.isFinite(serverAt) && serverAt > 0) return serverAt;
+  } catch {
+    /* Fall back cleanly to device clock if probe read/write is unavailable */
+  } finally {
+    void set(probeRef, null).catch(() => {});
+  }
+  return Date.now();
+}
+
+/**
+ * Fallback atomic registration using ONLY legacy pre-deployed RTDB nodes
+ * (`usernames`, `students`, `studentAccounts`) when `mobileIndex` or
+ * `dailyStudentCounters` rules have not yet been deployed to Firebase Console.
+ */
+async function registerStudentViaLegacyNodes({
+  db,
+  cleanMobile,
+  cleanUsername,
+  cleanEmail,
+  preferredStudentId = '',
+  userKey,
+  claimToken,
+  buildRecords
+}) {
+  let usernameReserved = false;
+  let reservedStudentId = '';
+  const preferredId = /^\d{9}$/.test(String(preferredStudentId || '').trim()) ? String(preferredStudentId).trim() : '';
+  const rollbackLegacy = async () => {
+    const cleanup = [];
+    if (usernameReserved) {
+      cleanup.push(runTransaction(ref(db, USERNAMES_ROOT), current => {
+        if (!current || typeof current !== 'object' || current[userKey] !== claimToken) return undefined;
+        const next = { ...current };
+        delete next[userKey];
+        return Object.keys(next).length ? next : undefined;
+      }, { applyLocally: false }).catch(() => {}));
+    }
+    if (reservedStudentId) {
+      cleanup.push(runTransaction(ref(db, `${DB_ROOT}/students/${reservedStudentId}`), current => {
+        if (!current || typeof current !== 'object' || current.__claimToken !== claimToken) return undefined;
+        return null;
+      }, { applyLocally: false }).catch(() => {}));
+    }
+    await Promise.allSettled(cleanup);
+  };
+
+  try {
+    let userDup = false;
+    let alreadyRegisteredSameId = false;
+    const userTx = await runTransaction(ref(db, USERNAMES_ROOT), current => {
+      const map = current && typeof current === 'object' ? current : {};
+      if (map[userKey] !== undefined && map[userKey] !== null) {
+        if (preferredId && map[userKey] === preferredId) alreadyRegisteredSameId = true;
+        userDup = true;
+        return;
+      }
+      return { ...map, [userKey]: claimToken };
+    }, { applyLocally: false });
+    if (alreadyRegisteredSameId) {
+      return { ok: true, studentId: preferredId, idempotent: true };
+    }
+    if (!userTx.committed || userDup || userTx.snapshot.val()?.[userKey] !== claimToken) {
+      return {
+        ok: false,
+        reason: 'duplicate',
+        field: 'username',
+        error: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।'
+      };
+    }
+    usernameReserved = true;
+
+    const serverMs = await getServerTimeMs();
+    const datePrefix = dhakaYYMMDD(serverMs);
+    let dupField = '';
+    let overLimit = false;
+    let candidateId = '';
+
+    const studentClaimTx = await runTransaction(ref(db, `${DB_ROOT}/students`), current => {
+      dupField = '';
+      overLimit = false;
+      candidateId = '';
+      const rawMap = current && typeof current === 'object' ? current : {};
+      const rows = Object.values(decodeRealtimeRecords(rawMap)).filter(Boolean);
+      for (const row of rows) {
+        const rowMobile = contactNumber(row?.registrationMobile || row?.mobile || row?.studentMobile || '');
+        if (rowMobile && rowMobile === cleanMobile) { dupField = 'mobile'; return; }
+        const rowUser = normalizeUsername(row?.username || '');
+        if (rowUser && rowUser === cleanUsername) { dupField = 'username'; return; }
+        if (cleanEmail) {
+          const rowEmail = normalizeEmail(row?.email || '');
+          if (rowEmail && rowEmail === cleanEmail) { dupField = 'email'; return; }
+        }
+      }
+      if (preferredId && !rawMap[preferredId]) {
+        candidateId = preferredId;
+      } else {
+        const nextSerial = maxExistingDailySerial(datePrefix, rows) + 1;
+        if (nextSerial > MAX_DAILY_STUDENTS) {
+          overLimit = true;
+          return;
+        }
+        candidateId = formatStudentId(datePrefix, nextSerial);
+        if (rawMap[candidateId]) { dupField = 'id'; return; }
+      }
+      return {
+        ...rawMap,
+        [candidateId]: {
+          id: candidateId,
+          status: 'pending',
+          registrationMobile: cleanMobile,
+          mobile: cleanMobile,
+          username: cleanUsername,
+          ...(cleanEmail ? { email: cleanEmail } : {}),
+          createdAt: new Date(serverMs).toISOString(),
+          __claimToken: claimToken
+        }
+      };
+    }, { applyLocally: false });
+
+    if (!studentClaimTx.committed || dupField || overLimit || !candidateId) {
+      await rollbackLegacy();
+      if (overLimit) return { ok: false, reason: 'daily-limit', field: 'id', error: DAILY_LIMIT_ERROR };
+      if (dupField === 'mobile') return { ok: false, reason: 'duplicate', field: 'mobile', error: 'এই মোবাইল নম্বর দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+      if (dupField === 'email') return { ok: false, reason: 'duplicate', field: 'email', error: 'এই ইমেইল ঠিকানা দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+      return {
+        ok: false,
+        reason: 'duplicate',
+        field: 'username',
+        error: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।'
+      };
+    }
+    reservedStudentId = candidateId;
+
+    const { studentRow, cloudAccount, notificationRecord } = await buildRecords({ studentId: reservedStudentId, serverMs });
+    const safeCloudAccount = studentAccountPayload(cloudAccount);
+    const encodedStudentsMap = encodeRealtimeRecords({ [reservedStudentId]: studentRow });
+    const encodedStudentNode = encodedStudentsMap[reservedStudentId] || studentRow;
+
+    await Promise.all([
+      set(ref(db, `${STUDENTS_ROOT}/${userKey}`), safeCloudAccount),
+      set(ref(db, `${DB_ROOT}/students/${reservedStudentId}`), encodedStudentNode),
+      runTransaction(ref(db, USERNAMES_ROOT), current => ({
+        ...(current && typeof current === 'object' ? current : {}),
+        [userKey]: reservedStudentId
+      }), { applyLocally: false }),
+      set(ref(db, `${NOTIFICATIONS_ROOT}/${notificationRecord.id}`), notificationRecord).catch(error => {
+        if (isPermissionDenied(error)) {
+          notificationsRulesBlocked = true;
+          return;
+        }
+        throw error;
+      })
+    ]);
+
+    return { ok: true, studentId: reservedStudentId, serverMs, studentRow, cloudAccount: safeCloudAccount, notificationRecord };
+  } catch (error) {
+    await rollbackLegacy();
+    return { ok: false, reason: 'network-unavailable', error };
+  }
+}
+
+/**
+ * Atomic online student registration:
+ *  1) Reserves mobile, username, and optional email via RTDB transactions
+ *  2) Obtains authoritative server time in Asia/Dhaka and increments dailyStudentCounters/<YYMMDD> (001–999)
+ *  3) Writes studentAccounts/<username>, students/<studentId>, and notifications/<notifId>
+ *  4) Rolls back claims if any pre-commit step fails
+ */
+export async function registerStudentAtomicallyOnline({ mobile, username, email = '', preferredStudentId = '', buildRecords }) {
+  if (!LEGACY_CLOUD_ENABLED) return cloudPausedResult();
+  if (!navigator.onLine) return { ok: false, reason: 'network-unavailable', offline: true };
+
+  const cleanMobile = contactNumber(mobile);
+  const cleanUsername = normalizeUsername(username);
+  const cleanEmail = normalizeEmail(email);
+  const preferredId = /^\d{9}$/.test(String(preferredStudentId || '').trim()) ? String(preferredStudentId).trim() : '';
+  const userKey = encodeUsernameKey(cleanUsername);
+  const emailKey = cleanEmail ? encodeUsernameKey(cleanEmail) : '';
+  const claimToken = `pending:${randomHexSuffix(6)}`;
+
+  let db;
+  try {
+    const user = await ensureCloudAuth();
+    if (!user) return { ok: false, reason: 'network-unavailable' };
+    db = getDatabase(firebaseApp);
+  } catch (error) {
+    return { ok: false, reason: 'network-unavailable', error };
+  }
+
+  let mobileClaimed = false;
+  let usernameClaimed = false;
+  let emailClaimed = false;
+
+  const rollbackClaims = async () => {
+    const tasks = [];
+    if (mobileClaimed) {
+      tasks.push(runTransaction(ref(db, `${MOBILE_INDEX_ROOT}/${cleanMobile}`), cur => (cur === claimToken ? null : undefined), { applyLocally: false }).catch(() => {}));
+    }
+    if (usernameClaimed) {
+      tasks.push(runTransaction(ref(db, `${USERNAMES_ROOT}/${userKey}`), cur => (cur === claimToken ? null : undefined), { applyLocally: false }).catch(() => {}));
+    }
+    if (emailClaimed && emailKey) {
+      tasks.push(runTransaction(ref(db, `${EMAIL_INDEX_ROOT}/${emailKey}`), cur => (cur === claimToken ? null : undefined), { applyLocally: false }).catch(() => {}));
+    }
+    await Promise.allSettled(tasks);
+  };
+
+  try {
+    // Pre-check existing cloud directory, student accounts, and roster for legacy unindexed duplicates.
+    const [dirSnap, existingAccSnap, allStudentsSnap, allAccountsSnap] = await Promise.all([
+      get(ref(db, DIRECTORY_ROOT)),
+      get(ref(db, `${STUDENTS_ROOT}/${userKey}`)),
+      get(ref(db, `${DB_ROOT}/students`)),
+      get(ref(db, STUDENTS_ROOT))
+    ]);
+
+    if (preferredId && existingAccSnap.exists()) {
+      const existingAcc = existingAccSnap.val();
+      const existingId = String(existingAcc?.student?.id || existingAcc?.studentId || '').trim();
+      const existingMob = contactNumber(existingAcc?.registrationMobile || existingAcc?.mobile || '');
+      if (existingId === preferredId && existingMob === cleanMobile) {
+        return { ok: true, studentId: preferredId, idempotent: true };
+      }
+    }
+
+    const staffRecords = Object.values(dirSnap.val()?.records || {});
+    if (existingAccSnap.exists() || staffRecords.some(emp => loginIdOf(emp) === cleanUsername)) {
+      return {
+        ok: false,
+        reason: 'duplicate',
+        field: 'username',
+        error: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।'
+      };
+    }
+
+    const rawStudentsVal = allStudentsSnap.exists() ? (allStudentsSnap.val() || {}) : {};
+    const existingStudents = Object.values(decodeRealtimeRecords(rawStudentsVal)).filter(Boolean);
+    const existingAccounts = Object.values(allAccountsSnap.val() || {}).filter(Boolean);
+
+    for (const row of [...existingStudents, ...existingAccounts]) {
+      const rowMobile = contactNumber(row?.registrationMobile || row?.mobile || row?.student?.studentMobile || '');
+      if (rowMobile && rowMobile === cleanMobile) {
+        return { ok: false, reason: 'duplicate', field: 'mobile', error: 'এই মোবাইল নম্বর দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+      }
+      const rowUser = normalizeUsername(row?.username || row?.student?.username || '');
+      if (rowUser && rowUser === cleanUsername) {
+        return {
+          ok: false,
+          reason: 'duplicate',
+          field: 'username',
+          error: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।'
+        };
+      }
+      if (cleanEmail) {
+        const rowEmail = normalizeEmail(row?.email || row?.student?.email || '');
+        if (rowEmail && rowEmail === cleanEmail) {
+          return { ok: false, reason: 'duplicate', field: 'email', error: 'এই ইমেইল ঠিকানা দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+        }
+      }
+    }
+
+    // 1. Atomic transaction on mobileIndex/<mobile>
+    const mobileTx = await runTransaction(ref(db, `${MOBILE_INDEX_ROOT}/${cleanMobile}`), current => {
+      if (current !== null && current !== undefined) return;
+      return claimToken;
+    }, { applyLocally: false });
+    if (!mobileTx.committed || mobileTx.snapshot.val() !== claimToken) {
+      return { ok: false, reason: 'duplicate', field: 'mobile', error: 'এই মোবাইল নম্বর দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+    }
+    mobileClaimed = true;
+
+    // 2. Atomic transaction on usernames/<userKey>
+    const userTx = await runTransaction(ref(db, `${USERNAMES_ROOT}/${userKey}`), current => {
+      if (current !== null && current !== undefined) return;
+      return claimToken;
+    }, { applyLocally: false });
+    if (!userTx.committed || userTx.snapshot.val() !== claimToken) {
+      await rollbackClaims();
+      return {
+        ok: false,
+        reason: 'duplicate',
+        field: 'username',
+        error: 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।'
+      };
+    }
+    usernameClaimed = true;
+
+    // 3. Atomic transaction on emailIndex/<emailKey> (when email provided)
+    if (emailKey) {
+      const emailTx = await runTransaction(ref(db, `${EMAIL_INDEX_ROOT}/${emailKey}`), current => {
+        if (current !== null && current !== undefined) return;
+        return claimToken;
+      }, { applyLocally: false });
+      if (!emailTx.committed || emailTx.snapshot.val() !== claimToken) {
+        await rollbackClaims();
+        return { ok: false, reason: 'duplicate', field: 'email', error: 'এই ইমেইল ঠিকানা দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।' };
+      }
+      emailClaimed = true;
+    }
+
+    // 4. Authoritative server time -> Asia/Dhaka YYMMDD -> atomic daily serial (001–999)
+    const serverMs = await getServerTimeMs();
+    const datePrefix = dhakaYYMMDD(serverMs);
+    let studentId = '';
+
+    if (preferredId && !rawStudentsVal[preferredId]) {
+      const prefPrefix = preferredId.slice(0, 6);
+      const prefSerial = Number(preferredId.slice(6));
+      if (prefSerial >= 1 && prefSerial <= MAX_DAILY_STUDENTS) {
+        await runTransaction(ref(db, `${DAILY_COUNTERS_ROOT}/${prefPrefix}`), current => {
+          const curNum = Number(current) || 0;
+          return prefSerial > curNum ? prefSerial : undefined;
+        }, { applyLocally: false }).catch(() => {});
+        studentId = preferredId;
+      }
+    }
+
+    if (!studentId) {
+      const floor = maxExistingDailySerial(datePrefix, existingStudents);
+      let overLimit = false;
+      const seqTx = await runTransaction(ref(db, `${DAILY_COUNTERS_ROOT}/${datePrefix}`), current => {
+        const base = Math.max(Number(current) || 0, floor);
+        if (base >= MAX_DAILY_STUDENTS) {
+          overLimit = true;
+          return;
+        }
+        return base + 1;
+      }, { applyLocally: false });
+      if (!seqTx.committed || overLimit) {
+        await rollbackClaims();
+        return { ok: false, reason: 'daily-limit', field: 'id', error: DAILY_LIMIT_ERROR };
+      }
+      const serial = Number(seqTx.snapshot.val());
+      studentId = formatStudentId(datePrefix, serial);
+    }
+
+    // 5. Build and persist student account, roster row, notification, and finalized index claims
+    const { studentRow, cloudAccount, notificationRecord } = await buildRecords({ studentId, serverMs });
+    const safeCloudAccount = studentAccountPayload(cloudAccount);
+    const encodedStudentsMap = encodeRealtimeRecords({ [studentId]: studentRow });
+    const encodedStudentNode = encodedStudentsMap[studentId] || studentRow;
+
+    await Promise.all([
+      set(ref(db, `${MOBILE_INDEX_ROOT}/${cleanMobile}`), studentId),
+      set(ref(db, `${USERNAMES_ROOT}/${userKey}`), studentId),
+      ...(emailKey ? [set(ref(db, `${EMAIL_INDEX_ROOT}/${emailKey}`), studentId)] : []),
+      set(ref(db, `${STUDENTS_ROOT}/${userKey}`), safeCloudAccount),
+      set(ref(db, `${DB_ROOT}/students/${studentId}`), encodedStudentNode),
+      set(ref(db, `${NOTIFICATIONS_ROOT}/${notificationRecord.id}`), notificationRecord).catch(error => {
+        if (isPermissionDenied(error)) {
+          notificationsRulesBlocked = true;
+          return;
+        }
+        throw error;
+      })
+    ]);
+
+    return { ok: true, studentId, serverMs, studentRow, cloudAccount: safeCloudAccount, notificationRecord };
+  } catch (error) {
+    await rollbackClaims();
+    if (isPermissionDenied(error)) {
+      return registerStudentViaLegacyNodes({
+        db,
+        cleanMobile,
+        cleanUsername,
+        cleanEmail,
+        preferredStudentId: preferredId,
+        userKey,
+        claimToken,
+        buildRecords
+      });
+    }
+    return { ok: false, reason: 'network-unavailable', error };
+  }
+}
+
+/**
+ * Push an Admin/Manager registration decision (approve or reject) to RTDB so
+ * the student's login record, shared roster row, and notification read state
+ * update immediately across devices.
+ */
+export async function syncRegistrationDecisionOnline({
+  studentId,
+  studentRow,
+  decision,
+  approvedBy = '',
+  approvedAt = '',
+  reviewNote = ''
+}) {
+  if (!LEGACY_CLOUD_ENABLED || !navigator.onLine) return { ok: false, reason: 'offline' };
+  if (!hasReviewerLocalSession()) return { ok: false, reason: 'not-allowed' };
+  const sid = String(studentId || '').trim();
+  if (!sid) return { ok: false, reason: 'missing-id' };
+  try {
+    await ensureCloudAuth();
+    const db = getDatabase(firebaseApp);
+    const mappedAccountStatus = decision === 'approved' || decision === 'active' ? 'active' : 'rejected';
+    const nowIso = approvedAt || new Date().toISOString();
+
+    if (studentRow && typeof studentRow === 'object') {
+      const encodedMap = encodeRealtimeRecords({ [sid]: studentRow });
+      const encodedRow = encodedMap[sid] || studentRow;
+      await runTransaction(ref(db, `${DB_ROOT}/students/${sid}`), current => ({
+        ...(current && typeof current === 'object' ? current : {}),
+        ...encodedRow,
+        id: sid
+      }), { applyLocally: false });
+    }
+
+    // Update studentAccounts/<loginKey> so a pending student can immediately sign in on any device.
+    let targetUserKey = '';
+    const candidateName = normalizeUsername(studentRow?.username || '');
+    if (candidateName) targetUserKey = encodeUsernameKey(candidateName);
+    if (targetUserKey) {
+      const snap = await get(ref(db, `${STUDENTS_ROOT}/${targetUserKey}`));
+      if (snap.exists()) {
+        const currentAcc = snap.val();
+        await set(ref(db, `${STUDENTS_ROOT}/${targetUserKey}`), {
+          ...currentAcc,
+          status: mappedAccountStatus,
+          ...(approvedBy ? { approvedBy } : {}),
+          ...(approvedAt ? { approvedAt } : {}),
+          ...(reviewNote ? { reviewNote } : {}),
+          updatedAt: nowIso,
+          student: {
+            ...(currentAcc.student || {}),
+            status: decision === 'approved' || decision === 'active' ? 'approved' : 'rejected'
+          }
+        });
+      } else {
+        targetUserKey = '';
+      }
+    }
+    if (!targetUserKey) {
+      const allAccSnap = await get(ref(db, STUDENTS_ROOT));
+      const entries = Object.entries(allAccSnap.val() || {});
+      for (const [k, acc] of entries) {
+        const accId = String(acc?.student?.id || acc?.studentId || '').trim();
+        if (accId === sid && isPasswordRecord(acc?.pinHash)) {
+          await set(ref(db, `${STUDENTS_ROOT}/${k}`), {
+            ...acc,
+            status: mappedAccountStatus,
+            ...(approvedBy ? { approvedBy } : {}),
+            ...(approvedAt ? { approvedAt } : {}),
+            ...(reviewNote ? { reviewNote } : {}),
+            updatedAt: nowIso,
+            student: {
+              ...(acc.student || {}),
+              status: decision === 'approved' || decision === 'active' ? 'approved' : 'rejected'
+            }
+          });
+          break;
+        }
+      }
+    }
+
+    // Mark matching notification(s) as read: true in RTDB (best-effort if rules not yet deployed).
+    if (!notificationsRulesBlocked) {
+      try {
+        const notifSnap = await get(ref(db, NOTIFICATIONS_ROOT));
+        if (notifSnap.exists()) {
+          const notifMap = notifSnap.val() || {};
+          for (const [nId, item] of Object.entries(notifMap)) {
+            if (item && (item.studentId === sid || nId === `reg-${sid}`) && !item.read) {
+              await set(ref(db, `${NOTIFICATIONS_ROOT}/${nId}`), {
+                ...item,
+                read: true,
+                readAt: nowIso,
+                ...(approvedBy ? { readBy: approvedBy } : {})
+              });
+            }
+          }
+        }
+      } catch (error) {
+        if (isPermissionDenied(error)) notificationsRulesBlocked = true;
+        else throw error;
+      }
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: 'decision-sync-failed', error };
+  }
+}
+
+/**
+ * Refresh a student's latest approval state from RTDB during login so a newly
+ * approved student is unlocked immediately without needing an active session first.
+ */
+export async function refreshStudentApprovalOnline(account) {
+  if (!LEGACY_CLOUD_ENABLED || !navigator.onLine || !account) return { ok: false, reason: 'offline' };
+  const sid = String(account.student?.id || account.studentId || '').trim();
+  const uname = normalizeUsername(account.username || account.student?.username || '');
+  try {
+    await ensureCloudAuth();
+    const db = getDatabase(firebaseApp);
+    const reads = [
+      sid ? get(ref(db, `${DB_ROOT}/students/${sid}`)) : Promise.resolve(null),
+      uname ? get(ref(db, `${STUDENTS_ROOT}/${encodeUsernameKey(uname)}`)) : Promise.resolve(null)
+    ];
+    const [rowSnap, accSnap] = await Promise.all(reads);
+    const row = rowSnap?.exists?.() ? rowSnap.val() : null;
+    const remoteAcc = accSnap?.exists?.() ? accSnap.val() : null;
+    const rowStatus = row?.status;
+    const accStatus = remoteAcc?.status;
+
+    if (rowStatus === 'approved' || rowStatus === 'active' || accStatus === 'active' || accStatus === 'approved') {
+      return {
+        ok: true,
+        status: 'active',
+        approvedBy: row?.approvedBy || remoteAcc?.approvedBy || row?.reviewedBy || '',
+        approvedAt: row?.approvedAt || remoteAcc?.approvedAt || row?.reviewedAt || '',
+        row
+      };
+    }
+    if (rowStatus === 'rejected' || accStatus === 'rejected') {
+      return {
+        ok: true,
+        status: 'rejected',
+        reviewNote: row?.reviewNote || remoteAcc?.reviewNote || '',
+        row
+      };
+    }
+    if (rowStatus === 'inactive' || accStatus === 'inactive') {
+      return { ok: true, status: 'inactive', row };
+    }
+    return { ok: true, status: account.status || 'pending', row };
+  } catch (error) {
+    return { ok: false, reason: 'refresh-failed', error };
+  }
+}
+
+/**
+ * Periodic <=15s fallback poll for Admin/Manager panels while open: refreshes
+ * `students` and `notifications` even if an SSE/WebSocket listener stalls.
+ */
+export async function pollRegistrationFeedOnline() {
+  if (!LEGACY_CLOUD_ENABLED || !navigator.onLine || !hasReviewerLocalSession()) {
+    return { ok: false, reason: 'skipped' };
+  }
+  try {
+    await ensureCloudAuth();
+    const db = getDatabase(firebaseApp);
+    const studentsSnap = await get(ref(db, `${DB_ROOT}/students`));
+    if (studentsSnap.exists()) {
+      const bridge = recordBridge('students');
+      bridge.receive(normalizeCollectionSnapshot('students', studentsSnap.val()));
+    }
+    if (!notificationsRulesBlocked) {
+      try {
+        const notifSnap = await get(ref(db, NOTIFICATIONS_ROOT));
+        if (notifSnap.exists()) {
+          const local = readLocal(KEYS.registrationNotifications) || [];
+          const merged = mergeRegistrationNotificationLists(local, notifSnap.val());
+          remoteWrite(KEYS.registrationNotifications, merged, 'registrationNotifications');
+        }
+      } catch (error) {
+        if (isPermissionDenied(error)) notificationsRulesBlocked = true;
+        else throw error;
+      }
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: 'poll-failed', error };
   }
 }
 
@@ -1223,6 +2018,9 @@ export function stopRealtimeSync() {
   connected = false;
   hasConnected = false;
   partialFailures = [];
+  classChatRulesBlocked = false;
+  classChatFallbackListening = false;
+  notificationsRulesBlocked = false;
   for (const stop of subscriptions) stop();
   subscriptions.clear();
   stopStudent = null;
@@ -1312,7 +2110,8 @@ export async function startRealtimeSync() {
         ...Object.keys(STAFF_ACCOUNTS).map(role => () => syncStaffRole(role)),
         () => syncDirectory(),
         () => syncUsernames(),
-        () => syncStudentAccount()
+        () => syncStudentAccount(),
+        () => syncRegistrationNotifications()
       ];
       // Keep failed collections separate. An independent node's rejection must
       // neither discard working listeners nor be falsely painted "synced".
@@ -1332,6 +2131,7 @@ export async function startRealtimeSync() {
       listenDirectory();
       listenUsernames();
       listenStudentAccount();
+      listenRegistrationNotifications();
       ready = true;
       started = true;
       schedulePendingFlush();

@@ -18,6 +18,7 @@ import { mountStatusNotice } from './status-surface.js';
    must never replay old news as a burst of notifications. */
 
 import { readJSON, writeJSON, loadAppConfig, loadAccount } from './storage.js';
+import { showFeedback } from './ui.js';
 import { KEYS, STAFF_KEYS, listDocuments } from './database.js';
 import { loadNotices, loadRoster } from './office-data.js';
 import { listTeacherAssignments } from './teacher-assignments.js';
@@ -59,10 +60,11 @@ const ROLE_USERNAMES = Object.freeze({
 
 const PROMPT_HIDE_MS = 7 * 24 * 60 * 60 * 1000;
 const REFRESH_DEBOUNCE_MS = 400;
+const REGISTRATION_POLL_MS = 15000;
 const ARM_FALLBACK_MS = 12000;
 const SW_READY_TIMEOUT_MS = 2500;
-const WATCHED_KEYS = new Set([KEYS.notices, KEYS.settings, KEYS.exams, KEYS.students, KEYS.transactions, KEYS.teaching]);
-const WATCHED_COLLECTIONS = Object.freeze(['notices', 'settings', 'exams', 'students', 'transactions', 'teaching']);
+const WATCHED_KEYS = new Set([KEYS.notices, KEYS.settings, KEYS.exams, KEYS.students, KEYS.registrationNotifications, KEYS.transactions, KEYS.teaching]);
+const WATCHED_COLLECTIONS = Object.freeze(['notices', 'settings', 'exams', 'students', 'registrationNotifications', 'transactions', 'teaching']);
 /* Which records each person's notifications are built from. */
 const NEEDS = Object.freeze({
   student: { students: true, transactions: true, exams: true, teaching: true },
@@ -265,6 +267,7 @@ function rawFeed(cleared = null) {
     examDb: want.exams ? readJSON(KEYS.exams, null) : null,
     teachingDb: want.teaching ? readJSON(KEYS.teaching, null) : null,
     students: want.students ? safely(loadRoster) : null,
+    registrationNotifications: reviewsRegistrations() ? readJSON(KEYS.registrationNotifications, []) : null,
     transactions: want.transactions ? safely(() => listDocuments('transactions')) : null,
     viewer,
     cleared,
@@ -680,9 +683,24 @@ export function refreshNotifications() {
   // Every item this device knows about now has a record (id NOTIF-YYYYMMDD-0001).
   // Items the engine had already announced are stored as read: updating the app
   // never turns yesterday's news into unread notifications.
+  // Pending student registrations (`registration:<id>`) are actionable work and
+  // must stay unread (`read: false`) until explicitly read or decided by staff.
   try {
-    syncNotifications({ userId: viewerKey, feed: full, legacyRead: [...receiptsBefore, ...cleared, ...upgradeRead, ...boardReadReceipts] });
-    if (boardReadReceipts.length) markRead(viewerKey, boardReadReceipts);
+    const regNotifs = readJSON(KEYS.registrationNotifications) || [];
+    const readRegKeys = new Set(
+      (Array.isArray(regNotifs) ? regNotifs : [])
+        .filter(item => item && item.read === true && item.studentId)
+        .map(item => `registration:${String(item.studentId).trim()}`)
+    );
+    const unreadRegKeys = new Set(
+      full
+        .filter(item => item.kind === 'registration' && !readRegKeys.has(item.key))
+        .map(item => item.key)
+    );
+    const legacySeen = receiptsBefore.filter(key => !unreadRegKeys.has(key));
+    const explicitReadReceipts = [...boardReadReceipts, ...readRegKeys];
+    syncNotifications({ userId: viewerKey, feed: full, legacyRead: [...legacySeen, ...cleared, ...upgradeRead, ...explicitReadReceipts] });
+    if (explicitReadReceipts.length) markRead(viewerKey, explicitReadReceipts);
   } catch (error) {
     console.warn('[Active Plus] notification records unavailable:', error?.name || 'unknown');
   }
@@ -695,6 +713,13 @@ export function refreshNotifications() {
   plan.notify = plan.notify.filter(item => !readKeys.has(item.key));
   // The in-app card needs no phone permission (owner decision 2026-09-30).
   if (armed && inAppNotificationsEnabled()) queueInAppAlerts(generalNotificationItems(feed), generalNotificationItems(full));
+  if (armed && reviewsRegistrations() && plan.notify.some(item => item.kind === 'registration')) {
+    const toastMessage = 'নতুন শিক্ষার্থী রেজিস্ট্রেশন করেছে';
+    showFeedback(toastMessage);
+    window.dispatchEvent(new CustomEvent('apc-new-registration-toast', {
+      detail: { message: toastMessage, items: plan.notify.filter(item => item.kind === 'registration') }
+    }));
+  }
   let delivered = 0;
   if (armed && systemNotificationsEnabled() && permission() === 'granted') {
     for (const item of plan.notify) { deliver(item); delivered += 1; }
@@ -933,8 +958,24 @@ export function initNotifications() {
       if (!collection || WATCHED_COLLECTIONS.includes(collection)) scheduleRefresh();
     });
     // Same-window data writes do not emit native storage events.
-    window.addEventListener('apc-registration-decided', scheduleRefresh);
+    window.addEventListener('apc-registration-decided', event => {
+      const sid = event?.detail?.studentId;
+      if (sid) {
+        try { markRead(viewerKey, [`registration:${sid}`]); markInAppHandled([`registration:${sid}`]); } catch {}
+      }
+      scheduleRefresh();
+    });
     window.addEventListener('teaching-data-updated', scheduleRefresh);
+    if (reviewsRegistrations()) {
+      const pollTimer = setInterval(() => {
+        if (document.visibilityState === 'hidden' || !panelVisible()) return;
+        import('../sync/sync-core.js?v=20260929-protected')
+          .then(bridge => bridge.pollRegistrationFeedOnline?.())
+          .catch(() => {})
+          .finally(() => scheduleRefresh());
+      }, REGISTRATION_POLL_MS);
+      if (typeof pollTimer?.unref === 'function') pollTimer.unref();
+    }
     watchNotificationClicks();
     window.addEventListener('apc-sync-status', () => { if (!armed) return; paintPill(); });
     document.addEventListener('visibilitychange', () => {

@@ -5,8 +5,8 @@
    Step 2 cannot be reached without a successful step 1: the form stays hidden and
    the handler re-checks the verified record, so hiding markup is never the guard. */
 import { $, openModal, closeModal, setAuthMessage } from './ui.js';
-import { contactNumber, isContactNumber, normalizeUsername } from './account-policy.js';
-import { loadAccount, persistAccount, verifySecurityAnswer } from './storage.js';
+import { matchesLoginIdentifier } from './sync-merge.js';
+import { loadAccount, listLocalAccounts, persistAccount, verifySecurityAnswer } from './storage.js';
 import { escapeHtml } from './sanitize.js';
 
 const STATUS_LABELS = Object.freeze({ approved: 'সক্রিয়', active: 'সক্রিয়', pending: 'অপেক্ষমাণ', rejected: 'বাতিল' });
@@ -53,31 +53,29 @@ async function handleVerify(event, state, session) {
   if (session.busy) return;
   session.busy = true;
   try {
-    state.account = loadAccount() || state.account;
-    if (!state.account) {
+    const form = new FormData(formElement);
+    const typed = String(form.get('mobile') || '').trim();
+    const candidates = listLocalAccounts();
+    if (!candidates.length && state.account) candidates.push(state.account);
+    if (!candidates.length) {
       closeModal('recoveryModal');
       setAuthMessage('এই ডিভাইসে কোনো রেজিস্টার্ড অ্যাকাউন্ট পাওয়া যায়নি।');
       return;
     }
-    const form = new FormData(formElement);
-    const typed = String(form.get('mobile') || '').trim();
-    const username = normalizeUsername(typed);
-    const mobile = contactNumber(typed);
-    const knownUsername = normalizeUsername(state.account.username || state.account.student?.username || '');
-    const identityOk = (Boolean(username) && username === knownUsername)
-      || (isContactNumber(mobile) && mobile === (state.account.registrationMobile || state.account.mobile));
+    const targetAccount = candidates.find(acc => matchesLoginIdentifier(acc, typed)) || null;
     const answer = String(form.get('answer') || '');
-    const matches = identityOk
-      && form.get('question') === state.account.securityQuestion
-      && (await verifySecurityAnswer(state.account, answer));
+    const matches = Boolean(targetAccount)
+      && form.get('question') === targetAccount.securityQuestion
+      && (await verifySecurityAnswer(targetAccount, answer));
     if (!matches) {
       session.verified = null;
       setStepError($('#recoveryVerifyError'), 'ইউজারনেম/মোবাইল নম্বর, প্রশ্ন বা উত্তর সঠিক নয়');
       return;
     }
     setStepError($('#recoveryVerifyError'), '');
-    session.verified = { account: state.account, answer };
-    renderSummary(state.account);
+    state.account = targetAccount;
+    session.verified = { account: targetAccount, answer };
+    renderSummary(targetAccount);
     showPasswordStep();
   } finally {
     session.busy = false;

@@ -37,7 +37,7 @@ import { escapeHtml } from './sanitize.js';
 import { matchesStudentQuery } from './student-search.js';
 import { createAccess, CAPABILITIES, routeFromHash, VIEW_SEAT } from './admin-permissions.js';
 import { rememberRoute, onRouteChange } from './panel-route.js';
-import { openRegistrationReview, DECIDED_EVENT } from './registration-review.js';
+import { openRegistrationReview, DECIDED_EVENT, listPendingRegistrations, pendingQueueMarkup, bindPendingQueueActions } from './registration-review.js';
 import { initAdminPanelShell } from './admin-panel-ui.js';
 import { paintIcon } from './icons.js';
 import {
@@ -423,6 +423,28 @@ function renderStudents() {
     countBadge.textContent = state.query.trim()
       ? (count > 0 ? `${bn(count)} জন শিক্ষার্থী পাওয়া গেছে` : 'কোনো ফলাফল মেলেনি')
       : `${bn(count)} জন শিক্ষার্থী`;
+  }
+
+  const pendingHost = $('#adminPendingRegistrations');
+  const pendingItems = access.has(CAPABILITIES.STUDENTS_APPROVE) ? listPendingRegistrations() : [];
+  const pendingCardLabel = $('[data-admin-student-card="pending"] .teacher-action-title');
+  if (pendingCardLabel) {
+    pendingCardLabel.textContent = pendingItems.length > 0
+      ? `অপেক্ষমাণ নিবন্ধন অনুমোদন (${bn(pendingItems.length)})`
+      : 'অপেক্ষমাণ নিবন্ধন অনুমোদন';
+  }
+  if (pendingHost) {
+    if (pendingItems.length > 0) {
+      pendingHost.hidden = false;
+      pendingHost.innerHTML = pendingQueueMarkup(pendingItems);
+      bindPendingQueueActions(pendingHost, {
+        role: 'admin',
+        onFeedback: (msg, ok) => toast(msg, !ok)
+      });
+    } else {
+      pendingHost.hidden = true;
+      pendingHost.innerHTML = '';
+    }
   }
 
   $('#studentList').innerHTML = list.length
@@ -1945,11 +1967,29 @@ window.addEventListener(DECIDED_EVENT, () => {
   state.students = loadRoster();
   renderAll();
 });
-window.addEventListener('storage', event => {
-  if (!event.apcRemote) return;
+const ADMIN_WATCHED_STORAGE_KEYS = new Set([
+  KEYS.students,
+  KEYS.registrationNotifications,
+  KEYS.transactions,
+  KEYS.notices,
+  KEYS.routine,
+  KEYS.exams,
+  KEYS.settings
+]);
+const ADMIN_WATCHED_COLLECTIONS = new Set([
+  'students',
+  'registrationNotifications',
+  'transactions',
+  'notices',
+  'routine',
+  'exams',
+  'settings',
+  'staffDirectory'
+]);
+function scheduleAdminLiveRefresh() {
   clearTimeout(cloudRefreshTimer);
   cloudRefreshTimer = setTimeout(async () => {
-    if ($('#adminShell').hidden) return;
+    if ($('#adminShell')?.hidden) return;
     try {
       state.students = loadRoster();
       state.notices = loadNotices();
@@ -1961,6 +2001,18 @@ window.addEventListener('storage', event => {
       console.warn('[Active Plus] cloud refresh failed:', error?.message);
     }
   }, 100);
+}
+window.addEventListener('storage', event => {
+  if (event.apcRemote || !event.key || ADMIN_WATCHED_STORAGE_KEYS.has(event.key)) {
+    scheduleAdminLiveRefresh();
+  }
+});
+window.addEventListener('apc-sync-updated', event => {
+  const collection = event?.detail?.collection;
+  const key = event?.detail?.key;
+  if (!collection || ADMIN_WATCHED_COLLECTIONS.has(collection) || (key && ADMIN_WATCHED_STORAGE_KEYS.has(key))) {
+    scheduleAdminLiveRefresh();
+  }
 });
 
 // Every staff login starts at index.html. This page only restores an existing session.

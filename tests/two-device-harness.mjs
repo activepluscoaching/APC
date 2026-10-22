@@ -36,6 +36,18 @@ function getAt(tree, nodePath) {
   return node;
 }
 
+function resolveServerSentinels(value, nowFn = () => Date.now()) {
+  if (!value || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(item => resolveServerSentinels(item, nowFn));
+  const keys = Object.keys(value);
+  if (keys.length === 1 && keys[0] === '.sv' && value['.sv'] === 'timestamp') {
+    return nowFn();
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([k, child]) => [k, resolveServerSentinels(child, nowFn)])
+  );
+}
+
 // Match RTDB's key restrictions; accepting arbitrary JSON hid production
 // failures for generated usernames such as test.admin.apc.
 function validateFirebaseKeys(value) {
@@ -49,20 +61,22 @@ function validateFirebaseKeys(value) {
 }
 
 // Firebase does not preserve empty JSON objects/arrays or null children.
-function firebaseValue(value) {
+function firebaseValue(value, nowFn = () => Date.now()) {
+  value = resolveServerSentinels(value, nowFn);
   if (!value || typeof value !== 'object') return value;
   if (Array.isArray(value)) {
-    const items = value.map(firebaseValue);
+    const items = value.map(item => firebaseValue(item, nowFn));
     while (items.length && items.at(-1) == null) items.pop();
     return items.length ? items : null;
   }
-  const entries = Object.entries(value).map(([key, child]) => [key, firebaseValue(child)]).filter(([, child]) => child != null);
+  const entries = Object.entries(value).map(([key, child]) => [key, firebaseValue(child, nowFn)]).filter(([, child]) => child != null);
   return entries.length ? Object.fromEntries(entries) : null;
 }
 
-function setAt(tree, nodePath, value) {
+function setAt(tree, nodePath, value, nowFn = () => Date.now()) {
+  value = resolveServerSentinels(value, nowFn);
   validateFirebaseKeys(value);
-  value = firebaseValue(value);
+  value = firebaseValue(value, nowFn);
   const keys = String(nodePath || '').split('/').filter(Boolean);
   // Real Realtime Database refuses the PATH too: `examDb/exams/EXAM.260929` is
   // rejected before the value is looked at. The mock must be just as strict,
@@ -104,6 +118,8 @@ export async function startMockCloud() {
   let revision = 0;
   let paused = false;
   let blocked = false;   // everything refused: a device that cannot reach the cloud
+  let serverClockMs = null;
+  const nowFn = () => (typeof serverClockMs === 'number' ? serverClockMs : Date.now());
   const subscribers = new Set();
   const send = (sub, nodePath) => {
     const val = getAt(state, nodePath);
@@ -167,15 +183,15 @@ export async function startMockCloud() {
           }
           // Key/path errors first (500, as before), then the security rules.
           const dryRun = structuredClone(state);
-          setAt(dryRun, nodePath, value);
-          if (!rules.canWrite(ANONYMOUS_DEVICE, nodePath, firebaseValue(value) ?? null, state)) {
+          setAt(dryRun, nodePath, value, nowFn);
+          if (!rules.canWrite(ANONYMOUS_DEVICE, nodePath, firebaseValue(value, nowFn) ?? null, state)) {
             ruleViolations.push({ op: 'write', path: nodePath });
             res.writeHead(403, { 'content-type': 'application/json' });
             res.end('{"error":"permission_denied"}');
             return;
           }
           revision += 1;
-          setAt(state, nodePath, value);
+          setAt(state, nodePath, value, nowFn);
           broadcast(nodePath);
           res.writeHead(200, { 'content-type': 'application/json' });
           res.end('{"ok":true}');
@@ -200,7 +216,13 @@ export async function startMockCloud() {
   });
   return new Promise(resolve => {
     server.listen(0, '127.0.0.1', () => {
-      resolve({ server, state, ruleViolations, url: `http://127.0.0.1:${server.address().port}` });
+      resolve({
+        server,
+        state,
+        ruleViolations,
+        setNow: ms => { serverClockMs = ms == null ? null : Number(ms); },
+        url: `http://127.0.0.1:${server.address().port}`
+      });
     });
   });
 }

@@ -959,3 +959,64 @@ exports.pushExam = onValueWritten({ ref: `${BRIDGE_ROOT}/examDb/exams/{examId}`,
     await sendToStudents(payload);
   }
 });
+
+const { validateRegistrationDecisionRequest: validateDecisionCore } = require('./registration-decision-core');
+
+function validateRegistrationDecisionRequest(auth, data = {}) {
+  const checked = validateDecisionCore(auth, data);
+  if (!checked.ok) {
+    throw new HttpsError(checked.code, checked.message);
+  }
+  return checked;
+}
+
+exports.validateRegistrationDecisionRequest = validateRegistrationDecisionRequest;
+
+exports.decideStudentRegistration = onCall(async request => {
+  const { role, studentId, decision, note } = validateRegistrationDecisionRequest(request.auth, request.data);
+  const database = getDatabase();
+  const studentRef = database.ref(`${BRIDGE_ROOT}/students/${studentId}`);
+  const snap = await studentRef.get();
+  if (!snap.exists()) {
+    throw new HttpsError('not-found', 'শিক্ষার্থীর আবেদন পাওয়া যায়নি।');
+  }
+  const current = snap.val() || {};
+  if (current.status !== 'pending') {
+    throw new HttpsError('failed-precondition', 'এই আবেদনটি ইতিমধ্যে নিষ্পত্তি হয়েছে।');
+  }
+  const nowIso = new Date().toISOString();
+  const actor = String(request.auth.token?.username || request.auth.token?.email || request.auth.uid);
+  const nextRow = {
+    ...current,
+    id: studentId,
+    status: decision,
+    accountStatus: decision === 'approved' ? 'active' : 'rejected',
+    reviewedBy: actor,
+    reviewedRole: role,
+    reviewedAt: nowIso,
+    updatedAt: nowIso,
+    ...(decision === 'approved'
+      ? { approvedBy: actor, approvedAt: nowIso, reviewNote: '' }
+      : { reviewNote: note, rejectionReason: note })
+  };
+  await studentRef.set(nextRow);
+  const notifRef = database.ref(`${BRIDGE_ROOT}/notifications/reg-${studentId}`);
+  const notifSnap = await notifRef.get();
+  if (notifSnap.exists()) {
+    await notifRef.update({ read: true, readAt: nowIso, readBy: actor });
+  }
+  return { ok: true, student: nextRow };
+});
+
+exports.pushNewRegistration = onValueWritten({ ref: `${BRIDGE_ROOT}/notifications/{notifId}`, region: DB_REGION }, async event => {
+  const before = event.data.before.val();
+  const after = event.data.after.val();
+  if (before || !after || after.type !== 'new_registration' || after.read === true) return;
+  const entries = (await tokenEntries()).filter(([, record]) => record.role === 'admin' || record.role === 'manager');
+  if (!entries.length) return;
+  await sendPayload(entries, {
+    title: 'নতুন শিক্ষার্থী রেজিস্ট্রেশন করেছে',
+    body: `${String(after.studentName || 'নতুন শিক্ষার্থী')} (ID: ${String(after.studentId || '')}) অনুমোদনের অপেক্ষায় আছে।`,
+    data: { kind: 'registration', id: String(after.studentId || event.params.notifId || '') }
+  });
+});

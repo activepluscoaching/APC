@@ -2,8 +2,8 @@ import { taka } from './money.js';
 /* Live office records: roster, notices and weekly routine.
    An empty browser starts empty. Sample arrays in admin-data.js stay available
    as fixtures for tests; they are not loaded here. */
-import { loadAccount, saveAccount, saveStudent, readJSON, writeJSON } from './storage.js';
-import { KEYS, listDocuments, listDocumentsStrict, replaceDocumentsStrict } from './database.js';
+import { loadAccount, saveAccount, saveStudent, readJSON, writeJSON, readAccountVault, rememberAccountVault } from './storage.js';
+import { KEYS, listDocuments, listDocumentsStrict, replaceDocumentsStrict, rememberAccount } from './database.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { LOCAL_WRITE_KEY, markLocalSource } from './local-write-mark.js';
 import { withClassKey } from './class-key.js';
@@ -27,8 +27,12 @@ export function accountToRosterStudent(account) {
   const student = account?.student || {};
   const id = student.id || account?.studentId;
   if (!id) return null;
+  const email = account.email || student.email || '';
+  const username = account.username || student.username || '';
   return {
     id,
+    username,
+    email,
     name: student.name || student.nameBn || '',
     nameEn: student.nameEn || '',
     fatherName: student.fatherName || '',
@@ -40,6 +44,10 @@ export function accountToRosterStudent(account) {
     birthDate: student.birthDate || '',
     gender: student.gender || '',
     status: rosterStatus(account.status),
+    accountStatus: account.status === 'approved' ? 'active' : String(account.status || 'pending'),
+    ...(account.approvedBy ? { approvedBy: account.approvedBy } : {}),
+    ...(account.approvedAt ? { approvedAt: account.approvedAt } : {}),
+    ...(account.reviewNote ? { reviewNote: account.reviewNote } : {}),
     attendance: Number(student.attendance) || 0,
     average: Number(student.average) || 0,
     monthlyFee: student.monthlyFee == null || student.monthlyFee === '' ? null : taka(student.monthlyFee),
@@ -136,6 +144,8 @@ export function upsertStudentRosterRow() {
   const stored = list[index];
   const row = {
     ...stored,
+    username: fresh.username || stored.username || '',
+    email: fresh.email || stored.email || '',
     name: fresh.name || stored.name,
     nameEn: fresh.nameEn || stored.nameEn,
     fatherName: fresh.fatherName || stored.fatherName,
@@ -151,16 +161,40 @@ export function upsertStudentRosterRow() {
   return saveRoster(list.map((student, i) => (i === index ? row : student)));
 }
 
-export async function syncAccountStatus(studentId, status) {
-  const account = loadAccount();
-  if (!account) return false;
-  const id = account.student?.id || account.studentId;
-  if (id !== studentId) return false;
+export async function syncAccountStatus(studentId, status, meta = {}) {
+  const targetId = String(studentId || '').trim();
+  if (!targetId) return false;
   /* approved → active (the app's own word for a working account). Every other
      roster status keeps its name, so a rejected application and a deactivated
      student stay two different things on the device. */
-  const mapped = status === 'approved' ? 'active' : String(status || 'pending');
-  return saveAccount({ ...account, status: mapped });
+  const mapped = status === 'approved' || status === 'active' ? 'active' : String(status || 'pending');
+  const patch = {
+    status: mapped,
+    ...(meta.approvedBy ? { approvedBy: meta.approvedBy } : {}),
+    ...(meta.approvedAt ? { approvedAt: meta.approvedAt } : {}),
+    ...(meta.reviewNote !== undefined ? { reviewNote: meta.reviewNote } : {})
+  };
+
+  let updatedAny = false;
+  const account = loadAccount();
+  const activeId = account?.student?.id || account?.studentId;
+  if (account && activeId === targetId) {
+    updatedAny = (await saveAccount({ ...account, ...patch })) || updatedAny;
+  }
+
+  const vault = readAccountVault();
+  if (vault[targetId]) {
+    const nextVaulted = { ...vault[targetId], ...patch, updatedAt: new Date().toISOString() };
+    updatedAny = rememberAccountVault(nextVaulted) || updatedAny;
+    rememberAccount(nextVaulted);
+  } else {
+    const publicMap = readJSON(KEYS.accounts, {}) || {};
+    if (publicMap[targetId]) {
+      publicMap[targetId] = { ...publicMap[targetId], ...patch, updatedAt: new Date().toISOString() };
+      updatedAny = writeJSON(KEYS.accounts, publicMap) || updatedAny;
+    }
+  }
+  return updatedAny;
 }
 
 /** Manager-only: mark a student active (English: approved) or inactive. The
@@ -196,7 +230,13 @@ export async function syncStudentProfileFromRoster(studentId) {
   const row = rows.find(item => item.id === id);
   if (!row) return false;
   const current = account.student;
-  const mappedStatus = row.status === 'approved' ? 'active' : row.status === 'rejected' ? 'rejected' : 'pending';
+  const mappedStatus = row.status === 'approved' || row.status === 'active'
+    ? 'active'
+    : row.status === 'rejected'
+      ? 'rejected'
+      : row.status === 'inactive'
+        ? 'inactive'
+        : 'pending';
   const nextStudent = {
     ...current,
     name: row.name ?? current.name,

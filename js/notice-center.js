@@ -60,8 +60,8 @@ const ACTION_LABEL = Object.freeze({
   rejected: 'বিস্তারিত দেখুন'
 });
 const actionLabel = item => String(item?.actionLabel || ACTION_LABEL[item?.kind] || '');
-const REFRESH_KEYS = Object.freeze(['activePlus.admin.notices.v1', 'activePlus.app.config.v1', 'active-plus-app-config-v1', 'activePlus.exams.v1', 'activePlus.teaching.v1', 'activePlus.admin.students.v1', 'activePlus.admin.transactions.v1']);
-const REFRESH_COLLECTIONS = Object.freeze(['notices', 'settings', 'exams', 'teaching', 'students', 'transactions']);
+const REFRESH_KEYS = Object.freeze(['activePlus.admin.notices.v1', 'activePlus.app.config.v1', 'active-plus-app-config-v1', 'activePlus.exams.v1', 'activePlus.teaching.v1', 'activePlus.admin.students.v1', 'activePlus.registrationNotifications.v1', 'activePlus.admin.transactions.v1']);
+const REFRESH_COLLECTIONS = Object.freeze(['notices', 'settings', 'exams', 'teaching', 'students', 'registrationNotifications', 'transactions']);
 
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
 const bn = value => String(value).replace(/\d/g, digit => BN_DIGITS[Number(digit)]);
@@ -214,6 +214,74 @@ export function mountNoticeCenter(api) {
   const isStudentViewer = () => {
     try { return api.viewer?.()?.kind === 'student'; } catch { return false; }
   };
+  const reviewerRole = () => {
+    try {
+      const v = api.viewer?.();
+      if (v?.kind === 'staff' && (v.role === 'admin' || v.role === 'manager')) return v.role;
+    } catch {}
+    return '';
+  };
+
+  let pendingHost = modal.querySelector('[data-apc-pending-host]');
+  if (!pendingHost && reviewerRole() && listBox) {
+    pendingHost = document.createElement('div');
+    pendingHost.className = 'apc-pending-host';
+    pendingHost.dataset.apcPendingHost = '';
+    if (filterRow) filterRow.before(pendingHost);
+    else listBox.before(pendingHost);
+  }
+
+  let regToastTimer = null;
+  function showSubtleRegistrationToast(message = 'নতুন শিক্ষার্থী রেজিস্ট্রেশন করেছে') {
+    if (!document.body) return;
+    let toastEl = document.getElementById('apcRegistrationToast');
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.id = 'apcRegistrationToast';
+      toastEl.className = 'apc-reg-toast';
+      toastEl.setAttribute('role', 'status');
+      toastEl.setAttribute('aria-live', 'polite');
+      document.body.append(toastEl);
+    }
+    toastEl.textContent = message;
+    toastEl.hidden = false;
+    clearTimeout(regToastTimer);
+    regToastTimer = setTimeout(() => {
+      if (toastEl) toastEl.hidden = true;
+    }, 4500);
+    if (typeof regToastTimer?.unref === 'function') regToastTimer.unref();
+  }
+
+  window.addEventListener('apc-new-registration-toast', event => {
+    if (!reviewerRole()) return;
+    showSubtleRegistrationToast(event?.detail?.message || 'নতুন শিক্ষার্থী রেজিস্ট্রেশন করেছে');
+    repaint();
+  });
+
+  async function paintPendingRegistrations() {
+    const role = reviewerRole();
+    if (!role || !pendingHost) return;
+    try {
+      const reviewMod = await import('./registration-review.js');
+      const items = reviewMod.listPendingRegistrations();
+      pendingHost.innerHTML = reviewMod.pendingQueueMarkup(items);
+      reviewMod.bindPendingQueueActions(pendingHost, {
+        role,
+        onFeedback: msg => {
+          if (statusLine && msg) statusLine.textContent = msg;
+          showSubtleRegistrationToast(msg);
+        },
+        onDecided: result => {
+          const sid = result?.student?.id;
+          if (sid) {
+            try { api.markRead?.([`registration:${sid}`]); } catch {}
+          }
+          try { api.refresh?.(); } catch {}
+          paint();
+        }
+      });
+    } catch { /* optional review module */ }
+  }
   const centerFeed = items => items;
   const displayTitle = item => {
     const raw = String(item?.title || 'নোটিশ').trim() || 'নোটিশ';
@@ -329,6 +397,7 @@ export function mountNoticeCenter(api) {
     const chip = modal.querySelector('[data-apc-notice-unread-chip]');
     if (chip) chip.textContent = unread ? ` ${bn(unread)}` : '';
     paintBadge(unread);
+    if (reviewerRole()) void paintPendingRegistrations();
 
     if (statusLine) {
       statusLine.textContent = feed.length

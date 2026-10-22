@@ -232,7 +232,7 @@ const commands = {
   },
 
   /* Fill every required field of the real registration form and submit it. */
-  async 'register-student'({ username, pin, mobile = '01711223344', nameBn = 'নতুন শিক্ষার্থী', nameEn = 'Test Student' }) {
+  async 'register-student'({ username, pin, mobile = '01711223344', email = '', nameBn = 'নতুন শিক্ষার্থী', nameEn = 'Test Student' }) {
     if (!ctx.$('#registrationForm')) await openAuthPage();
     if (!registerBound) {
       const register = await mod('register.js');
@@ -267,14 +267,18 @@ const commands = {
       if (['tel', 'number'].includes(field.type)) { setValue(field, '01711223366'); continue; }
       setValue(field, field.type === 'password' ? pin : 'টেস্ট');
     }
+    const emailField = ctx.$('#regEmail');
+    if (emailField) setValue(emailField, email);
     setValue(ctx.$('#studentMobile'), mobile);
     if (ctx.$('#authMessage')) ctx.$('#authMessage').textContent = '';
+    const beforeCount = registered;
     ctx.submit(form);
     await waitUntil(() =>
-      registered > 0 || hasSession(storageKeys.session) || Boolean(authMessage()) ||
-      Boolean(readLocal(db.KEYS.account)), { timeout: 60000 });
+      registered > beforeCount ||
+      /^রেজিস্ট্রেশন সফল/.test(authMessage()) ||
+      (form.getAttribute('aria-busy') !== 'true' && Boolean(authMessage())), { timeout: 60000 });
     return {
-      registered: registered > 0 || Boolean(readLocal(db.KEYS.account)),
+      registered: registered > beforeCount || /^রেজিস্ট্রেশন সফল/.test(authMessage()),
       session: hasSession(storageKeys.session),
       message: authMessage(),
       account: readLocal(db.KEYS.account)
@@ -674,6 +678,123 @@ const commands = {
   async 'wait-account-status'({ status }) {
     await waitUntil(() => readLocal(db.KEYS.account)?.status === status, { timeout: 30000 });
     return { accountStatus: readLocal(db.KEYS.account)?.status || null };
+  },
+
+  async 'open-staff-portal'({ role }) {
+    const htmlFile = role === 'admin' ? 'admin.html' : 'manager.html';
+    const seed = {};
+    for (let i = 0; i < ctx.window.localStorage.length; i++) {
+      const key = ctx.window.localStorage.key(i);
+      seed[key] = ctx.window.localStorage.getItem(key);
+    }
+    const previous = ctx;
+    ctx = await loadPage(htmlFile, { seed });
+    bindPageEvents();
+    Object.defineProperty(globalThis, 'Storage', { value: ctx.window.Storage, configurable: true, writable: true });
+    previous.window.close();
+    syncModule.stopRealtimeSync();
+
+    const { buildSessionRecord } = await mod('session.js');
+    const info = staffAuth.STAFF_ACCOUNTS[role];
+    let account = await staffAuth.readStaffAccount(role);
+    if (!account) {
+      await staffAuth.provisionStaffAccount(role, 'Apc-Test-2026', 'Apc-Test-2026');
+      account = await staffAuth.readStaffAccount(role);
+    }
+    const owner = account?.username || info.username;
+    ctx.window.localStorage.setItem(info.sessionKey, JSON.stringify(buildSessionRecord({ owner, ttlDays: 1 })));
+
+    const toastLog = [];
+    ctx.window.__apcToastLog = toastLog;
+    ctx.window.addEventListener('apc-new-registration-toast', ev => {
+      toastLog.push(ev?.detail?.message || '');
+    });
+
+    if (role === 'admin') {
+      await mod(`admin.js?portal=${Date.now()}`);
+      await waitUntil(() => ctx.$('#adminShell')?.hidden === false, { timeout: 15000 });
+    } else {
+      const mgr = await mod(`manager.js?portal=${Date.now()}`);
+      await mgr.managerReady;
+      await waitUntil(() => ctx.$('#managerShell')?.hidden === false, { timeout: 15000 });
+    }
+
+    const notifMod = await mod('notifications.js');
+    notifMod.initNotifications();
+    const bootRes = await syncModule.startRealtimeSync();
+    ctx.window.dispatchEvent(new ctx.window.CustomEvent('apc-sync-status', { detail: { state: 'online' } }));
+    await sleep(120);
+    return { ok: Boolean(bootRes?.ok), role, armed: Boolean(ctx.window.apcNotifications?.armed?.()) };
+  },
+
+  async 'open-staff-students-view'({ role }) {
+    const selector = role === 'admin'
+      ? '.admin-bottom-item[data-admin-view="students"]'
+      : '.admin-bottom-item[data-manager-view="students"]';
+    const btn = ctx.$(selector);
+    if (btn) ctx.click(btn);
+    await sleep(80);
+    return { ok: Boolean(btn) };
+  },
+
+  async 'staff-portal-state'({ role }) {
+    const api = ctx.window.apcNotifications;
+    const dot = ctx.$('#notificationButton .notification-dot');
+    const hostText = role === 'admin'
+      ? (ctx.$('#adminPendingRegistrations')?.textContent || '')
+      : (ctx.$('#managerStudentQueue')?.textContent || '');
+    const pendingCardLabel = role === 'admin'
+      ? (ctx.$('[data-admin-student-card="pending"] .teacher-action-title')?.textContent || '')
+      : (ctx.$('#managerPendingBadge')?.textContent || '');
+    return {
+      unread: api ? api.unread() : -1,
+      unreadKeys: api ? api.unreadKeys() : [],
+      badgeHidden: dot ? Boolean(dot.hidden) : true,
+      badgeText: dot ? (dot.textContent || '') : '',
+      pendingHostHidden: role === 'admin' ? Boolean(ctx.$('#adminPendingRegistrations')?.hidden) : Boolean(ctx.$('#managerStudentQueue')?.hidden),
+      hostText,
+      pendingCardLabel,
+      toasts: [...(ctx.window.__apcToastLog || [])],
+      studentsCount: (readLocal(db.KEYS.students) || []).length
+    };
+  },
+
+  async 'refresh-notifications'({ times = 1 }) {
+    const api = ctx.window.apcNotifications;
+    for (let i = 0; i < times; i += 1) {
+      api?.refresh?.();
+      await sleep(30);
+    }
+    return {
+      unread: api ? api.unread() : -1,
+      unreadKeys: api ? api.unreadKeys() : []
+    };
+  },
+
+  async 'decide-pending-student'({ studentId, decision = 'approved', role = 'manager', reason = '' }) {
+    const review = await mod('registration-review.js');
+    const res = await review.decideRegistration(studentId, decision, { role, reason });
+    await sleep(150);
+    return { ok: Boolean(res?.ok), reason: res?.reason || null, status: res?.student?.status || null };
+  },
+
+  async 'pending-cloud-queue'() {
+    return { queue: readLocal(db.KEYS.pendingCloudRegistrations) || [] };
+  },
+
+  async 'send-class-chat'({ className, text, actor }) {
+    const chat = await mod('class-chat.js');
+    const msg = chat.sendClassMessage({ className, text, actor });
+    await sleep(150);
+    return { id: msg.id, text: msg.text, classId: msg.classId };
+  },
+
+  async 'read-class-chat'({ className, actor }) {
+    const chat = await mod('class-chat.js');
+    const view = chat.getClassRoomView(className, { actor });
+    return {
+      messages: view.messages.map(m => ({ id: m.id, text: m.text, senderName: m.senderName, senderRole: m.senderRole }))
+    };
   },
 
   async quit() {

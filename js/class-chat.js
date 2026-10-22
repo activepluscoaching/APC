@@ -366,7 +366,7 @@ export function countActiveClassMembers(className) {
   const approvedIds = new Set();
   if (Array.isArray(roster)) {
     for (const student of roster) {
-      if (student?.status === 'approved' && normalizeClassId(student.className) === classId && student.id) {
+      if ((student?.status === 'approved' || student?.status === 'active') && normalizeClassId(student.className) === classId && student.id) {
         approvedIds.add(String(student.id));
       }
     }

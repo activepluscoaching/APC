@@ -99,8 +99,21 @@ test('a saved account and legacy skip flag cannot create a login session; a wron
   assert.equal(ctx.$('#loginMobile').value, 'gate.student');
   assert.equal(ctx.$('#loginPin').value, '');
   assert.equal(await storage.hasSession(), false);
+  // While pending, login must be blocked with the pending message.
+  await submit('gate.student', '246810');
+  assert.equal(admitted, 1, 'pending registration cannot enter before approval');
+  assert.match(ctx.$('#authMessage').textContent, /অনুমোদনের অপেক্ষায় আছে/);
+  assert.equal(await storage.hasSession(), false);
+
+  // Once approved, login succeeds.
+  const { syncAccountStatus, saveRoster, loadRoster } = await import('../js/office-data.js');
+  const createdId = registrationState.account?.student?.id || registrationState.account?.studentId;
+  saveRoster(loadRoster().map(row => row.id === createdId ? { ...row, status: 'approved', accountStatus: 'active' } : row));
+  await syncAccountStatus(createdId, 'active', { approvedBy: 'admin.apc', approvedAt: new Date().toISOString() });
+  registrationState.account = storage.loadAccount();
   await submit('gate.student', '246810');
   assert.equal(admitted, 2);
   assert.equal(await storage.hasSession(), true);
+  panelCtx.window.close();
   ctx.window.close();
 });

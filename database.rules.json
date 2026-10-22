@@ -18,7 +18,43 @@
         },
         "usernames": {
           ".read": "auth != null",
-          ".write": "auth != null"
+          ".write": "auth != null",
+          "$usernameKey": {
+            ".write": "auth != null",
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "mobileIndex": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$mobileKey": {
+            ".write": "auth != null",
+            ".validate": "$mobileKey.length === 11 && newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "emailIndex": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$emailKey": {
+            ".write": "auth != null",
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "dailyStudentCounters": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$dayKey": {
+            ".write": "auth != null && (!newData.exists() || (newData.isNumber() && newData.val() >= 1 && newData.val() <= 999 && (!data.exists() || newData.val() > data.val())))",
+            ".validate": "$dayKey.length === 6 && newData.isNumber() && newData.val() >= 1 && newData.val() <= 999"
+          }
+        },
+        "notifications": {
+          ".read": "auth != null && (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager')",
+          ".write": "auth != null && (!newData.exists() || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+          "$notifId": {
+            ".write": "auth != null && (!newData.exists() || (!data.exists() && newData.child('read').val() === false) || ((auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager') && data.exists()))",
+            ".validate": "newData.child('id').val() === $notifId && newData.hasChildren(['id', 'type', 'studentId', 'studentName', 'mobile', 'createdAt', 'read']) && newData.child('type').val() === 'new_registration' && newData.child('studentId').isString() && newData.child('studentId').val().length > 0 && newData.child('studentName').isString() && newData.child('studentName').val().length > 0 && newData.child('mobile').isString() && newData.child('mobile').val().length > 0 && newData.child('createdAt').isString() && newData.child('createdAt').val().length > 0 && newData.child('read').isBoolean()"
+          }
         },
         "studentAccount": {
           ".read": "auth != null"
@@ -26,8 +62,8 @@
         "studentAccounts": {
           ".read": "auth != null",
           "$loginKey": {
-            ".write": "auth != null",
-            ".validate": "newData.hasChild('pinHash')"
+            ".write": "auth != null && (!newData.exists() || !(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'active' || newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+            ".validate": "newData.hasChild('pinHash') && (!(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'active' || newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))"
           }
         },
         "examDb": {
@@ -54,7 +90,9 @@
             ".validate": "newData.isBoolean()"
           },
           "connectivityProbe": {
+            ".read": "auth != null",
             "$probeKey": {
+              ".read": "auth != null",
               ".write": "auth != null && $probeKey.length <= 64",
               "at": {
                 ".validate": "newData.isNumber()"
@@ -86,7 +124,8 @@
           ".read": "auth != null",
           ".write": "auth != null",
           "$recordId": {
-            ".validate": "newData.hasChildren()"
+            ".write": "auth != null && (!newData.exists() || !(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'active' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+            ".validate": "newData.hasChildren() && (!data.exists() || !data.child('id').exists() || newData.child('id').val() === data.child('id').val()) && (!(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'active' || newData.child('status').val() === 'rejected')) || ((auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager') && (newData.child('approvedAt').isString() || newData.child('reviewedAt').isString())))"
           }
         },
         "transactions": {

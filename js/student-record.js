@@ -14,7 +14,7 @@ const section = (id, title, fields) => `
 
 export function studentRecordMarkup(student) {
   const statuses = {
-    approved: ['অনুমোদিত', 'approved'], pending: ['অপেক্ষমাণ', 'pending'], rejected: ['বাতিল', 'rejected']
+    approved: ['অনুমোদিত', 'approved'], active: ['অনুমোদিত', 'approved'], pending: ['অপেক্ষমাণ', 'pending'], rejected: ['বাতিল', 'rejected']
   };
   const status = Object.hasOwn(statuses, student.status) ? statuses[student.status] : ['স্ট্যাটাস অজানা', 'unknown'];
   const id = String(student.id ?? '');
@@ -39,11 +39,12 @@ export function studentRecordMarkup(student) {
       ${section('studentRecordContact', 'যোগাযোগ',
         field('মোবাইল নম্বর', number(student.mobile), 'student-record-phone') +
         field('অভিভাবকের মোবাইল', number(student.guardianMobile), 'student-record-phone') +
+        (student.email ? field('ইমেইল', display(student.email)) : '') +
         field('ঠিকানা', display(student.address), 'student-record-field--wide'))}
       ${section('studentRecordEnrollment', 'ভর্তি ও একাডেমিক তথ্য',
         field('শ্রেণি', `${display(student.className)} <span class="student-record-class-code">${escapeHtml(classCode)}</span>`) +
         field('রেজিস্ট্রেশনের তারিখ', display(student.enrolledAt)) + field('সর্বশেষ সক্রিয়', display(student.lastActive)) +
-        (student.status === 'approved'
+        (student.status === 'approved' || student.status === 'active'
           ? field('অগ্রগতি', `উপস্থিতি ${percent(student.attendance)}<br>গড় ফলাফল ${percent(student.average)}`)
           : field('অগ্রগতি', 'অনুমোদনের পরে দেখা যাবে')))}
     </div>

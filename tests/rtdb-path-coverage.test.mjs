@@ -44,6 +44,20 @@ const cloud = () => ({ activePlusSync: { v1: {
     [role, { username: `${role}.apc`, password: hash, status: 'active' }])),
   staffDirectory: { version: 1, records: [{ id: 'S1', username: 'teacher.apc', role: 'teacher' }] },
   usernames: { 'teacher.apc': 'staff:teacher' },
+  mobileIndex: { '01711223344': '261022001' },
+  emailIndex: { 'student%40example%2Ecom': '261022001' },
+  dailyStudentCounters: { '261022': 1 },
+  notifications: {
+    notif_261022001: {
+      id: 'notif_261022001',
+      type: 'new_registration',
+      studentId: '261022001',
+      studentName: 'দোলন',
+      mobile: '01711223344',
+      createdAt: '2026-10-22T06:00:00.000Z',
+      read: false
+    }
+  },
   studentAccounts: { dolon: { username: 'dolon', pinHash: hash } },
   examDb: { exams: { EX1: { id: 'EX1', teacherId: 'T1', status: 'draft' } }, attempts: { AT1: { id: 'AT1', examId: 'EX1', studentId: 'STU-1' } } },
   system: { adminInitialized: true },
@@ -61,6 +75,22 @@ const payloadFor = path => {
   if (payloads[node]) return payloads[node]();
   if (node === 'staffDirectory') return { version: 1, records: [{ id: 'S1', username: 'teacher.apc', role: 'teacher' }] };
   if (node === 'usernames') return { 'teacher.apc': 'staff:teacher' };
+  if (node === 'mobileIndex') return { '01711223344': '261022001' };
+  if (node === 'emailIndex') return { 'student%40example%2Ecom': '261022001' };
+  if (path.includes('/dailyStudentCounters/')) return 2;
+  if (node === 'notifications') {
+    return {
+      notif_261022001: {
+        id: 'notif_261022001',
+        type: 'new_registration',
+        studentId: '261022001',
+        studentName: 'দোলন',
+        mobile: '01711223344',
+        createdAt: '2026-10-22T06:00:00.000Z',
+        read: false
+      }
+    };
+  }
   if (node === 'adminInitialized') return true;
   if (path.includes('/system/connectivityProbe/')) return { at: 1728432000000 };
   if (path.includes('/examDb/exams/')) return { id: 'EX1', teacherId: 'T1', status: 'draft' };
@@ -77,6 +107,9 @@ const LISTENED = [
   ...Object.keys(STAFF_ACCOUNTS).map(role => V1(`staffAccounts/${role}`)),
   V1('staffDirectory'),
   V1('usernames'),
+  V1('mobileIndex'),
+  V1('emailIndex'),
+  V1('notifications'),
   V1('studentAccounts/' + encodeUsernameKey('dolon')),
   V1('examDb')
 ];
@@ -87,6 +120,10 @@ const WRITTEN = [
   ...Object.keys(STAFF_ACCOUNTS).map(role => V1(`staffAccounts/${role}`)),
   V1('staffDirectory'),
   V1('usernames'),
+  V1('mobileIndex'),
+  V1('emailIndex'),
+  V1('dailyStudentCounters/261022'),
+  V1('notifications'),
   V1('studentAccounts/' + encodeUsernameKey('dolon')),
   V1('examDb/exams/EX1'),
   V1('examDb/attempts/AT1'),
@@ -135,6 +172,10 @@ test('the factory reset can delete every node it clears (docs/FACTORY-RESET.md)'
   const ok = (path, why) => assert.equal(sim.canWrite(device, V1(path), null, state), true, why);
   ok('staffDirectory', 'the staff directory can be cleared');
   ok('usernames', 'the login-id registry can be cleared');
+  ok('mobileIndex', 'the mobile uniqueness index can be cleared');
+  ok('emailIndex', 'the email uniqueness index can be cleared');
+  ok('dailyStudentCounters', 'the daily Student ID counters can be cleared');
+  ok('notifications', 'the registration notifications collection can be cleared');
   ok('studentAccounts/dolon', 'a student login can be cleared');
   ok('system/adminInitialized', 'the initialization marker can be cleared');
   ok('examDb/exams', 'the exam group can be cleared in one write');

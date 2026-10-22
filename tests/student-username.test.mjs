@@ -101,13 +101,27 @@ test('the same username cannot be taken twice', async () => {
   assert.equal(usernameTaken('tahmid.hasan'), false);
 });
 
-test('login accepts the username, in any case, and still accepts the mobile number', async () => {
+test('login blocks while pending, then accepts the username in any case and the mobile number after approval', async () => {
   const { $, type, submit, waitFor } = ctx;
   const saved = account();
   assert.equal(saved.username, 'raisa.islam');
   // The stored account holds a PBKDF2 hash, never the plaintext password.
   assert.equal(saved.pin, undefined);
   assert.equal(typeof saved.pinHash, 'object');
+
+  // Pending login is blocked first.
+  state.account = null;
+  type($('#loginMobile'), 'raisa.islam');
+  type($('#loginPin'), '123123');
+  submit($('#loginForm'));
+  await waitFor(() => $('#authMessage').textContent.includes('অনুমোদনের অপেক্ষায় আছে'));
+  assert.equal(loggedIn, 0, 'pending account cannot log in before approval');
+
+  // Approve the student so active login works.
+  const { syncAccountStatus, saveRoster, loadRoster } = await import('../js/office-data.js');
+  const sid = saved.student?.id || saved.studentId;
+  saveRoster(loadRoster().map(row => row.id === sid ? { ...row, status: 'approved', accountStatus: 'active' } : row));
+  await syncAccountStatus(sid, 'active', { approvedBy: 'admin.apc', approvedAt: new Date().toISOString() });
 
   state.account = null;
   type($('#loginMobile'), '  RAISA.ISLAM ');

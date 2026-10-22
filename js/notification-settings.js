@@ -100,8 +100,9 @@ function waitForEngine(timeout = 10000) {
 
 /* ---- rendering ---------------------------------------------------------------- */
 
-function toggleRow(id, label, note, checked, disabled = false) {
+function toggleRow(id, label, note, checked, disabled = false, iconName = 'bell', tone = 'mint') {
   return '<label class="settings-toggle notice-setting-row">' +
+      '<span class="settings-icon ' + esc(tone) + '" aria-hidden="true">' + iconMarkup(iconName, 'apc-icon-svg') + '</span>' +
       '<span class="settings-copy"><strong>' + esc(label) + '</strong><small>' + esc(note) + '</small></span>' +
       '<span class="toggle-switch"><input type="checkbox" id="' + id + '" ' + (checked ? 'checked ' : '') + (disabled ? 'disabled' : '') + '><i></i></span>' +
     '</label>';
@@ -141,7 +142,7 @@ function paint() {
   root.innerHTML =
     '<div class="profile-section"><p class="eyebrow">নোটিফিকেশন</p>' +
       '<div class="settings-list">' +
-        toggleRow('noticeMasterToggle', 'নোটিফিকেশন চালু', 'বন্ধ করলে কোনো নোটিফিকেশন আসবে না — বাকি সব তথ্য অক্ষত থাকবে।', settings.enabled) +
+        toggleRow('noticeMasterToggle', 'নোটিফিকেশন চালু', 'বন্ধ করলে কোনো নোটিফিকেশন আসবে না — বাকি সব তথ্য অক্ষত থাকবে।', settings.enabled, false, 'notification-settings', 'mint') +
       '</div>' +
       '<p class="form-note">' + (off
         ? 'নোটিফিকেশন বন্ধ আছে। চালু করলে নতুন নোটিশ, পরীক্ষা, ফলাফল ও পেমেন্টের খবর পাবেন।'
@@ -156,15 +157,15 @@ function paint() {
         '</div>' +
         toggleRow('noticeBackgroundToggle', 'ব্যাকগ্রাউন্ড নোটিফিকেশন',
           'অ্যাপ বন্ধ বা ব্যাকগ্রাউন্ডে থাকলেও ফোনে খবর আসবে (যেখানে ব্রাউজার সমর্থন করে)।',
-          settings.background, off || permission !== 'granted') +
+          settings.background, off || permission !== 'granted', 'smartphone', 'green') +
         toggleRow('noticeInAppToggle', 'অ্যাপের ভেতরের নোটিফিকেশন',
-          'অ্যাপ খোলা থাকলে সুন্দর কার্ডে নোটিফিকেশন দেখাবে — অনুমতি ছাড়াও কাজ করে।', settings.inApp, off) +
+          'অ্যাপ খোলা থাকলে সুন্দর কার্ডে নোটিফিকেশন দেখাবে — অনুমতি ছাড়াও কাজ করে।', settings.inApp, off, 'notice', 'purple') +
       '</div>' +
     '</div>' +
 
     '<div class="profile-section"><p class="eyebrow">শব্দ ও প্রিভিউ</p>' +
       '<div class="settings-list">' +
-        toggleRow('noticeSoundToggle', 'নোটিফিকেশনের শব্দ', 'নতুন নোটিফিকেশন এলে ছোট একটি টোন বাজবে।', settings.sound, off) +
+        toggleRow('noticeSoundToggle', 'নোটিফিকেশনের শব্দ', 'নতুন নোটিফিকেশন এলে ছোট একটি টোন বাজবে।', settings.sound, off, 'bell', 'mint') +
         '<button type="button" class="settings-row-button" data-notice-preview>' +
           '<span class="settings-copy"><strong>প্রিভিউ দেখুন</strong><small>একটি নমুনা নোটিফিকেশন কার্ড দেখুন</small></span>' +
           '<span class="notice-history-tag">প্রিভিউ</span>' +

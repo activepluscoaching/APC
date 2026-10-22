@@ -1038,7 +1038,7 @@ export function initStaffManagement({ onChanged } = {}) {
   notify = typeof onChanged === 'function' ? onChanged : () => {};
   if (state.wired || !$('#staffList')) return;
   // "নতুন স্টাফ" carries a plus inside the same fixed drop used everywhere.
-  paintIcon($('#staffCreateButton .apc-icon'), 'add', 'apc-icon');
+  paintIcon($('#staffCreateButton .apc-icon'), 'staff', 'apc-color-icon', { variant: 'color' });
 
   $('#staffCreateButton')?.addEventListener('click', openCreate);
 

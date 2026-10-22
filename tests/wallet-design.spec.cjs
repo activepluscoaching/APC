@@ -283,7 +283,7 @@ test.describe('wallet offline shell', () => {
     await page.reload();
     await expect(page.locator('#loginForm')).toHaveAttribute('data-login-ready', 'true');
     await expect(page.locator('#authScreen')).toBeVisible();
-    await expect(page.locator('.auth-brand h1')).toHaveCSS('color', 'rgb(238, 244, 252)');
+    await expect(page.locator('.auth-brand h1')).toHaveCSS('color', 'rgb(14, 122, 85)');
     expect(await page.locator('.auth-panel.active').evaluate(el => getComputedStyle(el).borderRadius)).toBe('26px');
     await page.locator('[data-auth-tab="register"]').click();
     await expect(page.locator('#registrationForm')).toBeVisible();

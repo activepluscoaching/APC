@@ -51,7 +51,14 @@ export function initPullToRefresh() {
         refreshing = true;
         indicator.classList.add('is-refreshing');
         indicator.querySelector('[data-pull-refresh-label]').textContent = 'রিফ্রেশ হচ্ছে…';
-        window.setTimeout(() => window.location.reload(), 120);
+        void (async () => {
+          try {
+            const reg = await navigator.serviceWorker?.getRegistration();
+            if (reg?.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            await reg?.update();
+          } catch { /* ignore */ }
+          window.location.reload();
+        })();
       } else reset();
     }, { passive: true });
 

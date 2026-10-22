@@ -25,15 +25,23 @@ test('the registered worker URL carries the build number', () => {
   assert.match(registrar, /register\(`\.\/sw\.js\?v=\$\{SW_VERSION\}`\)/,
     'registration must use the versioned worker URL');
   assert.equal(registrar.includes("register('./sw.js')"), false, 'the unversioned worker URL is gone');
+
+  const cacheRefresh = read('js/cache-refresh.js');
+  const defaultRefreshVersion = Number(cacheRefresh.match(/const DEFAULT_VERSION = (\d+)/)?.[1]);
+  assert.equal(defaultRefreshVersion, cacheVersion, 'cache-refresh.js DEFAULT_VERSION must equal CACHE_VERSION so it never ping-pongs with SW_VERSION');
+  assert.match(cacheRefresh, /searchParams\.get\('v'\)/, 'cache-refresh.js reads the live ?v= pin from its script tag');
 });
 
 test('the worker still activates immediately and the app re-checks on return', () => {
   assert.match(sw, /await self\.skipWaiting\(\)/, 'a new worker must not wait for tabs to close');
   assert.match(sw, /await self\.clients\.claim\(\)/, 'open pages come under the new worker at once');
   assert.match(sw, /key !== CACHE_NAME/, 'activate deletes every older cache');
+  assert.match(sw, /SKIP_WAITING/, 'worker listens for SKIP_WAITING messages');
+  assert.match(sw, /cache:\s*'no-cache'/, 'worker revalidates with the server instead of copying stale HTTP cache entries');
   assert.match(registrar, /registration\.update\(\)/, 'registration forces an update check');
   assert.match(registrar, /visibilitychange/, 'a returning user triggers a fresh check');
   assert.match(registrar, /নতুন সংস্করণ আছে/, 'the update banner still offers the refresh');
+  assert.match(registrar, /applyUpdateAndReload/, 'clicking refresh purges stale caches and activates the new worker before reloading');
 });
 
 test('every page pin agrees with the build the worker will cache', () => {

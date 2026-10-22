@@ -43,7 +43,7 @@
   </section>
 </main>
 <script type="module">
-import { mergeBackups } from '../js/backup-merge.js';
+import { mergeBackups, unwrapBackupPayload, encryptBackupPayload } from '../js/backup-merge.js';
 
 const $ = id => document.getElementById(id);
 const files = { a: null, b: null };
@@ -63,8 +63,10 @@ for (const [id, key] of [['fileA', 'a'], ['fileB', 'b']]) {
 $('merge').addEventListener('click', async () => {
   try {
     clearError();
-    const { merged: result, report } = mergeBackups(await readJSON(files.a), await readJSON(files.b));
-    merged = result;
+    const rawA = await unwrapBackupPayload(await readJSON(files.a), 'প্রথম ফাইল');
+    const rawB = await unwrapBackupPayload(await readJSON(files.b), 'দ্বিতীয় ফাইল');
+    const { merged: result, report } = mergeBackups(rawA, rawB);
+    merged = await encryptBackupPayload(result.data, result.createdAt, { mergedFrom: result.mergedFrom });
     $('summary').replaceChildren(...report.lines.map(line => {
       const item = document.createElement('li'); item.textContent = line; return item;
     }));

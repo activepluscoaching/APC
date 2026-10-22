@@ -840,127 +840,56 @@ label { font-size: 13.5px; font-weight: 600; margin-block: 14px 6px; }
  .counter-financial-table td::before { content: attr(data-label); display: block; margin-bottom: 3px; font-size: 11px; color: var(--color-text-secondary); }
 }
 
-/* 13 ── Login and registration: a brand header and a clean form sheet ───── */
-.auth-screen { background: var(--color-bg); padding: 24px 16px calc(32px + var(--safe-bottom)); transition: background 600ms ease; }
-.auth-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-.auth-card { position: relative; z-index: 1; }
-/* The sky is a real photograph per weather state (assets/sky/*.jpg, one file
-   fetched per visit, cache-first afterwards). The old cartoon sun disc and
-   three puff-ball clouds are gone: the orb is now a soft atmospheric glow and
-   the clouds are wide blurred haze bands, so nothing reads as a sticker on
-   top of the photo. Every colour lives in the foundation sky palette; the
-   scrim melts the photo into the page and keeps the transparent brand card
-   readable. */
-.auth-orb { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-.auth-cloud { position: absolute; top: 72px; left: 4%; width: 62vw; height: 130px; border-radius: 50%;
-  background: var(--sky-haze); filter: blur(14px); }
-.auth-cloud::before, .auth-cloud::after { content: none; }
-.auth-cloud.c1 { left: 8%; animation: apc-cloud-drift 26s linear infinite; }
-.auth-cloud.c2 { left: 36%; top: 168px; width: 72vw; opacity: .8; animation: apc-cloud-drift 34s linear infinite reverse; }
-.auth-cloud.c3 { right: 4%; left: auto; top: 44px; width: 48vw; opacity: .6; animation: apc-cloud-drift 30s linear infinite; }
-@keyframes apc-cloud-drift { from { transform: translateX(0); } to { transform: translateX(28px); } }
-/* The orb IS the sun or the moon: js/login.js walks it along the day's arc
-   through --orb-x/--orb-y/--orb-size and marks it with data-celestial, so it
-   rises, peaks and sets instead of standing still. No glow behind a full
-   cloud deck — the photograph owns those skies. */
-.auth-orb { left: var(--orb-x, 70%); top: var(--orb-y, 22vh);
-  width: var(--orb-size, 180px); height: var(--orb-size, 180px);
-  transition: left 90s linear, top 90s linear, width 400ms ease, height 400ms ease, opacity 600ms ease; }
-.auth-screen[data-celestial=sun] .auth-orb { background: var(--sky-orb-sun); filter: blur(2px); }
-.auth-screen[data-celestial=sun][data-orb-warm=high] .auth-orb { background: var(--sky-orb-sun-warm); filter: blur(4px); }
-.auth-screen[data-celestial=sun][data-orb-warm=mid] .auth-orb { background: var(--sky-orb-sun); filter: blur(3px); }
-.auth-screen[data-celestial=moon] .auth-orb { background: var(--sky-orb-moon); filter: blur(2px); }
-.auth-screen[data-sky=cloudy] .auth-orb,
-.auth-screen[data-sky=rain] .auth-orb,
-.auth-screen[data-sky=storm] .auth-orb,
-.auth-screen[data-sky=fog] .auth-orb { display: none; }
-.auth-screen[data-sky=storm] .auth-cloud { opacity: .45; }
-.auth-screen[data-sky=clear-night] .auth-cloud { opacity: .5; background: var(--sky-haze-night); }
-@media (prefers-reduced-motion: reduce) {
-  .auth-cloud { animation: none; }
+/* 13 ── Login and registration: clean glass card over an ambient canvas ───── */
+.auth-screen,
+.auth-screen[data-sky] {
+  display: flex;
+  flex-direction: column;
+  background: var(--auth-glass-canvas);
+  padding: max(20px, env(safe-area-inset-top)) 14px calc(28px + var(--safe-bottom));
+  transition: background 300ms ease;
 }
-/* Layer order per state: [optional tint/haze] → readability scrim → the
-   photograph → the gradient fallback for offline/no-photo. Only the current
-   state's photograph is ever fetched. */
-.auth-screen[data-sky] { background-position: center top; background-repeat: no-repeat; }
-.auth-screen[data-sky=clear-day] { background-image: var(--sky-scrim-bright), url('../assets/sky/clear-day.jpg'), var(--sky-fall-day);
-  background-size: auto, cover, auto;  background-position: 70% top;}
-.auth-screen[data-sky=heat] { background-image: var(--sky-warm-wash), var(--sky-scrim-bright), url('../assets/sky/clear-day.jpg'), var(--sky-fall-heat);
-  background-size: auto, auto, cover, auto;  background-position: 70% top;}
-.auth-screen[data-sky=dusk] { background-image: var(--sky-scrim-dusk), url('../assets/sky/dusk.jpg'), var(--sky-fall-dusk);
-  background-size: auto, cover, auto; }
-.auth-screen[data-sky=dawn] { background-image: var(--sky-scrim-dawn), url('../assets/sky/dawn.jpg'), var(--sky-fall-dawn);
-  background-size: auto, cover, auto; }
-.auth-screen[data-sky=clear-night] { background-image: var(--sky-scrim-night), url('../assets/sky/clear-night.jpg'), var(--sky-fall-night);
-  background-size: auto, cover, auto; }
-.auth-screen[data-sky=cloudy] { background-image: var(--sky-scrim-mid), url('../assets/sky/cloudy.jpg'), var(--sky-fall-cloudy);
-  background-size: auto, cover, auto; }
-.auth-screen[data-sky=fog] { background-image: var(--sky-fog-wash), var(--sky-scrim-fog), url('../assets/sky/cloudy.jpg'), var(--sky-fall-fog);
-  background-size: auto, auto, cover, auto; }
-.auth-screen[data-sky=rain] { background-image: var(--sky-scrim-rain), url('../assets/sky/rain.jpg'), var(--sky-fall-rain);
-  background-size: auto, cover, auto; }
-.auth-screen[data-sky=storm] { background-image: var(--sky-scrim-storm), url('../assets/sky/storm.jpg'), var(--sky-fall-storm);
-  background-size: auto, cover, auto; }
-/* Over a photograph the brand is hero text: light states keep the ink
-   colours under the scrim, dark skies switch to light ink with a soft
-   shadow so it never fights the clouds. */
-.auth-screen[data-sky=clear-day] .auth-brand h1,
-.auth-screen[data-sky=heat] .auth-brand h1,
-.auth-screen[data-sky=cloudy] .auth-brand h1,
-.auth-screen[data-sky=fog] .auth-brand h1,
-.auth-screen[data-sky=clear-day] .auth-brand p,
-.auth-screen[data-sky=heat] .auth-brand p,
-.auth-screen[data-sky=cloudy] .auth-brand p,
-.auth-screen[data-sky=fog] .auth-brand p { text-shadow: var(--sky-ink-shadow-paper); }
-.auth-screen[data-sky=clear-night] .auth-brand h1,
-.auth-screen[data-sky=storm] .auth-brand h1,
-.auth-screen[data-sky=dusk] .auth-brand h1,
-.auth-screen[data-sky=dawn] .auth-brand h1 { color: var(--sky-ink-strong); text-shadow: var(--sky-ink-shadow); }
-.auth-screen[data-sky=clear-night] .auth-brand p,
-.auth-screen[data-sky=storm] .auth-brand p,
-.auth-screen[data-sky=rain] .auth-brand p,
-.auth-screen[data-sky=dusk] .auth-brand p,
-.auth-screen[data-sky=dawn] .auth-brand p { color: var(--sky-ink-soft); text-shadow: var(--sky-ink-shadow-soft); }
-/* ঋতু washes — one soft tint per Bengali season, laid over the sky photo so
-   a June monsoon morning and a December dawn never share one palette. */
-.auth-sky::before { content: ''; position: absolute; inset: 0 0 auto; height: 46%; opacity: .9; }
-.auth-screen[data-season=sheet] .auth-sky::before { background: var(--sky-wash-sheet); }
-.auth-screen[data-season=basant] .auth-sky::before { background: var(--sky-wash-basanta); }
-.auth-screen[data-season=grishmo] .auth-sky::before { background: var(--sky-wash-grishmo); }
-.auth-screen[data-season=borsha] .auth-sky::before { background: var(--sky-wash-borsha); }
-.auth-screen[data-season=shorot] .auth-sky::before { background: var(--sky-wash-shorot); }
-.auth-screen[data-season=hemonto] .auth-sky::before { background: var(--sky-wash-hemonto); }
-/* The living status line: greeting · ঋতু · আবহাওয়া, recomputed every minute. */
-.auth-screen .auth-brand p.auth-sky-note { display: inline-block; margin: 8px 0 0; padding: 5px 13px;
-  border-radius: 999px; background: var(--sky-note-bg); color: var(--sky-note-ink);
-  text-shadow: none; font-size: 11.5px; font-weight: 600; letter-spacing: .02em; animation: none; }
-.auth-card { position: relative; width: 100%; max-width: 460px; margin: 0 auto; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.auth-brand { text-align: center; margin-bottom: 22px; }
-.auth-brand img { display: block; width: 76px; height: 76px; padding: 8px; margin: 0 auto 12px; border-radius: 22px;
-  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--pay-shadow); }
-.auth-brand h1 { color: var(--color-primary); font-size: 26px; font-weight: 700; margin: 0 0 4px; letter-spacing: -.025em; }
-.auth-brand p { color: var(--color-text-secondary); font-size: 14px; font-weight: 500; display: inline-block; animation: apc-tagline-drift 4.8s ease-in-out infinite; }
-@keyframes apc-tagline-drift {
-  0%, 100% { transform: translateY(0); letter-spacing: 0; opacity: .82; }
-  50% { transform: translateY(-4px); letter-spacing: .06em; opacity: 1; }
+/* Sky photographs, sun/moon orb and drifting cloud bands are hidden so the
+   login screen stays a clean, modern glass card layout; DOM nodes remain in
+   place for state/theme compatibility. */
+.auth-sky,
+.auth-orb,
+.auth-cloud,
+.auth-sky::before { display: none; }
+.auth-screen .auth-brand p.auth-sky-note {
+  display: inline-block; margin: 8px 0 0; padding: 5px 13px;
+  border-radius: 999px; background: var(--pay-disc); color: var(--pay-disc-ink);
+  text-shadow: none; font-size: 11.5px; font-weight: 600; letter-spacing: .02em; animation: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .auth-brand p { animation: none; }
+.auth-card {
+  position: relative; z-index: 1; width: 100%; max-width: 440px; margin: auto;
+  padding: 18px; border: 1px solid var(--auth-card-border); border-radius: 28px;
+  background: var(--auth-card-bg); box-shadow: var(--auth-card-shadow);
 }
-.auth-tabs { margin: 0 0 12px; padding: 5px; border: 0; border-radius: 16px; gap: 5px; background: var(--color-surface-muted); box-shadow: none; }
+.auth-brand {
+  text-align: center; margin-bottom: 16px; padding: 18px 16px 16px;
+  border-radius: 22px; background: var(--auth-brand-banner); border: 1px solid var(--auth-brand-border);
+}
+.auth-brand img {
+  display: block; width: 72px; height: 72px; padding: 9px; margin: 0 auto 10px; border-radius: 22px;
+  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--pay-shadow);
+}
+.auth-brand h1 { color: var(--color-primary); font-size: 25px; font-weight: 700; margin: 0 0 4px; letter-spacing: -.02em; text-shadow: none; }
+.auth-brand p { color: var(--color-text-secondary); font-size: 13.5px; font-weight: 500; margin: 0; display: block; animation: none; text-shadow: none; }
+.auth-tabs { margin: 0 0 14px; padding: 5px; border: 1px solid var(--color-border); border-radius: 16px; gap: 6px; background: var(--color-surface-muted); box-shadow: none; }
 .auth-tab { min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--color-text-secondary); font-weight: 600; }
 .auth-tab.active { background: var(--color-surface); color: var(--color-primary); border: 0; box-shadow: var(--pay-shadow); font-weight: 700; }
 .auth-panel.active { padding: 20px; border: 1px solid var(--color-border); border-radius: 24px; background: var(--color-surface); box-shadow: var(--pay-shadow); }
-.auth-panel-heading { text-align: left; margin: 0 0 16px; }
-.auth-panel-heading h2 { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
-.auth-panel-heading p { margin: 0; font-size: 13px; }
-.auth-screen .form-row { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 0 8px; margin: 14px 0 4px; }
+.auth-panel-heading { text-align: left; margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+.auth-panel-heading h2 { font-size: 18px; font-weight: 700; margin: 0; color: var(--color-text); }
+.auth-panel-heading p { margin: 4px 0 0; font-size: 13px; }
+.auth-screen .form-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 8px; margin: 14px 0 6px; }
 .auth-screen .remember-label { display: inline-flex; gap: 7px; margin: 0; min-height: 44px; font-size: 12.5px; font-weight: 500; }
 .auth-screen .link-button { font-size: 12.5px; font-weight: 600; padding: 0; }
 .auth-submit { margin-top: 14px; }
 .auth-footnote { margin: 18px 0 0; color: var(--color-text-secondary); font-size: 12.5px; line-height: 1.7; }
 .inline-link { display: inline; padding: 0; min-height: 44px; font-size: inherit; text-decoration: underline; }
-.registration-progress { margin: 12px 0 16px; padding: 14px; border-radius: 14px; background: var(--color-surface-muted); }
+.registration-progress { margin: 12px 0 16px; padding: 14px; border-radius: 14px; background: var(--color-surface-muted); border: 1px solid var(--color-border); }
 .step-progress-track { height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-border); }
 #registrationProgressBar { display: block; height: 100%; border-radius: 999px; background: var(--color-primary); transition: width .18s ease; }
 .step-progress-meta { align-items: center; gap: 12px; margin-top: 7px; font-size: 12px; color: var(--color-text-secondary); }
@@ -974,8 +903,8 @@ label { font-size: 13.5px; font-weight: 600; margin-block: 14px 6px; }
 .username-lock-note { font-size: 11.5px; }
 .terms-label { align-items: flex-start; flex-wrap: nowrap; font-size: 13px; }
 .terms-label input { margin-top: 4px; }
-html[data-theme="dark"] .auth-card { box-shadow: none; }
-html[data-theme="dark"] .auth-brand img { background: transparent; padding: 0; box-shadow: none; }
+html[data-theme="dark"] .auth-card { box-shadow: var(--auth-card-shadow); }
+html[data-theme="dark"] .auth-brand img { background: var(--color-surface-muted); padding: 8px; box-shadow: none; }
 .launch-screen { background: var(--color-surface); }
 .launch-screen img { width: 112px; height: 112px; }
 
@@ -1142,7 +1071,7 @@ html[data-theme="dark"] .pay-toast { background: var(--color-surface-muted); col
   .modal, .admin-modal, .staff-pw-card { max-height: 96dvh; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-alert-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .modal-backdrop, .admin-modal-backdrop, .staff-pw-backdrop, .apc-alert-backdrop, .auth-screen .auth-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -1281,17 +1210,20 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 .pay-grid .pay-tile[aria-pressed="true"] .pay-tile-icon,.pay-grid .day-tab.active .pay-tile-icon{box-shadow:0 0 0 2px var(--color-primary),var(--pay-shadow);transform:scale(1.05)}
 .pay-grid .pay-tile[aria-pressed="true"] .learning-filter-count{color:var(--color-primary);opacity:1}
 
-/* 29 ── Login (index.html #authScreen): the living sky photograph, the sun/
-   moon arc and the season washes stay exactly as they are — this pass only
-   gives the sheet floating over them more presence: a haloed logo plate, a
-   segmented tab bar whose active tab lifts, taller fields with a focus
-   ring you can actually see, and a submit that reads as the one action of
-   the page. Scoped to .auth-screen, token-only, so the student app behind
-   the login inherits none of it. */
+/* 29 ── Login (index.html #authScreen): clean frosted glass card over the
+   ambient canvas — haloed logo plate inside a soft brand banner, a segmented
+   tab bar whose active tab lifts, taller fields with a visible focus ring,
+   and a submit that reads as the one action of the page. Scoped to
+   .auth-screen, token-only, so the student app behind the login inherits
+   none of it. */
+.auth-screen .auth-card {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
 .auth-screen .auth-brand img {
   border-radius: 26px; box-shadow: var(--pay-logo-shadow), 0 0 0 6px var(--pay-hero-chip);
 }
-.auth-screen .auth-brand h1 { font-size: 28px; }
+.auth-screen .auth-brand h1 { font-size: 26px; }
 .auth-screen .auth-tabs { border-radius: 18px; }
 .auth-screen .auth-tab {
   border-radius: 14px; font-size: 15px;
@@ -1299,15 +1231,38 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 }
 .auth-screen .auth-tab.active { box-shadow: var(--pay-shadow), inset 0 0 0 1px var(--color-border); }
 .auth-screen .auth-panel.active { border-radius: 26px; padding: 22px; box-shadow: var(--shadow-dialog); }
-.auth-screen .input-wrap input { min-height: 52px; border-radius: 14px; }
+.auth-screen label { font-size: 13.5px; font-weight: 600; color: var(--color-text); margin-block: 14px 6px; }
+.auth-screen form > label:first-of-type { margin-top: 0; }
+.auth-screen .input-wrap > svg { color: var(--color-text-secondary); transition: color .18s ease; }
+.auth-screen .input-wrap input {
+  min-height: 52px; border-radius: 14px; background: var(--auth-input-bg);
+  transition: border-color .18s ease, background-color .18s ease, outline-color .18s ease;
+}
+.auth-screen select, .auth-screen textarea {
+  border-radius: 14px; background: var(--auth-input-bg);
+  transition: border-color .18s ease, background-color .18s ease;
+}
 .auth-screen .input-wrap:focus-within > svg { color: var(--color-primary); }
 .auth-screen .input-wrap input:focus {
+  background: var(--color-surface);
   border-color: var(--color-primary); outline: 3px solid var(--pay-disc); outline-offset: 0;
 }
-.auth-screen .auth-submit { min-height: 54px; border-radius: 16px; font-size: 16px; font-weight: 700; }
+.auth-screen select:focus, .auth-screen textarea:focus {
+  background: var(--color-surface);
+  border-color: var(--color-primary); outline: 3px solid var(--pay-disc); outline-offset: 0;
+}
+.auth-screen .show-pin {
+  width: 40px; height: 40px; right: 6px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--color-text-secondary);
+}
+.auth-screen .show-pin:hover, .auth-screen .show-pin:focus-visible {
+  background: var(--color-surface-muted); color: var(--color-primary);
+}
+.auth-screen .auth-submit { min-height: 54px; border-radius: 16px; font-size: 16px; font-weight: 700; box-shadow: var(--pay-fab-shadow); }
 .auth-screen .auth-submit svg { transition: transform .18s ease; }
 .auth-screen .auth-submit:hover svg, .auth-screen .auth-submit:active svg { transform: translateX(3px); }
-.auth-screen .auth-message { text-align: center; font-weight: 600; }
+.auth-screen .auth-message { text-align: center; font-weight: 600; border-radius: 14px; }
 .auth-screen .auth-footnote.first-use-note {
   margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--color-border);
 }
@@ -2918,17 +2873,16 @@ html[data-theme="dark"] .app-shell .app-topbar { background: var(--pay-hero-a); 
 .manager-finance-collection-kpis > .admin-card { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--glass-surface); box-shadow: none; }
 .manager-finance-collection-kpis small { color: var(--color-text-secondary); font-size: 11.5px; line-height: 1.4; }
 .manager-finance-collection-kpis strong { margin-top: 4px; color: var(--color-primary); font-size: 18px; line-height: 1.3; }
-[data-finance-panel="approval"] > .pay-grid {
+[data-finance-panel="approval"] > .pay-grid:not(.teacher-home-actions) {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 12px;
   padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
 }
-[data-finance-panel="approval"] > .pay-grid .pay-tile {
+[data-finance-panel="approval"] > .pay-grid .pay-tile:not(.teacher-action-card) {
   display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 40px; padding: 7px 5px;
   border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface-muted);
   color: var(--color-text-secondary); box-shadow: none; font-size: 12px; line-height: 1.25;
 }
-[data-finance-panel="approval"] > .pay-grid .pay-tile-icon { display: none; }
-[data-finance-panel="approval"] > .pay-grid .pay-tile.active {
+[data-finance-panel="approval"] > .pay-grid .pay-tile:not(.teacher-action-card).active {
   border-color: var(--color-primary); background: var(--color-primary); color: var(--pay-on-fab);
 }
 @media (max-width: 380px) {
@@ -3625,7 +3579,7 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
     min-height: 42px; padding: 8px 12px; border-radius: 13px; font-size: 14px;
     background: var(--color-surface); border-color: var(--color-border);
   }
-  .manager-view[data-view-panel="students"] .manager-student-scopes {
+  .manager-view[data-view-panel="students"] .manager-student-scopes:not(.teacher-home-actions) {
     display: flex; flex-wrap: nowrap; align-items: center; gap: 3px;
     width: 100%; min-width: 0; margin: 0 0 15px; padding: 4px;
     overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none;
@@ -3633,17 +3587,16 @@ html[data-birthday] body.student-reference #homeView .pay-hero::before { display
     scroll-snap-type: x proximity;
   }
   .manager-view[data-view-panel="students"] .manager-student-scopes::-webkit-scrollbar { display: none; }
-  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile {
+  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile:not(.teacher-action-card) {
     display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
     width: auto; min-width: max-content; min-height: 36px; padding: 7px 11px;
     border: 0; border-radius: 11px; background: transparent; box-shadow: none;
     color: var(--color-text-secondary); scroll-snap-align: start;
   }
-  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile .pay-tile-icon { display: none; }
-  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile .pay-tile-label {
+  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile:not(.teacher-action-card) .pay-tile-label {
     color: inherit; font-size: 12px; font-weight: 650; line-height: 1.25; white-space: nowrap;
   }
-  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile.active {
+  .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile:not(.teacher-action-card).active {
     background: var(--color-primary); color: var(--pay-on-fab); box-shadow: 0 2px 6px var(--pay-nav-shadow);
   }
   .manager-view[data-view-panel="students"] .manager-student-scopes > .pay-tile:focus-visible {

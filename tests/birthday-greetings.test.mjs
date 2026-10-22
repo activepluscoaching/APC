@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { birthdayAdvanceItems, birthdayItems, isStudentBirthday, notificationFeed } from '../js/notification-rules.js';
+import { birthdayAdvanceItems, birthdayItems, birthdayTodayStaffItems, isStudentBirthday, notificationFeed } from '../js/notification-rules.js';
 
 const student = { kind: 'student', studentId: 'S-BD', name: 'রাফি আহমেদ', birthDate: '2008-10-09' };
 
@@ -48,4 +48,24 @@ test('Admin, Manager and Teacher are told the day before, with class and name', 
   assert.equal(birthdayAdvanceItems(roster, { kind: 'staff', role: 'payment' }, now).length, 0);
   const feed = notificationFeed({ students: roster, viewer: { kind: 'staff', role: 'manager' }, now });
   assert.ok(feed.some(item => item.kind === 'birthday-soon' && item.sourceId === 'S-BD'));
+});
+
+test('all Admin, Manager and Teacher panels receive a same-day birthday notice on the student birthday', () => {
+  const now = Date.parse('2026-10-09T09:00:00Z');
+  const roster = [
+    { id: 'S-BD', name: 'রাফি আহমেদ', className: 'দশম শ্রেণি', group: 'বিজ্ঞান', birthDate: '2008-10-09', status: 'approved' },
+    { id: 'S-OTHER', name: 'মিম', className: 'নবম শ্রেণি', birthDate: '2009-01-01', status: 'approved' }
+  ];
+  for (const role of ['admin', 'manager', 'teacher']) {
+    const items = birthdayTodayStaffItems(roster, { kind: 'staff', role, assignedClasses: ['একাদশ শ্রেণি'] }, now);
+    assert.equal(items.length, 1);
+    assert.equal(items[0].key, 'birthday-today:S-BD:2026');
+    assert.equal(items[0].kind, 'birthday');
+    assert.equal(items[0].target, role === 'teacher' ? 'classes' : 'students');
+    assert.match(items[0].title, /আজ জন্মদিন — রাফি আহমেদ/);
+    assert.match(items[0].body, /দশম শ্রেণি • বিজ্ঞান — রাফি আহমেদ/);
+    const feed = notificationFeed({ students: roster, viewer: { kind: 'staff', role, assignedClasses: ['একাদশ শ্রেণি'] }, now });
+    assert.ok(feed.some(item => item.key === 'birthday-today:S-BD:2026' && item.kind === 'birthday'));
+  }
+  assert.equal(birthdayTodayStaffItems(roster, { kind: 'staff', role: 'payment' }, now).length, 0);
 });

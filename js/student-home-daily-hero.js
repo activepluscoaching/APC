@@ -1,7 +1,8 @@
 /* Student-only daily selection for the existing four-slide Home carousel.
    A Dhaka calendar date picks the featured slide; the selection updates again
    at midnight or when a hidden tab becomes visible. */
-import './student-home-hero-entry.js?v=379';
+import { STUDENT_HOME_HERO_SLIDES } from './student-home-hero-entry.js?v=379';
+import { pickHeroMessage } from './home-hero.js?v=379';
 import {
   BUILT_IN_QUOTES, pickQuote, quoteDateKey, quoteDayNumber, readQuoteCache
 } from './daily-quote.js';
@@ -123,6 +124,10 @@ export function initStudentDailyHero(rootOrSelector, options = {}) {
     const targetIndex = studentDailyHeroIndex(now, slides.length);
     const currentIndex = Math.max(0, slides.findIndex(slide => slide.classList.contains('is-active')));
     slides.forEach((slide, index) => {
+      const spec = STUDENT_HOME_HERO_SLIDES.find(item => item.id === slide.dataset.heroId)
+        || STUDENT_HOME_HERO_SLIDES[index];
+      const descNode = slide.querySelector('[data-hero-description]');
+      if (descNode && spec) descNode.textContent = pickHeroMessage(spec, now);
       const image = slide.querySelector('img');
       if (!image) return;
       const selected = index === targetIndex;

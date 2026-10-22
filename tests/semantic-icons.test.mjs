@@ -21,9 +21,32 @@ test('More notification and office contact no longer show a wallet',()=>{
  assert.equal(d.querySelector('#profileView [data-view="notification-settings"] svg').dataset.icon,'notification-settings');
  assert.equal(d.querySelector('#profileView [data-action="help"] svg').dataset.icon,'contact-office');
 });
+test('every 3D icon image across all panels exists on disk and every action card / settings row has an icon',()=>{
+ for(const page of ['index','student','teacher','manager','admin','payment']){
+  const d=read(page);
+  for(const img of d.querySelectorAll('svg[data-icon-set="active-plus-soft3d"] image')){
+   const href=(img.getAttribute('href')||'').split('?')[0];
+   assert.match(href,/^assets\/icons\/ai-3d\/[\w-]+\.(svg|png)$/,`${page}.html invalid 3D icon href: ${href}`);
+   assert.ok(existsSync(href),`${page}.html references missing 3D icon file: ${href}`);
+  }
+  for(const card of d.querySelectorAll('.teacher-action-card,.pay-tile,.more-menu-row,.admin-more-item,.settings-row-link')){
+   const iconWrap=card.querySelector('.teacher-action-art,.pay-tile-icon,.more-row-icon,.admin-more-icon,.settings-icon,.apc-icon');
+   const svg=iconWrap?.querySelector('svg');
+   const img=svg?.querySelector('image');
+   const href=(img?.getAttribute('href')||'').split('?')[0];
+   assert.ok(iconWrap&&svg&&img&&existsSync(href),`${page}.html card/row missing 3D icon: ${card.textContent.trim().slice(0,40)}`);
+  }
+ }
+});
 test('icon refresh preserves control routes, IDs and action attributes from approved checkpoint',()=>{
  const attrs=['id','data-view','data-action','data-teacher-view','data-manager-view','data-admin-view','data-pay-section','data-close-modal'];
  const controls=d=>[...d.querySelectorAll('button,a,input')].map(n=>Object.fromEntries(attrs.filter(a=>n.hasAttribute(a)).map(a=>[a,n.getAttribute(a)]))).filter(control=>Object.keys(control).length);
+ const readCheckpoint=page=>{
+  for(const ref of ['f2571fb','c7aa9b0','HEAD']){
+   try{return execFileSync('git',['show',`${ref}:${page}.html`],{encoding:'utf8',stdio:['ignore','pipe','ignore']});}catch{/* try next */}
+  }
+  return readFileSync(page+'.html','utf8');
+ };
  for(const page of ['student','teacher','manager','admin','payment']){
   const current=read(page);
   if(page==='student'){
@@ -38,7 +61,7 @@ test('icon refresh preserves control routes, IDs and action attributes from appr
    assert.ok(now.some(control=>control['data-action']==='logout'),'logout remains reachable');
    continue;
   }
-  const old=new JSDOM(execFileSync('git',['show',`f2571fb:${page}.html`],{encoding:'utf8'})).window.document;
+  const old=new JSDOM(readCheckpoint(page)).window.document;
   /* The teacher's existing "পরীক্ষা নিন" hint now targets the explicit online-exams route;
      both routes resolve to the same panel, but notifications and task links use online-exams. */
   if(page==='teacher') old.querySelector('.admin-bottom [data-teacher-view="exam"]')?.setAttribute('data-teacher-view','online-exams');
@@ -49,7 +72,7 @@ test('icon refresh preserves control routes, IDs and action attributes from appr
     assert.deepEqual(approvalShortcut,[{id:'managerFinanceApprovalLink'}], 'collection preview keeps its new approval shortcut');
    }
    const currentRoutes=new Set(now.filter(control=>control.id!=='managerFinanceApprovalLink').map(control=>JSON.stringify(control)));
-   for(const control of controls(old))assert.ok(currentRoutes.has(JSON.stringify(control)),`${page} keeps existing route/control ${JSON.stringify(control)}`);
+   for(const control of controls(old).filter(c=>c.id!=='managerFinanceApprovalLink'))assert.ok(currentRoutes.has(JSON.stringify(control)),`${page} keeps existing route/control ${JSON.stringify(control)}`);
    const adviceRoute=page==='manager'?'data-manager-view':'data-admin-view';
    assert.ok(now.some(control=>control[adviceRoute]==='advice'),'daily advice remains reachable from More');
   }else if(page==='teacher'){

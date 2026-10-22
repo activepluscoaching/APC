@@ -5,12 +5,15 @@
  * A clean report NEVER authorizes import: Auth ownership, deletion history,
  * reconciliation and emulator tests must still be done by an operator. */
 import { readFileSync, statSync } from 'node:fs';
+import { createDecipheriv, pbkdf2Sync } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { FEE_TYPES, METHODS, MONTHS } = require('../functions/staged-payment-core.cjs');
 
+const BACKUP_SECRET = 'active-plus-backup-aes-256-gcm-v2-institutional-seal';
+const BACKUP_PBKDF2_ITERATIONS = 100000;
 const STUDENTS = 'activePlus.admin.students.v1';
 const TRANSACTIONS = 'activePlus.admin.transactions.v1';
 const SAFE = /^[A-Za-z0-9_-]{1,128}$/;
@@ -28,13 +31,35 @@ export class PreflightInputError extends Error {
   constructor() { super('Invalid preflight input. Use an unmodified Admin backup and a reviewed link file.'); this.name = 'PreflightInputError'; }
 }
 const invalid = () => { throw new PreflightInputError(); };
+export function decryptBackupDataSync(payload) {
+  if (!object(payload) || payload.kind !== 'active-plus-backup') invalid();
+  if (payload.version === 2 && payload.encrypted === true) {
+    if (typeof payload.salt !== 'string' || typeof payload.iv !== 'string' || typeof payload.ciphertext !== 'string') invalid();
+    try {
+      const salt = Buffer.from(payload.salt, 'base64');
+      const iv = Buffer.from(payload.iv, 'base64');
+      const raw = Buffer.from(payload.ciphertext, 'base64');
+      if (salt.length < 8 || iv.length !== 12 || raw.length <= 16) invalid();
+      const key = pbkdf2Sync(BACKUP_SECRET, salt, BACKUP_PBKDF2_ITERATIONS, 32, 'sha256');
+      const tag = raw.subarray(raw.length - 16);
+      const enc = raw.subarray(0, raw.length - 16);
+      const decipher = createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(tag);
+      const plain = Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
+      const data = JSON.parse(plain);
+      if (!object(data)) invalid();
+      return data;
+    } catch { invalid(); }
+  }
+  if (payload.version === 1 && object(payload.data)) return payload.data;
+  invalid();
+}
 export function readLegacyBackupCollections(payload) {
-  if (!object(payload) || payload.kind !== 'active-plus-backup' || payload.version !== 1 ||
-      !object(payload.data) || typeof payload.data[STUDENTS] !== 'string' ||
-      typeof payload.data[TRANSACTIONS] !== 'string') invalid();
+  const data = decryptBackupDataSync(payload);
+  if (typeof data[STUDENTS] !== 'string' || typeof data[TRANSACTIONS] !== 'string') invalid();
   try {
-    const students = JSON.parse(payload.data[STUDENTS]);
-    const transactions = JSON.parse(payload.data[TRANSACTIONS]);
+    const students = JSON.parse(data[STUDENTS]);
+    const transactions = JSON.parse(data[TRANSACTIONS]);
     if (!Array.isArray(students) || !Array.isArray(transactions) ||
         students.length > MAX_ROWS || transactions.length > MAX_ROWS) invalid();
     return { students, transactions };

@@ -42,14 +42,12 @@ function shellBar(document, exitId) {
 
 /** The shared shell is identical across every panel. */
 function normalised(bar) {
-  // ids, titles and data-actions differ per panel by necessity (that is how
-  // the shell wires them); strip those volatile attributes before comparing
-  // the common APC brand/bell/sign-out structure. The teacher name used to be
-  // an extra topbar slot but left the bar on 2026-10-21 (it now lives only on
-  // the welcome hero card), so nothing needs removing first.
+  // ids, titles, data-actions and per-portal view routing attributes differ
+  // per panel by necessity (that is how each shell wires them); strip those
+  // volatile attributes before comparing the common APC brand/chat/bell/sign-out structure.
   return bar.outerHTML
     .replace(/<strong class="app-brand-name">[\s\S]*?<\/strong>/, '')
-    .replace(/\s(?:id|title|data-action)="[^"]*"/g, '');
+    .replace(/\s(?:id|title|data-action|data-view|data-teacher-view|data-manager-view|data-admin-view|data-admin-cap)="[^"]*"/g, '');
 }
 
 test('the login page keeps its brand-only card (no topbar, no bell, no sign-out)', () => {
@@ -108,12 +106,20 @@ test('every panel shares the APC topbar; teacher identity lives only on its hero
       assert.ok(exit, `${page.file}: sign-out is missing`);
       assert.equal(exit.id, page.exit, `${page.file}: sign-out changed id`);
       assert.ok(drawable(exit.querySelector('svg[data-icon="logout"]')), `${page.file}: sign-out has no icon`);
-      assert.equal(actions.querySelectorAll('button').length, 2, `${page.file}: the topbar holds more than the bell and sign-out`);
-      // Nothing else may sit in the bar — the buttons remain the original
-      // bell/exit pair, and no identity name slot is allowed back in.
+      const expectedButtons = page.file === 'payment.html' ? 2 : 3;
+      if (page.file !== 'payment.html') {
+        const chatBtn = actions.querySelector('#classChatTopbarButton');
+        assert.ok(chatBtn, `${page.file}: the class chat topbar shortcut is missing`);
+        assert.ok(drawable(chatBtn.querySelector('svg[data-icon="chat"]')), `${page.file}: the chat shortcut has no icon`);
+        assert.ok(chatBtn.querySelector('.notification-dot'), `${page.file}: the chat shortcut has no unread dot`);
+      } else {
+        assert.equal(actions.querySelector('#classChatTopbarButton'), null, 'payment.html keeps no class chat shortcut');
+      }
+      assert.equal(actions.querySelectorAll('button').length, expectedButtons, `${page.file}: unexpected topbar action count`);
+      // No identity name slot, clock or theme switch is allowed back in the bar.
       assert.equal(bar.querySelectorAll('[data-theme-toggle], time, .student-date, .manager-top-actions, .topbar-chip, .teacher-header-name').length, 0,
         `${page.file}: an extra control is back in the topbar`);
-      assert.equal(bar.querySelectorAll('button').length, 2, `${page.file}: the topbar has an extra button`);
+      assert.equal(bar.querySelectorAll('button').length, expectedButtons, `${page.file}: the topbar has an extra button`);
       // Dark mode still has a home on every panel: the same switch row the
       // student profile uses — sun/moon chip + the app's toggle switch.
       if (page.file === 'payment.html') {
@@ -264,3 +270,78 @@ test('the redesigned dark-mode switch really flips the theme', async () => {
   assert.ok(ctx.$('.theme-switch .theme-switch-icon .icon-sun'), 'the sun icon is missing');
   assert.ok(ctx.$('.theme-switch .theme-switch-icon .icon-moon'), 'the moon icon is missing');
 });
+
+test('mobile long Bengali notices show clean 1-2 line preview, toggle «আরও দেখুন», and open a scrollable detail sheet', async () => {
+  const ctx = await livePage('manager.html');
+  const { mountNoticeCenter } = await import('../js/notice-center.js?mobile-long-notice');
+  const longBody = [
+    'সম্মানিত শিক্ষার্থী ও অভিভাবকবৃন্দ, আগামীকাল সকাল ৯টা থেকে দুপুর ১টা পর্যন্ত বিশেষ প্রস্তুতিমূলক মডেল টেস্ট অনুষ্ঠিত হবে।',
+    'সকল শিক্ষার্থীকে নির্ধারিত সময়ে প্রবেশপত্র, কলম ও জ্যামিতি বক্সসহ উপস্থিত থাকার জন্য অনুরোধ করা হচ্ছে।',
+    'বিস্তারিত রুটিন লিংক: https://activepluscoaching.example/notices/2026/model-test-schedule-class-10-special-batch',
+    'কোনো কারণে অনুপস্থিত থাকলে অভিভাবকের লিখিত আবেদন জমা দিতে হবে — শেষ লাইন যাচাই।'
+  ].join('\n');
+  const readSet = new Set();
+  const items = [{
+    key: 'notice:LONG-1:r1',
+    source: 'notices',
+    sourceId: 'LONG-1',
+    kind: 'notice',
+    title: 'দশম শ্রেণির বিশেষ মডেল টেস্ট ও উপস্থিতি সংক্রান্ত জরুরি নোটিশ',
+    body: longBody,
+    at: Date.parse('2026-10-22T08:30:00Z'),
+    audience: 'সকল শিক্ষার্থী'
+  }];
+  const center = mountNoticeCenter({
+    feed: () => items,
+    read: () => [...readSet],
+    markRead: keys => { keys.forEach(k => readSet.add(k)); return true; },
+    openItem: () => {},
+    pushSupport: async () => ({ supported: false, secureContext: true, permission: 'unsupported', hasVapidKey: false }),
+    enable: async () => ({ ok: false, status: 'unsupported' }),
+    disable: async () => ({ ok: false, status: 'off' }),
+    refresh: () => {}
+  });
+
+  // 1) In-app popup (#apcInAppAlert) shows title + clean 1-2 line preview + «নোটিশ খুলুন» button without dumping raw 4-line text
+  center.showPreview(items[0]);
+  const popup = ctx.$('#apcInAppAlert');
+  assert.equal(popup.hidden, false);
+  const popupCopy = popup.querySelector('.apc-inapp-alert-copy small');
+  assert.ok(popupCopy, 'popup renders a compact preview');
+  assert.ok(popupCopy.textContent.length <= 145, 'popup preview stays concise on mobile');
+  assert.doesNotMatch(popupCopy.textContent, /শেষ লাইন যাচাই/, 'popup preview trims before the final paragraph');
+  const popupOpenBtn = popup.querySelector('.apc-inapp-alert-action');
+  assert.equal(popupOpenBtn?.textContent.trim(), 'নোটিশ খুলুন');
+
+  // 2) Bell Notification Center card shows clean preview + «আরও দেখুন» + «নোটিশ খুলুন»
+  ctx.click(ctx.$('#notificationButton'));
+  const modal = ctx.$('#apcNoticeModal');
+  assert.equal(modal.hidden, false);
+  const card = modal.querySelector('.notice-detail');
+  assert.ok(card.querySelector('.notification-card-preview'), 'collapsed card uses .notification-card-preview');
+  const expandBtn = card.querySelector('[data-apc-notice-expand]');
+  const openBtn = card.querySelector('.notice-action[data-apc-notice-open]');
+  assert.equal(expandBtn?.textContent.trim(), 'আরও দেখুন');
+  assert.equal(expandBtn?.getAttribute('aria-expanded'), 'false');
+  assert.equal(openBtn?.textContent.trim(), 'নোটিশ খুলুন');
+
+  // 3) Clicking «আরও দেখুন» expands full multi-line Bengali text inline without closing the modal
+  ctx.click(expandBtn);
+  assert.equal(modal.hidden, false, 'expanding inline keeps the modal open');
+  const expandedBody = modal.querySelector('.notice-detail .notification-body.notice-content');
+  assert.ok(expandedBody, 'expanded card renders .notification-body.notice-content');
+  assert.match(expandedBody.textContent, /শেষ লাইন যাচাই/, 'full end-of-notice text is readable');
+  assert.match(expandedBody.textContent, /model-test-schedule-class-10-special-batch/);
+  const collapseBtn = modal.querySelector('[data-apc-notice-expand]');
+  assert.equal(collapseBtn?.textContent.trim(), 'সংক্ষিপ্ত করুন');
+  assert.equal(collapseBtn?.getAttribute('aria-expanded'), 'true');
+
+  // 4) Clicking «নোটিশ খুলুন» on a staff portal opens the scrollable in-modal detail sheet instead of losing the notice
+  ctx.click(modal.querySelector('.notice-action[data-apc-notice-open]'));
+  const sheet = modal.querySelector('[data-apc-notice-detail-sheet="notice:LONG-1:r1"]');
+  assert.ok(sheet, 'staff portal opens scrollable in-modal notice detail sheet');
+  assert.match(sheet.querySelector('.notification-body.notice-content').textContent, /শেষ লাইন যাচাই/);
+  ctx.click(sheet.querySelector('[data-apc-notice-detail-back]'));
+  assert.equal(modal.querySelector('[data-apc-notice-detail-sheet]'), null, 'back button returns to the notification list');
+});
+

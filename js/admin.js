@@ -64,7 +64,7 @@ runMigrations();
 // credentials, local account secrets or device keys in a downloaded backup.
 const BACKUP_KEYS = Object.freeze([
   KEYS.students, KEYS.transactions, KEYS.notices, KEYS.routine,
-  KEYS.teaching, KEYS.exams, KEYS.settings
+  KEYS.teaching, KEYS.exams, KEYS.settings, KEYS.classChat
 ]);
 const bn = toBanglaNumber;
 const $ = selector => document.querySelector(selector);
@@ -1517,8 +1517,18 @@ const VIEW_REFRESHERS = {
   profile: () => { resetSettingsHub('[data-settings-hub="admin"]'); renderAdminProfile(); },
   staff: () => { void renderStaff(); },
   content: () => { void refreshAdminContentRecords(); },
-  reports: () => refreshReports($('#adminReports'))
+  reports: () => refreshReports($('#adminReports')),
+  'class-chat': () => mountAdminClassChat()
 };
+
+let adminChatFlight = null;
+function mountAdminClassChat() {
+  const mount = $('#adminClassChatMount');
+  if (!mount) return;
+  adminChatFlight ??= import('./class-chat.js').catch(err => { adminChatFlight = null; throw err; });
+  void adminChatFlight.then(mod => mod.mountClassChat(mount, { portal: 'admin' }))
+    .catch(err => console.warn('[Active Plus] admin class-chat failed:', err?.message));
+}
 
 function refreshView(view) {
   const refresh = VIEW_REFRESHERS[view];

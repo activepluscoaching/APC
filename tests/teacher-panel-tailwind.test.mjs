@@ -218,7 +218,7 @@ test('both hero illustrations ship at the card\'s 828×462 size, day and night',
 
 test('every teacher view has a full 3D hero card with daily advice, date pill, glint, and hidden top back button', () => {
   const views = [...page.querySelectorAll('.teacher-view')];
-  assert.equal(views.length, 11, 'all 11 teacher views are audited');
+  assert.equal(views.length, 12, 'all 12 teacher views are audited');
   for (const view of views) {
     const hero = view.querySelector(':scope > .home-dashboard-intro.teacher-home-intro');
     assert.ok(hero, `${view.id} starts with a full 3D Hero Card`);

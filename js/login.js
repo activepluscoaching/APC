@@ -382,6 +382,7 @@ export function initLogin({ state, onAuthenticated }) {
     if (trigger.dataset.authTab === 'first-admin') void openFirstAdminSetup();
     else switchAuthTab(trigger.dataset.authTab);
   }));
+  $('#switchToRegister')?.addEventListener('click', () => $('.auth-tab[data-auth-tab="register"]')?.click());
   const form = $('#loginForm');
   let submitting = false;
   form?.addEventListener('submit', async event => {

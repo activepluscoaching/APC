@@ -73,6 +73,7 @@ export function unreadBadgeText(count) {
 }
 
 let center = null;
+let centerDoc = null;
 
 /* ---- helpers ---------------------------------------------------------------- */
 
@@ -146,8 +147,9 @@ function emptyState(title, note) {
  * @returns {{ paint: Function, open: Function, close: Function, refresh: Function }}
  */
 export function mountNoticeCenter(api) {
-  if (center) return center;
+  if (center && centerDoc === document) return center;
   if (!api || typeof api.feed !== 'function') return null;
+  centerDoc = document;
 
   const ownsModal = !document.getElementById('noticeModal');
   const modal = document.getElementById('noticeModal') || buildModal();
@@ -157,6 +159,22 @@ export function mountNoticeCenter(api) {
   let pushRow = null;
   let shownFeed = [];
   let filter = 'unread';
+  let detailKey = '';
+  const expandedKeys = new Set();
+
+  const PREVIEW_CHAR_LIMIT = 140;
+  const isLongBody = value => {
+    const raw = String(value ?? '').trim();
+    if (!raw) return false;
+    return raw.length > PREVIEW_CHAR_LIMIT || raw.split(/\r?\n/).length > 2;
+  };
+  const buildCardPreview = value => {
+    const normalized = String(value ?? '').replace(/\s*\r?\n\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    if (normalized.length <= PREVIEW_CHAR_LIMIT) return normalized;
+    const sliced = normalized.slice(0, PREVIEW_CHAR_LIMIT);
+    const boundary = sliced.lastIndexOf(' ');
+    return `${(boundary > 80 ? sliced.slice(0, boundary) : sliced).trim()}…`;
+  };
 
   /* The filter tabs and the "read all" action, for a page modal that has the
      list but not this shell (index.html). */
@@ -193,29 +211,29 @@ export function mountNoticeCenter(api) {
     }
   }
 
-  const separatesBoard = () => {
-    try { return api.viewer?.().kind === 'student'; } catch { return false; }
+  const isStudentViewer = () => {
+    try { return api.viewer?.()?.kind === 'student'; } catch { return false; }
   };
-  const centerFeed = items => separatesBoard()
-    ? items.filter(item => !['notice', 'broadcast'].includes(item.kind))
-    : items;
+  const centerFeed = items => items;
+  const displayTitle = item => {
+    const raw = String(item?.title || 'নোটিশ').trim() || 'নোটিশ';
+    if (item?.kind === 'notice' && isStudentViewer() && !/^নতুন নোটিশ/u.test(raw)) {
+      return `নতুন নোটিশ এসেছে - ${raw}`;
+    }
+    return raw;
+  };
 
-  /* Unread state: the record store is authoritative. Student notices and
-     broadcasts are counted on their separate Notice Board, not under the bell. */
-  function unreadKeys(feed = []) {
+  /* Unread state: the record store is authoritative across notices, broadcasts,
+     exams, homework and results so the bell badge reflects unread notices too. */
+  function unreadKeys() {
     if (typeof api.unreadKeys === 'function') {
       try {
         const keys = new Set(api.unreadKeys());
-        if (separatesBoard()) {
-          const visible = new Set(feed.map(item => item.key));
-          const filtered = new Set([...keys].filter(key => visible.has(key)));
-          return { count: filtered.size, keys: filtered };
-        }
         const count = typeof api.unread === 'function' ? Number(api.unread()) : keys.size;
         return { count: Number.isFinite(count) ? Math.max(0, count) : keys.size, keys };
       } catch { /* fall through to the receipts */ }
     }
-    if (!separatesBoard() && typeof api.unread === 'function') {
+    if (typeof api.unread === 'function') {
       try {
         const count = Number(api.unread());
         if (Number.isFinite(count)) return { count: Math.max(0, count), keys: null };
@@ -251,20 +269,51 @@ export function mountNoticeCenter(api) {
   }
 
   function paintCard(item, unread) {
-    const opens = item.actionable || Boolean(item.target) || typeof api.openItem === 'function';
-    const label = actionLabel(item) || (item.actionable || item.target ? 'খুলুন' : '');
+    const opens = Boolean(item.actionable || item.target || item.body) && (typeof api.openItem === 'function' || Boolean(item.body));
+    const defaultNoticeLabel = item.kind === 'notice' ? 'নোটিশ খুলুন' : (item.kind === 'broadcast' ? 'জরুরি ঘোষণা খুলুন' : '');
+    const label = actionLabel(item) || defaultNoticeLabel || (item.actionable || item.target ? 'খুলুন' : '');
     const rowOpens = opens && !label;
-    const action = label
+    const heading = displayTitle(item);
+    const bodyText = String(item.body || '').trim();
+    const longBody = isLongBody(bodyText);
+    const expanded = longBody && expandedKeys.has(item.key);
+    const bodyMarkup = bodyText
+      ? (expanded
+        ? '<div class="notification-body notice-content">' + escapeHtml(bodyText) + '</div>'
+        : '<p class="notification-card-preview">' + escapeHtml(longBody ? buildCardPreview(bodyText) : bodyText) + '</p>')
+      : '';
+    const expandButton = longBody
+      ? '<button type="button" class="mini-btn notice-expand-btn" data-apc-notice-expand="' + escapeHtml(item.key) + '" aria-expanded="' + (expanded ? 'true' : 'false') + '">' + (expanded ? 'সংক্ষিপ্ত করুন' : 'আরও দেখুন') + '</button>'
+      : '';
+    const openButton = label
       ? '<button type="button" class="mini-btn primary notice-action" data-apc-notice-open="' + escapeHtml(item.key) + '" aria-label="' + escapeHtml(`${label}: ${item.title}`) + '">' + escapeHtml(label) + '</button>'
       : '';
-    return '<article class="notice-detail' + (unread ? ' unread' : '') + (rowOpens ? ' actionable' : '') + (label ? ' has-action' : '') + (item.kind === 'birthday' || item.kind === 'birthday-soon' ? ' is-birthday' : '') + '"' +
-      (rowOpens ? ' data-apc-notice-open="' + escapeHtml(item.key) + '" role="button" tabindex="0"' : '') + '>' +
+    const actionsRow = (expandButton || openButton)
+      ? '<div class="notice-card-actions">' + expandButton + openButton + '</div>'
+      : '';
+    return '<article class="notice-detail' + (unread ? ' unread' : '') + (opens ? ' actionable' : '') + (label ? ' has-action' : '') + (expanded ? ' is-expanded' : '') + (item.kind === 'birthday' || item.kind === 'birthday-soon' ? ' is-birthday' : '') + '"' +
+      (opens ? ' data-apc-notice-open="' + escapeHtml(item.key) + '"' : '') +
+      (rowOpens ? ' role="button" tabindex="0"' : '') + '>' +
       '<span class="notice-detail-icon' + (item.kind === 'broadcast' ? ' light' : '') + (item.kind === 'birthday' || item.kind === 'birthday-soon' ? ' is-birthday' : '') + '">' + iconMarkup(item.kind) + '</span>' +
       '<div class="notice-detail-copy"><span class="notice-time">' + escapeHtml(whenText(item)) + '</span>' +
       '<span class="notice-section-chip">' + escapeHtml(sectionOf(item)) + '</span>' +
-      '<h3>' + escapeHtml(item.title) + '</h3>' +
-      (item.body ? '<p>' + escapeHtml(item.body) + '</p>' : '') + action + '</div>' +
+      '<h3>' + escapeHtml(heading) + '</h3>' +
+      bodyMarkup + actionsRow + '</div>' +
       (unread ? '<span class="notice-unread-dot" aria-label="অপঠিত"></span>' : '') + '</article>';
+  }
+
+  function paintDetailSheet(item) {
+    const heading = displayTitle(item);
+    const bodyText = String(item.body || '').trim();
+    return '<article class="notice-modal-detail-sheet" data-apc-notice-detail-sheet="' + escapeHtml(item.key) + '">' +
+      '<div class="notice-modal-detail-head">' +
+        '<button type="button" class="mini-btn notice-detail-back" data-apc-notice-detail-back>← তালিকায় ফিরুন</button>' +
+        '<span class="notice-section-chip">' + escapeHtml(sectionOf(item)) + '</span>' +
+      '</div>' +
+      '<span class="notice-time">' + escapeHtml(whenText(item)) + '</span>' +
+      '<h3>' + escapeHtml(heading) + '</h3>' +
+      (bodyText ? '<div class="notification-body notice-content">' + escapeHtml(bodyText) + '</div>' : '') +
+    '</article>';
   }
 
   function paint() {
@@ -275,7 +324,7 @@ export function mountNoticeCenter(api) {
     const unread = state.count === null ? unreadItems.length : state.count;
     shownFeed = feed;
 
-    if (clearButton) clearButton.hidden = feed.length === 0;
+    if (clearButton) clearButton.hidden = feed.length === 0 || Boolean(detailKey);
 
     const chip = modal.querySelector('[data-apc-notice-unread-chip]');
     if (chip) chip.textContent = unread ? ` ${bn(unread)}` : '';
@@ -296,11 +345,16 @@ export function mountNoticeCenter(api) {
     if (!listBox) return { unread, total: feed.length };
 
     if (!feed.length) {
-      listBox.innerHTML = separatesBoard()
-        ? emptyState('নতুন নোটিফিকেশন নেই', 'স্কুলের নোটিশগুলো আলাদা নোটিশ বোর্ডে থাকে।')
-        : emptyState('সব নোটিফিকেশন দেখা হয়েছে', 'নতুন কোনো নোটিফিকেশন নেই।');
+      detailKey = '';
+      listBox.innerHTML = emptyState('সব নোটিফিকেশন দেখা হয়েছে', 'নতুন কোনো নোটিফিকেশন নেই।');
       return { unread, total: 0 };
     }
+    const activeDetail = detailKey ? feed.find(item => item.key === detailKey) : null;
+    if (activeDetail) {
+      listBox.innerHTML = paintDetailSheet(activeDetail);
+      return { unread, total: feed.length };
+    }
+    detailKey = '';
     const visible = filter === 'unread' ? unreadItems : feed;
     listBox.innerHTML = visible.length
       ? visible.map(item => paintCard(item, isUnread(item, state))).join('')
@@ -358,9 +412,10 @@ export function mountNoticeCenter(api) {
     pushNote.append(line, on);
   }
 
-  function open() {
+  function open(initialDetailKey = '') {
     hideAlerts();                              // the list shows them all
-    filter = 'unread';
+    detailKey = initialDetailKey || '';
+    filter = detailKey ? 'all' : 'unread';
     paint();
     show(true);
   }
@@ -372,7 +427,28 @@ export function mountNoticeCenter(api) {
     if (bell) { event.preventDefault(); open(); return; }
     if (!modal.contains(event.target)) return;
     const tab = event.target?.closest?.('[data-apc-notice-filter]');
-    if (tab) { filter = tab.dataset.apcNoticeFilter === 'all' ? 'all' : 'unread'; paint(); return; }
+    if (tab) {
+      detailKey = '';
+      filter = tab.dataset.apcNoticeFilter === 'all' ? 'all' : 'unread';
+      paint();
+      return;
+    }
+    if (event.target?.closest?.('[data-apc-notice-detail-back]')) {
+      event.preventDefault();
+      detailKey = '';
+      paint();
+      return;
+    }
+    const expandButton = event.target?.closest?.('[data-apc-notice-expand]');
+    if (expandButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const key = expandButton.dataset.apcNoticeExpand;
+      if (expandedKeys.has(key)) expandedKeys.delete(key);
+      else expandedKeys.add(key);
+      paint();
+      return;
+    }
     if (event.target?.closest?.('[data-apc-notice-read-all]')) {
       event.preventDefault();
       readAll();
@@ -424,7 +500,15 @@ export function mountNoticeCenter(api) {
       if (typeof api.markRead === 'function') api.markRead([key]);
       else if (typeof api.markAllSeen === 'function') api.markAllSeen();
     } catch { /* opening still works */ }
-    if (typeof api.openItem === 'function') {
+    const needsInlineDetail = ((item.kind === 'notice' || item.kind === 'broadcast') && !isStudentViewer())
+      || (!item.actionable && !item.target && Boolean(item.body));
+    if (needsInlineDetail) {
+      detailKey = item.key;
+      filter = 'all';
+      paint();
+      return;
+    }
+    if (typeof api.openItem === 'function' && (item.actionable || item.target)) {
       closeModal();
       void Promise.resolve(api.openItem(item)).finally(() => paint());
       return;
@@ -486,11 +570,18 @@ export function mountNoticeCenter(api) {
       if (!row) return;
       const item = alertItems.find(entry => entry.key === row.dataset.apcAlertOpen);
       alertItems = alertItems.filter(entry => entry !== item);
-      paintAlerts();
-      if (!item) return;
-      if ((item.actionable || item.target) && typeof api.openItem === 'function') {
+      if (!item) { paintAlerts(); return; }
+      try {
+        if (typeof api.markRead === 'function') api.markRead([item.key]);
+      } catch { /* opening still proceeds */ }
+      const staffNoticeDetail = (item.kind === 'notice' || item.kind === 'broadcast') && !isStudentViewer();
+      if (!staffNoticeDetail && (item.actionable || item.target) && typeof api.openItem === 'function') {
+        hideAlerts();
         void Promise.resolve(api.openItem(item)).finally(() => paint());
-      } else open();
+      } else {
+        hideAlerts();
+        open(item.body ? item.key : '');
+      }
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && alertBackdrop && !alertBackdrop.hidden) hideAlerts();
@@ -517,12 +608,15 @@ export function mountNoticeCenter(api) {
     if (!alertItems.length) { hideAlerts(); return; }
     ensureAlertShell();
     const rows = alertItems.slice(0, 3).map(item => {
-      const label = actionLabel(item) || (item.actionable || item.target ? 'খুলুন' : '');
+      const defaultNoticeLabel = item.kind === 'notice' ? 'নোটিশ খুলুন' : (item.kind === 'broadcast' ? 'জরুরি ঘোষণা খুলুন' : '');
+      const label = actionLabel(item) || defaultNoticeLabel || (item.actionable || item.target ? 'খুলুন' : '');
+      const heading = displayTitle(item);
+      const preview = item.body ? buildCardPreview(item.body) : '';
       const key = escapeHtml(item.key);
       return '<li class="apc-inapp-alert-row">' +
         '<button type="button" class="apc-inapp-alert-item" data-apc-alert-open="' + key + '">' +
           '<span class="apc-inapp-alert-icon">' + iconMarkup(item.kind) + '</span>' +
-          '<span><b>' + escapeHtml(item.title) + '</b>' + (item.body ? '<small>' + escapeHtml(item.body) + '</small>' : '') + '</span>' +
+          '<span class="apc-inapp-alert-copy"><b>' + escapeHtml(heading) + '</b>' + (preview ? '<small>' + escapeHtml(preview) + '</small>' : '') + '</span>' +
         '</button>' + (label
           ? '<button type="button" class="mini-btn primary apc-inapp-alert-action" data-apc-alert-open="' + key + '" aria-label="' + escapeHtml(`${label}: ${item.title}`) + '">' + escapeHtml(label) + '</button>'
           : '') +

@@ -110,5 +110,5 @@ test('the action center uses the same shared glass accent and a safe-height shee
 test('the login layer beneath is untouched', () => {
   const loginSection = css.indexOf('/* 29 ');
   assert.ok(loginSection > 0 && loginSection < start, 'the §29 login layer still ships before §30');
-  assert.match(css.slice(loginSection, start), /\.auth-screen \.auth-submit \{ min-height: 54px/, '§29 rules are intact');
+  assert.match(css.slice(loginSection, start), /\.auth-screen \.auth-submit \{\s*min-height: 46px/, '§29 rules are intact');
 });

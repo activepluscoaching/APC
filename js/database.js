@@ -10,6 +10,7 @@ export const COLLECTIONS = Object.freeze({
   academics: 'academics',
   courseContent: 'courseContent',
   courses: 'courses',
+  classChat: 'classChat',
   questionBank: 'questionBank',
   account: 'account',
   accounts: 'accounts',
@@ -34,7 +35,8 @@ export const SYNCABLE = Object.freeze([
   COLLECTIONS.settings,
   COLLECTIONS.academics,
   COLLECTIONS.courseContent,
-  COLLECTIONS.courses
+  COLLECTIONS.courses,
+  COLLECTIONS.classChat
 ]);
 
 export const STAFF_KEYS = Object.freeze({
@@ -64,6 +66,7 @@ export const KEYS = Object.freeze({
   academics: 'activePlus.academics.v1',
   courseContent: 'activePlus.courseContent.v1',
   courses: 'activePlus.courses.v1',
+  classChat: 'activePlus.classChat.v1',
   questionBank: 'activePlus.questionBank.v1',
   notificationSettings: 'activePlus.notificationSettings.v1'
 });

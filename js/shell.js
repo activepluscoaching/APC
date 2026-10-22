@@ -95,10 +95,11 @@ const VIEW_ROUTES = Object.freeze([
   'materials', 'model-test', 'study-practice', 'study-results', 'study-other',
   'exams', 'exam-upcoming', 'exam-live', 'exam-done', 'exam-results', 'exam-practice',
   'exam-instant', 'exam-papers', 'exam-recent', 'exam-bank', 'exam-other', 'results',
-  'profile', 'my-profile', 'student-id-card', 'settings', 'student-fee', 'reports', 'notification-settings', 'notice-board'
+  'profile', 'my-profile', 'student-id-card', 'settings', 'student-fee', 'reports', 'notification-settings', 'notice-board', 'class-chat'
 ]);
 /* Views whose id does not follow the `<route>View` rule. */
 const VIEW_ID_OVERRIDES = Object.freeze({
+  'class-chat': 'classChatView',
   'notification-settings': 'notificationSettingsView',
   'my-profile': 'myProfileView',
   'student-id-card': 'studentIdCardView',
@@ -191,7 +192,8 @@ const NAV_PARENTS = Object.freeze({
   'student-id-card': 'profile',
   settings: 'profile',
   'student-fee': 'profile',
-  'notice-board': 'home'
+  'notice-board': 'home',
+  'class-chat': 'home'
 });
 
 export function viewRouteFromHash(hash = window.location.hash) {

@@ -44,7 +44,8 @@ export const ILLUSTRATIONS = Object.freeze({
   help: a(p('M3 12.8V6.2A3.2 3.2 0 0 1 6.2 3h11.6A3.2 3.2 0 0 1 21 6.2v9.2a3.2 3.2 0 0 1-3.2 3.2H9l-4.8 3v-4','blue-back')+c(12,10.6,6,'paper')+st('M10.1 8.8a2 2 0 0 1 4 0c0 1.8-2 1.6-2 3.3','blue',1.5)+c(12.1,13.8,.55,'blue','stroke="none"')),
   bell: a(p('M5.2 14.8V9.4a6.8 6.8 0 0 1 13.6 0v5.4l2 3H3.2Z','gold')+st('M9.3 20.2a3 3 0 0 0 5.4 0','outline',1.6)+c(18.8,5,3,'mint')+c(18.8,5,.5,'paper','stroke="none"')),
   mail: a(r(2.7,5,18.6,15.5,'paper',2.5)+p('m3.4 6.2 8.6 6.7 8.6-6.7','blue-back')+st('m3.7 19.4 5.8-5.1m10.8 5.1-5.8-5.1','blue')+c(19.3,5.1,3.1,'mint')+check('m17.9 5.1 1 1 1.9-2')),
-  phone: a(r(4.8,2.5,14.4,19.1,'mint',2.7)+r(6.8,5.1,10.4,12.9,'paper',1)+st('M10.3 4h3.4','on-color',.8)+p('M9.2 8h2l.7 1.8-1.3.9q.9 2 2.5 2.7l1-1.2 1.8.8v1.9c-4.4.5-7.8-3.3-6.7-6.9','blue')+c(12,19.8,.6,'paper','stroke="none"'))
+  phone: a(r(4.8,2.5,14.4,19.1,'mint',2.7)+r(6.8,5.1,10.4,12.9,'paper',1)+st('M10.3 4h3.4','on-color',.8)+p('M9.2 8h2l.7 1.8-1.3.9q.9 2 2.5 2.7l1-1.2 1.8.8v1.9c-4.4.5-7.8-3.3-6.7-6.9','blue')+c(12,19.8,.6,'paper','stroke="none"')),
+  chat: a(p('M3 6.2A2.7 2.7 0 0 1 5.7 3.5h10.6A2.7 2.7 0 0 1 19 6.2v6.6a2.7 2.7 0 0 1-2.7 2.7H9.6l-4 3.2v-3.2H5.7A2.7 2.7 0 0 1 3 12.8Z','blue')+p('M9.4 10.6h9.2A2.4 2.4 0 0 1 21 13v5a2.4 2.4 0 0 1-2.4 2.4h-1v2.6l-3.3-2.6H9.4A2.4 2.4 0 0 1 7 18v-5a2.4 2.4 0 0 1 2.4-2.4Z','mint')+st('M6.8 8.3h7.2M6.8 11.2h4.2','on-color',1.4)+c(11.6,15.5,.8,'paper','stroke="none"')+c(14.2,15.5,.8,'paper','stroke="none"')+c(16.8,15.5,.8,'paper','stroke="none"'))
 });
 
 const s = (base, mark) => `<g transform="translate(0 .2) scale(.82)">${ILLUSTRATIONS[base]}</g><circle cx="18" cy="18" r="5.3" fill="var(--icon-paper)" stroke="var(--icon-outline)" stroke-width=".8"/><g fill="none" stroke="var(--icon-blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${mark}</g>`;
@@ -177,7 +178,7 @@ const aliases = Object.freeze({
   sliders: 'settings', summary: 'reports', grid: 'dashboard', clipboard: 'exam', trending: 'reports', award: 'result',
   success: 'approval', verified: 'approval', approvals: 'pending-user', 'question-bank': 'exam-bank',
   checkCircle: 'approval', 'check-circle': 'approval', 'arrow-right': 'next',
-  'arrow-left': 'back', 'chevron-right': 'next', plus: 'add', megaphone: 'notice', support: 'help', app: 'smartphone', card: 'receipt'
+  'arrow-left': 'back', 'chevron-right': 'next', plus: 'add', megaphone: 'notice', support: 'help', app: 'smartphone', card: 'receipt', 'class-chat': 'chat'
 });
 export function resolveIcon(name) {
   const key = String(name).replace(/^icon-/, '');

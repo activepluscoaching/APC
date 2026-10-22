@@ -555,10 +555,15 @@ export function notificationFeed({ notices = [], config = null, examDb = null, t
   const items = [];
   const broadcast = broadcastItem(config);
   if (broadcast) items.push(broadcast);
+  const latestNotices = new Map();
   for (const notice of Array.isArray(notices) ? notices : []) {
+    if (notice?.status && notice.status !== 'published') continue;
     const item = noticeItem(notice);
-    if (item && audienceMatches(notice, viewer)) items.push(item);
+    if (!item || !audienceMatches(notice, viewer)) continue;
+    const prev = latestNotices.get(item.sourceId);
+    if (!prev || (item.at || 0) >= (prev.at || 0)) latestNotices.set(item.sourceId, item);
   }
+  items.push(...latestNotices.values());
   items.push(...examItems(examDb, viewer, now));
   items.push(...homeworkItems(teachingDb, viewer, now));
   items.push(...registrationItems(students, viewer));

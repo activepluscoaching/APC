@@ -81,32 +81,42 @@ test('nothing is shown over the login screen', async () => {
   assert.ok(!stored.some(key => key.startsWith('notice:N-NEW')), 'not counted as shown yet');
 });
 
-test('student notices appear only on the Notice Board, not as in-app cards or in the bell', async () => {
+test('student notices surface in the Notification Center, bell badge and in-app alert with "নতুন নোটিশ এসেছে - ..."', async () => {
   ctx.$('#appShell').hidden = false;
   controller.refresh();
-  await new Promise(resolve => setTimeout(resolve, 120));
-  assert.equal(cardVisible(), false, 'a newly published notice does not cover the app with a popup');
+  await ctx.waitFor(() => cardVisible(), 3000);
+  assert.match(card().textContent, /নতুন নোটিশ এসেছে - কাল ক্লাস বন্ধ/);
+  ctx.click(ctx.$('#apcInAppAlert [data-apc-alert-close]'));
+  assert.equal(cardVisible(), false);
+
   assert.equal(board.refresh().total, 2, 'both old and newly published notices remain on the Board');
-  assert.ok(controller.feed().every(item => !['notice', 'broadcast'].includes(item.kind)));
-  assert.equal(controller.unread(), 0, 'Board notices do not affect the ordinary unread count');
+  assert.ok(controller.feed().some(item => item.kind === 'notice'));
+  assert.ok(controller.unread() >= 1, 'unread notices count toward the bell badge');
+  assert.equal(ctx.$('#notificationButton .notification-dot').hidden, false);
 
   ctx.click(ctx.$('#notificationButton'));
   assert.equal(inbox().hidden, false);
-  assert.match(ctx.$('#noticeListStudent').textContent, /আলাদা নোটিশ বোর্ড/);
-  assert.doesNotMatch(ctx.$('#noticeListStudent').textContent, /কাল ক্লাস বন্ধ|পুরোনো নোটিশ/);
+  assert.match(ctx.$('#noticeListStudent').textContent, /নতুন নোটিশ এসেছে - কাল ক্লাস বন্ধ/);
   closeInbox();
 });
 
-test('a notice arriving while signed in updates the Board without queuing an in-app alert', async () => {
+test('a notice arriving while signed in queues an in-app alert and tapping it opens that notice on the Board', async () => {
+  clicks.length = 0;
   ctx.window.localStorage.setItem(KEYS.notices, JSON.stringify([
     notice('N-OLD', 'পুরোনো নোটিশ', '2026-09-01T00:00:00.000Z'),
-    notice('N-NEW', 'কাল ক্লাস বন্ধ'), notice('N-LIVE', 'আজকের নতুন ঘোষণা')
+    notice('N-NEW', 'কাল ক্লাস বন্ধ'), notice('N-LIVE', 'সাপ্তাহিক বন্ধের নোটিশ')
   ]));
   board.refresh(); controller.refresh();
-  await new Promise(resolve => setTimeout(resolve, 100));
-  assert.equal(cardVisible(), false);
+  await ctx.waitFor(() => cardVisible(), 3000);
+  assert.match(card().textContent, /নতুন নোটিশ এসেছে - সাপ্তাহিক বন্ধের নোটিশ/);
   assert.equal(board.refresh().total, 3);
-  assert.ok(controller.feed().every(item => item.kind !== 'notice'));
+  assert.ok(controller.feed().some(item => item.kind === 'notice' && item.sourceId === 'N-LIVE'));
+  ctx.click(ctx.$('#apcInAppAlert [data-apc-alert-open^="notice:N-LIVE"]'));
+  await ctx.waitFor(() => clicks.includes('notice-board'), 3000);
+  assert.equal(cardVisible(), false);
+  assert.equal(ctx.$('#noticeBoardDetail').hidden, false);
+  assert.equal(ctx.$('#noticeBoardDetailTitle').textContent, 'সাপ্তাহিক বন্ধের নোটিশ');
+  ctx.click(ctx.$('#noticeBoardDetail [data-notice-board-close]'));
 });
 
 test('something arriving while the app is open appears at once; tapping a result opens Results', async () => {

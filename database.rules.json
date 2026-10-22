@@ -144,6 +144,13 @@
           "$recordId": {
             ".validate": "newData.hasChildren()"
           }
+        },
+        "classChat": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
         }
       }
     }

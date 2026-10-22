@@ -134,6 +134,11 @@ test('the bottom bar renders one icon + label per permitted tab', () => {
   assert.ok(brand, 'the topbar has no brand');
   assert.equal(brand.querySelectorAll('img').length, 1, 'the brand paints more than one logo');
   assert.ok(brand.querySelector('[data-fixed-tagline]').textContent.trim().length > 1, 'the slogan is missing');
+  const chatBtn = header.querySelector('#classChatTopbarButton');
+  assert.ok(chatBtn, 'the topbar has no class chat button');
+  assert.equal(chatBtn.querySelectorAll('svg').length, 1, 'the chat button paints more than one icon');
+  assert.ok(chatBtn.querySelector('svg[data-icon="chat"]'));
+  assert.ok(chatBtn.querySelector('.notification-dot'), 'the chat button has no unread dot');
   const bell = header.querySelector('#notificationButton');
   assert.ok(bell, 'the topbar has no notification button');
   assert.equal(bell.querySelectorAll('svg').length, 1, 'the bell paints more than one icon');
@@ -144,7 +149,7 @@ test('the bottom bar renders one icon + label per permitted tab', () => {
   assert.equal(exit.id, 'adminExitButton');
   assert.equal(exit.querySelectorAll('svg').length, 1, 'sign-out paints more than one icon');
   assert.ok(exit.querySelector('svg[data-icon="logout"]'));
-  assert.equal(header.querySelectorAll('button').length, 2, 'the topbar holds more than notification + sign-out');
+  assert.equal(header.querySelectorAll('button').length, 3, 'the topbar holds chat + notification + sign-out');
   assert.equal(header.querySelectorAll('[data-theme-toggle], time, .student-date').length, 0, 'a control that belongs elsewhere is still in the topbar');
   // Dark mode stays reachable: it lives in System Settings as a switch row —
   // icon chip (sun in light, moon in dark), label and the app's toggle switch.

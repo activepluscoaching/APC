@@ -140,7 +140,8 @@ export const VIEW_CAPABILITIES = Object.freeze({
   settings: CAPABILITIES.SETTINGS_MANAGE,
   profile: CAPABILITIES.PROFILE_VIEW,
   more: CAPABILITIES.PROFILE_VIEW,
-  advice: CAPABILITIES.ADVICE_MANAGE
+  advice: CAPABILITIES.ADVICE_MANAGE,
+  'class-chat': CAPABILITIES.DATA_MANAGE
 });
 
 /** Five shared seats: হোম · স্টাফ · রিপোর্ট · সিস্টেম · আরও.
@@ -179,7 +180,7 @@ export const ADMIN_MORE_NAV = Object.freeze([
 /** Which seat lights up for a view that lives inside a hub. */
 export const VIEW_SEAT = Object.freeze({
   roles: 'system', security: 'system', settings: 'system', academics: 'system', migration: 'system',
-  data: 'more', backup: 'more', audit: 'more', profile: 'more', advice: 'more', content: 'more',
+  data: 'more', backup: 'more', audit: 'more', profile: 'more', advice: 'more', content: 'more', 'class-chat': 'more',
   students: 'dashboard'
 });
 

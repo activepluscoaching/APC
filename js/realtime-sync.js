@@ -125,8 +125,10 @@ function onValue(node, callback) {
 async function flushPending() {
   if (!syncEnabled) return;
   const bridges = [...recordBridges.values()];
-  if (!bridges.length) return;
-  await Promise.all(bridges.map(bridge => bridge.flush()));
+  await Promise.all([
+    ...bridges.map(bridge => bridge.flush()),
+    syncClassChat()
+  ]);
 }
 
 function paintSyncStatus() {
@@ -732,8 +734,69 @@ function listenExamDb() {
   });
 }
 
-const RECORD_COLLECTIONS = [...SYNCABLE.filter(name => name !== 'exams'), 'teacherAssignments'];
+const RECORD_COLLECTIONS = [...SYNCABLE.filter(name => name !== 'exams' && name !== 'classChat'), 'teacherAssignments'];
 const recordBridges = new Map();
+const CLASSCHAT_ROOT = DB_ROOT + '/classChat';
+let classChatQueue = Promise.resolve();
+let classChatRelayModulePromise = null;
+
+function loadClassChatRelayModule() {
+  classChatRelayModulePromise ??= import('./class-chat-relay.js').catch(error => {
+    classChatRelayModulePromise = null;
+    throw error;
+  });
+  return classChatRelayModulePromise;
+}
+
+function syncClassChat(preloadedSnapshot = undefined) {
+  const generation = syncGeneration;
+  const live = () => syncEnabled && generation === syncGeneration;
+  if (!live()) return Promise.resolve();
+  const work = classChatQueue.catch(() => {}).then(async () => {
+    if (!live()) return;
+    const { syncClassChatRelayCycle } = await loadClassChatRelayModule();
+    if (!live()) return;
+    const node = ref(getDatabase(firebaseApp), CLASSCHAT_ROOT);
+    await syncClassChatRelayCycle({
+      storage: localStorage,
+      rawSetItem,
+      notifyLocalUpdate: () => notifyRemote(KEYS.classChat, 'classChat'),
+      readCloudSnapshot: async () => {
+        if (preloadedSnapshot !== undefined) return preloadedSnapshot;
+        const snap = await get(node);
+        if (!live()) throw new Error('session-ended');
+        markSyncSuccess('read');
+        return snap.exists() ? snap.val() : null;
+      },
+      runCloudTransaction: async updater => {
+        if (!live()) throw new Error('session-ended');
+        const result = await runTransaction(node, current => {
+          if (!live()) return;
+          return updater(current);
+        }, { applyLocally: false });
+        if (!live()) throw new Error('session-ended');
+        markSyncSuccess('write');
+        return result.snapshot.val();
+      }
+    });
+  });
+  classChatQueue = work;
+  return work;
+}
+
+const pushClassChat = () => {
+  if (!ready || !navigator.onLine) { paintSyncStatus(); return Promise.resolve(); }
+  setSyncStatus('pending');
+  return syncClassChat().then(paintSyncStatus);
+};
+
+function listenClassChat() {
+  onValue(ref(getDatabase(firebaseApp), CLASSCHAT_ROOT), snap => {
+    return syncClassChat(snap.exists() ? snap.val() : null).catch(error => {
+      console.warn('[Active Plus] class chat relay listener failed', error);
+    });
+  });
+}
 
 function normalizeCollectionSnapshot(collection, value) {
   const decoded = decodeRealtimeRecords(value || {});
@@ -803,6 +866,7 @@ function installLocalWriteBridge() {
     if (key === KEYS.usernames) return pushUsernames();
     if (key === KEYS.account) return pushStudentAccount();
     if (key === KEYS.exams) { markLocalExamChanges(); return pushExamDb(); }
+    if (key === KEYS.classChat) return pushClassChat();
     return null;
   };
   const originalSetItem = Storage.prototype.setItem;
@@ -1241,6 +1305,7 @@ export async function startRealtimeSync() {
       const tasks = [
         ...RECORD_COLLECTIONS.map(collection => () => syncCollection(collection)),
         () => syncExamDb(),
+        () => syncClassChat(),
         // Cross-device login identities: without these, an ID created on one
         // phone never reaches the cloud until it is edited again, and a
         // password changed elsewhere is never received here.
@@ -1262,6 +1327,7 @@ export async function startRealtimeSync() {
       }
       for (const collection of RECORD_COLLECTIONS) listenCollection(collection);
       listenExamDb();
+      listenClassChat();
       for (const role of Object.keys(STAFF_ACCOUNTS)) listenStaffRole(role);
       listenDirectory();
       listenUsernames();

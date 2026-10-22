@@ -33,10 +33,13 @@
     #myProfileView .profile-photo-wrap,
     #studentIdCardPreview,
     #studentFeeMount .student-fee-stat,
-    #noticeBoardDetail,
     #classesView .class-attendance-card
   ):has(> .hc-art) {
     position: relative;
+    isolation: isolate;
+  }
+  body.student-reference #noticeBoardDetail:not([hidden]):has(> .hc-art) {
+    position: fixed;
     isolation: isolate;
   }
 
@@ -394,15 +397,13 @@
     opacity: .92;
   }
 
-  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) {
-    padding-right: 94px;
-  }
   body.student-reference #noticeBoardDetail .hc-art--megaphone {
-    top: 16px;
-    right: 12px;
-    width: 68px;
-    height: 68px;
-    opacity: .92;
+    top: 10px;
+    right: 54px;
+    width: 40px;
+    height: 40px;
+    opacity: .24;
+    pointer-events: none;
   }
 
   body.student-reference #classesView .class-attendance-card:has(> .hc-art--attendance-check) .class-attendance-heading {
@@ -550,8 +551,7 @@
   body.student-reference #examsView .hc-art--live-clock { right: 108px; width: 52px; height: 52px; }
   body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) { padding-right: 58px; }
   body.student-reference #studentFeeMount .hc-art--fee-coin { right: 4px; width: 52px; height: 52px; }
-  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) { padding-right: 78px; }
-  body.student-reference #noticeBoardDetail .hc-art--megaphone { right: 8px; width: 58px; height: 58px; }
+  body.student-reference #noticeBoardDetail .hc-art--megaphone { right: 50px; top: 10px; width: 36px; height: 36px; }
   body.student-reference #classesView .class-attendance-card:has(> .hc-art--attendance-check) .class-attendance-heading { padding-right: 62px; }
   body.student-reference #classesView .hc-art--attendance-check { right: 8px; width: 52px; height: 52px; }
 }
@@ -597,8 +597,7 @@
   body.student-reference #examUpcomingView #studentExamWorkspace .hc-art--hourglass { right: 6px; width: 52px; height: 52px; }
   body.student-reference #studentFeeMount .student-fee-stat:has(> .hc-art--fee-coin) { padding-right: 56px; }
   body.student-reference #studentFeeMount .hc-art--fee-coin { right: 3px; width: 52px; height: 52px; }
-  body.student-reference #noticeBoardDetail:has(> .hc-art--megaphone) { padding-right: 70px; }
-  body.student-reference #noticeBoardDetail .hc-art--megaphone { right: 6px; width: 52px; height: 52px; }
+  body.student-reference #noticeBoardDetail .hc-art--megaphone { display: none; }
 }
 
 @media screen and (prefers-reduced-motion: reduce) {

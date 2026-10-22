@@ -115,7 +115,7 @@ for(const width of [320,390,1280]) for(const role of ['login','admin','manager',
     expect(home.subtitle).not.toBe('rgba(0, 0, 0, 0)');
     expect(home.metricLabels).toEqual(['উপস্থিতি','গড় ফলাফল']);
     expect(home.metricCount).toBe(2);
-    expect(home.quickActions).toBe(6);
+    expect(home.quickActions).toBe(7);
     expect(home.tabs).toBe(5);
    }
    const nav=page.locator(role==='student'?'.bottom-nav':'.admin-bottom');

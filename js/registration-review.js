@@ -1,18 +1,10 @@
-/* Student registration review — one decision path for Admin and Manager.
- *
- * Owner decision 2026-09-30: the Admin may approve/reject a registration as
- * well as the Manager. Both panels (and a tapped "new registration"
- * notification) use this module, so the decision is recorded identically:
- * the roster row changes status, the reviewer is stamped, and the synced
- * `students` collection carries the result to every device — including the
- * student's own phone, which unlocks itself (js/main.js storage handler).
- *
- * The dialog is built on demand with the shared modal classes, so it looks the
- * same on both panels and needs no page markup.
- */
+/* Student registration review — one shared, role-guarded decision path for Admin and Manager. */
+import { LEGACY_CLOUD_ENABLED } from '../sync/cloud-access.js';
 import { loadRoster, saveRoster, syncAccountStatus } from './office-data.js';
+import { listRegistrationNotifications, markRegistrationNotificationRead } from './registration-service.js';
 import { hasStaffSession, readStaffAccount } from './staff-auth.js';
 import { escapeHtml } from './sanitize.js';
+import { toBanglaNumber } from './ui.js';
 
 export const REVIEW_ROLES = Object.freeze(['admin', 'manager']);
 export const REVIEW_DIALOG_ID = 'apcRegistrationReview';
@@ -20,43 +12,174 @@ export const DECIDED_EVENT = 'apc-registration-decided';
 
 let busy = false;
 
-async function reviewerName(role) {
+async function verifyReviewerAccess(role) {
+  if (!REVIEW_ROLES.includes(role)) return { ok: false, reason: 'not-allowed' };
+  if (!(await hasStaffSession(role))) return { ok: false, reason: 'no-session' };
   try {
     const account = await readStaffAccount(role);
-    return String(account?.username || role);
-  } catch { return role; }
+    if (account && (['disabled', 'inactive', 'rejected'].includes(account.status) || account.accountStatus === 'disabled')) {
+      return { ok: false, reason: 'not-allowed' };
+    }
+    return { ok: true, reviewer: String(account?.username || role) };
+  } catch {
+    return { ok: true, reviewer: String(role) };
+  }
+}
+
+export function formatPendingDate(studentOrRecord) {
+  const raw = studentOrRecord?.registeredAt || studentOrRecord?.createdAt || '';
+  if (raw) {
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      try {
+        return parsed.toLocaleDateString('bn-BD', {
+          timeZone: 'Asia/Dhaka',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      } catch {
+        return parsed.toLocaleDateString('bn-BD');
+      }
+    }
+  }
+  return String(studentOrRecord?.enrolledAt || 'তারিখ নেই').trim() || 'তারিখ নেই';
+}
+
+export function listPendingRegistrations() {
+  const roster = loadRoster();
+  const notifications = listRegistrationNotifications();
+  const notifByStudent = new Map(notifications.map(item => [String(item.studentId), item]));
+  const items = [];
+  const seen = new Set();
+
+  for (const student of roster) {
+    if (!student || student.status !== 'pending' || !student.id) continue;
+    const id = String(student.id);
+    seen.add(id);
+    const notif = notifByStudent.get(id);
+    items.push({
+      id,
+      name: String(student.name || student.nameBn || student.nameEn || notif?.studentName || 'নাম নেই').trim(),
+      mobile: String(student.mobile || student.studentMobile || notif?.mobile || '—').trim(),
+      className: String(student.className || '').trim(),
+      group: String(student.group || '').trim(),
+      createdAt: String(student.registeredAt || notif?.createdAt || student.createdAt || ''),
+      dateLabel: formatPendingDate(student.registeredAt ? student : (notif || student)),
+      unread: notif ? notif.read !== true : true
+    });
+  }
+
+  const decidedIds = new Set(
+    roster.filter(s => s && s.id && s.status && s.status !== 'pending').map(s => String(s.id))
+  );
+  for (const notif of notifications) {
+    const id = String(notif?.studentId || '').trim();
+    if (!id || notif.read === true || seen.has(id) || decidedIds.has(id)) continue;
+    seen.add(id);
+    items.push({
+      id,
+      name: String(notif.studentName || 'নাম নেই').trim(),
+      mobile: String(notif.mobile || '—').trim(),
+      className: '',
+      group: '',
+      createdAt: String(notif.createdAt || ''),
+      dateLabel: formatPendingDate(notif),
+      unread: true
+    });
+  }
+
+  return items.sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0));
 }
 
 /**
  * Record a decision on one pending registration.
+ * Strictly restricted to verified `admin` and `manager` sessions.
  * @returns {Promise<{ok: boolean, reason?: string, student?: object}>}
  */
 export async function decideRegistration(studentId, decision, { role, note = '' } = {}) {
-  if (!['approved', 'rejected'].includes(decision)) return { ok: false, reason: 'bad-decision' };
-  if (!REVIEW_ROLES.includes(role)) return { ok: false, reason: 'not-allowed' };
-  if (!(await hasStaffSession(role))) return { ok: false, reason: 'no-session' };
+  const normalizedDecision = decision === 'active' || decision === 'approved'
+    ? 'approved'
+    : decision === 'rejected'
+      ? 'rejected'
+      : '';
+  if (!normalizedDecision) return { ok: false, reason: 'bad-decision' };
+
+  const access = await verifyReviewerAccess(role);
+  if (!access.ok) return { ok: false, reason: access.reason };
+
   const reason = String(note || '').trim();
-  if (decision === 'rejected' && !reason) return { ok: false, reason: 'note-required' };
+  if (normalizedDecision === 'rejected' && !reason) return { ok: false, reason: 'note-required' };
   if (busy) return { ok: false, reason: 'busy' };
   busy = true;
   try {
+    const sid = String(studentId || '').trim();
     const students = loadRoster();
-    const index = students.findIndex(row => row?.id === studentId);
-    if (index < 0) return { ok: false, reason: 'not-found' };
-    if (students[index].status !== 'pending') return { ok: false, reason: 'already-decided', student: students[index] };
+    let index = students.findIndex(row => row?.id === sid);
+
+    // If only the notification record arrived so far, hydrate a minimal pending row so decision can proceed.
+    if (index < 0) {
+      const notif = listRegistrationNotifications().find(item => item.studentId === sid);
+      if (!notif) return { ok: false, reason: 'not-found' };
+      students.push({
+        id: sid,
+        name: notif.studentName || 'নাম নেই',
+        mobile: notif.mobile || '',
+        status: 'pending',
+        registeredAt: notif.createdAt || new Date().toISOString()
+      });
+      index = students.length - 1;
+    }
+
+    if (students[index].status !== 'pending') {
+      return { ok: false, reason: 'already-decided', student: students[index] };
+    }
+
+    const nowIso = new Date().toISOString();
+    const reviewer = access.reviewer;
+    const isApproved = normalizedDecision === 'approved';
     const student = {
       ...students[index],
-      status: decision,
-      reviewedAt: new Date().toISOString(),
-      reviewedBy: await reviewerName(role),
+      status: normalizedDecision,
+      accountStatus: isApproved ? 'active' : 'rejected',
+      reviewedAt: nowIso,
+      reviewedBy: reviewer,
       reviewedRole: role,
-      updatedAt: new Date().toISOString()
+      updatedAt: nowIso,
+      ...(isApproved
+        ? { approvedBy: reviewer, approvedAt: nowIso, reviewNote: '' }
+        : { reviewNote: reason, rejectionReason: reason })
     };
-    if (reason) student.reviewNote = reason;
+
     const next = students.map((row, i) => (i === index ? student : row));
     if (!saveRoster(next)) return { ok: false, reason: 'save-failed' };
-    await syncAccountStatus(studentId, decision);
-    window.dispatchEvent(new CustomEvent(DECIDED_EVENT, { detail: { studentId, decision, role } }));
+
+    await syncAccountStatus(sid, isApproved ? 'active' : 'rejected', {
+      approvedBy: isApproved ? reviewer : '',
+      approvedAt: isApproved ? nowIso : '',
+      reviewNote: isApproved ? '' : reason
+    });
+
+    markRegistrationNotificationRead(sid, {
+      readBy: reviewer,
+      readAt: nowIso,
+      decision: normalizedDecision
+    });
+
+    if (LEGACY_CLOUD_ENABLED && typeof navigator !== 'undefined' && navigator.onLine) {
+      import('../sync/sync-core.js?v=20260929-protected')
+        .then(bridge => bridge.syncRegistrationDecisionOnline({
+          studentId: sid,
+          studentRow: student,
+          decision: normalizedDecision,
+          approvedBy: isApproved ? reviewer : '',
+          approvedAt: isApproved ? nowIso : '',
+          reviewNote: isApproved ? '' : reason
+        }))
+        .catch(() => {});
+    }
+
+    window.dispatchEvent(new CustomEvent(DECIDED_EVENT, { detail: { studentId: sid, decision: normalizedDecision, role } }));
     return { ok: true, student };
   } finally {
     busy = false;
@@ -64,7 +187,7 @@ export async function decideRegistration(studentId, decision, { role, note = '' 
 }
 
 export const DECISION_MESSAGES = Object.freeze({
-  'not-allowed': 'এই প্যানেল থেকে রেজিস্ট্রেশনের সিদ্ধান্ত নেওয়া যায় না।',
+  'not-allowed': 'শুধুমাত্র এডমিন ও ম্যানেজার রেজিস্ট্রেশন অনুমোদন বা বাতিল করতে পারবেন।',
   'no-session': 'সেশন যাচাই হয়নি। আবার প্রবেশ করুন।',
   'note-required': 'বাতিলের কারণ লিখুন।',
   busy: 'আগের সিদ্ধান্ত সংরক্ষণ হচ্ছে, একটু অপেক্ষা করুন।',
@@ -74,7 +197,10 @@ export const DECISION_MESSAGES = Object.freeze({
   'bad-decision': 'অজানা সিদ্ধান্ত।'
 });
 
-const STATUS_TEXT = Object.freeze({ approved: 'অনুমোদিত', rejected: 'বাতিল', pending: 'অপেক্ষমাণ' });
+const STATUS_TEXT = Object.freeze({ approved: 'অনুমোদিত', active: 'অনুমোদিত', rejected: 'বাতিল', pending: 'অপেক্ষমাণ' });
+const cssEscape = value => (typeof globalThis.CSS?.escape === 'function'
+  ? globalThis.CSS.escape(String(value ?? ''))
+  : String(value ?? '').replace(/["\\]/g, '\\$&'));
 
 function row(label, value) {
   const text = String(value ?? '').trim();
@@ -87,6 +213,123 @@ function closeDialog() {
 }
 
 /**
+ * Render the shared "অনুমোদনের অপেক্ষায়" pending student list inside a host element
+ * (used in both Admin/Manager bell drawer and Admin student management).
+ */
+export function pendingQueueMarkup(items = listPendingRegistrations()) {
+  if (!items.length) {
+    return `<section class="apc-pending-queue" data-apc-pending-registrations>
+      <div class="apc-pending-queue__head">
+        <h3>অনুমোদনের অপেক্ষায়</h3>
+        <span class="apc-pending-queue__count">০</span>
+      </div>
+      <p class="apc-pending-queue__empty">বর্তমানে অনুমোদনের অপেক্ষায় কোনো শিক্ষার্থী নেই।</p>
+    </section>`;
+  }
+
+  return `<section class="apc-pending-queue" data-apc-pending-registrations>
+    <div class="apc-pending-queue__head">
+      <h3>অনুমোদনের অপেক্ষায়</h3>
+      <span class="apc-pending-queue__count">${escapeHtml(toBanglaNumber(items.length))} জন</span>
+    </div>
+    <ul class="apc-pending-queue__list">
+      ${items.map(item => `<li class="apc-pending-item" data-pending-student-row="${escapeHtml(item.id)}">
+        <div class="apc-pending-item__info">
+          <strong class="apc-pending-item__name">${escapeHtml(item.name)}</strong>
+          <div class="apc-pending-item__meta">
+            <span>মোবাইল: <b dir="ltr">${escapeHtml(item.mobile || '—')}</b></span>
+            <span>আইডি: <b dir="ltr">${escapeHtml(item.id)}</b></span>
+            <span>তারিখ: ${escapeHtml(item.dateLabel)}</span>
+          </div>
+        </div>
+        <div class="apc-pending-item__actions">
+          <button type="button" class="mini-btn approve primary apc-pending-btn" data-pending-approve="${escapeHtml(item.id)}">অনুমোদন দিন</button>
+          <button type="button" class="mini-btn reject danger apc-pending-btn" data-pending-reject="${escapeHtml(item.id)}">বাতিল করুন</button>
+        </div>
+        <div class="apc-pending-item__reject-box" data-pending-reject-box="${escapeHtml(item.id)}" hidden>
+          <input type="text" class="apc-pending-item__reason-input" data-pending-reject-note="${escapeHtml(item.id)}" maxlength="300" placeholder="বাতিল করার কারণ লিখুন…" aria-label="বাতিলের কারণ">
+          <div class="apc-pending-item__reject-actions">
+            <button type="button" class="mini-btn reject danger apc-pending-btn" data-pending-reject-confirm="${escapeHtml(item.id)}">নিশ্চিত বাতিল</button>
+            <button type="button" class="mini-btn apc-pending-btn" data-pending-reject-cancel="${escapeHtml(item.id)}">ফিরে যান</button>
+          </div>
+        </div>
+        <p class="apc-pending-item__feedback" data-pending-feedback="${escapeHtml(item.id)}" role="status" aria-live="polite" hidden></p>
+      </li>`).join('')}
+    </ul>
+  </section>`;
+}
+
+export function bindPendingQueueActions(host, { role, onDecided, onFeedback } = {}) {
+  if (!host || host.dataset.pendingQueueBound === 'true') return;
+  host.dataset.pendingQueueBound = 'true';
+
+  host.addEventListener('click', async event => {
+    const approveBtn = event.target.closest('[data-pending-approve]');
+    if (approveBtn) {
+      const id = approveBtn.getAttribute('data-pending-approve');
+      approveBtn.disabled = true;
+      const result = await decideRegistration(id, 'approved', { role });
+      if (!result.ok) {
+        approveBtn.disabled = false;
+        const msg = DECISION_MESSAGES[result.reason] || 'অনুমোদন সম্পন্ন হয়নি।';
+        const fb = host.querySelector(`[data-pending-feedback="${cssEscape(id)}"]`);
+        if (fb) { fb.textContent = msg; fb.hidden = false; }
+        onFeedback?.(msg, false);
+        return;
+      }
+      onFeedback?.('শিক্ষার্থীর রেজিস্ট্রেশন অনুমোদিত হয়েছে।', true);
+      onDecided?.(result);
+      return;
+    }
+
+    const rejectToggle = event.target.closest('[data-pending-reject]');
+    if (rejectToggle) {
+      const id = rejectToggle.getAttribute('data-pending-reject');
+      const box = host.querySelector(`[data-pending-reject-box="${cssEscape(id)}"]`);
+      if (box) {
+        box.hidden = false;
+        box.querySelector('input')?.focus?.();
+      }
+      return;
+    }
+
+    const rejectCancel = event.target.closest('[data-pending-reject-cancel]');
+    if (rejectCancel) {
+      const id = rejectCancel.getAttribute('data-pending-reject-cancel');
+      const box = host.querySelector(`[data-pending-reject-box="${cssEscape(id)}"]`);
+      if (box) box.hidden = true;
+      const fb = host.querySelector(`[data-pending-feedback="${cssEscape(id)}"]`);
+      if (fb) { fb.textContent = ''; fb.hidden = true; }
+      return;
+    }
+
+    const rejectConfirm = event.target.closest('[data-pending-reject-confirm]');
+    if (rejectConfirm) {
+      const id = rejectConfirm.getAttribute('data-pending-reject-confirm');
+      const input = host.querySelector(`[data-pending-reject-note="${cssEscape(id)}"]`);
+      const note = String(input?.value || '').trim();
+      const fb = host.querySelector(`[data-pending-feedback="${cssEscape(id)}"]`);
+      if (!note) {
+        if (fb) { fb.textContent = DECISION_MESSAGES['note-required']; fb.hidden = false; }
+        input?.focus?.();
+        return;
+      }
+      rejectConfirm.disabled = true;
+      const result = await decideRegistration(id, 'rejected', { role, note });
+      if (!result.ok) {
+        rejectConfirm.disabled = false;
+        const msg = DECISION_MESSAGES[result.reason] || 'বাতিল সম্পন্ন হয়নি।';
+        if (fb) { fb.textContent = msg; fb.hidden = false; }
+        onFeedback?.(msg, false);
+        return;
+      }
+      onFeedback?.('রেজিস্ট্রেশন কারণসহ বাতিল করা হয়েছে।', true);
+      onDecided?.(result);
+    }
+  });
+}
+
+/**
  * Open the review dialog for one student.
  * @param {string} studentId
  * @param {{ role: string, onLater?: Function, onDone?: Function }} options
@@ -94,7 +337,8 @@ function closeDialog() {
  */
 export async function openRegistrationReview(studentId, { role, onLater, onDone } = {}) {
   closeDialog();
-  if (!REVIEW_ROLES.includes(role) || !(await hasStaffSession(role))) return false;
+  const access = await verifyReviewerAccess(role);
+  if (!access.ok) return false;
   const student = loadRoster().find(item => item?.id === studentId);
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
@@ -103,7 +347,7 @@ export async function openRegistrationReview(studentId, { role, onLater, onDone 
   const heading = student ? escapeHtml(student.name || student.nameEn || 'নাম নেই') : 'শিক্ষার্থী পাওয়া যায়নি';
   backdrop.innerHTML =
     '<section class="modal" role="dialog" aria-modal="true" aria-labelledby="apcReviewTitle">' +
-      '<div class="modal-header"><div><p class="eyebrow">শিক্ষার্থী রেজিস্ট্রেশন</p>' +
+      '<div class="modal-header"><div><p class="eyebrow">শিক্ষার্থী রেজিস্ট্রেশন · অনুমোদনের অপেক্ষায়</p>' +
       `<h2 id="apcReviewTitle">${heading}</h2></div>` +
       '<button type="button" class="modal-close" data-review-close aria-label="বন্ধ করুন">×</button></div>' +
       (student
@@ -114,10 +358,11 @@ export async function openRegistrationReview(studentId, { role, onLater, onDone 
             row('বিভাগ / গ্রুপ', student.group) +
             row('পিতার নাম', student.fatherName) +
             row('মোবাইল', student.mobile) +
+            row('ইমেইল', student.email) +
             row('অভিভাবকের মোবাইল', student.guardianMobile) +
             row('ঠিকানা', student.address) +
-            row('আবেদনের তারিখ', student.enrolledAt) +
-            (pending ? '' : row('সিদ্ধান্ত নিয়েছেন', [student.reviewedBy, student.reviewedRole].filter(Boolean).join(' • '))) +
+            row('আবেদনের তারিখ', formatPendingDate(student)) +
+            (pending ? '' : row('অনুমোদন/পর্যালোচনা করেছেন', [student.approvedBy || student.reviewedBy, student.reviewedRole].filter(Boolean).join(' • '))) +
             (pending ? '' : row('কারণ', student.reviewNote)) +
           '</dl>'
         : '<p class="form-note">রেকর্ডটি এখনও এই ডিভাইসে আসেনি বা মুছে গেছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।</p>') +
@@ -126,7 +371,7 @@ export async function openRegistrationReview(studentId, { role, onLater, onDone 
           '<textarea id="apcReviewNote" maxlength="300" rows="2" placeholder="যেমন: তথ্য অসম্পূর্ণ"></textarea>' +
           '<p class="form-note" data-review-status role="status" aria-live="polite"></p>' +
           '<div class="modal-actions">' +
-            '<button type="button" class="mini-btn approve primary" data-review-decision="approved">✓ অনুমোদন করুন</button>' +
+            '<button type="button" class="mini-btn approve primary" data-review-decision="approved">✓ অনুমোদন দিন</button>' +
             '<button type="button" class="mini-btn reject danger" data-review-decision="rejected">✕ বাতিল করুন</button>' +
             '<button type="button" class="mini-btn" data-review-later>পরে দেখব</button>' +
           '</div>'

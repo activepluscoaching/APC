@@ -1,25 +1,99 @@
 import { LEGACY_CLOUD_ENABLED, CLOUD_PAUSED_MESSAGE, cloudPausedResult, backendMode } from '../sync/cloud-access.js';
 import { defaultStudent } from './config.js';
-import { $, $$, setAuthMessage, scrollToTop } from './ui.js';
+import { $, $$, setAuthMessage, scrollToTop, toBanglaNumber } from './ui.js';
 import { contactNumber, normalizeUsername } from './account-policy.js';
 import { matchesLoginIdentifier, studentIdOf } from './sync-merge.js';
-import { loadAccount, saveStudent, persistSession, setTrustedDevice, loadAppConfig, verifyAccountPassword, upgradeAccountSecrets } from './storage.js';
+import {
+  loadAccount,
+  listLocalAccounts,
+  saveAccount,
+  saveStudent,
+  persistSession,
+  setTrustedDevice,
+  loadAppConfig,
+  verifyAccountPassword,
+  upgradeAccountSecrets,
+  writeJSON
+} from './storage.js';
 import {
   STAFF_ACCOUNTS, STAFF_USERNAMES, normalizeStaffUsername, authenticateStaff,
   saveStaffSession, resolveStaffRoleByUsername, createInitialAdmin, staffAccountRecordExists,
   activeStaffRoles
 } from './staff-auth.js';
 import { KEYS, readJSON } from './database.js';
-import { openStaffPasswordDialog } from './staff-password-dialog.js';
 import { generateLoginId } from './user-id.js';
-import {
-  adminInitializationStatus,
-  ADMIN_EXISTS_MESSAGE, ADMIN_VERIFY_REQUIRED_MESSAGE
-} from './admin-initialization.js';
 import { isPasswordRecord } from './password-hash.js';
 
 const STAFF_PANEL = Object.freeze({ admin: 'admin.html', manager: 'manager.html', teacher: 'teacher.html', payment: 'payment.html' });
 const STAFF_LABEL = Object.freeze({ admin: 'এডমিন প্যানেল', manager: 'ম্যানেজার প্যানেল', teacher: 'শিক্ষক প্যানেল', payment: 'পেমেন্ট রিসিভ প্যানেল' });
+
+export const PENDING_LOGIN_MESSAGE = 'আপনার অ্যাকাউন্ট অনুমোদনের অপেক্ষায় আছে।';
+export const REJECTED_LOGIN_MESSAGE = 'আপনার রেজিস্ট্রেশন আবেদনটি বাতিল করা হয়েছে। অফিসে যোগাযোগ করুন।';
+export const INACTIVE_LOGIN_MESSAGE = 'আপনার অ্যাকাউন্টটি বর্তমানে নিষ্ক্রিয় আছে। অফিসে যোগাযোগ করুন।';
+export const LOGIN_LOCKOUT_KEY = 'activePlus.loginLockout.v1';
+export const MAX_LOGIN_ATTEMPTS = 5;
+export const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
+
+function lockoutBucketKey(identifier) {
+  const ascii = String(identifier ?? '')
+    .trim()
+    .replace(/[০-৯]/g, d => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+  return contactNumber(ascii) || normalizeUsername(ascii) || '__device__';
+}
+
+function readLockoutMap() {
+  const map = readJSON(LOGIN_LOCKOUT_KEY, {}) || {};
+  return map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+}
+
+export function checkLoginLockout(identifier, now = Date.now()) {
+  const key = lockoutBucketKey(identifier);
+  const entry = readLockoutMap()[key];
+  if (!entry || typeof entry !== 'object') return { locked: false, attempts: 0, remainingMs: 0 };
+  const lockedUntil = Number(entry.lockedUntil) || 0;
+  if (lockedUntil > now) {
+    const remainingMs = lockedUntil - now;
+    const mins = Math.max(1, Math.ceil(remainingMs / 60000));
+    return {
+      locked: true,
+      attempts: Number(entry.attempts) || MAX_LOGIN_ATTEMPTS,
+      remainingMs,
+      lockedUntil,
+      message: `অনেকবার ভুল পাসওয়ার্ড দেওয়া হয়েছে। নিরাপত্তার স্বার্থে ${toBanglaNumber(mins)} মিনিট পর আবার চেষ্টা করুন।`
+    };
+  }
+  return { locked: false, attempts: 0, remainingMs: 0 };
+}
+
+export function recordFailedLoginAttempt(identifier, now = Date.now()) {
+  const key = lockoutBucketKey(identifier);
+  const map = { ...readLockoutMap() };
+  const prev = map[key] && typeof map[key] === 'object' ? map[key] : { attempts: 0, lockedUntil: 0 };
+  const baseAttempts = Number(prev.lockedUntil) > 0 && Number(prev.lockedUntil) <= now ? 0 : (Number(prev.attempts) || 0);
+  const attempts = baseAttempts + 1;
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    const lockedUntil = now + LOGIN_LOCKOUT_MS;
+    map[key] = { attempts, lockedUntil, lastFailedAt: now };
+    writeJSON(LOGIN_LOCKOUT_KEY, map);
+    return {
+      locked: true,
+      attempts,
+      lockedUntil,
+      message: '৫ বার ভুল পাসওয়ার্ড দেওয়ায় আপনার লগইন ১৫ মিনিটের জন্য সাময়িকভাবে লক করা হয়েছে। ১৫ মিনিট পর আবার চেষ্টা করুন।'
+    };
+  }
+  map[key] = { attempts, lockedUntil: 0, lastFailedAt: now };
+  writeJSON(LOGIN_LOCKOUT_KEY, map);
+  return { locked: false, attempts, lockedUntil: 0, message: '' };
+}
+
+export function clearLoginLockout(identifier) {
+  const key = lockoutBucketKey(identifier);
+  const map = { ...readLockoutMap() };
+  if (!Object.hasOwn(map, key)) return;
+  delete map[key];
+  writeJSON(LOGIN_LOCKOUT_KEY, map);
+}
 
 export function staffRoleFor(value) {
   const typed = normalizeStaffUsername(value);
@@ -78,9 +152,11 @@ async function handleStaffLogin(role, typedId, pin) {
     return;
   }
   if (!result.ok) {
-    setAuthMessage(`${STAFF_LABEL[role]}ের ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।`);
+    const lock = recordFailedLoginAttempt(typedId);
+    setAuthMessage(lock.locked ? lock.message : `${STAFF_LABEL[role]}ের ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।`);
     return;
   }
+  clearLoginLockout(typedId);
   if (role === 'teacher' && loadAppConfig().allowTeacherRegistration === false) {
     setAuthMessage('শিক্ষক প্যানেল প্রবেশ এই মুহূর্তে এডমিন কর্তৃক বন্ধ রাখা হয়েছে।');
     return;
@@ -88,6 +164,7 @@ async function handleStaffLogin(role, typedId, pin) {
   const remember = $('#rememberMe')?.checked !== false;
   const identity = { username: normalizeStaffUsername(typedId), staffId: '', fullName: '' };
   if (result.needsPasswordChange) {
+    const { openStaffPasswordDialog } = await import('./staff-password-dialog.js');
     openStaffPasswordDialog({
       role,
       mode: 'change',
@@ -117,6 +194,7 @@ async function handleDirectoryStaffLogin(directory, remember) {
     fullName: String(staff.fullName || '')
   };
   if (mustChangePassword) {
+    const { openStaffPasswordDialog } = await import('./staff-password-dialog.js');
     openStaffPasswordDialog({
       role,
       mode: 'change',
@@ -203,6 +281,56 @@ async function runBackgroundLoginSync() {
   }
 }
 
+function findLocalStudentAccount(identifier, fallbackAccount = null) {
+  const all = listLocalAccounts();
+  if (fallbackAccount && !all.includes(fallbackAccount)) all.push(fallbackAccount);
+  return all.find(acc => isOwnIdentifier(acc, identifier)) || null;
+}
+
+async function admitVerifiedStudent({ matchedAccount, typedId, pin, remember, attemptId, state, onAuthenticated }) {
+  if (attemptId !== loginAttemptId) return true;
+  clearLoginLockout(typedId);
+  let activeAccount = matchedAccount;
+  if (!isPasswordRecord(activeAccount.pinHash)) {
+    activeAccount = await upgradeAccountSecrets(activeAccount, { pin }) || activeAccount;
+  }
+
+  const svc = await import('./registration-service.js');
+  const effectiveStatus = await svc.resolveStudentLoginStatus(activeAccount, ONLINE_BRIDGE_BUDGET_MS);
+  if (attemptId !== loginAttemptId) return true;
+
+  if (effectiveStatus === 'pending' || !effectiveStatus) {
+    setAuthMessage(PENDING_LOGIN_MESSAGE);
+    return true;
+  }
+  if (effectiveStatus === 'rejected') {
+    const latest = findLocalStudentAccount(typedId, loadAccount()) || activeAccount;
+    const reason = String(latest?.reviewNote || latest?.student?.reviewNote || '').trim();
+    setAuthMessage(reason ? `আপনার রেজিস্ট্রেশন আবেদনটি বাতিল করা হয়েছে। কারণ: ${reason}` : REJECTED_LOGIN_MESSAGE);
+    return true;
+  }
+  if (effectiveStatus === 'inactive') {
+    setAuthMessage(INACTIVE_LOGIN_MESSAGE);
+    return true;
+  }
+
+  activeAccount = { ...activeAccount, status: 'active' };
+  await saveAccount(activeAccount);
+  state.account = loadAccount() || activeAccount;
+  state.student = { ...defaultStudent, ...(state.account.student || {}) };
+  saveStudent(state.student);
+  if (!(await persistSession(remember))) {
+    setAuthMessage('সেশন সংরক্ষণ করা যায়নি — স্টোরেজ পরীক্ষা করে আবার চেষ্টা করুন।');
+    return true;
+  }
+  if (remember) setTrustedDevice(true);
+
+  window.dispatchEvent(new Event('apc-student-login'));
+  onAuthenticated?.();
+  void runBackgroundLoginSync();
+  return true;
+}
+
 let loginAttemptId = 0;
 
 async function handleLogin(event, state, onAuthenticated) {
@@ -226,6 +354,12 @@ async function handleLogin(event, state, onAuthenticated) {
     return;
   }
 
+  const lockout = checkLoginLockout(typedId);
+  if (lockout.locked) {
+    setAuthMessage(lockout.message);
+    return;
+  }
+
   // Never let a sync operation own the login UI. Local authentication is always
   // attempted first, even while the background bridge is connecting.
   const remember = $('#rememberMe')?.checked !== false;
@@ -243,6 +377,7 @@ async function handleLogin(event, state, onAuthenticated) {
   const directory = await authenticateDirectoryStaff(typedId, pin);
   if (attemptId !== loginAttemptId) return;
   if (directory.ok) {
+    clearLoginLockout(typedId);
     await handleDirectoryStaffLogin(directory, remember);
     return;
   }
@@ -251,34 +386,20 @@ async function handleLogin(event, state, onAuthenticated) {
     return;
   }
   if (directory.code === 'WRONG_PASSWORD') {
-    setAuthMessage('স্টাফ ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।');
+    const lock = recordFailedLoginAttempt(typedId);
+    setAuthMessage(lock.locked ? lock.message : 'স্টাফ ইউজারনেম বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।');
     return;
   }
 
-  // 3) Student account — local first.
-  state.account = loadAccount() || state.account;
-  if (state.account && isOwnIdentifier(state.account, typedId)) {
-    if (!(await verifyAccountPassword(state.account, pin))) {
-      setAuthMessage('ইউজারনেম/মোবাইল নম্বর অথবা পাসওয়ার্ড সঠিক নয়।');
+  // 3) Student account — local first (checks both active account and multi-student vault).
+  const localMatch = findLocalStudentAccount(typedId, state.account);
+  if (localMatch) {
+    if (!(await verifyAccountPassword(localMatch, pin))) {
+      const lock = recordFailedLoginAttempt(typedId);
+      setAuthMessage(lock.locked ? lock.message : 'ইউজারনেম/মোবাইল নম্বর অথবা পাসওয়ার্ড সঠিক নয়।');
       return;
     }
-
-    if (attemptId !== loginAttemptId) return;
-    if (!isPasswordRecord(state.account.pinHash)) {
-      state.account = await upgradeAccountSecrets(state.account, { pin }) || state.account;
-    }
-    state.student = { ...defaultStudent, ...(state.account.student || {}) };
-    saveStudent(state.student);
-    if (!(await persistSession(remember))) {
-      setAuthMessage('সেশন সংরক্ষণ করা যায়নি — স্টোরেজ পরীক্ষা করে আবার চেষ্টা করুন।');
-      return;
-    }
-    if (remember) setTrustedDevice(true);
-
-    // Login is complete before cloud work begins.
-    window.dispatchEvent(new Event('apc-student-login'));
-    onAuthenticated?.();
-    void runBackgroundLoginSync();
+    await admitVerifiedStudent({ matchedAccount: localMatch, typedId, pin, remember, attemptId, state, onAuthenticated });
     return;
   }
 
@@ -314,27 +435,20 @@ async function handleLogin(event, state, onAuthenticated) {
       : [];
 
     // A verified cloud student account may now have been safely hydrated.
-    state.account = loadAccount() || state.account;
-    if (state.account && isOwnIdentifier(state.account, typedId) &&
-        await verifyAccountPassword(state.account, pin)) {
-      if (attemptId !== loginAttemptId) return;
-      if (!isPasswordRecord(state.account.pinHash)) {
-        state.account = await upgradeAccountSecrets(state.account, { pin }) || state.account;
-      }
-      state.student = { ...defaultStudent, ...(state.account.student || {}) };
-      saveStudent(state.student);
-      if (!(await persistSession(remember))) {
-        setAuthMessage('সেশন সংরক্ষণ করা যায়নি — স্টোরেজ পরীক্ষা করে আবার চেষ্টা করুন।');
-        return;
-      }
-      if (remember) setTrustedDevice(true);
-      window.dispatchEvent(new Event('apc-student-login'));
-      onAuthenticated?.();
-      void runBackgroundLoginSync();
+    const cloudMatch = findLocalStudentAccount(typedId, loadAccount() || state.account);
+    if (cloudMatch && await verifyAccountPassword(cloudMatch, pin)) {
+      await admitVerifiedStudent({ matchedAccount: cloudMatch, typedId, pin, remember, attemptId, state, onAuthenticated });
       return;
     }
 
     if (onlineIdentities.cloudPasswordMismatch || onlineIdentities.ambiguous) {
+      if (onlineIdentities.cloudPasswordMismatch) {
+        const lock = recordFailedLoginAttempt(typedId);
+        if (lock.locked) {
+          setAuthMessage(lock.message);
+          return;
+        }
+      }
       setAuthMessage(onlineIdentities.ambiguous
         ? 'এই সংক্ষিপ্ত শিক্ষার্থীর আইডি দিয়ে একাধিক শিক্ষার্থী পাওয়া গেছে — সম্পূর্ণ শিক্ষার্থীর আইডি লিখুন।'
         : 'ইউজারনেম, মোবাইল নম্বর বা শিক্ষার্থীর আইডি অথবা পাসওয়ার্ড সঠিক নয়।');
@@ -356,6 +470,7 @@ async function handleLogin(event, state, onAuthenticated) {
     const cloudDirectory = await authenticateDirectoryStaff(typedId, pin);
     if (attemptId !== loginAttemptId) return;
     if (cloudDirectory.ok) {
+      clearLoginLockout(typedId);
       await handleDirectoryStaffLogin(cloudDirectory, remember);
       return;
     }
@@ -659,6 +774,7 @@ async function closeFirstAdminSetup(message = '') {
 async function refreshFirstAdminSetup({ openWhenUninitialized = false } = {}) {
   const panel = $('#firstAdminPanel');
   if (!panel) return { available: false, reason: 'no-workflow' };
+  const { adminInitializationStatus, ADMIN_VERIFY_REQUIRED_MESSAGE } = await import('./admin-initialization.js');
   // 1) This device's own record — present means the institution's Admin exists.
   if (staffAccountRecordExists('admin')) {
     await lockFirstAdminSetup();
@@ -705,6 +821,7 @@ function initFirstAdminSetup() {
 
 async function openFirstAdminSetup() {
   if (!$('#firstAdminPanel')) return;
+  const { adminInitializationStatus, ADMIN_EXISTS_MESSAGE, ADMIN_VERIFY_REQUIRED_MESSAGE } = await import('./admin-initialization.js');
   if (staffAccountRecordExists('admin')) {
     await closeFirstAdminSetup(ADMIN_EXISTS_MESSAGE);
     return;
@@ -737,6 +854,7 @@ async function handleFirstAdminSubmit(event) {
     error.hidden = !message;
   };
   showError('');
+  const { adminInitializationStatus, ADMIN_EXISTS_MESSAGE, ADMIN_VERIFY_REQUIRED_MESSAGE } = await import('./admin-initialization.js');
   const status = await adminInitializationStatus();
   if (!status.ok) {
     showError(ADMIN_VERIFY_REQUIRED_MESSAGE);

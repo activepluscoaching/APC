@@ -1,18 +1,24 @@
-import { LEGACY_CLOUD_ENABLED, backendMode } from '../sync/cloud-access.js';
-/* Registration feature: step-by-step student self-registration with auto Student ID.
-   Registration saves the account; entry still requires a submitted login.
-   The student also picks a permanent username here — a login ID that never
-   changes, so the phone number does not have to be shared to log in. */
-import { $, $$, normalizeMobile, normalizeAnswer, setAuthMessage, showFeedback } from './ui.js';
+import { backendMode } from '../sync/cloud-access.js';
+/* Registration UI & early step validation. Submit-time atomic persistence lives in
+   ./registration-service.js so the parser-blocking first-paint graph stays compact. */
+import { $, $$, setAuthMessage } from './ui.js';
 import { enabledClasses } from './config.js';
 import { registrationPasswordError } from './password-policy.js';
-import { contactNumber, isContactNumber, normalizeUsername, usernameError, suggestUsername } from './account-policy.js';
 import {
-  saveAccount, saveStudent, generateClassRoll, usernameTaken, reserveUsername, releaseUsername, loadAccount
-} from './storage.js';
-import { upsertStudentRosterRow } from './office-data.js';
-import { listDocuments } from './database.js';
-import { switchAuthTab } from './login.js';
+  contactNumber,
+  isContactNumber,
+  mobileError,
+  normalizeUsername,
+  usernameError,
+  suggestUsername,
+  normalizeEmail,
+  emailError
+} from './account-policy.js';
+import { usernameTaken, mobileTaken, emailTaken } from './storage.js';
+
+export const DUPLICATE_MOBILE_MESSAGE = 'এই মোবাইল নম্বর দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।';
+export const DUPLICATE_USERNAME_MESSAGE = 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।';
+export const DUPLICATE_EMAIL_MESSAGE = 'এই ইমেইল ঠিকানা দিয়ে আগেই রেজিস্ট্রেশন হয়েছে।';
 
 function populateRegistrationClasses() {
   const select = $('#regClass');
@@ -31,12 +37,21 @@ function initFixedContactMobile() {
   const loginMobile = $('#regMobile');
   const contactMobile = $('#studentMobile');
   if (!loginMobile || !contactMobile) return;
-  const sync = () => { contactMobile.value = loginMobile.value; };
+  const sync = () => {
+    contactMobile.value = loginMobile.value;
+    loginMobile.setCustomValidity('');
+  };
   loginMobile.addEventListener('input', sync);
+  loginMobile.addEventListener('blur', () => {
+    const normalized = contactNumber(loginMobile.value);
+    if (isContactNumber(normalized)) {
+      loginMobile.value = normalized;
+      contactMobile.value = normalized;
+    }
+  });
   sync();
 }
 
-/* Live username feedback: the name is permanent, so the rule shows while typing. */
 function initUsernameField() {
   const field = $('#regUsername');
   if (!field) return;
@@ -45,7 +60,7 @@ function initUsernameField() {
     if (!status) return;
     status.textContent = message;
     status.classList.toggle('is-ok', Boolean(ok));
-    status.classList.toggle('is-bad', !ok);
+    status.classList.toggle('is-bad', !ok && Boolean(message));
   };
   const check = () => {
     const typed = normalizeUsername(field.value);
@@ -53,17 +68,12 @@ function initUsernameField() {
     if (!typed) { setStatus('', false); return true; }
     const problem = usernameError(typed);
     if (problem) { setStatus(problem, false); return false; }
-    if (usernameTaken(typed)) {
-      const message = 'এই ইউজারনেমটি আগেই নেওয়া হয়েছে — অন্য একটি বেছে নিন।';
-      setStatus(message, false);
-      return false;
-    }
+    if (usernameTaken(typed)) { setStatus(DUPLICATE_USERNAME_MESSAGE, false); return false; }
     setStatus('✓ এই ইউজারনেমটি নেওয়া যাবে', true);
     return true;
   };
   field.addEventListener('input', check);
   field.addEventListener('blur', () => {
-    // Normalise once the field loses focus; the stored form is lowercase.
     const typed = normalizeUsername(field.value);
     if (typed && !usernameError(typed)) field.value = typed;
     check();
@@ -81,26 +91,33 @@ function initUsernameField() {
   return check;
 }
 
-/* The claimed login IDs live in the cloud as well as here. A device that has
-   not synced yet must not take a name another student already owns, so the
-   cloud is asked before the local claim is written. Best effort: an offline or
-   failed lookup answers null and never blocks local-first registration (the
-   bridge's own merge guard still protects the other student's record). */
-async function checkUsernameOnline(username) {
-  if (!LEGACY_CLOUD_ENABLED) return null;
-  if (!navigator.onLine) return null;
-  const budget = 4000;
-  const bounded = promise => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('lookup timed out')), budget))
-  ]);
-  try {
-    const bridge = await bounded(import('./realtime-sync.js'));
-    return await bounded(bridge.usernameTakenOnline(username));
-  } catch (error) {
-    console.warn('[Active Plus] cloud login-id check unavailable:', error.message);
-    return null;
-  }
+function initEmailField() {
+  const field = $('#regEmail');
+  if (!field) return;
+  const status = $('#regEmailStatus');
+  const setStatus = (message, ok) => {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('is-ok', Boolean(ok));
+    status.classList.toggle('is-bad', !ok && Boolean(message));
+  };
+  const check = () => {
+    const normalized = normalizeEmail(field.value);
+    field.setCustomValidity('');
+    if (!normalized) { setStatus('', false); return true; }
+    const err = emailError(normalized);
+    if (err) { setStatus(err, false); return false; }
+    if (emailTaken(normalized)) { setStatus(DUPLICATE_EMAIL_MESSAGE, false); return false; }
+    setStatus('✓ ইমেইল ঠিকানা সঠিক আছে', true);
+    return true;
+  };
+  field.addEventListener('input', check);
+  field.addEventListener('blur', () => {
+    const normalized = normalizeEmail(field.value);
+    if (normalized) field.value = normalized;
+    check();
+  });
+  return check;
 }
 
 async function handleRegistration(event, state, onRegistered) {
@@ -114,94 +131,9 @@ async function handleRegistration(event, state, onRegistered) {
     formElement.reportValidity();
     return;
   }
-  const form = new FormData(formElement);
-  if (!form.get('guardianConsent')) return setAuthMessage('রেজিস্ট্রেশনে অভিভাবকের সম্মতি প্রয়োজন।');
-  const mobile = contactNumber(form.get('mobile'));
-  const pin = String(form.get('pin') || '');
-  const pinConfirm = String(form.get('pinConfirm') || '');
-  const username = normalizeUsername(form.get('username'));
-  if (!isContactNumber(mobile)) return setAuthMessage('সঠিক মোবাইল নম্বর দিন।');
-  const usernameProblem = usernameError(username);
-  if (usernameProblem) return setAuthMessage(usernameProblem);
-  if (usernameTaken(username)) return setAuthMessage('এই ইউজারনেমটি আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।');
-  if ((await checkUsernameOnline(username))?.taken) {
-    return setAuthMessage('এই ইউজারনেমটি অন্য একটি ডিভাইসে আগেই নেওয়া হয়েছে। অন্য একটি বেছে নিন — এটি পরে বদলানো যাবে না।');
-  }
-  const pinProblem = registrationPasswordError(pin, pinConfirm);
-  if (pinProblem) return setAuthMessage(pinProblem);
-  if (state.account) return setAuthMessage('এই ডিভাইসে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন অথবা এডমিনের সাহায্য নিন।');
-
-  const className = String(form.get('className') || '');
-  // The Student ID is the permanent tracking key every panel searches by, so
-  // one that this device already holds is never handed out twice. (A new id
-  // ends with a random suffix, making a collision practically impossible —
-  // this is the belt to its braces.)
-  const issuedIds = new Set(listDocuments('students').map(student => student?.id).filter(Boolean));
-  if (loadAccount()?.student?.id) issuedIds.add(loadAccount().student.id);
-  const { idGenerator } = await import('./idGenerator.js');
-  let studentId = await idGenerator.nextStudentId([...issuedIds].map(id => ({ id })));
-  for (let guard = 0; guard < 5 && issuedIds.has(studentId); guard += 1) studentId = await idGenerator.nextStudentId([...issuedIds].map(id => ({ id })));
-  const studentData = {
-    name: String(form.get('nameBn') || '').trim(),
-    nameBn: String(form.get('nameBn') || '').trim(),
-    nameEn: String(form.get('nameEn') || '').trim(),
-    className,
-    group: String(form.get('group') || ''),
-    id: studentId,
-    username,
-    fatherName: String(form.get('fatherName') || '').trim(),
-    motherName: String(form.get('motherName') || '').trim(),
-    guardianName: String(form.get('guardianName') || '').trim(),
-    birthDate: String(form.get('birthDate') || ''),
-    gender: String(form.get('gender') || ''),
-    studentMobile: mobile,
-    guardianMobile: normalizeMobile(form.get('guardianMobile')),
-    address: String(form.get('address') || '').trim(),
-    major: String(form.get('major') || '').trim(),
-    institution: String(form.get('institution') || '').trim(),
-    roll: generateClassRoll(className),
-    registrationNo: String(form.get('registrationNo') || '').trim()
-  };
-
-  const account = {
-    mobile,
-    registrationMobile: mobile,
-    additionalMobiles: [],
-    username,
-    pin,
-    securityQuestion: String(form.get('securityQuestion') || ''),
-    securityAnswer: normalizeAnswer(form.get('securityAnswer')),
-    student: studentData,
-    studentId,
-    status: 'pending',
-    guardianConsentAt: new Date().toISOString(),
-    createdAt: new Date().toISOString()
-  };
-  // Claim the name first, so a failed save never leaves a dangling claim.
-  if (!reserveUsername(username, studentId)) return setAuthMessage('এই ইউজারনেমটি এরই মধ্যে অন্য কেউ নিয়েছে। অন্য একটি বেছে নিন।');
-  // The account is written with a PBKDF2-hashed password; the plaintext PIN
-  // stays in this form submission only.
-  if (!(await saveAccount(account))) {
-    releaseUsername(username, studentId);
-    return setAuthMessage('সংরক্ষণ হয়নি। স্টোরেজ পরীক্ষা করে আবার চেষ্টা করুন।');
-  }
-  state.account = loadAccount() || account;
-  state.student = { ...state.student, ...studentData };
-  saveStudent(state.student);
-  upsertStudentRosterRow();   // the exact personal fields, nothing the branch owns
-  formElement.reset();
-  toggleMajorField();
-  /* #pendingStudentId lives on the student panel page now (student.html);
-     shell.js fills it there when the pending screen opens. The registration
-     itself happens on the login page, where the element does not exist. */
-  const pendingId = $('#pendingStudentId');
-  if (pendingId) pendingId.textContent = studentId;
-  switchAuthTab('login');
-  $('#loginMobile').value = username;
-  $('#loginPin').value = '';
-  setAuthMessage(`রেজিস্ট্রেশন সফল। Student ID: ${studentId} • লগইনে “${username}” ও আপনার পাসওয়ার্ড দিন।`, true);
-  onRegistered?.();
-  showFeedback(`রেজিস্ট্রেশন সফল — ID: ${studentId} • ইউজারনেম: ${username}`);
+  const entries = [...new FormData(formElement).entries()];
+  const svc = await import('./registration-service.js');
+  return svc.submitStudentRegistration({ entries, formElement, state, onRegistered, toggleMajorField });
 }
 
 function initRegistrationSteps() {
@@ -226,11 +158,48 @@ function initRegistrationSteps() {
   };
 
   const validateCurrentStep = () => {
-    const fields = $$('input, select, textarea', steps[current]);
+    const stepEl = steps[current];
+    const fields = $$('input, select, textarea', stepEl);
     const invalid = fields.find(field => !field.checkValidity());
-    if (invalid) {
-      invalid.reportValidity();
-      return false;
+    if (invalid) { invalid.reportValidity(); return false; }
+    if (current === 0) {
+      const mobileInput = $('#regMobile', stepEl);
+      const userInput = $('#regUsername', stepEl);
+      const mobile = contactNumber(mobileInput?.value || '');
+      const mobErr = mobileError(mobile);
+      if (mobErr) { setAuthMessage(mobErr); mobileInput?.focus(); return false; }
+      if (mobileTaken(mobile)) { setAuthMessage(DUPLICATE_MOBILE_MESSAGE); mobileInput?.focus(); return false; }
+      if (mobileInput) mobileInput.value = mobile;
+      if ($('#studentMobile')) $('#studentMobile').value = mobile;
+
+      const uname = normalizeUsername(userInput?.value || '');
+      const unameErr = usernameError(uname);
+      if (unameErr) { setAuthMessage(unameErr); userInput?.focus(); return false; }
+      if (usernameTaken(uname)) { setAuthMessage(DUPLICATE_USERNAME_MESSAGE); userInput?.focus(); return false; }
+      if (userInput) userInput.value = uname;
+
+      const pin = $('#regPin', stepEl)?.value || '';
+      const pinConfirm = $('#regPinConfirm', stepEl)?.value || '';
+      const pinErr = registrationPasswordError(pin, pinConfirm);
+      if (pinErr) { setAuthMessage(pinErr); $('#regPin', stepEl)?.focus(); return false; }
+      setAuthMessage('');
+    }
+    if (current === 2) {
+      const guardianInput = $('#guardianMobile', stepEl);
+      const emailInput = $('#regEmail', stepEl);
+      const guardian = contactNumber(guardianInput?.value || '');
+      if (!isContactNumber(guardian)) {
+        setAuthMessage('অভিভাবকের সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর দিন।');
+        guardianInput?.focus();
+        return false;
+      }
+      if (guardianInput) guardianInput.value = guardian;
+      const email = normalizeEmail(emailInput?.value || '');
+      const mailErr = emailError(email);
+      if (mailErr) { setAuthMessage(mailErr); emailInput?.focus(); return false; }
+      if (email && emailTaken(email)) { setAuthMessage(DUPLICATE_EMAIL_MESSAGE); emailInput?.focus(); return false; }
+      if (emailInput && email) emailInput.value = email;
+      setAuthMessage('');
     }
     return true;
   };
@@ -245,16 +214,28 @@ function initRegistrationSteps() {
   return { reset: () => showStep(0) };
 }
 
+function maybeFlushQueuedRegistrations() {
+  try {
+    if (!navigator.onLine) return;
+    const raw = window.localStorage?.getItem('activePlus.pendingCloudRegistrations.v1');
+    if (!raw || raw === '[]') return;
+    import('./registration-service.js')
+      .then(mod => mod.flushPendingLocalRegistrations())
+      .catch(() => {});
+  } catch { /* ignore storage access issues */ }
+}
+
 export function initRegister({ state, onRegistered }) {
   populateRegistrationClasses();
   initFixedContactMobile();
   initUsernameField();
+  initEmailField();
   const registerSteps = initRegistrationSteps();
   $('#regClass')?.addEventListener('change', toggleMajorField);
   $('#registrationForm')?.addEventListener('submit', event => handleRegistration(event, state, onRegistered));
-
-  // Starting registration always returns to the first step.
   $$('[data-auth-tab]').forEach(trigger => trigger.addEventListener('click', () => {
     if (trigger.dataset.authTab === 'register') registerSteps.reset();
   }));
+  window.addEventListener('online', maybeFlushQueuedRegistrations);
+  maybeFlushQueuedRegistrations();
 }

@@ -46,7 +46,7 @@ export function stubPdfPrimitives(window) {
   return window;
 }
 
-export async function loadPage(file, { seed = {}, hash = '' } = {}) {
+export async function loadPage(file, { seed = {}, hash = '', width = null, height = null } = {}) {
   const html = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
   const virtualConsole = new VirtualConsole();
   const jsdomErrors = [];
@@ -55,6 +55,12 @@ export async function loadPage(file, { seed = {}, hash = '' } = {}) {
   // refresh of that page does.
   const dom = new JSDOM(html, { url: `http://localhost/${hash || ''}`, pretendToBeVisual: true, virtualConsole });
   const { window } = dom;
+  if (Number.isFinite(width) && width > 0) {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: width });
+  }
+  if (Number.isFinite(height) && height > 0) {
+    Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: height });
+  }
   /* jsdom.close() does not emit pagehide. Real page departure does, and the
      app uses it to stop its staff-session watchdogs; mirror that lifecycle so
      test contexts do not leave 60-second timers running after teardown. */

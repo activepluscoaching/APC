@@ -73,11 +73,21 @@ export const studentIdOf = record =>
  * permanent Student ID. The Student ID may be typed in the short form
  * ("s260929001") — see findLoginMatches for that.
  */
+const toAsciiId = value =>
+  String(value ?? '')
+    .trim()
+    .replace(/[০-৯]/g, ch => String('০১২৩৪৫৬৭৮৯'.indexOf(ch)))
+    .toLowerCase()
+    .replace(/\s+/g, '');
+
 export function matchesLoginIdentifier(account, identifier) {
   if (!account || !identifier) return false;
   const typed = normalizeUsername(identifier);
+  const asciiTyped = toAsciiId(identifier);
   const phone = contactNumber(identifier);
+  const storedId = toAsciiId(account?.student?.id || account?.studentId || '');
   if (typed && (typed === loginIdOf(account) || typed === studentIdOf(account))) return true;
+  if (asciiTyped && storedId && asciiTyped === storedId) return true;
   const registered = contactNumber(account.registrationMobile || account.mobile || '');
   return Boolean(phone) && Boolean(registered) && phone === registered;
 }

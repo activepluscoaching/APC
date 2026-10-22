@@ -344,9 +344,18 @@ export function syncNotifications({ userId, feed = [], legacyRead = [], now = Da
   const stamp = Number(now) || Date.now();
   const legacy = new Set((Array.isArray(legacyRead) ? legacyRead : []).map(text));
   const settings = readSharedSettings();
+  const knownKeys = new Set(
+    store.records
+      .filter(record => text(record.userId) === owner)
+      .map(record => text(record.key))
+      .filter(Boolean)
+  );
   // Promote existing device-local receipts into the already-synced settings
   // collection, so old installs gradually establish the cross-device baseline.
+  // Never promote a key that already has a stored record (e.g. a newly arrived
+  // unread item whose delivery was recorded in SEEN_KEY on an earlier refresh).
   for (const key of legacy) {
+    if (!key || knownKeys.has(key)) continue;
     if (receiptState(owner, key, settings) === undefined) saveSharedReceipt(owner, key, stamp);
   }
   const receipt = key => receiptState(owner, key, settings);
@@ -359,7 +368,7 @@ export function syncNotifications({ userId, feed = [], legacyRead = [], now = Da
       resolved = true;
       return { ...record, read: shared, readAt: shared ? (record.readAt || new Date(stamp).toISOString()) : '' };
     }
-    if (record.type !== 'homework' || record.read !== false || live.has(key)) return record;
+    if ((record.type !== 'homework' && record.type !== 'registration') || record.read !== false || live.has(key)) return record;
     resolved = true;
     return { ...record, read: true, readAt: new Date(stamp).toISOString() };
   });

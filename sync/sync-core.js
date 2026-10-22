@@ -83,6 +83,11 @@ export const SyncService = Object.freeze({
   resetCloudDatabase: (...args) => resetCloudDatabaseOnce(...args),
   hydrateUserIdentifiers: (...args) => hydrateUserIdentifiersOnce(...args),
   usernameTakenOnline: (...args) => implementation().then(m => m.usernameTakenOnline(...args)),
+  registerStudentAtomicallyOnline: (...args) => implementation().then(m => m.registerStudentAtomicallyOnline(...args)),
+  syncRegistrationDecisionOnline: (...args) => implementation().then(m => m.syncRegistrationDecisionOnline(...args)),
+  refreshStudentApprovalOnline: (...args) => implementation().then(m => m.refreshStudentApprovalOnline(...args)),
+  pollRegistrationFeedOnline: (...args) => implementation().then(m => m.pollRegistrationFeedOnline(...args)),
+  getServerTimeMs: (...args) => implementation().then(m => m.getServerTimeMs(...args)),
   getStatus: () => ({ ...document.documentElement.dataset })
 });
 
@@ -94,3 +99,8 @@ export const adminInitializationState = (...args) => adminInitializationStateOnc
 export const claimFirstAdminAccount = (...args) => claimFirstAdminAccountOnce(...args);
 export const resetCloudDatabase = (...args) => resetCloudDatabaseOnce(...args);
 export const hydrateUserIdentifiers = (...args) => hydrateUserIdentifiersOnce(...args);
+export const registerStudentAtomicallyOnline = (...args) => implementation().then(m => m.registerStudentAtomicallyOnline(...args));
+export const syncRegistrationDecisionOnline = (...args) => implementation().then(m => m.syncRegistrationDecisionOnline(...args));
+export const refreshStudentApprovalOnline = (...args) => implementation().then(m => m.refreshStudentApprovalOnline(...args));
+export const pollRegistrationFeedOnline = (...args) => implementation().then(m => m.pollRegistrationFeedOnline(...args));
+export const getServerTimeMs = (...args) => implementation().then(m => m.getServerTimeMs(...args));

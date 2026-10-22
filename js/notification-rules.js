@@ -354,24 +354,56 @@ export function nextHomeworkBoundary(teachingDb, viewer, now = nowEpoch()) {
 
 export const REGISTRATION_REVIEWERS = Object.freeze(['admin', 'manager']);
 
-export function registrationItems(students, viewer) {
+export function registrationItems(students, viewer, registrationNotifications = null) {
   if (viewer?.kind !== 'staff' || !REGISTRATION_REVIEWERS.includes(text(viewer.role))) return [];
   const items = [];
+  const seenIds = new Set();
+  const decidedIds = new Set();
   for (const student of Array.isArray(students) ? students : []) {
-    if (!isObject(student) || student.status !== 'pending') continue;
+    if (!isObject(student)) continue;
     const id = text(student.id);
     if (!id) continue;
+    if (student.status && student.status !== 'pending') { decidedIds.add(id); continue; }
+    if (student.status !== 'pending') continue;
+    seenIds.add(id);
     const name = text(student.name) || text(student.nameEn) || 'নাম নেই';
-    const details = [text(student.className), text(student.group), id].filter(Boolean).join(' • ');
+    const mobile = text(student.mobile || student.studentMobile);
+    const details = [text(student.className), text(student.group), mobile, id].filter(Boolean).join(' • ');
     items.push({
       key: `registration:${id}`,
       source: 'students',
       sourceId: id,
       kind: 'registration',
       actionable: true,
+      studentName: name,
+      mobile,
+      createdAt: text(student.registeredAt) || text(student.createdAt) || text(student.enrolledAt),
       title: 'নতুন শিক্ষার্থী রেজিস্ট্রেশন',
       body: `${name}${details ? ` — ${details}` : ''} · অনুমোদনের অপেক্ষায়`,
       at: Date.parse(text(student.registeredAt) || text(student.createdAt) || '') || 0,
+      audience: 'এডমিন ও ম্যানেজার'
+    });
+  }
+  for (const notif of Array.isArray(registrationNotifications) ? registrationNotifications : []) {
+    if (!isObject(notif) || notif.type !== 'new_registration' || notif.read === true) continue;
+    const id = text(notif.studentId);
+    if (!id || seenIds.has(id) || decidedIds.has(id)) continue;
+    seenIds.add(id);
+    const name = text(notif.studentName) || 'নাম নেই';
+    const mobile = text(notif.mobile);
+    const details = [mobile, id].filter(Boolean).join(' • ');
+    items.push({
+      key: `registration:${id}`,
+      source: 'students',
+      sourceId: id,
+      kind: 'registration',
+      actionable: true,
+      studentName: name,
+      mobile,
+      createdAt: text(notif.createdAt),
+      title: 'নতুন শিক্ষার্থী রেজিস্ট্রেশন',
+      body: `${name}${details ? ` — ${details}` : ''} · অনুমোদনের অপেক্ষায়`,
+      at: Date.parse(text(notif.createdAt) || '') || 0,
       audience: 'এডমিন ও ম্যানেজার'
     });
   }
@@ -394,8 +426,8 @@ export function studentDecisionItems(students, viewer) {
   if (!id) return [];
   const row = (Array.isArray(students) ? students : []).find(item => isObject(item) && text(item.id) === id);
   // Only a real review (it carries reviewedAt) is news; old rows stay quiet.
-  if (!row || !text(row.reviewedAt) || !['approved', 'rejected'].includes(row.status)) return [];
-  const approved = row.status === 'approved';
+  if (!row || !text(row.reviewedAt) || !['approved', 'active', 'rejected'].includes(row.status)) return [];
+  const approved = row.status === 'approved' || row.status === 'active';
   const note = text(row.reviewNote);
   return [{
     key: `decision:${id}:${row.status}:${text(row.reviewedAt)}`,
@@ -551,7 +583,7 @@ export function sortNewestFirst(items) {
   return [...items].sort((left, right) => (right.at || 0) - (left.at || 0));
 }
 
-export function notificationFeed({ notices = [], config = null, examDb = null, teachingDb = null, viewer = null, now = nowEpoch(), localWrites = null, students = null, transactions = null, cleared = null } = {}) {
+export function notificationFeed({ notices = [], config = null, examDb = null, teachingDb = null, viewer = null, now = nowEpoch(), localWrites = null, students = null, registrationNotifications = null, transactions = null, cleared = null } = {}) {
   const items = [];
   const broadcast = broadcastItem(config);
   if (broadcast) items.push(broadcast);
@@ -566,7 +598,7 @@ export function notificationFeed({ notices = [], config = null, examDb = null, t
   items.push(...latestNotices.values());
   items.push(...examItems(examDb, viewer, now));
   items.push(...homeworkItems(teachingDb, viewer, now));
-  items.push(...registrationItems(students, viewer));
+  items.push(...registrationItems(students, viewer, registrationNotifications));
   items.push(...studentDecisionItems(students, viewer));
   items.push(...examTimingItems(examDb, viewer, now));
   items.push(...studentPaymentItems(transactions, viewer));

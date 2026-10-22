@@ -27,7 +27,7 @@ test('index.html ships only the login door, student.html only the panel', () => 
   const panel = documentOf('student.html');
   assert.ok(panel.getElementById('appShell'), 'the student shell ships on student.html');
   assert.equal(panel.getElementById('appShell').hidden, true, 'the shell starts hidden, before any session check');
-  assert.equal(panel.querySelectorAll('[data-view-panel]').length, 50, 'every student view ships on the panel page');
+  assert.equal(panel.querySelectorAll('[data-view-panel]').length, 51, 'every student view ships on the panel page');
   assert.ok(panel.getElementById('noticeModal') && panel.getElementById('logoutModal') && panel.getElementById('editModal'),
     'the panel overlays ship with the panel');
   assert.equal(panel.getElementById('authScreen'), null, 'the login screen must not ship on the panel page');

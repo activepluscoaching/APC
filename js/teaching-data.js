@@ -233,7 +233,7 @@ function readData() {
   return db;
 }
 function approvedRoster() {
-  const students = loadRoster().filter(s => s.status === 'approved').map(s => ({ ...s }));
+  const students = loadRoster().filter(s => s.status === 'approved' || s.status === 'active').map(s => ({ ...s }));
   // Include the current approved student account without changing stored office records.
   try {
     const account = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.account) || 'null');

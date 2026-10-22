@@ -12,8 +12,6 @@ import { initAppearance } from './appearance.js';
 import { activeStaffRoles } from './staff-auth.js';
 import { staffPanelPath } from './login.js';
 import { switchAuthTab, initLogin } from './login.js';
-import { initRegister } from './register.js';
-import { initRecovery } from './recovery.js';
 import { requestLogout, initLogout } from './logout.js';
 import { initNavigation } from './navigation.js';
 import { initFixedShell } from './fixed-shell.js';
@@ -189,6 +187,7 @@ const shareStudentOnWhatsApp = (...args) => featureHandles.shareStudentOnWhatsAp
 
 function refreshSignedInSurface() {
   refreshDashboard();
+  refreshRoutine();
   refreshTeaching(); refreshCourses.paint();
   dailyQuote.paint();
   refreshExams(); refreshPractice();
@@ -404,8 +403,10 @@ initLogin({
   state,
   onAuthenticated: ON_AUTH_PAGE ? goToStudentPanel : enterApp
 });
-initRegister({ state });
-initRecovery({ state });
+if (ON_AUTH_PAGE) {
+  void import('./register.js').then(({ initRegister }) => initRegister({ state }));
+  void import('./recovery.js').then(({ initRecovery }) => initRecovery({ state }));
+}
 initLogout({ onLoggedOut: leaveApp });
 
 // Pending-account screen is the only other place a student can leave the app.
@@ -465,7 +466,7 @@ window.addEventListener('storage', async event => {
       const account = loadAccount();
       const id = account?.student?.id || account?.studentId;
       const roster = listDocuments('students').find(student => student.id === id);
-      const status = roster?.status === 'approved' ? 'active' : roster?.status;
+      const status = roster?.status === 'approved' || roster?.status === 'active' ? 'active' : roster?.status;
       if (roster && status !== account?.status) {
         await syncAccountStatus(id, roster.status);
         state.account = loadAccount();

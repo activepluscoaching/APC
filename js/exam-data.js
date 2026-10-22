@@ -889,7 +889,7 @@ export function closeStaleMcqAttempts(db, now = nowEpoch()) {
 function approvedRosterRows() {
   try {
     return listDocuments('students')
-      .filter(person => person && person.status === 'approved' && typeof person.id === 'string' && person.id);
+      .filter(person => person && (person.status === 'approved' || person.status === 'active') && typeof person.id === 'string' && person.id);
   } catch { return []; }
 }
 

@@ -10,13 +10,11 @@
        single nodes CAN be deleted, so the Admin panel's factory reset
        (docs/FACTORY-RESET.md) can clear the database node by node and the
        login page can offer the first-use Admin Account setup again;
-     • check basic record shape, so the database can't be used as free storage;
+     • enforce atomic uniqueness registries (usernames, mobileIndex, emailIndex),
+       monotonic daily Student ID counters (001–999), registration notification
+       schema, immutable Student IDs, and Admin/Manager-only registration
+       approval/rejection transitions;
      • keep push tokens write-only (only Cloud Functions read them).
-
-   What they DO NOT do: tell one app user from another for the legacy sync
-   bridge. That is the accepted interim risk; docs/RTDB-PER-USER-RULES-PLAN.md
-   is the replacement. The separate public advice bank is an exception: it is
-   readable by signed-in clients, but writes require active Admin/Manager claims.
 
    Run: node tools/rtdb-rules/build-interim-rules.mjs */
 import { writeFileSync } from 'node:fs';
@@ -24,10 +22,15 @@ import { fileURLToPath } from 'node:url';
 
 const AUTH = 'auth != null';
 const ADVICE_EDITOR = `${AUTH} && auth.token.status === 'active' && auth.token.mustChangePassword !== true && (auth.token.role === 'admin' || auth.token.role === 'manager')`;
+const REVIEWER_OR_BRIDGE = "(auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager')";
 const STAFF_ROLES = ['admin', 'manager', 'teacher', 'payment'];
 const RECORD_COLLECTIONS = ['students', 'transactions', 'notices', 'routine', 'teaching', 'academics', 'courseContent', 'courses', 'teacherAssignments', 'classChat'];
 const hasChildren = "newData.hasChildren()";
 const idMatches = variable => `newData.child('id').val() === ${variable}`;
+
+const STUDENT_DECISION_CHANGE = "(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'active' || newData.child('status').val() === 'rejected'))";
+const STUDENT_RECORD_VALIDATE = `${hasChildren} && (!data.exists() || !data.child('id').exists() || newData.child('id').val() === data.child('id').val()) && (!${STUDENT_DECISION_CHANGE} || (${REVIEWER_OR_BRIDGE} && (newData.child('approvedAt').isString() || newData.child('reviewedAt').isString())))`;
+const ACCOUNT_DECISION_CHANGE = "(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'active' || newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected'))";
 
 export function buildInterimRules() {
   const v1 = {
@@ -49,11 +52,52 @@ export function buildInterimRules() {
       '.write': AUTH,
       '.validate': "newData.hasChild('version')"
     },
-    // Claimed Login User IDs: the client only ever adds (merge transaction).
+    // Claimed Login User IDs: atomic per-key transaction or merge transaction.
     // The factory reset may clear the whole registry.
     usernames: {
       '.read': AUTH,
-      '.write': AUTH
+      '.write': AUTH,
+      $usernameKey: {
+        '.write': AUTH,
+        '.validate': "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+      }
+    },
+    // Unique Bangladeshi mobile number index (01XXXXXXXXX -> studentId).
+    mobileIndex: {
+      '.read': AUTH,
+      '.write': AUTH,
+      $mobileKey: {
+        '.write': AUTH,
+        '.validate': "$mobileKey.length === 11 && newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+      }
+    },
+    // Optional unique email index (encoded lowercase email -> studentId).
+    emailIndex: {
+      '.read': AUTH,
+      '.write': AUTH,
+      $emailKey: {
+        '.write': AUTH,
+        '.validate': "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+      }
+    },
+    // Atomic daily Student ID serial counter (YYMMDD -> 1..999).
+    dailyStudentCounters: {
+      '.read': AUTH,
+      '.write': AUTH,
+      $dayKey: {
+        '.write': `${AUTH} && (!newData.exists() || (newData.isNumber() && newData.val() >= 1 && newData.val() <= 999 && (!data.exists() || newData.val() > data.val())))`,
+        '.validate': "$dayKey.length === 6 && newData.isNumber() && newData.val() >= 1 && newData.val() <= 999"
+      }
+    },
+    // Registration notifications shared with Admin and Manager panels:
+    // { id, type: "new_registration", studentId, studentName, mobile, createdAt, read }
+    notifications: {
+      '.read': `${AUTH} && ${REVIEWER_OR_BRIDGE}`,
+      '.write': `${AUTH} && (!newData.exists() || ${REVIEWER_OR_BRIDGE})`,
+      $notifId: {
+        '.write': `${AUTH} && (!newData.exists() || (!data.exists() && newData.child('read').val() === false) || (${REVIEWER_OR_BRIDGE} && data.exists()))`,
+        '.validate': `${idMatches('$notifId')} && newData.hasChildren(['id', 'type', 'studentId', 'studentName', 'mobile', 'createdAt', 'read']) && newData.child('type').val() === 'new_registration' && newData.child('studentId').isString() && newData.child('studentId').val().length > 0 && newData.child('studentName').isString() && newData.child('studentName').val().length > 0 && newData.child('mobile').isString() && newData.child('mobile').val().length > 0 && newData.child('createdAt').isString() && newData.child('createdAt').val().length > 0 && newData.child('read').isBoolean()`
+      }
     },
     // Old single-student node: read-only migration source.
     studentAccount: { '.read': AUTH },
@@ -62,8 +106,8 @@ export function buildInterimRules() {
     studentAccounts: {
       '.read': AUTH,
       $loginKey: {
-        '.write': AUTH,
-        '.validate': "newData.hasChild('pinHash')"
+        '.write': `${AUTH} && (!newData.exists() || !${ACCOUNT_DECISION_CHANGE} || ${REVIEWER_OR_BRIDGE})`,
+        '.validate': `newData.hasChild('pinHash') && (!${ACCOUNT_DECISION_CHANGE} || ${REVIEWER_OR_BRIDGE})`
       }
     },
     // Exam database: per-id mirror (deletions are legitimate). The two group
@@ -88,23 +132,17 @@ export function buildInterimRules() {
     },
     // Institution-wide markers. `system/adminInitialized` records that the
     // one-time global Admin initialization happened, so a device with an empty
-    // localStorage can never mistake itself for a fresh installation. It is a
-    // marker, never the evidence: the Admin record above is what really
-    // decides. The factory reset may delete it to reopen first-use setup.
+    // localStorage can never mistake itself for a fresh installation.
     system: {
       '.read': AUTH,
       adminInitialized: {
         '.write': `${AUTH} && (!newData.exists() || newData.isBoolean())`,
         '.validate': 'newData.isBoolean()'
       },
-      /* Login-page diagnostic (js/firebase-diagnostics.js): a signed-in device
-         proves the rules really allow a write with a tiny `{at: <millis>}`
-         record that it removes the same second. Deletion must stay possible
-         (cleanup), so the write rule does not require newData.exists(); the
-         child guard keeps the node from becoming free storage — the only
-         accepted child is a numeric `at`. */
       connectivityProbe: {
+        '.read': AUTH,
         $probeKey: {
+          '.read': AUTH,
           '.write': `${AUTH} && $probeKey.length <= 64`,
           at: { '.validate': 'newData.isNumber()' },
           $other: { '.validate': false }
@@ -113,8 +151,6 @@ export function buildInterimRules() {
     },
     // Public educational advice: all signed-in clients can read; only an
     // active Admin/Manager claim can add, edit, activate, reorder or delete.
-    // Records are stored directly at adviceBank/{adviceId}; the RTDB key is
-    // the ID, so no wrapper, metadata, dailyAdvice node or pin fields exist.
     adviceBank: {
       '.read': AUTH,
       '.write': ADVICE_EDITOR,
@@ -135,7 +171,16 @@ export function buildInterimRules() {
   // Application collections: written as one merge transaction per collection
   // (js/record-sync.js); every record is an object.
   for (const name of RECORD_COLLECTIONS) {
-    v1[name] = { '.read': AUTH, '.write': AUTH, $recordId: { '.validate': hasChildren } };
+    v1[name] = {
+      '.read': AUTH,
+      '.write': AUTH,
+      $recordId: name === 'students'
+        ? {
+            '.write': `${AUTH} && (!newData.exists() || !${STUDENT_DECISION_CHANGE} || ${REVIEWER_OR_BRIDGE})`,
+            '.validate': STUDENT_RECORD_VALIDATE
+          }
+        : { '.validate': hasChildren }
+    };
   }
   return {
     rules: {

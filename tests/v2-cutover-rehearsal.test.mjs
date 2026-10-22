@@ -24,6 +24,9 @@ const { mobileProposals, v2StudentRecord } = require('../functions/v2-roster-mig
 const {
   buildTeacherQuestionProjection, buildStudentQuestionProjection
 } = require('../functions/question-bank-projection.js');
+const {
+  normalizeNoticeDraft, normalizeNoticeRecord, buildStudentNoticeProjection, buildNoticeFanout, noticeMatchesTeacher
+} = require('../functions/notice-projection.js');
 
 const draft = JSON.parse(readFileSync(new URL('../database.rules.v2.draft.json', import.meta.url), 'utf8'));
 const NOW = Date.UTC(2026, 9, 8, 6, 0, 0);
@@ -203,6 +206,51 @@ test('migrated students see exactly their own practice lane, gated on status', (
   assert.deepEqual(Object.keys(buildStudentQuestionProjection(questionBankRows, rahimRow, NOW)), ['q-math-1', 'q-eng-1'], 'approved Class 6 sees every active Class 6 question, never the inactive one');
   assert.deepEqual(Object.keys(buildStudentQuestionProjection(questionBankRows, karimRow, NOW)), [], 'pending migrates but projects nothing');
   assert.deepEqual(Object.keys(buildStudentQuestionProjection(questionBankRows, sadatRow, NOW)), ['q-math-1', 'q-eng-1'], 'guardian-matched student lands in the right class lane');
+});
+
+test('migrated students and teachers obey v2 Notices rules and class/group projections', () => {
+  const rahimRow = v2StudentRecord(legacyStudents['STU-1'], { uid: 'u-rahim', accountStatus: 'approved', now: NOW });
+  const karimApprovedRow = v2StudentRecord(legacyStudents['STU-2'], { uid: 'u-karim', accountStatus: 'approved', now: NOW });
+  const karimPendingRow = v2StudentRecord(legacyStudents['STU-2'], { uid: 'u-karim', accountStatus: 'pending', now: NOW });
+  const rafiqMigration = migrationForTeacher(legacyAssignments, 'rafiq', identities.rafiq);
+
+  const draft = normalizeNoticeDraft({
+    id: 'n-class6-math',
+    authorUid: 'u-rafiq',
+    title: 'Class 6 গণিত ক্লাস টেস্ট',
+    body: 'আগামীকাল সকাল ১০টায় ক্লাস টেস্ট হবে।',
+    classId: 'Class 6',
+    group: '',
+    status: 'draft',
+    published: false
+  }, { id: 'n-class6-math', authorUid: 'u-rafiq' });
+
+  const state = stateWith({});
+  assert.equal(sim.canWrite(RAFIQ, R('noticeDraftsByAuthor/u-rafiq/n-class6-math'), draft, state), true, 'Teacher writes own private draft');
+  assert.equal(sim.canWrite(SALMA, R('noticeDraftsByAuthor/u-rafiq/n-class6-math'), draft, state), false, 'other Teacher cannot modify draft');
+  assert.equal(noticeMatchesTeacher(draft, 'u-rafiq', rafiqMigration.assignments), true, 'assigned Teacher passes server scope check');
+  assert.equal(noticeMatchesTeacher({ ...draft, classId: 'Class 7', className: 'Class 7' }, 'u-rafiq', rafiqMigration.assignments), false, 'unassigned class is rejected');
+
+  const canonical = normalizeNoticeRecord({
+    ...draft,
+    status: 'published',
+    published: true
+  }, { id: 'n-class6-math' });
+  assert.equal(sim.canWrite(MANAGER, R('notices/n-class6-math'), canonical, state), true, 'Manager/Admin SDK shape passes canonical notice rules');
+
+  const fanout = buildNoticeFanout({
+    noticeId: 'n-class6-math',
+    after: canonical,
+    students: {
+      'u-rahim': rahimRow,
+      'u-karim': karimApprovedRow,
+      'u-karim-pending': karimPendingRow
+    }
+  });
+  assert.ok(fanout['studentNotices/u-rahim/n-class6-math'], 'Class 6 approved student receives projection');
+  assert.equal(fanout['studentNotices/u-karim/n-class6-math'], undefined, 'Class 7 student never receives Class 6 notice');
+  assert.equal(fanout['studentNotices/u-karim-pending/n-class6-math'], undefined, 'pending student receives nothing');
+  assert.deepEqual(Object.keys(buildStudentNoticeProjection({ 'n-class6-math': canonical }, rahimRow)), ['n-class6-math']);
 });
 
 test('the migration writes are deterministic for a fixed clock (safe to re-run)', () => {

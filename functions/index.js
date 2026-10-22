@@ -24,6 +24,15 @@ const {
   buildQuestionBankFanout
 } = require('./question-bank-projection.js');
 const {
+  safeKey: safeNoticeKey,
+  normalizeNoticeRecord,
+  normalizeNoticeDraft,
+  noticeMatchesTeacher,
+  buildStudentNoticeProjection,
+  buildNoticeFanout,
+  advanceNoticeDraftAfterPublish
+} = require('./notice-projection.js');
+const {
   linkedTeacherClaims,
   migrationForTeacher,
   entriesOfLegacyAssignments,
@@ -696,6 +705,127 @@ exports.rebuildTeacherQuestionBank = onValueWritten({ ref: `${V2_ROOT}/teacherAs
   await applyV2Updates(updates);
 });
 
+/** Teacher notice-publishing callable (docs/RTDB-PER-USER-RULES-PLAN.md §5).
+ * Verifies the authenticated active Teacher's assignment scope against the
+ * private draft under `noticeDraftsByAuthor/<uid>/<noticeId>` before writing
+ * canonical `activePlusV2/notices/<noticeId>`. */
+exports.publishNotice = onCall(async request => {
+  requireCaller(request, 'teacher');
+  const teacherId = String(request.auth.token.teacherId || '');
+  const authorUid = String(request.auth.uid || '');
+  const noticeId = String(request.data?.noticeId || '');
+  if (!safeNoticeKey(teacherId) || !safeNoticeKey(authorUid) || !safeNoticeKey(noticeId)) {
+    throw new HttpsError('permission-denied', 'সক্রিয় Teacher identity প্রয়োজন।');
+  }
+  const database = getDatabase();
+  const [draftSnapshot, assignmentsSnapshot] = await Promise.all([
+    database.ref(`${V2_ROOT}/noticeDraftsByAuthor/${authorUid}/${noticeId}`).get(),
+    database.ref(`${V2_ROOT}/teacherAssignments`).get()
+  ]);
+  const rawDraft = draftSnapshot.val();
+  if (!rawDraft || rawDraft.id !== noticeId || rawDraft.authorUid !== authorUid) {
+    throw new HttpsError('not-found', 'নিজের অপেক্ষমাণ নোটিশ Draft পাওয়া যায়নি।');
+  }
+  let draft;
+  try {
+    draft = normalizeNoticeDraft(rawDraft, { id: noticeId, authorUid });
+  } catch {
+    throw new HttpsError('invalid-argument', 'নোটিশ Draft-এর তথ্য সঠিক নয়।');
+  }
+  const assignmentRows = valuesOf(assignmentsSnapshot.val());
+  if (!noticeMatchesTeacher(draft, teacherId, assignmentRows)) {
+    throw new HttpsError('permission-denied', 'এই শ্রেণি বা বিভাগে নোটিশ প্রকাশের সক্রিয় assignment আপনার নেই।');
+  }
+  const profileSnapshot = await db.doc(`users/${authorUid}`).get();
+  const profile = profileSnapshot.exists ? profileSnapshot.data() : {};
+  const displayName = String(profile.fullName || profile.username || request.auth.token.name || draft.createdBy || 'Teacher').trim().slice(0, 100);
+  const nowIso = new Date().toISOString();
+  const canonicalNotice = normalizeNoticeRecord({
+    ...draft,
+    id: noticeId,
+    status: 'published',
+    published: true,
+    createdBy: displayName,
+    updatedAt: nowIso
+  }, { id: noticeId });
+
+  const canonicalRef = database.ref(`${V2_ROOT}/notices/${noticeId}`);
+  const result = await canonicalRef.transaction(current => {
+    if (current) {
+      if (current.createdByUid && current.createdByUid !== authorUid) return;
+      if (!noticeMatchesTeacher(current, teacherId, assignmentRows)) return;
+    }
+    return {
+      ...canonicalNotice,
+      createdBy: current?.createdBy || displayName,
+      createdAt: current?.createdAt || draft.createdAt || nowIso,
+      updatedAt: nowIso,
+      createdByUid: current?.createdByUid || authorUid,
+      updatedByUid: authorUid,
+      teacherId: current?.teacherId || teacherId
+    };
+  }, undefined, false);
+  if (!result.committed) {
+    throw new HttpsError('permission-denied', 'অন্য কারো বা অনুমোদনবিহীন নোটিশ পরিবর্তন করা যাবে না।');
+  }
+  await database.ref(`${V2_ROOT}/noticeDraftsByAuthor/${authorUid}/${noticeId}`)
+    .transaction(current => advanceNoticeDraftAfterPublish(current, {
+      authorUid,
+      noticeId,
+      publishedDraft: rawDraft
+    }), undefined, false);
+  return { ok: true, noticeId, updatedAt: nowIso };
+});
+
+/** Fan out canonical published notices to matching approved students under
+ * `activePlusV2/studentNotices/<studentId>/<noticeId>` and retract stale copies. */
+exports.projectNoticeRecord = onValueWritten({ ref: `${V2_ROOT}/notices/{noticeId}`, region: DB_REGION }, async event => {
+  const noticeId = String(event.params.noticeId || '');
+  if (!safeNoticeKey(noticeId)) return;
+  const before = event.data.before.val();
+  const after = event.data.after.val();
+  if (after) {
+    try { normalizeNoticeRecord(after, { id: noticeId }); }
+    catch (error) { throw new Error(`Invalid canonical Notice row ${noticeId}: ${error.message}`); }
+  }
+  const database = getDatabase();
+  const studentsSnapshot = await database.ref(`${V2_ROOT}/students`).get();
+  const updates = buildNoticeFanout({
+    noticeId,
+    before,
+    after,
+    students: studentsSnapshot.val() || {}
+  });
+  await applyV2Updates(updates);
+});
+
+/** Rebuild a student's `studentNotices/<studentId>` subtree when their approval
+ * status, class, or group changes. */
+exports.rebuildStudentNotices = onValueWritten({ ref: `${V2_ROOT}/students/{studentId}`, region: DB_REGION }, async event => {
+  const studentId = String(event.params.studentId || '');
+  if (!safeNoticeKey(studentId)) return;
+  const student = event.data.after.val();
+  const database = getDatabase();
+  const projectionRef = database.ref(`${V2_ROOT}/studentNotices/${studentId}`);
+  if (!student || student.id !== studentId || student.status !== 'approved') {
+    await projectionRef.set(null);
+    return;
+  }
+  const [noticesSnapshot, existingSnapshot] = await Promise.all([
+    database.ref(`${V2_ROOT}/notices`).get(),
+    projectionRef.get()
+  ]);
+  const projection = buildStudentNoticeProjection(noticesSnapshot.val() || {}, student);
+  const existing = mapObject(existingSnapshot.val());
+  const updates = {};
+  for (const noticeId of new Set([...Object.keys(existing), ...Object.keys(projection)])) {
+    if (!safeNoticeKey(noticeId)) continue;
+    const next = projection[noticeId] || null;
+    if (!jsonEqual(existing[noticeId] ?? null, next)) updates[`studentNotices/${studentId}/${noticeId}`] = next;
+  }
+  await applyV2Updates(updates);
+});
+
 /** One-minute server release queue: exam-sourced answers are inserted in each
  * student's own bank only after the official endAt, even if no client reconnects. */
 exports.releaseQuestionBankExamQuestions = onSchedule({
@@ -958,4 +1088,65 @@ exports.pushExam = onValueWritten({ ref: `${BRIDGE_ROOT}/examDb/exams/{examId}`,
     if (!payload.data.id) payload.data.id = String(event.params.examId || '');
     await sendToStudents(payload);
   }
+});
+
+const { validateRegistrationDecisionRequest: validateDecisionCore } = require('./registration-decision-core');
+
+function validateRegistrationDecisionRequest(auth, data = {}) {
+  const checked = validateDecisionCore(auth, data);
+  if (!checked.ok) {
+    throw new HttpsError(checked.code, checked.message);
+  }
+  return checked;
+}
+
+exports.validateRegistrationDecisionRequest = validateRegistrationDecisionRequest;
+
+exports.decideStudentRegistration = onCall(async request => {
+  const { role, studentId, decision, note } = validateRegistrationDecisionRequest(request.auth, request.data);
+  const database = getDatabase();
+  const studentRef = database.ref(`${BRIDGE_ROOT}/students/${studentId}`);
+  const snap = await studentRef.get();
+  if (!snap.exists()) {
+    throw new HttpsError('not-found', 'শিক্ষার্থীর আবেদন পাওয়া যায়নি।');
+  }
+  const current = snap.val() || {};
+  if (current.status !== 'pending') {
+    throw new HttpsError('failed-precondition', 'এই আবেদনটি ইতিমধ্যে নিষ্পত্তি হয়েছে।');
+  }
+  const nowIso = new Date().toISOString();
+  const actor = String(request.auth.token?.username || request.auth.token?.email || request.auth.uid);
+  const nextRow = {
+    ...current,
+    id: studentId,
+    status: decision,
+    accountStatus: decision === 'approved' ? 'active' : 'rejected',
+    reviewedBy: actor,
+    reviewedRole: role,
+    reviewedAt: nowIso,
+    updatedAt: nowIso,
+    ...(decision === 'approved'
+      ? { approvedBy: actor, approvedAt: nowIso, reviewNote: '' }
+      : { reviewNote: note, rejectionReason: note })
+  };
+  await studentRef.set(nextRow);
+  const notifRef = database.ref(`${BRIDGE_ROOT}/notifications/reg-${studentId}`);
+  const notifSnap = await notifRef.get();
+  if (notifSnap.exists()) {
+    await notifRef.update({ read: true, readAt: nowIso, readBy: actor });
+  }
+  return { ok: true, student: nextRow };
+});
+
+exports.pushNewRegistration = onValueWritten({ ref: `${BRIDGE_ROOT}/notifications/{notifId}`, region: DB_REGION }, async event => {
+  const before = event.data.before.val();
+  const after = event.data.after.val();
+  if (before || !after || after.type !== 'new_registration' || after.read === true) return;
+  const entries = (await tokenEntries()).filter(([, record]) => record.role === 'admin' || record.role === 'manager');
+  if (!entries.length) return;
+  await sendPayload(entries, {
+    title: 'নতুন শিক্ষার্থী রেজিস্ট্রেশন করেছে',
+    body: `${String(after.studentName || 'নতুন শিক্ষার্থী')} (ID: ${String(after.studentId || '')}) অনুমোদনের অপেক্ষায় আছে।`,
+    data: { kind: 'registration', id: String(after.studentId || event.params.notifId || '') }
+  });
 });

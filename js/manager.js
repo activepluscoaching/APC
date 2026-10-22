@@ -5,7 +5,7 @@ import { STAFF_DIRECTORY_RULES } from './staff-directory.js';
 import { mountSettingsHub, resetSettingsHub } from './settings-hub.js';
 import { mountProfileSelfEdit } from './staff-self-edit.js';
 import { rememberRoute, onRouteChange, routeName } from './panel-route.js';
-import { decideRegistration, DECISION_MESSAGES, DECIDED_EVENT } from './registration-review.js';
+import { decideRegistration, DECISION_MESSAGES, DECIDED_EVENT, formatPendingDate, openRegistrationReview } from './registration-review.js';
 import { installPanelGuard, lockPanel, rememberPanelPage, watchOwnPanelSession } from './panel-lockdown.js';
 import { openStaffPasswordDialog } from './staff-password-dialog.js';
 import { loadRoster, updateStudentOperationalInfo, setStudentStatus, loadNotices, saveNotices, loadRoutine, saveRoutine, WEEK_DAYS } from './office-data.js';
@@ -273,7 +273,8 @@ function managerStudentDetailsMarkup(student, fee) {
   const group = escapeHtml(student.group || 'ব্যাচ নির্ধারিত নয়');
   const contact = managerStudentDetailGroup('যোগাযোগ', `<p>শিক্ষার্থী ${escapeHtml(student.mobile || '—')}</p><p>অভিভাবক ${escapeHtml(student.guardianMobile || '—')}</p>`);
   if (student.status === 'pending') {
-    return `<div class="manager-student-detail-grid">${managerStudentDetailGroup('আবেদনের তথ্য', `<p>${['শ্রেণি', className, group].filter(Boolean).join(' • ')}</p><p>আবেদন ${escapeHtml(student.enrolledAt || 'তারিখ নেই')}</p>`)}${contact}</div>`;
+    const appliedDate = escapeHtml(formatPendingDate(student));
+    return `<div class="manager-student-detail-grid">${managerStudentDetailGroup('অনুমোদনের অপেক্ষায়', `<p>নাম: ${escapeHtml(student.name || 'নাম নেই')} • আইডি: ${escapeHtml(student.id || '—')}</p><p>${['শ্রেণি', className, group].filter(Boolean).join(' • ')}</p><p>তারিখ: ${appliedDate}</p>`)}${contact}</div>`;
   }
   const progress = managerStudentDetailGroup('অগ্রগতি', `<p>মাসিক বকেয়া ${money(fee.due)}</p><p>উপস্থিতি ${student.attendance == null ? '—' : `${escapeHtml(student.attendance)}%`} • গড় ফল ${student.average == null ? '—' : escapeHtml(student.average)}</p>`);
   return `<div class="manager-student-detail-grid">${managerStudentDetailGroup('শ্রেণি ও ব্যাচ', `<p>${[className, group].filter(Boolean).join(' • ') || '—'}</p>`)}${contact}${progress}</div>`;
@@ -316,8 +317,8 @@ function renderStudents() {
           <div class="manager-student-details" id="${escapeHtml(detailsId)}"${detailsOpen ? '' : ' hidden'}>
             ${managerStudentDetailsMarkup(student)}
             <div class="manager-actions manager-student-actions">
-              <button class="mini-btn approve manager-student-action-primary" type="button" data-manager-action="approve-student" data-id="${escapeHtml(student.id)}">অনুমোদন</button>
-              <button class="mini-btn reject manager-student-action-secondary" type="button" data-manager-action="reject-student" data-id="${escapeHtml(student.id)}">বাতিল</button>
+              <button class="mini-btn approve manager-student-action-primary" type="button" data-manager-action="approve-student" data-id="${escapeHtml(student.id)}">অনুমোদন দিন</button>
+              <button class="mini-btn reject manager-student-action-secondary" type="button" data-manager-action="reject-student" data-id="${escapeHtml(student.id)}">বাতিল করুন</button>
               <button class="mini-btn manager-student-action-secondary" type="button" data-manager-action="view-student" data-id="${escapeHtml(student.id)}">প্রোফাইল</button>
             </div>
             <div class="manager-student-extra" hidden></div>
@@ -835,8 +836,18 @@ async function approveStudent(studentId, decision) {
   if (!(await managerGuard())) return toast('Manager session যাচাই হয়নি। আবার প্রবেশ করুন।', true);
   const student = students.find(row => row.id === studentId);
   if (!student || student.status !== 'pending') return toast('এই নিবন্ধনে আর সিদ্ধান্ত নেওয়া যাবে না।', true);
-  const note = decision === 'rejected' ? window.prompt('বাতিলের কারণ লিখুন (আবশ্যক):', '')?.trim() : '';
-  if (decision === 'rejected' && !note) return;
+  let note = '';
+  if (decision === 'rejected') {
+    let prompted;
+    try { prompted = typeof window.prompt === 'function' ? window.prompt('বাতিলের কারণ লিখুন (আবশ্যক):', '') : undefined; } catch { prompted = undefined; }
+    if (prompted === undefined) {
+      await openRegistrationReview(studentId, { role: 'manager', onDone: () => { void loadOperationalData(); } });
+      return;
+    }
+    if (prompted === null) return;
+    note = String(prompted).trim();
+    if (!note) return toast(DECISION_MESSAGES['note-required'], true);
+  }
   managerBusy = true;
   try {
     // Shared with the Admin panel and the notification review dialog.
@@ -1445,7 +1456,38 @@ async function mountCourseEditor() {
   return courseEditorMountFlight;
 }
 $('#managerLogout').addEventListener('click', () => { clearStaffSession('manager'); goToLoginPage(); });
+const MANAGER_WATCHED_KEYS = new Set([
+  'activePlus.admin.students.v1',
+  'activePlus.registrationNotifications.v1',
+  'activePlus.admin.transactions.v1',
+  'activePlus.admin.notices.v1',
+  'activePlus.admin.routine.v1',
+  TEACHING_KEY,
+  TEACHER_ASSIGNMENTS_KEY,
+  'activePlus.exams.v1'
+]);
+const MANAGER_WATCHED_COLLECTIONS = new Set([
+  'students',
+  'registrationNotifications',
+  'transactions',
+  'notices',
+  'routine',
+  'teaching',
+  'teacherAssignments',
+  'exams'
+]);
+function refreshManagerLiveData() {
+  void loadOperationalData();
+  refreshReports($('#managerReports'));
+}
 window.addEventListener('storage', event => {
-  if (!event.key || [ 'activePlus.admin.students.v1', 'activePlus.admin.transactions.v1', 'activePlus.admin.notices.v1', 'activePlus.admin.routine.v1', TEACHING_KEY, TEACHER_ASSIGNMENTS_KEY, 'activePlus.exams.v1' ].includes(event.key)) { void loadOperationalData(); refreshReports($('#managerReports')); }
+  if (!event.key || MANAGER_WATCHED_KEYS.has(event.key)) refreshManagerLiveData();
+});
+window.addEventListener('apc-sync-updated', event => {
+  const collection = event?.detail?.collection;
+  const key = event?.detail?.key;
+  if (!collection || MANAGER_WATCHED_COLLECTIONS.has(collection) || (key && MANAGER_WATCHED_KEYS.has(key))) {
+    refreshManagerLiveData();
+  }
 });
 export const managerReady = enterManager();

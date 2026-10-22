@@ -56,34 +56,33 @@ test('the office admin is signed in and can approve registrations', async () => 
   await adminPhone.run('boot');
 });
 
-test('a new student registers on their own phone and enters the pending app', async () => {
+test('a new student registers on their own phone and is blocked from logging in while pending', async () => {
   await studentPhone.run('start-app');
   const result = await studentPhone.run('register-student', { username: USERNAME, pin: PIN });
   assert.equal(result.registered, true, result.message);
   studentId = result.account?.student?.id || result.account?.studentId;
   assert.ok(studentId, 'the registration returned a permanent Student ID');
+  assert.match(String(studentId), /^\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$/);
   assert.equal(result.account?.status, 'pending', 'a fresh registration starts pending');
 
-  // The student may sign in while pending — the account is not blocked, its
-  // student features are (README: pending accounts can log in, cannot study).
-  const login = await studentPhone.run('submit-login', { username: USERNAME, pin: PIN });
-  assert.equal(login.studentSession, true, login.message);
-  const open = await studentPhone.run('wait-app-open');
-  assert.equal(open.pending, true, 'the pending screen is shown until the office decides');
-  assert.equal(open.accountStatus, 'pending');
+  // Pending accounts cannot sign in before approval and see the clear Bangla pending notice.
+  const blockedLogin = await studentPhone.run('submit-login', { username: USERNAME, pin: PIN });
+  assert.equal(blockedLogin.studentSession, false, 'pending student cannot sign in');
+  assert.match(blockedLogin.message, /^আপনার অ্যাকাউন্ট অনুমোদনের অপেক্ষায় আছে।/);
   await waitForCloud(state => Object.values(state.students || {}).some(row => row?.id === studentId), 'roster row uploaded');
 });
 
-test('the approval unlocks the phone that was already signed in', async () => {
+test('after Admin approval, the student phone can sign in and enters active', async () => {
   await adminPhone.run('wait-content', { key: KEYS.students, id: studentId });
   const decided = await adminPhone.run('decide-registration', { studentId, decision: 'approved', role: 'admin' });
   assert.equal(decided.ok, true, decided.reason);
+  await waitForCloud(state => state.students?.[studentId]?.status === 'approved', 'the approval is on the cloud');
 
-  const status = await studentPhone.run('wait-account-status', { status: 'active' });
-  assert.equal(status.accountStatus, 'active', 'the student account is no longer pending');
-  const state = await studentPhone.run('app-state');
-  assert.equal(state.pending, false, 'the pending lock is gone');
-  await waitForCloud(state => state.students?.[studentId]?.status === 'approved', 'the approval is still on the cloud');
+  const login = await studentPhone.run('submit-login', { username: USERNAME, pin: PIN });
+  assert.equal(login.studentSession, true, login.message);
+  const open = await studentPhone.run('wait-app-open');
+  assert.equal(open.pending, false, 'the pending lock is gone after approval');
+  assert.equal(open.accountStatus, 'active');
 });
 
 test('the student can sign in again after the approval', async () => {

@@ -375,6 +375,13 @@ Done (client + functions, tested by `npm test`):
       (সিস্টেম → ভি-টু সিংক মাইগ্রেশন, `security.manage`-gated): teacher
       dry-run → verify → apply and roster proposals → select → validate →
       apply, every write behind an explicit confirmation.
+- [x] Role-scoped Notices v2 slice: client path selector `sync/notices-v2-policy.js`,
+      claims-gated sync controller `sync/notices-v2-sync.js` (wired alongside
+      Question Bank v2 in `js/realtime-sync-entry.js` with zero anonymous retry
+      or error interference while `activePlusSync/v1` is active), projection &
+      fan-out helpers `functions/notice-projection.js`, and server callables /
+      triggers `publishNotice`, `projectNoticeRecord`, and `rebuildStudentNotices`
+      in `functions/index.js`.
 
 ### Retro-link runbook (`adminProvisionV2Identities`)
 

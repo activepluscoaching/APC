@@ -170,7 +170,7 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 412;
+const CACHE_VERSION = 413;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -354,6 +354,8 @@ const APP_SHELL = [
   './sync/sync-guard.js',
   './sync/question-bank-v2-policy.js',
   './sync/question-bank-v2-sync.js',
+  './sync/notices-v2-policy.js',
+  './sync/notices-v2-sync.js',
   './js/firebase-config.js',
   './js/firebase-online-test.js',
   './js/realtime-sync-entry.js',

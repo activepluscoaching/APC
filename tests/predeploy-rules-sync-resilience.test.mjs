@@ -9,6 +9,8 @@ const values = new Map();
 const listeners = new Set();
 
 const UNDEPLOYED_PREFIXES = [
+  'activePlusSync/v1/courses',
+  'activePlusSync/v1/adviceBank',
   'activePlusSync/v1/classChat',
   'activePlusSync/v1/notifications',
   'activePlusSync/v1/mobileIndex',

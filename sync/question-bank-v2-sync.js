@@ -346,6 +346,7 @@ export async function startQuestionBankV2Sync() {
   await auth.authStateReady();
   const user = auth.currentUser;
   if (!user) return { ok: false, reason: 'authentication-required' };
+  if (user.isAnonymous === true) return { ok: false, reason: 'authenticated-claims-required' };
   const token = await user.getIdTokenResult(true);
   const plan = checkClaims(user, token.claims || {});
   if (!plan.ok) return { ok: false, reason: plan.reason };

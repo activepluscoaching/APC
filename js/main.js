@@ -187,6 +187,7 @@ const shareStudentOnWhatsApp = (...args) => featureHandles.shareStudentOnWhatsAp
 
 function refreshSignedInSurface() {
   refreshDashboard();
+  refreshRoutine();
   refreshTeaching(); refreshCourses.paint();
   dailyQuote.paint();
   refreshExams(); refreshPractice();

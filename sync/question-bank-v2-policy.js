@@ -40,7 +40,11 @@ export function questionBankSyncPlan(claims = {}, signInProvider = '') {
  * Bank paths is a persistent "no work" state — the session events restart the
  * controller, so a blind retry loop would only hammer Auth. Every other
  * failure is transient and backs off through the protected retry table. */
-const NO_RETRY_REASONS = new Set(['authentication-required', 'role-not-authorized']);
+const NO_RETRY_REASONS = new Set([
+  'authentication-required',
+  'authenticated-claims-required',
+  'role-not-authorized'
+]);
 export function questionBankV2RetryDecision(result) {
   if (result?.ok) return { retry: false, started: true, reason: '' };
   const reason = String(result?.reason || 'unknown');

@@ -61,23 +61,32 @@ async function bootRealtimeSync() {
   }
 }
 
-/* Authenticated Question Bank sync (activePlusV2). It runs next to the legacy
-   bridge, never instead of it: the bridge keeps syncing every other
-   collection, while this controller owns only the role-scoped Question Bank
-   paths. It activates solely from the signed-in user's custom claims — the
-   same selector the server rules enforce — so a device without V2 claims
-   simply stays a no-op until the staged migration provisions them. */
+/* Authenticated role-scoped V2 controllers (activePlusV2: Question Bank + Notices).
+   They run next to the legacy bridge, never instead of it: the bridge keeps
+   syncing every v1 collection, while these controllers activate solely from
+   a signed-in user's custom claims — the same selector the server rules
+   enforce — so a device without V2 claims stays a zero-traffic no-op until
+   the staged migration provisions them. While LEGACY_CLOUD_ENABLED is true,
+   staged v2 controller errors never overwrite a healthy v1 topbar verdict. */
 let v2Running = false;
 let v2Attempt = 0;
 let v2Timer = null;
 
+function reportStagedV2Error(error) {
+  if (!LEGACY_CLOUD_ENABLED) {
+    reportSyncError(error);
+    return;
+  }
+  console.warn('[Active Plus] staged v2 sync deferred:', error?.code || error?.name || 'unknown');
+}
+
 function scheduleV2(delay) {
   window.clearTimeout(v2Timer);
   if (!LEGACY_CLOUD_ENABLED || !maySync()) return;
-  v2Timer = window.setTimeout(bootQuestionBankV2, delay);
+  v2Timer = window.setTimeout(bootStagedV2Sync, delay);
 }
 
-async function bootQuestionBankV2() {
+async function bootStagedV2Sync() {
   if (!LEGACY_CLOUD_ENABLED) return;
   if (!maySync() || !navigator.onLine || v2Running) return;
   try {
@@ -86,15 +95,30 @@ async function bootQuestionBankV2() {
   } catch { return; }
   v2Running = true;
   try {
-    const [{ startQuestionBankV2Sync }, { questionBankV2RetryDecision }] = await Promise.all([
+    const [
+      { startQuestionBankV2Sync },
+      { questionBankV2RetryDecision },
+      { startNoticesV2Sync },
+      { noticesV2RetryDecision }
+    ] = await Promise.all([
       import('../sync/question-bank-v2-sync.js'),
-      import('../sync/question-bank-v2-policy.js')
+      import('../sync/question-bank-v2-policy.js'),
+      import('../sync/notices-v2-sync.js'),
+      import('../sync/notices-v2-policy.js')
     ]);
-    const decision = questionBankV2RetryDecision(await startQuestionBankV2Sync());
-    if (decision.started) v2Attempt = 0;
-    else if (decision.retry) scheduleV2(retryDelay(v2Attempt++));
+    const [qbResult, noticesResult] = await Promise.all([
+      startQuestionBankV2Sync(),
+      startNoticesV2Sync()
+    ]);
+    const qbDecision = questionBankV2RetryDecision(qbResult);
+    const noticesDecision = noticesV2RetryDecision(noticesResult);
+    if (qbDecision.retry || noticesDecision.retry) {
+      scheduleV2(retryDelay(v2Attempt++));
+    } else {
+      v2Attempt = 0;
+    }
   } catch (error) {
-    reportSyncError(error);
+    reportStagedV2Error(error);
     scheduleV2(retryDelay(v2Attempt++));
   } finally {
     v2Running = false;
@@ -105,9 +129,13 @@ async function stopQuestionBankV2() {
   window.clearTimeout(v2Timer);
   v2Attempt = 0;
   try {
-    const { stopQuestionBankV2Sync } = await import('../sync/question-bank-v2-sync.js');
+    const [{ stopQuestionBankV2Sync }, { stopNoticesV2Sync }] = await Promise.all([
+      import('../sync/question-bank-v2-sync.js'),
+      import('../sync/notices-v2-sync.js')
+    ]);
     stopQuestionBankV2Sync();
-  } catch { /* module never loaded — nothing to stop */ }
+    stopNoticesV2Sync();
+  } catch { /* modules never loaded — nothing to stop */ }
 }
 
 /* No on-screen sync message: the topbar's top border

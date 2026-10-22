@@ -799,6 +799,9 @@ function listenExamDb() {
 
 const RECORD_COLLECTIONS = [...SYNCABLE.filter(name => name !== 'exams' && name !== 'classChat'), 'teacherAssignments'];
 const recordBridges = new Map();
+const COURSES_FALLBACK_ROOT = DB_ROOT + '/courseContent/__apcCoursesRelayV1';
+let coursesRulesBlocked = false;
+let coursesFallbackListening = false;
 const CLASSCHAT_ROOT = DB_ROOT + '/classChat';
 const CLASSCHAT_FALLBACK_ROOT = DB_ROOT + '/routine/__apcClassChatRelayV1';
 let classChatQueue = Promise.resolve();
@@ -919,6 +922,27 @@ function normalizeCollectionSnapshot(collection, value) {
   return collectionPayload(collection, remoteToLocal(collection, decoded)) || {};
 }
 
+function extractCoursesFallbackRecords(val) {
+  if (!val || typeof val !== 'object') return {};
+  const records = val.records;
+  return records && typeof records === 'object' && !Array.isArray(records) ? records : {};
+}
+
+function ensureCoursesFallbackListener() {
+  if (coursesFallbackListening || !syncEnabled) return;
+  coursesFallbackListening = true;
+  const bridge = recordBridge('courses');
+  onOptionalValue(ref(getDatabase(firebaseApp), COURSES_FALLBACK_ROOT), snapshot => {
+    if (!snapshot.exists()) {
+      bridge.capture();
+      if (!bridge.hasView()) return;
+      bridge.receive({});
+      return;
+    }
+    bridge.receive(normalizeCollectionSnapshot('courses', extractCoursesFallbackRecords(snapshot.val())));
+  }, { label: 'courseContent/__apcCoursesRelayV1' });
+}
+
 function recordBridge(collection) {
   if (recordBridges.has(collection)) return recordBridges.get(collection);
   const key = localKey(collection);
@@ -932,6 +956,41 @@ function recordBridge(collection) {
     commit: async operations => {
       const generation = syncGeneration;
       if (!syncEnabled) throw new Error('session-ended');
+      if (collection === 'courses') {
+        const commitFallback = async () => {
+          const fallbackNode = ref(getDatabase(firebaseApp), COURSES_FALLBACK_ROOT);
+          const fallbackResult = await runTransaction(fallbackNode, current => {
+            if (!syncEnabled || generation !== syncGeneration) return;
+            const decoded = decodeRealtimeRecords(extractCoursesFallbackRecords(current));
+            const merged = mergeRecordOperations(decoded, operations);
+            return {
+              id: '__apcCoursesRelayV1',
+              _syncKind: 'coursesRelay',
+              updatedAt: Date.now(),
+              records: encodeRealtimeRecords(merged)
+            };
+          }, { applyLocally: false });
+          if (!syncEnabled || generation !== syncGeneration) throw new Error('session-ended');
+          markSyncSuccess('write');
+          return normalizeCollectionSnapshot('courses', extractCoursesFallbackRecords(fallbackResult.snapshot.val()));
+        };
+        if (coursesRulesBlocked) return commitFallback();
+        try {
+          const result = await runTransaction(node, current => {
+            if (!syncEnabled || generation !== syncGeneration) return;
+            const decoded = decodeRealtimeRecords(current || {});
+            return encodeRealtimeRecords(mergeRecordOperations(decoded, operations));
+          }, { applyLocally: false });
+          if (!syncEnabled || generation !== syncGeneration) throw new Error('session-ended');
+          markSyncSuccess('write');
+          return normalizeCollectionSnapshot(collection, result.snapshot.val());
+        } catch (error) {
+          if (!isPermissionDenied(error)) throw error;
+          coursesRulesBlocked = true;
+          ensureCoursesFallbackListener();
+          return commitFallback();
+        }
+      }
       const result = await runTransaction(node, current => {
         if (!syncEnabled || generation !== syncGeneration) return;
         const decoded = decodeRealtimeRecords(current || {});
@@ -950,6 +1009,44 @@ async function syncCollection(collection) {
   const generation = syncGeneration;
   if (!syncEnabled) return;
   const bridge = recordBridge(collection);
+  if (collection === 'courses') {
+    const syncCoursesFallback = async () => {
+      const fallbackSnap = await get(ref(getDatabase(firebaseApp), COURSES_FALLBACK_ROOT));
+      if (!syncEnabled || generation !== syncGeneration) return;
+      markSyncSuccess('read');
+      if (!fallbackSnap.exists()) {
+        bridge.capture();
+        if (bridge.hasView()) bridge.receive({});
+        await bridge.flush();
+        return;
+      }
+      bridge.receive(normalizeCollectionSnapshot('courses', extractCoursesFallbackRecords(fallbackSnap.val())));
+      await bridge.flush();
+    };
+    if (coursesRulesBlocked) {
+      await syncCoursesFallback();
+      return;
+    }
+    try {
+      const snapshot = await get(ref(getDatabase(firebaseApp), DB_ROOT + '/courses'));
+      if (!syncEnabled || generation !== syncGeneration) return;
+      markSyncSuccess('read');
+      if (!snapshot.exists()) {
+        bridge.capture();
+        if (bridge.hasView()) bridge.receive({});
+        await bridge.flush();
+        return;
+      }
+      bridge.receive(normalizeCollectionSnapshot('courses', snapshot.val()));
+      await bridge.flush();
+      return;
+    } catch (error) {
+      if (!isPermissionDenied(error)) throw error;
+      coursesRulesBlocked = true;
+      await syncCoursesFallback();
+      return;
+    }
+  }
   const snapshot = await get(ref(getDatabase(firebaseApp), DB_ROOT + '/' + collection));
   if (!syncEnabled || generation !== syncGeneration) return;
   markSyncSuccess('read');
@@ -1966,6 +2063,28 @@ export async function hydrateUserIdentifiers({ identifier = '', password = '' } 
 
 function listenCollection(collection) {
   const bridge = recordBridge(collection);
+  if (collection === 'courses') {
+    if (coursesRulesBlocked) {
+      ensureCoursesFallbackListener();
+      return;
+    }
+    onOptionalValue(ref(getDatabase(firebaseApp), DB_ROOT + '/courses'), snapshot => {
+      if (!snapshot.exists()) {
+        bridge.capture();
+        if (!bridge.hasView()) return;
+        bridge.receive({});
+        return;
+      }
+      bridge.receive(normalizeCollectionSnapshot('courses', snapshot.val()));
+    }, {
+      label: 'courses',
+      onPermissionDenied: () => {
+        coursesRulesBlocked = true;
+        ensureCoursesFallbackListener();
+      }
+    });
+    return;
+  }
   onValue(ref(getDatabase(firebaseApp), DB_ROOT + '/' + collection), snapshot => {
     if (!snapshot.exists()) {
       bridge.capture();
@@ -2018,6 +2137,8 @@ export function stopRealtimeSync() {
   connected = false;
   hasConnected = false;
   partialFailures = [];
+  coursesRulesBlocked = false;
+  coursesFallbackListening = false;
   classChatRulesBlocked = false;
   classChatFallbackListening = false;
   notificationsRulesBlocked = false;

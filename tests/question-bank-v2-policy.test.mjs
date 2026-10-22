@@ -50,7 +50,7 @@ test('a started controller reports started and never retries', () => {
 });
 
 test('signed-out or claimless sessions are persistent no-work states, never retried', () => {
-  for (const reason of ['authentication-required', 'role-not-authorized']) {
+  for (const reason of ['authentication-required', 'authenticated-claims-required', 'role-not-authorized']) {
     const decision = questionBankV2RetryDecision({ ok: false, reason });
     assert.equal(decision.retry, false, `${reason} must not retry`);
     assert.equal(decision.started, false);

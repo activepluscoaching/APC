@@ -264,6 +264,7 @@ export function mountNoticeCenter(api) {
     try {
       const reviewMod = await import('./registration-review.js');
       const items = reviewMod.listPendingRegistrations();
+      pendingHost.classList.toggle('is-empty', items.length === 0);
       pendingHost.innerHTML = reviewMod.pendingQueueMarkup(items);
       reviewMod.bindPendingQueueActions(pendingHost, {
         role,
@@ -440,6 +441,7 @@ export function mountNoticeCenter(api) {
     pushNote.textContent = '';
     if (pushRow) { pushRow.remove(); pushRow = null; }
     const line = document.createElement('span');
+    line.className = 'notice-push-copy';
     if (!support.supported) {
       line.textContent = 'এই ব্রাউজারে সিস্টেম নোটিফিকেশন নেই — অ্যাপ খোলা থাকলেও নোটিশ এখানে আসবে।';
       pushNote.append(line);
@@ -451,7 +453,7 @@ export function mountNoticeCenter(api) {
         : '✅ ডিভাইসে নোটিফিকেশন চালু — অ্যাপ খোলা থাকলে বা ব্যাকগ্রাউন্ডে থাকলে আসবে।';
       const off = document.createElement('button');
       off.type = 'button';
-      off.className = 'mini-btn reject';
+      off.className = 'mini-btn reject notice-push-btn';
       off.textContent = 'বন্ধ করুন';
       off.addEventListener('click', async () => {
         off.disabled = true;
@@ -468,7 +470,7 @@ export function mountNoticeCenter(api) {
       : 'নোটিফিকেশন চালু করলে নতুন নোটিশ, পরীক্ষা ও ফলাফলের খবর সাথে সাথে পাবেন।';
     const on = document.createElement('button');
     on.type = 'button';
-    on.className = 'mini-btn';
+    on.className = 'mini-btn notice-push-btn';
     on.textContent = '🔔 চালু করুন';
     on.addEventListener('click', async () => {
       on.disabled = true;

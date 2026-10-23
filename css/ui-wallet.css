@@ -2037,12 +2037,59 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 :is(#noticeModal, #apcNoticeModal) [data-apc-notice-clear] {
   grid-column: 2; grid-row: 2; align-self: center; margin: 0 20px 0 8px;
   min-height: 48px; padding: 8px 0; border: 0; background: transparent;
-  color: var(--color-success); text-decoration: none; box-shadow: none; font-size: 12px;
+  color: var(--color-success); text-decoration: none; box-shadow: none; font-size: 12px; white-space: nowrap;
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-host {
+  grid-column: 1 / -1; grid-row: 3; margin: 2px 20px 14px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border); min-width: 0;
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-host.is-empty {
+  display: none;
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-queue {
+  border-radius: 18px; padding: 14px; gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-queue__list {
+  max-height: none; overflow: visible; gap: 10px;
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-item {
+  border-radius: 14px; padding: 12px 14px; gap: 10px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-btn.approve {
+  background: var(--color-primary); border: 1px solid var(--color-primary); color: var(--color-on-accent);
+  border-radius: 11px; box-shadow: none;
+}
+:is(#noticeModal, #apcNoticeModal) .apc-pending-btn.reject {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
+  color: var(--color-danger); border-radius: 11px; box-shadow: none;
 }
 :is(#noticeModal, #apcNoticeModal) .notice-filters {
-  grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: nowrap;
+  grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: wrap;
   align-items: center; gap: 4px; margin: 4px 20px 14px; padding: 4px;
   border: 1px solid var(--color-border); border-radius: 18px; background: transparent;
+}
+:is(#noticeModal, #apcNoticeModal):not([hidden]) .modal:has(.apc-pending-host:not(.is-empty)) {
+  grid-template-rows: auto auto auto auto auto auto;
+  overflow-y: auto; overscroll-behavior: contain;
+}
+:is(#noticeModal, #apcNoticeModal) .modal:has(.apc-pending-host:not(.is-empty)) .notice-filters {
+  grid-row: 4; margin-top: 0;
+}
+:is(#noticeModal, #apcNoticeModal) .modal:has(.apc-pending-host:not(.is-empty)) :is(#noticeListStudent, [data-apc-notice-list]) {
+  grid-row: 5; overflow-y: visible; padding-bottom: 14px;
+}
+:is(#noticeModal, #apcNoticeModal) .modal:has(.apc-pending-host:not(.is-empty)) .notice-empty {
+  padding: 20px 16px; gap: 6px;
+}
+:is(#noticeModal, #apcNoticeModal) .modal:has(.apc-pending-host:not(.is-empty)) .notice-empty-art {
+  width: 48px; height: 48px;
+}
+:is(#noticeModal, #apcNoticeModal) .modal:has(.apc-pending-host:not(.is-empty)) [data-apc-notice-push] {
+  grid-row: 6;
 }
 :is(#noticeModal, #apcNoticeModal) .notice-filters .chip {
   min-height: 40px; padding: 7px 14px; border: 0; border-radius: 13px;
@@ -2108,8 +2155,26 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
 }
 :is(#noticeModal, #apcNoticeModal) .notice-action::after { content: '→'; display: inline-block; margin-left: 9px; }
 :is(#noticeModal, #apcNoticeModal) .notice-empty { border-radius: 18px; background: var(--color-surface); border: 1px dashed var(--color-border); box-shadow: none; }
-:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] { grid-column: 1 / -1; grid-row: 5; margin: 0 20px 10px; color: var(--color-text-secondary); }
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] {
+  grid-column: 1 / -1; grid-row: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px;
+  margin: 2px 20px 12px; padding: 11px 14px;
+  border: 1px solid var(--color-border); border-radius: 14px;
+  background: var(--color-surface-muted); color: var(--color-text-secondary);
+}
 :is(#noticeModal, #apcNoticeModal) [data-apc-notice-push]:empty { display: none; }
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] .notice-push-copy {
+  flex: 1 1 180px; min-width: 0; font-size: 12.5px; line-height: 1.5; color: var(--color-text-secondary);
+}
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] .notice-push-btn {
+  flex: 0 0 auto; width: auto; min-height: 36px; padding: 6px 12px; margin: 0;
+  border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: none;
+}
+:is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] .notice-push-btn.reject {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, var(--color-border));
+  color: var(--color-danger);
+}
 @keyframes notice-badge-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) {
   :is(#noticeModal, #apcNoticeModal) .notice-detail-icon { animation: none; }
@@ -7400,6 +7465,139 @@ body:is(.modal-open, .admin-modal-open, .notice-board-detail-open) .class-chat-h
 }
 .class-chat-head-preview-close:hover {
   color: var(--color-text);
+}
+
+/* Registration review detail modal: force single-column definition rows on mobile/desktop */
+#apcRegistrationReview .modal {
+  max-width: 500px;
+  width: min(100%, 500px);
+  max-height: min(92dvh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#apcRegistrationReview .modal-header {
+  align-items: flex-start;
+  gap: 12px;
+}
+#apcRegistrationReview .modal-header h2 {
+  margin: 2px 0 0;
+  line-height: 1.35;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+#apcRegistrationReview .apc-review-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin: var(--space-3) 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+#apcRegistrationReview .apc-review-row {
+  display: grid;
+  grid-template-columns: minmax(108px, 38%) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  min-width: 0;
+}
+#apcRegistrationReview .apc-review-row:last-child {
+  border-bottom: 0;
+}
+#apcRegistrationReview .apc-review-row dt {
+  margin: 0;
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  word-break: normal;
+  overflow-wrap: break-word;
+  writing-mode: horizontal-tb;
+}
+#apcRegistrationReview .apc-review-row dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  word-break: normal;
+  overflow-wrap: break-word;
+  writing-mode: horizontal-tb;
+}
+#apcRegistrationReview .apc-review-dd--ltr {
+  font-variant-numeric: tabular-nums;
+}
+#apcRegistrationReview .apc-review-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+#apcRegistrationReview .apc-review-status-pill.is-pending {
+  border-color: color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
+  color: var(--color-warning);
+}
+#apcRegistrationReview .apc-review-status-pill.is-approved,
+#apcRegistrationReview .apc-review-status-pill.is-active {
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  color: var(--color-success);
+}
+#apcRegistrationReview .apc-review-status-pill.is-rejected {
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  color: var(--color-danger);
+}
+#apcRegistrationReview .modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+#apcRegistrationReview .modal-actions .mini-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 600;
+  justify-content: center;
+  box-shadow: none;
+}
+#apcRegistrationReview .modal-actions .mini-btn.approve {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-on-accent);
+}
+#apcRegistrationReview .modal-actions .mini-btn.reject {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
+  color: var(--color-danger);
+}
+#apcRegistrationReview .modal-actions [data-review-later] {
+  grid-column: 1 / -1;
+  min-height: 42px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+@media (max-width: 380px) {
+  #apcRegistrationReview .apc-review-row {
+    grid-template-columns: minmax(96px, 36%) minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+  }
 }
 }
 

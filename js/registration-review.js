@@ -202,9 +202,18 @@ const cssEscape = value => (typeof globalThis.CSS?.escape === 'function'
   ? globalThis.CSS.escape(String(value ?? ''))
   : String(value ?? '').replace(/["\\]/g, '\\$&'));
 
-function row(label, value) {
+function row(label, value, { ltr = false, badgeTone = '' } = {}) {
   const text = String(value ?? '').trim();
-  return text ? `<div class="apc-review-row"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}</dd></div>` : '';
+  if (!text) return '';
+  const ddClasses = [
+    ltr ? 'apc-review-dd--ltr' : '',
+    badgeTone ? `apc-review-dd--status is-${escapeHtml(badgeTone)}` : ''
+  ].filter(Boolean).join(' ');
+  const ddAttrs = `${ddClasses ? ` class="${ddClasses}"` : ''}${ltr ? ' dir="ltr"' : ''}`;
+  const inner = badgeTone
+    ? `<span class="apc-review-status-pill is-${escapeHtml(badgeTone)}">${escapeHtml(text)}</span>`
+    : escapeHtml(text);
+  return `<div class="apc-review-row"><dt>${escapeHtml(label)}</dt><dd${ddAttrs}>${inner}</dd></div>`;
 }
 
 function closeDialog() {
@@ -352,14 +361,14 @@ export async function openRegistrationReview(studentId, { role, onLater, onDone 
       '<button type="button" class="modal-close" data-review-close aria-label="বন্ধ করুন">×</button></div>' +
       (student
         ? '<dl class="apc-review-details">' +
-            row('Student ID', student.id) +
-            row('অবস্থা', STATUS_TEXT[student.status] || student.status) +
+            row('Student ID', student.id, { ltr: true }) +
+            row('অবস্থা', STATUS_TEXT[student.status] || student.status, { badgeTone: student.status || 'pending' }) +
             row('শ্রেণি', student.className) +
             row('বিভাগ / গ্রুপ', student.group) +
             row('পিতার নাম', student.fatherName) +
-            row('মোবাইল', student.mobile) +
-            row('ইমেইল', student.email) +
-            row('অভিভাবকের মোবাইল', student.guardianMobile) +
+            row('মোবাইল', student.mobile, { ltr: true }) +
+            row('ইমেইল', student.email, { ltr: true }) +
+            row('অভিভাবকের মোবাইল', student.guardianMobile, { ltr: true }) +
             row('ঠিকানা', student.address) +
             row('আবেদনের তারিখ', formatPendingDate(student)) +
             (pending ? '' : row('অনুমোদন/পর্যালোচনা করেছেন', [student.approvedBy || student.reviewedBy, student.reviewedRole].filter(Boolean).join(' • '))) +

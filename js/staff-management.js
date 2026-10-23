@@ -402,6 +402,8 @@ function renderList() {
   const host = $('#staffList');
   if (!host) return;
   const rows = sortStaff(filteredStaff());
+  const clearBtn = $('#staffSearchClear');
+  if (clearBtn) clearBtn.hidden = !state.query.trim();
   const counter = $('#staffCountBadge');
   if (counter) {
     counter.textContent = rows.length
@@ -409,12 +411,24 @@ function renderList() {
       : 'কোনো স্টাফ পাওয়া যায়নি';
   }
   if (!state.staff.length) {
-    host.innerHTML = '<p class="admin-empty">এখনো কোনো স্টাফ অ্যাকাউন্ট নেই। নিচের “নতুন স্টাফ তৈরি করুন” বাটনে চেপে প্রথম স্টাফ যোগ করুন।</p>';
+    host.innerHTML = `<div class="admin-empty apc-empty-state" role="status">
+      <span class="apc-empty-icon" aria-hidden="true">${iconMarkup('staff', 'apc-icon-svg')}</span>
+      <p>এখনো কোনো স্টাফ অ্যাকাউন্ট নেই। নিচের “নতুন স্টাফ তৈরি করুন” বাটনে চেপে প্রথম স্টাফ যোগ করুন।</p>
+      ${state.canManage ? '<button class="mini-btn primary apc-empty-cta" type="button" data-staff-action="create-empty">নতুন স্টাফ যোগ করুন</button>' : ''}
+    </div>`;
     return;
   }
+  const hasActiveFilter = Boolean(state.query.trim() || state.role !== 'all' || state.status !== 'all');
+  const emptyCopy = state.query.trim()
+    ? `“${escapeHtml(state.query)}” দিয়ে কোনো স্টাফ পাওয়া যায়নি। Staff ID, নাম, ইউজারনেম বা মোবাইল দিয়ে খুঁজুন।`
+    : 'নির্বাচিত ফিল্টারে কোনো স্টাফ পাওয়া যায়নি।';
   host.innerHTML = rows.length
     ? rows.map(staffCard).join('')
-    : `<p class="admin-empty">“${escapeHtml(state.query)}” দিয়ে কোনো স্টাফ পাওয়া যায়নি। Staff ID, নাম, ইউজারনেম বা মোবাইল দিয়ে খুঁজুন।</p>`;
+    : `<div class="admin-empty apc-empty-state" role="status">
+        <span class="apc-empty-icon" aria-hidden="true">${iconMarkup('search', 'apc-icon-svg')}</span>
+        <p>${emptyCopy}</p>
+        ${hasActiveFilter ? '<button class="mini-btn primary apc-empty-cta" type="button" data-staff-action="reset-filters">ফিল্টার রিসেট করুন</button>' : ''}
+      </div>`;
 }
 
 let renderGeneration = 0;
@@ -1108,6 +1122,18 @@ export function initStaffManagement({ onChanged } = {}) {
       return;
     }
     state.openMore = null;
+    if (staffAction === 'create-empty') { await openCreate(); return; }
+    if (staffAction === 'reset-filters') {
+      state.query = '';
+      state.role = 'all';
+      state.status = 'all';
+      const input = $('#staffSearch');
+      if (input) input.value = '';
+      renderRoleFilter();
+      renderStatusFilter();
+      renderList();
+      return;
+    }
     if (staffAction === 'retry') { await renderStaff(); return; }
     if (staffAction === 'view') await openProfile(staffId);
     else if (staffAction === 'edit') { closeModal(); await openEdit(staffId); }

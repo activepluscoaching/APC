@@ -10,7 +10,23 @@
 .receipt-modal-box{padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface)}.receipt-header{text-align:center;border-bottom:1px solid var(--color-border);padding-bottom:var(--space-4);margin-bottom:var(--space-4)}.receipt-logo{display:block;width:56px;height:56px;margin:0 auto var(--space-3)}.receipt-brand-title{font-size:var(--font-lg);font-weight:600}.receipt-sub,.receipt-address,.receipt-note{font-size:var(--font-sm);color:var(--color-text-secondary)}.receipt-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}.receipt-meta-grid dt{font-size:var(--font-sm);color:var(--color-text-secondary)}.receipt-meta-grid dd{font-weight:500}.receipt-amount-block{display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-4);margin-block:var(--space-4);background:var(--color-surface-muted);border-radius:var(--radius-sm)}.receipt-amount-block strong{font-size:var(--font-xl)}.receipt-paid-seal{color:var(--color-success);font-size:var(--font-sm)}.receipt-footer-sign{display:flex;justify-content:space-between;gap:var(--space-3);margin-top:var(--space-5);font-size:var(--font-sm)}.receipt-signature-line{border-top:1px solid var(--color-border);padding-top:var(--space-2)}
 @media(max-width:380px){.receipt-meta-grid{grid-template-columns:1fr}}
 /* Registration review dialog and actionable notification (2026-09-30) */
-.apc-review-details{display:grid;gap:var(--space-2);margin:var(--space-3) 0}.apc-review-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:var(--space-3);padding-block:var(--space-2);border-bottom:1px solid var(--color-border)}.apc-review-row dt{color:var(--color-text-secondary);font-size:var(--font-sm)}.apc-review-row dd{margin:0;overflow-wrap:anywhere}
+.apc-review-details{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin:var(--space-3) 0 var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);overflow:hidden}
+.apc-review-row{display:grid;grid-template-columns:minmax(108px,38%) minmax(0,1fr);align-items:baseline;gap:var(--space-3);padding:11px 14px;border-bottom:1px solid var(--color-border);min-width:0;background:var(--color-surface)}
+.apc-review-row:last-child{border-bottom:0}
+.apc-review-row dt{margin:0;min-width:0;color:var(--color-text-secondary);font-size:var(--font-sm);font-weight:500;line-height:1.45;word-break:normal;overflow-wrap:break-word;writing-mode:horizontal-tb}
+.apc-review-row dd{margin:0;min-width:0;color:var(--color-text);font-size:var(--font-sm);font-weight:600;line-height:1.5;word-break:normal;overflow-wrap:break-word;writing-mode:horizontal-tb}
+.apc-review-dd--ltr{font-variant-numeric:tabular-nums;word-break:normal;overflow-wrap:break-word}
+.apc-review-status-pill{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;border:1px solid var(--color-border);background:var(--color-surface-muted);color:var(--color-text);font-size:var(--font-xs);font-weight:700;line-height:1.4}
+.apc-review-status-pill.is-pending{color:var(--color-warning)}
+.apc-review-status-pill.is-approved,.apc-review-status-pill.is-active{color:var(--color-success)}
+.apc-review-status-pill.is-rejected{color:var(--color-danger)}
+#apcRegistrationReview label[for="apcReviewNote"]{display:block;margin:var(--space-1) 0 var(--space-2);font-size:var(--font-sm);font-weight:600;color:var(--color-text)}
+#apcRegistrationReview label[for="apcReviewNote"] span{font-weight:400;color:var(--color-text-secondary);font-size:var(--font-xs)}
+#apcRegistrationReview #apcReviewNote{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-muted);color:var(--color-text);font:inherit;font-size:var(--font-sm);resize:vertical}
+#apcRegistrationReview [data-review-status]:empty{display:none}
+#apcRegistrationReview .modal-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2);margin-top:var(--space-3)}
+#apcRegistrationReview .modal-actions [data-review-later]{grid-column:1 / -1}
+@media(max-width:380px){.apc-review-row{grid-template-columns:minmax(96px,36%) minmax(0,1fr);gap:10px;padding:10px 12px}}
 .notice-detail.actionable{cursor:pointer;border-color:var(--color-primary)}.notice-detail.actionable .mini-btn{margin-top:var(--space-2)}[data-apc-notice-clear]{margin-block:var(--space-2)}
 /* In-app notification card (js/notice-center.js): new notifications shown
    inside the app, above the bottom bar and below every dialog. */

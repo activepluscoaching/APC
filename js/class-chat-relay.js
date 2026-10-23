@@ -273,11 +273,35 @@ export function resolveCurrentRelayViewer(storage = globalThis.window?.localStor
   const state = readRelayState(storage);
   try {
     const pathname = String(globalThis.window?.location?.pathname || '').toLowerCase();
+    const isExplicitStudentPage = /(?:^|\/)student(?:\.html)?\/?$/.test(pathname);
+    const doc = globalThis.window?.document || null;
+    const shellByRole = {
+      admin: '#adminShell',
+      manager: '#managerShell',
+      teacher: '#teacherShell',
+      payment: '#payShell'
+    };
+    const buildStaffViewer = (role, spec) => {
+      const account = readLocalJson(storage, spec.accountKey);
+      const uname = typeof account?.username === 'string' && account.username.trim()
+        ? account.username.trim()
+        : role;
+      const id = sanitizeAckKey(`staff_${role}_${uname}`);
+      return { kind: 'staff', role, ackKey: id || state.deviceId, allowedRoomKeys: null };
+    };
     for (const [role, spec] of Object.entries(STAFF_ACCOUNTS)) {
-      if (pathname.endsWith(`${role}.html`)) {
-        const account = readLocalJson(storage, spec.accountKey);
-        const id = sanitizeAckKey(`staff_${role}_${account?.username || role}`);
-        return { kind: 'staff', role, ackKey: id || state.deviceId, allowedRoomKeys: null };
+      const routeRe = new RegExp(`(?:^|/)${role}(?:\\.html)?/?$`, 'i');
+      if (routeRe.test(pathname)) return buildStaffViewer(role, spec);
+      const shellEl = shellByRole[role] ? doc?.querySelector?.(shellByRole[role]) : null;
+      if (shellEl && !shellEl.hidden) return buildStaffViewer(role, spec);
+    }
+    if (!isExplicitStudentPage) {
+      for (const [role, spec] of Object.entries(STAFF_ACCOUNTS)) {
+        const hasStaffSess = Boolean(
+          globalThis.window?.sessionStorage?.getItem?.(spec.sessionKey)
+          || storage?.getItem?.(spec.sessionKey)
+        );
+        if (hasStaffSess) return buildStaffViewer(role, spec);
       }
     }
     const account = readLocalJson(storage, KEYS.account);

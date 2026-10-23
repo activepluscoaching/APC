@@ -183,11 +183,20 @@ test('the deployment assets the audit found are still in place', () => {
   assert.match(config, /projectId:\s*'active-plus-coaching'/);
 
   /* App Check with a reCAPTCHA v3 key cannot run under a policy that blocks
-     the reCAPTCHA scripts — the sync then fails with Permission denied. */
-  for (const page of ['index.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
+     the reCAPTCHA scripts — the sync then fails with Permission denied.
+     Likewise, when carrier proxies block WebSockets, Firebase RTDB falls back
+     to BrowserPollConnection (/.lp JSONP script + hidden iframe) on the
+     pinned RTDB origin; CSP must permit that origin in script-src/frame-src. */
+  const hostingCsp = JSON.parse(readFileSync(new URL('../firebase.json', import.meta.url), 'utf8'))
+    .hosting.headers[0].headers.find(h => h.key === 'Content-Security-Policy').value;
+  assert.match(hostingCsp, /script-src[^;]*active-plus-coaching-default-rtdb\.asia-southeast1\.firebasedatabase\.app/);
+  assert.match(hostingCsp, /frame-src[^;]*active-plus-coaching-default-rtdb\.asia-southeast1\.firebasedatabase\.app/);
+  for (const page of ['index.html', 'student.html', 'admin.html', 'manager.html', 'teacher.html', 'payment.html']) {
     const html = readFileSync(new URL('../' + page, import.meta.url), 'utf8');
     assert.match(html, /script-src[^;]*google\.com\/recaptcha\//, `${page} allows the reCAPTCHA script`);
     assert.match(html, /frame-src[^;]*google\.com\/recaptcha\//, `${page} allows the reCAPTCHA frame`);
+    assert.match(html, /script-src[^;]*active-plus-coaching-default-rtdb\.asia-southeast1\.firebasedatabase\.app/, `${page} allows RTDB long-polling script fallback`);
+    assert.match(html, /frame-src[^;]*active-plus-coaching-default-rtdb\.asia-southeast1\.firebasedatabase\.app/, `${page} allows RTDB long-polling iframe fallback`);
   }
 });
 

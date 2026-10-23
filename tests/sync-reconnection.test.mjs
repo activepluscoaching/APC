@@ -92,6 +92,40 @@ test('a transient disconnect preserves listeners and retries a failed collection
   listeners.get('.info/connected').callback({ val: () => true });
   await wait(() => ctx.document.documentElement.dataset.realtimeSync === 'online');
 
+  // Offline Exam DB + Class Chat edits queue locally and flush automatically on RTDB reconnect.
+  online = false;
+  ctx.window.dispatchEvent(new ctx.window.Event('offline'));
+  listeners.get('.info/connected').callback({ val: () => false });
+  await wait(() => ctx.document.documentElement.dataset.realtimeSync === 'offline');
+  ctx.window.localStorage.setItem(KEYS.exams, JSON.stringify({
+    version: 1,
+    exams: [{ id: 'EX-OFF-1', teacherId: 'T-1', status: 'published', participants: ['SYNC-1'], title: 'Offline Exam' }],
+    attempts: [{ id: 'ATT-OFF-1', examId: 'EX-OFF-1', studentId: 'SYNC-1', status: 'submitted', number: 1, answers: { q1: 'A' }, order: ['q1'], startedAt: 1700000000000 }]
+  }));
+  ctx.window.localStorage.setItem(KEYS.classChat, JSON.stringify({
+    version: 1,
+    rooms: {},
+    messages: [{
+      id: 'MSG-OFF-1',
+      roomKey: 'class_10',
+      classId: 'দশম শ্রেণি',
+      senderId: 'SYNC-1',
+      senderName: 'Student',
+      senderRole: 'student',
+      text: 'অফলাইন থেকে পাঠানো বার্তা',
+      createdAt: new Date().toISOString(),
+      updatedAt: Date.now()
+    }],
+    updatedAt: Date.now()
+  }));
+  online = true;
+  ctx.window.dispatchEvent(new ctx.window.Event('online'));
+  listeners.get('.info/connected').callback({ val: () => true });
+  await wait(() => Boolean(values.get('activePlusSync/v1/examDb/exams/EX-OFF-1')));
+  await wait(() => Boolean(values.get('activePlusSync/v1/examDb/attempts/ATT-OFF-1')));
+  await wait(() => Boolean(values.get('activePlusSync/v1/classChat')?.['msg-MSG-OFF-1']));
+  await wait(() => ctx.document.documentElement.dataset.realtimeSync === 'online');
+
   // A transient write rejection keeps the local outbox, not a permanent failed
   // transport requiring a full re-read every 15 seconds.
   rejectWrites = true;

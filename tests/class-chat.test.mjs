@@ -778,4 +778,307 @@ test('9. Topbar Chat Icon & Floating Chat Head stay synced, enforce RBAC unread 
     'Inactive class tabs with unread messages still show unread badge pill');
 });
 
+test('10. Authentic WhatsApp UI: grouped bubbles, double-ticks, search & emoji drawers, portal back navigation, and AA contrast', async () => {
+  const dom = resetStorage(ROSTER);
+  document.body.innerHTML = `
+    <section class="view active" id="classChatView">
+      <div class="page-intro"><button class="pay-back" type="button" data-view="home">ফিরে যান</button></div>
+      <div id="waStudentMount"></div>
+    </section>
+  `;
+  let wentBack = false;
+  document.querySelector('.pay-back').addEventListener('click', () => { wentBack = true; });
+
+  // Consecutive messages from same classmate vs outgoing replies
+  const m1 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'আসসালামু আলাইকুম সবাইকে!', actor: studentTanvir });
+  const m2 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'আজকে গণিত ক্লাস কয়টায়?', actor: studentTanvir });
+  const m3 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'বিকেল ৪টায় শুরু হবে।', replyToId: m2.id, actor: studentRaisa });
+  toggleMessageReaction({ className: 'দশম শ্রেণি', messageId: m2.id, emoji: '👍', actor: studentRaisa });
+
+  const mount = document.getElementById('waStudentMount');
+  const ui = mountClassChat(mount, { portal: 'student', getActor: () => studentRaisa });
+  await new Promise(r => setTimeout(r, 25));
+
+  const shell = mount.querySelector('.class-chat-shell');
+  assert.ok(shell.classList.contains('is-whatsapp-ui'), 'mounts WhatsApp UI shell');
+
+  // Portal back arrow inside WhatsApp header delegates to native view back button
+  const backBtn = mount.querySelector('[data-chat-action="go-back"]');
+  assert.equal(backBtn.hidden, false, 'WhatsApp back arrow visible inside portal view');
+  backBtn.click();
+  assert.equal(wentBack, true, 'WhatsApp back arrow triggers host portal back navigation');
+
+  // E2EE golden banner is rendered inside feed without any <img>/<image>
+  const feed = mount.querySelector('[data-chat-feed]');
+  assert.ok(feed.querySelector('.class-chat-e2ee-banner'), 'WhatsApp E2EE notice banner rendered at top of feed');
+  assert.equal(feed.querySelectorAll('img, image, [onerror], [onload]').length, 0, 'strictly zero img/image elements inside feed');
+
+  // Consecutive incoming messages group cleanly; outgoing message shows double-tick SVG
+  const row1 = feed.querySelector(`[data-chat-msg-id="${m1.id}"]`);
+  const row2 = feed.querySelector(`[data-chat-msg-id="${m2.id}"]`);
+  const row3 = feed.querySelector(`[data-chat-msg-id="${m3.id}"]`);
+  assert.equal(row1.classList.contains('is-first-in-group'), true, 'first message of sender run has bubble tail class');
+  assert.equal(row2.classList.contains('is-grouped'), true, 'second consecutive message from same sender is grouped');
+  assert.equal(row1.querySelector('.chat-read-ticks'), null, 'incoming message does not show outgoing read ticks');
+  assert.ok(row3.querySelector('.chat-read-ticks .wa-tick-svg'), 'outgoing message shows WhatsApp double-tick SVG');
+  assert.ok(row2.querySelector('.chat-active-reactions .chat-reaction-pill'), 'reacted bubble displays floating WhatsApp reaction pill');
+
+  // Bubble chevron toggles floating menu open & closed
+  row1.querySelector('[data-chat-action="toggle-menu"]').click();
+  assert.equal(row1.classList.contains('is-menu-open'), true, 'chevron opens bubble quick menu');
+  row1.querySelector('[data-chat-action="toggle-menu"]').click();
+  assert.equal(row1.classList.contains('is-menu-open'), false, 'chevron closes bubble quick menu');
+
+  // Search toggle button opens & closes WhatsApp search drawer
+  const searchToggle = mount.querySelector('[data-chat-action="toggle-search"]');
+  searchToggle.click();
+  assert.equal(shell.classList.contains('is-search-open'), true, 'search drawer opens');
+  searchToggle.click();
+  assert.equal(shell.classList.contains('is-search-open'), false, 'search drawer closes');
+
+  // Composer smiley toggle + quick emoji insertion
+  const emojiToggle = mount.querySelector('[data-chat-action="toggle-emoji"]');
+  const emojiDrawer = mount.querySelector('[data-chat-emoji-drawer]');
+  assert.equal(emojiDrawer.hidden, true);
+  emojiToggle.click();
+  assert.equal(emojiDrawer.hidden, false, 'emoji strip opens');
+  const smileEmojiBtn = [...mount.querySelectorAll('[data-chat-action="insert-emoji"]')]
+    .find(btn => btn.dataset.emoji === '😊');
+  assert.ok(smileEmojiBtn, 'quick emoji button rendered');
+  smileEmojiBtn.click();
+  const input = mount.querySelector('[data-chat-input]');
+  assert.equal(input.value, '😊', 'clicking quick emoji inserts into WhatsApp pill input');
+
+  // Verify WhatsApp palette tokens in foundation.css clear WCAG AA in both light & dark themes
+  const foundation = readFileSync(new URL('../css/foundation.css', import.meta.url), 'utf8');
+  for (const token of ['--wa-header-bg', '--wa-wallpaper-bg', '--wa-out-bubble', '--wa-in-bubble', '--wa-bubble-ink', '--wa-send-bg']) {
+    assert.match(foundation, new RegExp(`${token}\\s*:`), `${token} defined in foundation.css`);
+  }
+  ui.destroy();
+  void dom;
+});
+
+test('11. Empty-room composer usability, disabled-when-empty পাঠান button, async pre-hydration send, sent status & one-tap quick reply', async () => {
+  resetStorage(ROSTER);
+  document.body.innerHTML = `
+    <section class="admin-view active" data-view-panel="class-chat">
+      <div class="page-intro"><h1>শ্রেণি চ্যাট ও মডারেশন</h1></div>
+      <div id="emptyRoomMount" data-class-chat-mount></div>
+    </section>
+  `;
+  const mount = document.getElementById('emptyRoomMount');
+  // Simulate slow async staff account resolution while user types & sends immediately
+  const ui = mountClassChat(mount, {
+    portal: 'admin',
+    initialClass: 'অষ্টম শ্রেণি',
+    getActor: async () => {
+      await new Promise(r => setTimeout(r, 25));
+      return adminActor;
+    }
+  });
+
+  const input = mount.querySelector('[data-chat-input]');
+  const sendBtn = mount.querySelector('[data-chat-action="send"]');
+  const composerWrap = mount.querySelector('[data-chat-composer-wrap]');
+  const charCount = mount.querySelector('[data-chat-char-count]');
+
+  assert.equal(
+    input.getAttribute('placeholder'),
+    'বার্তা লিখুন… (পাঠাতে Enter, নতুন লাইন Shift+Enter)',
+    'exact Bengali composer placeholder is shown'
+  );
+  assert.equal(sendBtn.disabled, true, 'পাঠান button starts disabled when input is empty');
+  assert.match(sendBtn.textContent, /পাঠান/, 'send button displays পাঠান');
+
+  // Wait for initial empty-room render and verify empty state + visible composer coexist
+  await new Promise(r => setTimeout(r, 40));
+  const feed = mount.querySelector('[data-chat-feed]');
+  assert.ok(feed.querySelector('.class-chat-empty'), 'empty room shows empty state guidance');
+  assert.equal(composerWrap.hidden, false, 'composer stays visible and ready on empty room');
+
+  // Whitespace-only keeps send disabled; real text enables it and updates char count
+  input.value = '   ';
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(sendBtn.disabled, true, 'whitespace-only draft keeps পাঠান disabled');
+
+  input.value = 'অষ্টম শ্রেণির প্রথম স্বাগত বার্তা!';
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(sendBtn.disabled, false, 'পাঠান enables when valid text is entered');
+  assert.equal(charCount.classList.contains('is-visible'), true, 'character counter displays without blocking send');
+
+  sendBtn.click();
+  await new Promise(r => setTimeout(r, 20));
+
+  const firstBubble = feed.querySelector('[data-chat-msg-id]');
+  assert.ok(firstBubble, 'first message sent on empty room renders immediately');
+  assert.equal(firstBubble.classList.contains('is-just-sent'), true, 'newly sent message carries pop-in class');
+  assert.equal(firstBubble.querySelector('[data-chat-status]')?.dataset.chatStatus, 'sent', 'sent bubble shows sent indicator');
+  assert.ok(firstBubble.querySelector('.chat-time')?.textContent.trim().length > 0, 'sent bubble renders timestamp');
+
+  // Also test sending BEFORE actor hydration completes on a fresh mount
+  const fastMount = document.createElement('div');
+  document.body.appendChild(fastMount);
+  const fastUi = mountClassChat(fastMount, {
+    portal: 'admin',
+    initialClass: 'নবম শ্রেণি',
+    getActor: async () => {
+      await new Promise(r => setTimeout(r, 30));
+      return adminActor;
+    }
+  });
+  const fastInput = fastMount.querySelector('[data-chat-input]');
+  const fastSend = fastMount.querySelector('[data-chat-action="send"]');
+  fastInput.value = 'দ্রুত পাঠানো বার্তা';
+  fastInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+  fastSend.click();
+  await new Promise(r => setTimeout(r, 55));
+  assert.match(fastMount.querySelector('[data-chat-feed]').textContent, /দ্রুত পাঠানো বার্তা/,
+    'clicking পাঠান before async actor hydration resolves still saves and renders the message');
+  fastUi.destroy();
+
+  // One-tap quick reply button directly on bubble quotes and replies cleanly
+  const quickReplyBtn = firstBubble.querySelector('.chat-quick-reply-btn[data-chat-action="reply"]');
+  assert.ok(quickReplyBtn, 'one-tap quick reply button rendered next to message bubble');
+  quickReplyBtn.click();
+  const replyBar = mount.querySelector('[data-chat-reply-bar]');
+  assert.equal(replyBar.hidden, false, 'clicking quick reply opens reply preview bar');
+
+  input.value = 'স্বাগত বার্তার উত্তর';
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  input.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(replyBar.hidden, true, 'reply bar closes after sending reply');
+  assert.equal(feed.querySelectorAll('.chat-reply-quote').length, 1, 'quoted reply bubble renders cleanly');
+
+  ui.destroy();
+});
+
+test('12. Per-class scroll preservation, unread badges, persistent lock banner, jump-free search tray & 360px mobile CSS safety', async () => {
+  resetStorage(ROSTER);
+  // Seed messages in অষ্টম শ্রেণি and दशম শ্রেণি (unread for Admin)
+  for (let i = 1; i <= 5; i += 1) {
+    sendClassMessage({ className: 'অষ্টম শ্রেণি', text: `অষ্টম বার্তা ক্রম ${i}`, actor: teacherActor });
+  }
+  const searchTarget = sendClassMessage({ className: 'দশম শ্রেণি', text: 'রসায়ন ল্যাব ক্লাস আগামীকাল সকাল ১০টায়', actor: studentTanvir });
+  sendClassMessage({ className: 'দশম শ্রেণি', text: 'সবাই ল্যাব কোট নিয়ে আসবে', actor: studentRaisa });
+
+  document.body.innerHTML = `
+    <section class="admin-view active" data-view-panel="class-chat">
+      <div class="page-intro"><h1>শ্রেণি চ্যাট ও মডারেশন</h1></div>
+      <div id="staffModMount" data-class-chat-mount></div>
+    </section>
+  `;
+  const heroIntro = document.querySelector('.page-intro');
+  const mount = document.getElementById('staffModMount');
+  const ui = mountClassChat(mount, {
+    portal: 'admin',
+    defaultClass: 'অষ্টম শ্রেণি',
+    getActor: () => adminActor
+  });
+  await new Promise(r => setTimeout(r, 25));
+
+  // Staff toolbar shows inline search + visible চ্যাট লক (স্টাফ অনলি)
+  const toolbar = mount.querySelector('.class-chat-search-drawer.is-staff-toolbar');
+  assert.ok(toolbar, 'staff inline search + moderation toolbar rendered');
+  const lockBtn = mount.querySelector('[data-chat-action="toggle-lock"]');
+  assert.match(lockBtn.textContent, /চ্যাট লক \(স্টাফ অনলি\)/, 'lock button shows exact Bengali label');
+
+  // Active class chip has dot & is-active; দশম শ্রেণি chip & select show unread count
+  const activeTab = mount.querySelector('.class-chat-tab.is-active');
+  assert.equal(activeTab.dataset.chatSelectClass, 'অষ্টম শ্রেণি');
+  assert.ok(activeTab.querySelector('.class-chat-tab-dot'), 'active class chip shows indicator dot');
+  const class10Tab = mount.querySelector('[data-chat-select-class="দশম শ্রেণি"]');
+  assert.ok(class10Tab.querySelector('[data-chat-tab-unread]'), 'unread class chip shows unread count badge');
+  const selectOpt10 = [...mount.querySelectorAll('[data-chat-class-select] option')]
+    .find(opt => opt.value === 'দশম শ্রেণি');
+  assert.match(selectOpt10.textContent, /নতুন/, 'class dropdown option shows unread count');
+
+  // Scroll feed in অষ্টম শ্রেণি: hero collapses and scroll position is saved per class
+  const feed = mount.querySelector('[data-chat-feed]');
+  Object.defineProperty(feed, 'scrollHeight', { value: 900, configurable: true });
+  Object.defineProperty(feed, 'clientHeight', { value: 300, configurable: true });
+  feed.scrollTop = 48;
+  feed.dispatchEvent(new window.Event('scroll'));
+  assert.equal(heroIntro.classList.contains('is-chat-hero-collapsed'), true, 'hero card collapses smoothly on feed scroll');
+
+  // Switch to দশম শ্রেণি -> opens at bottom (900), clears unread; switch back -> restores scrollTop 48
+  class10Tab.click();
+  assert.equal(feed.scrollTop, 900, 'switching to unvisited class room scrolls cleanly to bottom');
+  assert.equal(mount.querySelector('[data-chat-select-class="দশম শ্রেণি"] [data-chat-tab-unread]'), null,
+    'opening দশম শ্রেণি clears its unread badge');
+
+  mount.querySelector('[data-chat-select-class="অষ্টম শ্রেণি"]').click();
+  assert.equal(feed.scrollTop, 48, 'switching back to অষ্টম শ্রেণি restores its exact scroll position');
+
+  // Switch back to দশম শ্রেণি to test persistent lock banner + staff send while locked + search tray above composer
+  mount.querySelector('[data-chat-select-class="দশম শ্রেণি"]').click();
+  lockBtn.click();
+  const lockBanner = mount.querySelector('[data-chat-room-lock-banner]');
+  assert.equal(lockBanner.hidden, false, 'locking room shows persistent moderation banner');
+  assert.match(lockBanner.textContent, /চ্যাট লক চালু আছে \(স্টাফ অনলি\)/, 'persistent banner states locked staff-only mode');
+
+  // Staff can still send while student mount in same class is blocked
+  const studentCheckMount = document.createElement('div');
+  document.body.appendChild(studentCheckMount);
+  const studentUi = mountClassChat(studentCheckMount, { portal: 'student', getActor: () => studentTanvir });
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(studentCheckMount.querySelector('[data-chat-input]').disabled, true, 'student input is disabled when room is locked');
+  assert.equal(studentCheckMount.querySelector('[data-chat-room-lock-banner]').hidden, false, 'student also sees persistent lock banner');
+
+  const staffInput = mount.querySelector('[data-chat-input]');
+  staffInput.value = 'লক অবস্থায় স্টাফ ঘোষণা';
+  staffInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+  mount.querySelector('[data-chat-action="send"]').click();
+  await new Promise(r => setTimeout(r, 20));
+  assert.match(feed.textContent, /লক অবস্থায় স্টাফ ঘোষণা/, 'staff can still send messages while room is locked');
+
+  // Unlock via persistent banner button
+  lockBanner.querySelector('[data-chat-action="unlock-banner"]').click();
+  assert.equal(lockBanner.hidden, true, 'unlocking hides the persistent lock banner');
+  studentUi.destroy();
+
+  // Search results appear cleanly above composer without leaking [data-chat-msg-id] outside feed
+  const searchInput = mount.querySelector('[data-chat-search]');
+  const searchResults = mount.querySelector('[data-chat-search-results]');
+  const composerWrap = mount.querySelector('[data-chat-composer-wrap]');
+  assert.equal(composerWrap.contains(searchResults), true, 'search results tray lives inside composer wrap above input');
+  searchInput.value = 'রসায়ন ল্যাব';
+  searchInput.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.equal(searchResults.hidden, false, 'search results tray opens cleanly above composer');
+  assert.equal(searchResults.querySelectorAll('[data-chat-msg-id]').length, 0, 'search tray does not duplicate feed message IDs');
+  const hitBtn = searchResults.querySelector(`[data-chat-action="jump-msg"][data-target-msg-id="${searchTarget.id}"]`);
+  assert.ok(hitBtn, 'matching message appears in search tray');
+  hitBtn.click();
+
+  // Verify 360-400px mobile CSS rules have no overflowing negative margin and keep lock label visible
+  const walletCss = readFileSync(new URL('../css/ui-wallet.css', import.meta.url), 'utf8');
+  assert.equal(/\.class-chat-shell\s*\{[^}]*margin-inline:\s*-16px/.test(walletCss), false,
+    'no -16px negative horizontal margin on .class-chat-shell that would overflow 360px screens');
+  assert.equal(/\.class-chat-lock-label\s*\{\s*display:\s*none/.test(walletCss), false,
+    'চ্যাট লক (স্টাফ অনলি) label stays visible on mobile viewports');
+
+  // Verify clean-URL staff portal (/admin without .html) resolves as staff with all-room relay access
+  // even when a prior student KEYS.account exists in localStorage
+  const { resolveCurrentRelayViewer } = await import('../js/class-chat-relay.js');
+  const cleanUrlDom = new JSDOM('<div id="adminShell"></div>', { url: 'https://active-plus-coaching.web.app/admin#class-chat' });
+  const prevWin = globalThis.window;
+  globalThis.window = cleanUrlDom.window;
+  try {
+    cleanUrlDom.window.localStorage.setItem(KEYS.account, JSON.stringify({
+      username: 'tanvir10',
+      student: { id: 'STU-10A', className: 'দশম শ্রেণি', status: 'approved' }
+    }));
+    const viewer = resolveCurrentRelayViewer(cleanUrlDom.window.localStorage);
+    assert.equal(viewer.kind, 'staff', 'clean-URL /admin resolves as staff relay viewer');
+    assert.equal(viewer.role, 'admin');
+    assert.equal(viewer.allowedRoomKeys, null, 'staff viewer syncs all class rooms without student single-room restriction');
+  } finally {
+    globalThis.window = prevWin;
+    cleanUrlDom.window.close();
+  }
+
+  ui.destroy();
+});
+
+
 

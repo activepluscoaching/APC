@@ -284,6 +284,8 @@ function managerStudentDetailsMarkup(student, fee) {
     every other status so an application can never appear twice. */
 function renderStudents() {
   const query = searchValue();
+  const clearBtn = $('#managerStudentSearchClear');
+  if (clearBtn) clearBtn.hidden = !query.trim();
   const pendingCount = students.filter(student => student.status === 'pending').length;
   const pending = students.filter(student => student.status === 'pending' && studentMatches(student, query));
   safeSetText('#managerPendingBadge', `${bn(pendingCount)} অপেক্ষমাণ`);
@@ -1095,6 +1097,15 @@ $('#managerStudentSearch').addEventListener('input', () => {
   renderStudents();
 });
 $('#managerStudentSearch').addEventListener('search', () => { expandedStudentId = null; renderStudents(); });
+$('#managerStudentSearchClear')?.addEventListener('click', () => {
+  const input = $('#managerStudentSearch');
+  if (input) {
+    input.value = '';
+    expandedStudentId = null;
+    renderStudents();
+    input.focus();
+  }
+});
 $$('.manager-view[data-view-panel="students"] [data-student-scope]').forEach(button => button.addEventListener('click', () => {
   const studentsPanel = $('.manager-view[data-view-panel="students"]');
   const nextScope = button.dataset.studentScope;
@@ -1410,7 +1421,7 @@ async function enterManager() {
     role: 'manager',
     actions: {
       password: () => openStaffPasswordDialog({ role: 'manager', mode: 'change' }),
-      logout: () => { clearStaffSession('manager'); goToLoginPage(); }
+      logout: () => { clearStaffSession('manager'); window.dispatchEvent(new Event('apc-session-ended')); goToLoginPage(); }
     },
     session: { value: `${bn(STAFF_SESSION_RULES.rememberDays.manager)} দিন`, hint: 'ডিভাইস-বাউন্ড সেশন', password: `${bn(STAFF_DIRECTORY_RULES.passwordMin)}–${bn(STAFF_DIRECTORY_RULES.passwordMax)} অক্ষর · PBKDF2 হ্যাশ` }
   });
@@ -1438,6 +1449,7 @@ async function enterManager() {
   }
   syncManagerHeroCards();
   watchOwnPanelSession('manager');
+  window.dispatchEvent(new Event('apc-session-ready'));
 }
 /** The content editor is mounted once and only painted when its page opens. */
 let courseEditor = null;
@@ -1455,13 +1467,18 @@ async function mountCourseEditor() {
   })().finally(() => { courseEditorMountFlight = null; });
   return courseEditorMountFlight;
 }
-$('#managerLogout').addEventListener('click', () => { clearStaffSession('manager'); goToLoginPage(); });
+$('#managerLogout').addEventListener('click', () => { clearStaffSession('manager'); window.dispatchEvent(new Event('apc-session-ended')); goToLoginPage(); });
 const MANAGER_WATCHED_KEYS = new Set([
   'activePlus.admin.students.v1',
   'activePlus.registrationNotifications.v1',
   'activePlus.admin.transactions.v1',
   'activePlus.admin.notices.v1',
   'activePlus.admin.routine.v1',
+  'activePlus.academics.v1',
+  'activePlus.courses.v1',
+  'activePlus.courseContent.v1',
+  'active-plus-app-config-v1',
+  'activePlus.staffDirectory.v1',
   TEACHING_KEY,
   TEACHER_ASSIGNMENTS_KEY,
   'activePlus.exams.v1'
@@ -1472,6 +1489,12 @@ const MANAGER_WATCHED_COLLECTIONS = new Set([
   'transactions',
   'notices',
   'routine',
+  'academics',
+  'courses',
+  'courseContent',
+  'settings',
+  'staffDirectory',
+  'staffAccounts',
   'teaching',
   'teacherAssignments',
   'exams'

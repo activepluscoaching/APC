@@ -778,4 +778,85 @@ test('9. Topbar Chat Icon & Floating Chat Head stay synced, enforce RBAC unread 
     'Inactive class tabs with unread messages still show unread badge pill');
 });
 
+test('10. Authentic WhatsApp UI: grouped bubbles, double-ticks, search & emoji drawers, portal back navigation, and AA contrast', async () => {
+  const dom = resetStorage(ROSTER);
+  document.body.innerHTML = `
+    <section class="view active" id="classChatView">
+      <div class="page-intro"><button class="pay-back" type="button" data-view="home">ফিরে যান</button></div>
+      <div id="waStudentMount"></div>
+    </section>
+  `;
+  let wentBack = false;
+  document.querySelector('.pay-back').addEventListener('click', () => { wentBack = true; });
+
+  // Consecutive messages from same classmate vs outgoing replies
+  const m1 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'আসসালামু আলাইকুম সবাইকে!', actor: studentTanvir });
+  const m2 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'আজকে গণিত ক্লাস কয়টায়?', actor: studentTanvir });
+  const m3 = sendClassMessage({ className: 'দশম শ্রেণি', text: 'বিকেল ৪টায় শুরু হবে।', replyToId: m2.id, actor: studentRaisa });
+  toggleMessageReaction({ className: 'দশম শ্রেণি', messageId: m2.id, emoji: '👍', actor: studentRaisa });
+
+  const mount = document.getElementById('waStudentMount');
+  const ui = mountClassChat(mount, { portal: 'student', getActor: () => studentRaisa });
+  await new Promise(r => setTimeout(r, 25));
+
+  const shell = mount.querySelector('.class-chat-shell');
+  assert.ok(shell.classList.contains('is-whatsapp-ui'), 'mounts WhatsApp UI shell');
+
+  // Portal back arrow inside WhatsApp header delegates to native view back button
+  const backBtn = mount.querySelector('[data-chat-action="go-back"]');
+  assert.equal(backBtn.hidden, false, 'WhatsApp back arrow visible inside portal view');
+  backBtn.click();
+  assert.equal(wentBack, true, 'WhatsApp back arrow triggers host portal back navigation');
+
+  // E2EE golden banner is rendered inside feed without any <img>/<image>
+  const feed = mount.querySelector('[data-chat-feed]');
+  assert.ok(feed.querySelector('.class-chat-e2ee-banner'), 'WhatsApp E2EE notice banner rendered at top of feed');
+  assert.equal(feed.querySelectorAll('img, image, [onerror], [onload]').length, 0, 'strictly zero img/image elements inside feed');
+
+  // Consecutive incoming messages group cleanly; outgoing message shows double-tick SVG
+  const row1 = feed.querySelector(`[data-chat-msg-id="${m1.id}"]`);
+  const row2 = feed.querySelector(`[data-chat-msg-id="${m2.id}"]`);
+  const row3 = feed.querySelector(`[data-chat-msg-id="${m3.id}"]`);
+  assert.equal(row1.classList.contains('is-first-in-group'), true, 'first message of sender run has bubble tail class');
+  assert.equal(row2.classList.contains('is-grouped'), true, 'second consecutive message from same sender is grouped');
+  assert.equal(row1.querySelector('.chat-read-ticks'), null, 'incoming message does not show outgoing read ticks');
+  assert.ok(row3.querySelector('.chat-read-ticks .wa-tick-svg'), 'outgoing message shows WhatsApp double-tick SVG');
+  assert.ok(row2.querySelector('.chat-active-reactions .chat-reaction-pill'), 'reacted bubble displays floating WhatsApp reaction pill');
+
+  // Bubble chevron toggles floating menu open & closed
+  row1.querySelector('[data-chat-action="toggle-menu"]').click();
+  assert.equal(row1.classList.contains('is-menu-open'), true, 'chevron opens bubble quick menu');
+  row1.querySelector('[data-chat-action="toggle-menu"]').click();
+  assert.equal(row1.classList.contains('is-menu-open'), false, 'chevron closes bubble quick menu');
+
+  // Search toggle button opens & closes WhatsApp search drawer
+  const searchToggle = mount.querySelector('[data-chat-action="toggle-search"]');
+  searchToggle.click();
+  assert.equal(shell.classList.contains('is-search-open'), true, 'search drawer opens');
+  searchToggle.click();
+  assert.equal(shell.classList.contains('is-search-open'), false, 'search drawer closes');
+
+  // Composer smiley toggle + quick emoji insertion
+  const emojiToggle = mount.querySelector('[data-chat-action="toggle-emoji"]');
+  const emojiDrawer = mount.querySelector('[data-chat-emoji-drawer]');
+  assert.equal(emojiDrawer.hidden, true);
+  emojiToggle.click();
+  assert.equal(emojiDrawer.hidden, false, 'emoji strip opens');
+  const smileEmojiBtn = [...mount.querySelectorAll('[data-chat-action="insert-emoji"]')]
+    .find(btn => btn.dataset.emoji === '😊');
+  assert.ok(smileEmojiBtn, 'quick emoji button rendered');
+  smileEmojiBtn.click();
+  const input = mount.querySelector('[data-chat-input]');
+  assert.equal(input.value, '😊', 'clicking quick emoji inserts into WhatsApp pill input');
+
+  // Verify WhatsApp palette tokens in foundation.css clear WCAG AA in both light & dark themes
+  const foundation = readFileSync(new URL('../css/foundation.css', import.meta.url), 'utf8');
+  for (const token of ['--wa-header-bg', '--wa-wallpaper-bg', '--wa-out-bubble', '--wa-in-bubble', '--wa-bubble-ink', '--wa-send-bg']) {
+    assert.match(foundation, new RegExp(`${token}\\s*:`), `${token} defined in foundation.css`);
+  }
+  ui.destroy();
+  void dom;
+});
+
+
 

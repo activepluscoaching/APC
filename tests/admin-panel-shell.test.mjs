@@ -323,6 +323,56 @@ test('Account → Security → Account reopens the correct Admin content on ever
   await ctx.flush(2);
 });
 
+test('Admin Class Chat (#class-chat) mounts immediately, keeps composer usable on empty rooms, sends messages, and never triggers broadcast toast', async () => {
+  const chatTrigger = ctx.$('#classChatTopbarButton')
+    || ctx.$('.teacher-chat-hub[data-admin-view="class-chat"]')
+    || ctx.$('[data-admin-view="class-chat"]');
+  assert.ok(chatTrigger, 'Class Chat trigger exists in Admin shell');
+  ctx.click(chatTrigger);
+  await ctx.waitFor(() => ctx.$('.admin-view.active')?.dataset.viewPanel === 'class-chat');
+  await ctx.waitFor(() => Boolean(ctx.$('#adminClassChatMount .class-chat-shell')));
+
+  assert.equal(ctx.$('#adminMain').classList.contains('is-chat-view'), true, 'adminMain activates viewport-fit chat mode');
+  const mount = ctx.$('#adminClassChatMount');
+  const composerWrap = mount.querySelector('[data-chat-composer-wrap]');
+  const input = mount.querySelector('[data-chat-input]');
+  const sendBtn = mount.querySelector('[data-chat-action="send"]');
+  const feed = mount.querySelector('[data-chat-feed]');
+
+  await ctx.waitFor(() => Boolean(feed.querySelector('.class-chat-empty') || feed.querySelector('[data-chat-msg-id]')));
+  assert.equal(composerWrap.hidden, false, 'composer stays visible on empty room');
+  assert.equal(input.disabled, false, 'composer input is enabled for Admin');
+  assert.equal(sendBtn.disabled, true, 'send button is disabled when composer is empty');
+  assert.match(sendBtn.textContent, /পাঠান/, 'send button displays পাঠান');
+
+  input.value = 'আজকের মডারেশন টেস্ট বার্তা';
+  input.dispatchEvent(new ctx.window.Event('input', { bubbles: true }));
+  assert.equal(sendBtn.disabled, false, 'send button enables as soon as text is entered');
+
+  ctx.click(sendBtn);
+  await ctx.waitFor(() => feed.textContent.includes('আজকের মডারেশন টেস্ট বার্তা'));
+
+  const sentRow = [...feed.querySelectorAll('[data-chat-msg-id]')]
+    .find(el => el.textContent.includes('আজকের মডারেশন টেস্ট বার্তা'));
+  assert.ok(sentRow, 'sent message bubble renders immediately in the active class feed');
+  assert.equal(sentRow.querySelector('[data-chat-status]')?.dataset.chatStatus, 'sent', 'sent bubble displays sent status');
+  assert.equal(input.value, '', 'composer clears after sending');
+  assert.equal(sendBtn.disabled, true, 'send button returns to disabled state when empty');
+
+  // Even an accidental click on hidden broadcast save while in #class-chat must never emit broadcast toast
+  const toastEl = ctx.$('#adminToast');
+  assert.equal((toastEl?.textContent || '').includes('জরুরি ঘোষণা বন্ধ করা হয়েছে'), false, 'no broadcast toast on chat send');
+  const hiddenBroadcastBtn = ctx.$('#btnSaveBroadcast');
+  if (hiddenBroadcastBtn) {
+    hiddenBroadcastBtn.click();
+    await ctx.flush(2);
+    assert.equal((toastEl?.textContent || '').includes('জরুরি ঘোষণা বন্ধ করা হয়েছে'), false, 'broadcast save is guarded while #class-chat is active');
+  }
+
+  ctx.click(ctx.$('.admin-bottom [data-admin-view="dashboard"]'));
+  await ctx.flush(2);
+});
+
 test('a role with no capability leaves the panel empty — menus, cards and routes', async () => {
   // A fresh, untouched copy of the panel: nothing has been rendered yet, so the
   // capability layer is the only thing that has touched the markup.

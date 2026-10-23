@@ -120,6 +120,7 @@ async function enterPanel() {
   // The capability set follows the role stored in the account record — the
   // existing role system is never modified, only read.
   const account = await readStaffAccount('admin');
+  state.adminAccount = account || null;
   access = createAccess(account?.role || 'admin');
   initAdminPanelShell({ access, onNavigate: navigate });
   // The অ্যাকাউন্ট → লগআউট row carries the same icon language as the top bar.
@@ -142,10 +143,12 @@ async function enterPanel() {
   });
   paintAdminSettingsDoors();
   mountReports($('#adminReports'), { panel: 'admin' });
-  // A deep link (admin.html#staff) opens only when this role may see it;
-  // anything else falls back to the first permitted tab.
+  // A deep link (admin.html#staff or admin.html#class-chat) opens only when
+  // this role may see it; anything else falls back to the first permitted tab.
   const route = routeFromHash(window.location.hash);
-  setView(route && access.allowsView(route) ? route : state.activeView);
+  const initialTarget = route && access.allowsView(route) ? route : state.activeView;
+  setView(initialTarget);
+  if (initialTarget !== 'dashboard') refreshView(initialTarget);
   const welcome = $('#adminWelcome');
   const adminName = String(account?.fullName || '').trim();
   if (welcome) {
@@ -279,12 +282,14 @@ function setView(view) {
   if (!$$('.admin-view').some(panel => panel.dataset.viewPanel === target)) return false;
   state.activeView = target;
   $('#adminMain')?.classList.toggle('is-staff-view', target === 'staff');
+  $('#adminMain')?.classList.toggle('is-chat-view', target === 'class-chat');
   $$('.admin-view').forEach(panel => {
     const active = panel.dataset.viewPanel === target;
     panel.classList.toggle('active', active);
     if (active) resetAdminTogglePanels(panel);
   });
   openDefaultPrimarySection(target);
+  if (target === 'class-chat') mountAdminClassChat();
   syncAdminHeroCards();
   const seat = seatFor(target);
   $$('.admin-bottom-item').forEach(item => {
@@ -860,6 +865,7 @@ function saveAppSettingsFromForm() {
 /* Urgent announcement: one switch + one message that every device receives as
    a notification. Clearing the message turns it off on every device too. */
 function saveBroadcastFromForm() {
+  if (state.activeView === 'class-chat') return;
   const current = state.appConfig || loadAppConfig();
   const message = $('#cfgBroadcastMessage')?.value.trim().slice(0, 500) || '';
   const alert = Boolean($('#cfgBroadcastAlert')?.checked) && Boolean(message);
@@ -1618,7 +1624,10 @@ function mountAdminClassChat() {
   const mount = $('#adminClassChatMount');
   if (!mount) return;
   adminChatFlight ??= import('./class-chat.js').catch(err => { adminChatFlight = null; throw err; });
-  void adminChatFlight.then(mod => mod.mountClassChat(mount, { portal: 'admin' }))
+  void adminChatFlight.then(mod => mod.mountClassChat(mount, {
+    portal: 'admin',
+    getStaff: () => state.adminAccount
+  }))
     .catch(err => console.warn('[Active Plus] admin class-chat failed:', err?.message));
 }
 

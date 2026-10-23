@@ -657,6 +657,8 @@ const WA_SVGS = Object.freeze({
   ban: '<svg class="wa-ban-svg" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7"/><path d="m4.1 4.1 9.8 9.8"/></svg>',
   smile: '<svg class="wa-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8"/><circle cx="9" cy="9.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.8" r="1.1" fill="currentColor" stroke="none"/></svg>',
   send: '<svg class="wa-send-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4 20.85 12 3.4 3.6l-.01 6.51L15 12 3.39 13.88l.01 6.52z" fill="currentColor" stroke="none"/></svg>',
+  reply: '<svg class="wa-reply-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 5.5 4 10l4.5 4.5M4.5 10H12a4 4 0 0 1 4 4v1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chatEmpty: '<svg class="wa-empty-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   e2eeLock: '<svg class="wa-e2ee-svg" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>'
 });
 
@@ -672,7 +674,7 @@ function senderTone(role, senderId, senderName) {
   return String((Math.abs(hash) % 5) + 1);
 }
 
-export function renderMessageBubbleHtml(msg, actorInput, { pinnedMessageId = '', groupedWithPrev = false } = {}) {
+export function renderMessageBubbleHtml(msg, actorInput, { pinnedMessageId = '', groupedWithPrev = false, isJustSent = false } = {}) {
   const actor = normalizeChatActor(actorInput);
   const isMine = msg.senderId === actor.id && msg.senderRole === actor.role;
   const isStaffSender = ['teacher', 'manager', 'admin'].includes(msg.senderRole);
@@ -736,7 +738,7 @@ export function renderMessageBubbleHtml(msg, actorInput, { pinnedMessageId = '',
 
   const showHeader = (!isMine && !groupedWithPrev) || isPinned;
 
-  return `<article class="chat-row ${isMine ? 'is-mine' : 'is-other'} ${groupClass}${isStaffSender ? ' is-staff' : ''}${isPinned ? ' is-pinned' : ''}${activeReactionPills ? ' has-reactions' : ''}" data-chat-msg-id="${escapeHtml(msg.id)}" data-sender-tone="${escapeHtml(tone)}">
+  return `<article class="chat-row ${isMine ? 'is-mine' : 'is-other'} ${groupClass}${isStaffSender ? ' is-staff' : ''}${isPinned ? ' is-pinned' : ''}${activeReactionPills ? ' has-reactions' : ''}${isJustSent ? ' is-just-sent' : ''}" data-chat-msg-id="${escapeHtml(msg.id)}" data-sender-tone="${escapeHtml(tone)}">
     ${isMine ? '' : `<div class="chat-avatar is-${escapeHtml(msg.senderRole)}" data-sender-tone="${escapeHtml(tone)}" aria-hidden="true">${escapeHtml(avatarInitial(msg.senderName))}</div>`}
     <div class="chat-bubble-wrap">
       <div class="chat-bubble">
@@ -750,7 +752,7 @@ export function renderMessageBubbleHtml(msg, actorInput, { pinnedMessageId = '',
           <div class="chat-bubble-text">${escapeHtml(msg.text)}</div>
           <span class="chat-inline-meta">
             <time class="chat-time" datetime="${escapeHtml(msg.createdAt)}">${escapeHtml(timeLabel)}</time>
-            ${isMine ? `<span class="chat-read-ticks" aria-label="পঠিত">${WA_SVGS.doubleTick}</span>` : ''}
+            ${isMine ? `<span class="chat-read-ticks" data-chat-status="sent" title="পাঠানো হয়েছে" aria-label="পাঠানো হয়েছে">${WA_SVGS.doubleTick}</span>` : ''}
           </span>
         </div>
         <div class="chat-hover-tray">
@@ -763,6 +765,7 @@ export function renderMessageBubbleHtml(msg, actorInput, { pinnedMessageId = '',
       </div>
       ${activeReactionPills ? `<div class="chat-active-reactions" role="group" aria-label="সক্রিয় প্রতিক্রিয়া">${activeReactionPills}</div>` : ''}
     </div>
+    <button type="button" class="chat-quick-reply-btn" data-chat-action="reply" data-msg-id="${escapeHtml(msg.id)}" aria-label="উত্তর দিন" title="উত্তর দিন">${WA_SVGS.reply}</button>
   </article>`;
 }
 
@@ -783,14 +786,16 @@ export function mountClassChat(target, options = {}) {
 
   const portal = ['teacher', 'manager', 'admin'].includes(options.portal) ? options.portal : 'student';
   const hostView = root.closest('.view, .teacher-view, .manager-view, .admin-view');
+  const hostHeroEl = hostView?.querySelector(':scope > .page-intro') || null;
   const hasPortalBack = Boolean(hostView?.querySelector('.pay-back'));
   const pendingInitialClass = (!options.initialClass && typeof window !== 'undefined' && portal !== 'student')
     ? normalizeClassId(window.__apcPendingChatClass || '')
     : '';
   if (pendingInitialClass && typeof window !== 'undefined') window.__apcPendingChatClass = '';
+  let suppressOwnEvent = false;
   const state = {
     actor: null,
-    selectedClass: normalizeClassId(options.initialClass || pendingInitialClass || '') || CORE_CHAT_CLASSES[2],
+    selectedClass: normalizeClassId(options.initialClass || options.defaultClass || pendingInitialClass || '') || CORE_CHAT_CLASSES[2],
     search: '',
     searchOpen: false,
     emojiOpen: false,
@@ -798,6 +803,9 @@ export function mountClassChat(target, options = {}) {
     replyTo: null,
     error: '',
     highlightedId: '',
+    justSentId: '',
+    sending: false,
+    scrollPositions: new Map(),
     destroyed: false
   };
 
@@ -822,15 +830,6 @@ export function mountClassChat(target, options = {}) {
           </div>
           <div class="class-chat-header-actions">
             <button type="button" class="class-chat-icon-btn" data-chat-action="toggle-search" aria-label="বার্তা খুঁজুন" aria-expanded="false" title="বার্তা খুঁজুন">${WA_SVGS.search}</button>
-            <button type="button" class="class-chat-lock-btn" data-chat-action="toggle-lock" aria-pressed="false" ${portal === 'student' ? 'hidden' : ''}>🔒 চ্যাট লক</button>
-          </div>
-        </div>
-
-        <div class="class-chat-search-drawer" data-chat-search-drawer>
-          <div class="class-chat-search-box">
-            <span class="class-chat-search-icon" aria-hidden="true">${WA_SVGS.search}</span>
-            <input type="search" class="class-chat-search-input" data-chat-search placeholder="এই চ্যাটে বার্তা বা নাম খুঁজুন…" autocomplete="off" aria-label="চ্যাটে বার্তা খুঁজুন">
-            <button type="button" class="class-chat-search-clear" data-chat-action="clear-search" aria-label="খোঁজা মুছুন" hidden>×</button>
           </div>
         </div>
 
@@ -841,7 +840,18 @@ export function mountClassChat(target, options = {}) {
             <select class="class-chat-select" data-chat-class-select aria-label="শ্রেণি নির্বাচন করুন"></select>
           </label>
         </div>
+
+        <div class="class-chat-search-drawer${portal !== 'student' ? ' is-staff-toolbar' : ''}" data-chat-search-drawer>
+          <div class="class-chat-search-box">
+            <span class="class-chat-search-icon" aria-hidden="true">${WA_SVGS.search}</span>
+            <input type="search" class="class-chat-search-input" data-chat-search placeholder="বার্তা খুঁজুন…" autocomplete="off" aria-label="চ্যাটে বার্তা খুঁজুন">
+            <button type="button" class="class-chat-search-clear" data-chat-action="clear-search" aria-label="খোঁজা মুছুন" hidden>×</button>
+          </div>
+          <button type="button" class="class-chat-lock-btn" data-chat-action="toggle-lock" aria-pressed="false" ${portal === 'student' ? 'hidden' : ''}>${WA_SVGS.lock}<span class="class-chat-lock-label">চ্যাট লক (স্টাফ অনলি)</span></button>
+        </div>
       </header>
+
+      <div class="class-chat-room-lock-banner" data-chat-room-lock-banner role="status" hidden></div>
 
       <div class="class-chat-pinned" data-chat-pinned-banner hidden></div>
 
@@ -852,18 +862,19 @@ export function mountClassChat(target, options = {}) {
       <p class="class-chat-error" data-chat-error role="alert" hidden></p>
 
       <footer class="class-chat-composer-wrap" data-chat-composer-wrap>
+        <div class="class-chat-search-results" data-chat-search-results role="region" aria-label="খোঁজার ফলাফল" hidden></div>
         <div class="class-chat-locked-notice" data-chat-locked-notice role="status" hidden>${escapeHtml(STUDENT_LOCKED_NOTICE)}</div>
         <div class="class-chat-staff-lock-hint" data-chat-staff-lock-hint hidden>🔒 শুধুমাত্র শিক্ষক ও স্টাফ বার্তা পাঠাতে পারবেন — শিক্ষার্থীরা পড়তে পারবে।</div>
         <div class="class-chat-reply-bar" data-chat-reply-bar hidden></div>
         <div class="class-chat-emoji-drawer" data-chat-emoji-drawer hidden role="toolbar" aria-label="দ্রুত ইমোজি">${emojiStripHtml}</div>
-        <div class="class-chat-composer" data-chat-composer-form>
+        <form class="class-chat-composer" data-chat-composer-form novalidate>
           <div class="class-chat-input-pill">
             <button type="button" class="class-chat-emoji-btn" data-chat-action="toggle-emoji" aria-label="ইমোজি যোগ করুন" aria-expanded="false">${WA_SVGS.smile}</button>
-            <textarea class="class-chat-input" data-chat-input rows="1" maxlength="${MAX_CHAT_MESSAGE_LENGTH}" placeholder="বার্তা লিখুন" aria-label="বার্তা লিখুন"></textarea>
+            <textarea class="class-chat-input" data-chat-input rows="1" maxlength="${MAX_CHAT_MESSAGE_LENGTH}" placeholder="বার্তা লিখুন… (পাঠাতে Enter, নতুন লাইন Shift+Enter)" aria-label="বার্তা লিখুন"></textarea>
             <small class="class-chat-char-count" data-chat-char-count>০/${toBnDigits(MAX_CHAT_MESSAGE_LENGTH)}</small>
           </div>
-          <button type="button" class="class-chat-send-btn" data-chat-action="send" aria-label="বার্তা পাঠান" title="বার্তা পাঠান">${WA_SVGS.send}</button>
-        </div>
+          <button type="button" class="class-chat-send-btn" data-chat-action="send" aria-label="বার্তা পাঠান" title="বার্তা পাঠান" disabled><span class="class-chat-send-label">পাঠান</span>${WA_SVGS.send}</button>
+        </form>
       </footer>
     </div>
   `;
@@ -877,9 +888,11 @@ export function mountClassChat(target, options = {}) {
   const memberCountEl = el('[data-chat-member-count]');
   const lockPillEl = el('[data-chat-lock-pill]');
   const lockBtnEl = el('[data-chat-action="toggle-lock"]');
+  const roomLockBannerEl = el('[data-chat-room-lock-banner]');
   const searchToggleBtn = el('[data-chat-action="toggle-search"]');
   const searchInput = el('[data-chat-search]');
   const searchClearBtn = el('[data-chat-action="clear-search"]');
+  const searchResultsEl = el('[data-chat-search-results]');
   const pinnedBannerEl = el('[data-chat-pinned-banner]');
   const accessGateEl = el('[data-chat-access-gate]');
   const feedEl = el('[data-chat-feed]');
@@ -893,6 +906,20 @@ export function mountClassChat(target, options = {}) {
   const composerFormEl = el('[data-chat-composer-form]');
   const inputEl = el('[data-chat-input]');
   const charCountEl = el('[data-chat-char-count]');
+  const sendBtnEl = el('[data-chat-action="send"]');
+
+  function syncHostHeroCollapse(collapsed) {
+    if (!hostHeroEl) return;
+    hostHeroEl.classList.toggle('is-chat-hero-collapsed', Boolean(collapsed));
+  }
+
+  function syncComposerSendState() {
+    if (!sendBtnEl || !inputEl) return;
+    const trimmed = String(inputEl.value || '').trim();
+    const canSendNow = Boolean(!inputEl.disabled && !state.sending && trimmed.length > 0 && inputEl.value.length <= MAX_CHAT_MESSAGE_LENGTH);
+    sendBtnEl.disabled = !canSendNow;
+    sendBtnEl.classList.toggle('is-ready', canSendNow);
+  }
 
   function syncSearchDrawerUi() {
     const open = Boolean(state.searchOpen || state.search);
@@ -932,9 +959,10 @@ export function mountClassChat(target, options = {}) {
     if (charCountEl) {
       const len = inputEl.value.length;
       charCountEl.textContent = `${toBnDigits(len)}/${toBnDigits(MAX_CHAT_MESSAGE_LENGTH)}`;
-      charCountEl.classList.toggle('is-visible', len >= MAX_CHAT_MESSAGE_LENGTH - 250);
+      charCountEl.classList.toggle('is-visible', len > 0);
       charCountEl.classList.toggle('is-near-limit', len >= MAX_CHAT_MESSAGE_LENGTH - 80);
     }
+    syncComposerSendState();
   }
 
   async function resolveCurrentActor() {
@@ -950,12 +978,62 @@ export function mountClassChat(target, options = {}) {
     return resolvePortalChatActor(portal, profileHint);
   }
 
-  function scrollToBottom(force = false) {
+  function saveCurrentRoomScroll() {
+    if (!feedEl || !state.selectedClass) return;
+    const rk = roomKeyForClass(state.selectedClass);
+    if (!rk) return;
+    const distance = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight;
+    state.scrollPositions.set(rk, {
+      scrollTop: feedEl.scrollTop,
+      atBottom: distance < 56
+    });
+  }
+
+  function restoreOrScrollFeed(roomKey, force = false) {
     if (!feedEl) return;
-    const nearBottom = (feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight) < 120;
-    if (force || nearBottom) {
+    if (force) {
       feedEl.scrollTop = feedEl.scrollHeight;
+      if (roomKey) state.scrollPositions.set(roomKey, { scrollTop: feedEl.scrollTop, atBottom: true });
+      return;
     }
+    const saved = roomKey ? state.scrollPositions.get(roomKey) : null;
+    if (saved) {
+      if (saved.atBottom) {
+        feedEl.scrollTop = feedEl.scrollHeight;
+      } else {
+        feedEl.scrollTop = saved.scrollTop;
+      }
+      return;
+    }
+    feedEl.scrollTop = feedEl.scrollHeight;
+    if (roomKey) state.scrollPositions.set(roomKey, { scrollTop: feedEl.scrollTop, atBottom: true });
+  }
+
+  function renderSearchResultsBar(view) {
+    if (!searchResultsEl) return;
+    const q = String(state.search || '').trim();
+    if (!q) {
+      searchResultsEl.hidden = true;
+      searchResultsEl.innerHTML = '';
+      return;
+    }
+    const matches = Array.isArray(view?.filteredMessages) ? view.filteredMessages : [];
+    const previewItems = matches.slice(-8).reverse().map(msg => {
+      const timeLabel = formatChatTimestamp(msg.createdAt);
+      const snippet = String(msg.text || '').replace(/\s+/g, ' ').slice(0, 72);
+      return `<button type="button" class="class-chat-search-hit" data-chat-action="jump-msg" data-target-msg-id="${escapeHtml(msg.id)}">
+        <span class="class-chat-search-hit-meta"><strong>${escapeHtml(msg.senderName)}</strong><time datetime="${escapeHtml(msg.createdAt)}">${escapeHtml(timeLabel)}</time></span>
+        <span class="class-chat-search-hit-text">${escapeHtml(snippet)}</span>
+      </button>`;
+    }).join('');
+    searchResultsEl.hidden = false;
+    searchResultsEl.innerHTML = `
+      <div class="class-chat-search-results-head">
+        <span>“${escapeHtml(q)}” — ${toBnDigits(matches.length)}টি ফলাফল</span>
+        <button type="button" class="class-chat-search-results-close" data-chat-action="clear-search" aria-label="খোঁজা বন্ধ করুন">বন্ধ করুন ×</button>
+      </div>
+      ${matches.length ? `<div class="class-chat-search-results-list">${previewItems}</div>` : ''}
+    `;
   }
 
   function highlightMessage(messageId) {
@@ -966,7 +1044,7 @@ export function mountClassChat(target, options = {}) {
       if (searchInput) searchInput.value = '';
       if (searchClearBtn) searchClearBtn.hidden = true;
       syncSearchDrawerUi();
-      paintLoaded();
+      paintLoaded(false);
     }
     const row = Array.from(feedEl.querySelectorAll('[data-chat-msg-id]'))
       .find(node => node.dataset.chatMsgId === String(messageId));
@@ -1017,16 +1095,21 @@ export function mountClassChat(target, options = {}) {
         const unreadCount = !active ? (unreadSummary.byClass?.[cls] || 0) : 0;
         const locked = store.rooms[rk]?.locked === true;
         return `<button type="button" role="tab" class="class-chat-tab${active ? ' is-active' : ''}${unreadCount ? ' has-unread' : ''}" data-chat-select-class="${escapeHtml(cls)}" aria-selected="${active ? 'true' : 'false'}">
+          ${active ? '<span class="class-chat-tab-dot" aria-hidden="true"></span>' : ''}
           <span>${escapeHtml(shortClassTabLabel(cls))}</span>
           ${locked ? '<span class="class-chat-tab-lock" aria-hidden="true">🔒</span>' : ''}
           ${unreadCount ? `<span class="class-chat-tab-unread" data-chat-tab-unread>${formatUnreadCountBn(unreadCount)}</span>` : (count ? `<span class="class-chat-tab-count">${toBnDigits(count)}</span>` : '')}
         </button>`;
       }).join('');
+      const activeChip = classTabsEl.querySelector('.class-chat-tab.is-active');
+      activeChip?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
     if (classSelectEl) {
-      classSelectEl.innerHTML = classes.map(cls =>
-        `<option value="${escapeHtml(cls)}"${cls === activeClassId ? ' selected' : ''}>${escapeHtml(cls)}</option>`
-      ).join('');
+      classSelectEl.innerHTML = classes.map(cls => {
+        const unreadCount = cls !== activeClassId ? (unreadSummary.byClass?.[cls] || 0) : 0;
+        const label = unreadCount ? `${cls} (${formatUnreadCountBn(unreadCount)} নতুন)` : cls;
+        return `<option value="${escapeHtml(cls)}"${cls === activeClassId ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+      }).join('');
       classSelectEl.value = activeClassId;
     }
   }
@@ -1038,6 +1121,7 @@ export function mountClassChat(target, options = {}) {
     }
     if (feedEl) feedEl.hidden = true;
     if (pinnedBannerEl) pinnedBannerEl.hidden = true;
+    if (roomLockBannerEl) roomLockBannerEl.hidden = true;
     if (composerWrapEl) composerWrapEl.hidden = true;
   }
 
@@ -1072,6 +1156,7 @@ export function mountClassChat(target, options = {}) {
     if (accessGateEl) accessGateEl.hidden = true;
     if (feedEl) feedEl.hidden = false;
     if (composerWrapEl) composerWrapEl.hidden = false;
+    shellEl?.classList.toggle('is-room-locked', Boolean(view.locked));
 
     if (titleEl) titleEl.textContent = view.title;
     if (memberCountEl) memberCountEl.textContent = `সক্রিয় সদস্য: ${toBnDigits(view.activeMemberCount)} জন`;
@@ -1082,9 +1167,23 @@ export function mountClassChat(target, options = {}) {
       lockBtnEl.setAttribute('aria-pressed', view.locked ? 'true' : 'false');
       lockBtnEl.classList.toggle('is-locked', view.locked);
       lockBtnEl.innerHTML = view.locked
-        ? `${WA_SVGS.unlock}<span class="class-chat-lock-label">আনলক</span>`
-        : `${WA_SVGS.lock}<span class="class-chat-lock-label">লক</span>`;
-      lockBtnEl.title = view.locked ? 'চ্যাট আনলক করুন' : 'চ্যাট লক করুন (স্টাফ অনলি)';
+        ? `${WA_SVGS.unlock}<span class="class-chat-lock-label">চ্যাট আনলক করুন</span>`
+        : `${WA_SVGS.lock}<span class="class-chat-lock-label">চ্যাট লক (স্টাফ অনলি)</span>`;
+      lockBtnEl.title = view.locked ? 'চ্যাট আনলক করুন' : 'চ্যাট লক (স্টাফ অনলি)';
+    }
+
+    if (roomLockBannerEl) {
+      if (view.locked) {
+        roomLockBannerEl.hidden = false;
+        const lockedByMeta = view.lockedBy ? ` (${escapeHtml(view.lockedBy)})` : '';
+        roomLockBannerEl.innerHTML = view.canModerate
+          ? `<span class="class-chat-room-lock-copy">${WA_SVGS.lock}<span><strong>চ্যাট লক চালু আছে (স্টাফ অনলি)</strong>${lockedByMeta} — শিক্ষার্থীরা এখন বার্তা পাঠাতে পারবে না; স্টাফ বার্তা পাঠাতে পারবেন।</span></span>
+             <button type="button" class="class-chat-room-unlock-btn" data-chat-action="unlock-banner">আনলক করুন</button>`
+          : `<span class="class-chat-room-lock-copy">${WA_SVGS.lock}<span>${escapeHtml(STUDENT_LOCKED_NOTICE)}</span></span>`;
+      } else {
+        roomLockBannerEl.hidden = true;
+        roomLockBannerEl.innerHTML = '';
+      }
     }
 
     if (pinnedBannerEl) {
@@ -1110,6 +1209,7 @@ export function mountClassChat(target, options = {}) {
       state.replyTo = null;
     }
     renderReplyBar();
+    renderSearchResultsBar(view);
 
     if (feedEl) {
       const e2eeNoticeHtml = !state.search
@@ -1120,7 +1220,7 @@ export function mountClassChat(target, options = {}) {
         const emptyText = state.search
           ? `"${escapeHtml(state.search)}" দিয়ে কোনো বার্তা পাওয়া যায়নি।`
           : `${escapeHtml(view.classId)}-এর আলোচনা কক্ষে এখনো কোনো বার্তা নেই। নিচে বার্তা লিখে আলোচনা শুরু করুন!`;
-        feedEl.innerHTML = `${e2eeNoticeHtml}<div class="class-chat-empty"><p>${emptyText}</p></div>`;
+        feedEl.innerHTML = `${e2eeNoticeHtml}<div class="class-chat-empty"><span class="class-chat-empty-icon" aria-hidden="true">${WA_SVGS.chatEmpty}</span><p>${emptyText}</p></div>`;
       } else {
         let lastBucket = '';
         let prevMsg = null;
@@ -1142,13 +1242,17 @@ export function mountClassChat(target, options = {}) {
             && prevMsg.senderId === msg.senderId
             && prevMsg.senderRole === msg.senderRole
           );
-          chunks.push(renderMessageBubbleHtml(msg, state.actor, { pinnedMessageId: pinnedId, groupedWithPrev }));
+          chunks.push(renderMessageBubbleHtml(msg, state.actor, {
+            pinnedMessageId: pinnedId,
+            groupedWithPrev,
+            isJustSent: Boolean(state.justSentId && state.justSentId === msg.id)
+          }));
           prevMsg = msg;
         }
         feedEl.innerHTML = chunks.join('');
       }
       syncOpenMenuRow();
-      scrollToBottom(forceBottom);
+      restoreOrScrollFeed(view.roomKey, forceBottom);
     }
 
     const studentBlockedByLock = view.locked && state.actor.kind === 'student';
@@ -1160,6 +1264,7 @@ export function mountClassChat(target, options = {}) {
       syncEmojiDrawerUi();
     }
     if (inputEl) inputEl.disabled = studentBlockedByLock;
+    syncComposerSendState();
   }
 
   async function refresh(forceBottom = false) {
@@ -1175,16 +1280,34 @@ export function mountClassChat(target, options = {}) {
     }
   }
 
-  function submitComposer() {
-    if (!state.actor || !inputEl) return;
+  async function submitComposer() {
+    if (state.sending || !inputEl || inputEl.disabled) return;
+    const rawDraft = inputEl.value;
+    if (!String(rawDraft || '').trim()) {
+      syncComposerSendState();
+      return;
+    }
+    state.sending = true;
+    syncComposerSendState();
     showError('');
     try {
-      sendClassMessage({
-        className: state.selectedClass,
-        text: inputEl.value,
-        replyToId: state.replyTo?.id || '',
-        actor: state.actor
-      });
+      if (!state.actor) {
+        state.actor = await resolveCurrentActor();
+        if (state.actor.kind === 'student') state.selectedClass = state.actor.classId;
+      }
+      suppressOwnEvent = true;
+      let sentMsg = null;
+      try {
+        sentMsg = sendClassMessage({
+          className: state.selectedClass,
+          text: rawDraft,
+          replyToId: state.replyTo?.id || '',
+          actor: state.actor
+        });
+      } finally {
+        suppressOwnEvent = false;
+      }
+      state.justSentId = sentMsg?.id || '';
       inputEl.value = '';
       state.replyTo = null;
       state.emojiOpen = false;
@@ -1194,17 +1317,25 @@ export function mountClassChat(target, options = {}) {
     } catch (err) {
       showError(err?.message || 'বার্তা পাঠানো যায়নি।');
       paintLoaded(false);
+    } finally {
+      state.sending = false;
+      syncComposerSendState();
     }
   }
 
   root.addEventListener('click', event => {
     const classBtn = event.target.closest('[data-chat-select-class]');
     if (classBtn && state.actor?.kind === 'staff') {
-      state.selectedClass = normalizeClassId(classBtn.dataset.chatSelectClass);
-      state.replyTo = null;
-      state.openMenuMsgId = '';
-      showError('');
-      paintLoaded(true);
+      const nextClass = normalizeClassId(classBtn.dataset.chatSelectClass);
+      if (nextClass && nextClass !== state.selectedClass) {
+        saveCurrentRoomScroll();
+        state.selectedClass = nextClass;
+        state.replyTo = null;
+        state.openMenuMsgId = '';
+        state.justSentId = '';
+        showError('');
+        paintLoaded(false);
+      }
       return;
     }
 
@@ -1269,7 +1400,7 @@ export function mountClassChat(target, options = {}) {
       return;
     }
     if (action === 'send') {
-      submitComposer();
+      void submitComposer();
       return;
     }
     if (action === 'cancel-reply') {
@@ -1303,43 +1434,68 @@ export function mountClassChat(target, options = {}) {
         }
       } else if (action === 'react') {
         state.openMenuMsgId = '';
-        toggleMessageReaction({
-          className: state.selectedClass,
-          messageId: actionBtn.dataset.msgId,
-          emoji: actionBtn.dataset.emoji,
-          actor: state.actor
-        });
+        suppressOwnEvent = true;
+        try {
+          toggleMessageReaction({
+            className: state.selectedClass,
+            messageId: actionBtn.dataset.msgId,
+            emoji: actionBtn.dataset.emoji,
+            actor: state.actor
+          });
+        } finally {
+          suppressOwnEvent = false;
+        }
         paintLoaded(false);
       } else if (action === 'pin') {
         state.openMenuMsgId = '';
-        pinClassMessage({
-          className: state.selectedClass,
-          messageId: actionBtn.dataset.msgId,
-          actor: state.actor
-        });
+        suppressOwnEvent = true;
+        try {
+          pinClassMessage({
+            className: state.selectedClass,
+            messageId: actionBtn.dataset.msgId,
+            actor: state.actor
+          });
+        } finally {
+          suppressOwnEvent = false;
+        }
         paintLoaded(false);
       } else if (action === 'unpin') {
         state.openMenuMsgId = '';
-        unpinClassMessage({
-          className: state.selectedClass,
-          actor: state.actor
-        });
+        suppressOwnEvent = true;
+        try {
+          unpinClassMessage({
+            className: state.selectedClass,
+            actor: state.actor
+          });
+        } finally {
+          suppressOwnEvent = false;
+        }
         paintLoaded(false);
       } else if (action === 'delete') {
         state.openMenuMsgId = '';
-        deleteClassMessage({
-          className: state.selectedClass,
-          messageId: actionBtn.dataset.msgId,
-          actor: state.actor
-        });
+        suppressOwnEvent = true;
+        try {
+          deleteClassMessage({
+            className: state.selectedClass,
+            messageId: actionBtn.dataset.msgId,
+            actor: state.actor
+          });
+        } finally {
+          suppressOwnEvent = false;
+        }
         paintLoaded(false);
-      } else if (action === 'toggle-lock') {
+      } else if (action === 'toggle-lock' || action === 'unlock-banner') {
         const currentView = getClassRoomView(state.selectedClass, { actor: state.actor });
-        setClassRoomLock({
-          className: state.selectedClass,
-          locked: !currentView.locked,
-          actor: state.actor
-        });
+        suppressOwnEvent = true;
+        try {
+          setClassRoomLock({
+            className: state.selectedClass,
+            locked: action === 'unlock-banner' ? false : !currentView.locked,
+            actor: state.actor
+          });
+        } finally {
+          suppressOwnEvent = false;
+        }
         paintLoaded(false);
       }
     } catch (err) {
@@ -1347,13 +1503,40 @@ export function mountClassChat(target, options = {}) {
     }
   });
 
+  composerFormEl?.addEventListener('submit', event => {
+    event.preventDefault();
+    void submitComposer();
+  });
+
   classSelectEl?.addEventListener('change', () => {
     if (state.actor?.kind !== 'staff') return;
-    state.selectedClass = normalizeClassId(classSelectEl.value);
+    const nextClass = normalizeClassId(classSelectEl.value);
+    if (!nextClass || nextClass === state.selectedClass) return;
+    saveCurrentRoomScroll();
+    state.selectedClass = nextClass;
     state.replyTo = null;
     state.openMenuMsgId = '';
+    state.justSentId = '';
     showError('');
-    paintLoaded(true);
+    paintLoaded(false);
+  });
+
+  feedEl?.addEventListener('scroll', () => {
+    saveCurrentRoomScroll();
+    if (feedEl.scrollTop > 20) syncHostHeroCollapse(true);
+    else if (feedEl.scrollTop <= 4 && document.activeElement !== inputEl) syncHostHeroCollapse(false);
+  }, { passive: true });
+
+  inputEl?.addEventListener('focus', () => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 520) {
+      syncHostHeroCollapse(true);
+    }
+  });
+
+  inputEl?.addEventListener('blur', () => {
+    if (feedEl && feedEl.scrollTop <= 4) {
+      syncHostHeroCollapse(false);
+    }
   });
 
   searchInput?.addEventListener('input', () => {
@@ -1372,12 +1555,12 @@ export function mountClassChat(target, options = {}) {
   inputEl?.addEventListener('keydown', event => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
-      submitComposer();
+      void submitComposer();
     }
   });
 
   const onExternalUpdate = event => {
-    if (state.destroyed) return;
+    if (state.destroyed || suppressOwnEvent) return;
     if (event?.type === 'storage' && event.key && event.key !== CLASS_CHAT_KEY && event.key !== KEYS.students) return;
     if (event?.type === 'apc-sync-updated') {
       const col = event.detail?.collection;
@@ -1396,13 +1579,16 @@ export function mountClassChat(target, options = {}) {
       if (state.actor?.kind === 'student') {
         assertRoomReadAccess(state.actor, className);
       }
+      saveCurrentRoomScroll();
       state.selectedClass = normalizeClassId(className) || state.selectedClass;
       state.replyTo = null;
       state.openMenuMsgId = '';
-      paintLoaded(true);
+      state.justSentId = '';
+      paintLoaded(false);
     },
     destroy() {
       state.destroyed = true;
+      syncHostHeroCollapse(false);
       window.removeEventListener('storage', onExternalUpdate);
       window.removeEventListener('apc-sync-updated', onExternalUpdate);
       window.removeEventListener('apc-class-chat-updated', onExternalUpdate);

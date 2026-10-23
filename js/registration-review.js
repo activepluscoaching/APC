@@ -232,7 +232,10 @@ export function pendingQueueMarkup(items = listPendingRegistrations()) {
         <h3>অনুমোদনের অপেক্ষায়</h3>
         <span class="apc-pending-queue__count">০</span>
       </div>
-      <p class="apc-pending-queue__empty">বর্তমানে অনুমোদনের অপেক্ষায় কোনো শিক্ষার্থী নেই।</p>
+      <div class="apc-pending-queue__empty-wrap">
+        <span class="apc-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m9 12 2 2 4-4"></path></svg></span>
+        <p class="apc-pending-queue__empty">বর্তমানে অনুমোদনের অপেক্ষায় কোনো শিক্ষার্থী নেই।</p>
+      </div>
     </section>`;
   }
 

@@ -284,6 +284,8 @@ function managerStudentDetailsMarkup(student, fee) {
     every other status so an application can never appear twice. */
 function renderStudents() {
   const query = searchValue();
+  const clearBtn = $('#managerStudentSearchClear');
+  if (clearBtn) clearBtn.hidden = !query.trim();
   const pendingCount = students.filter(student => student.status === 'pending').length;
   const pending = students.filter(student => student.status === 'pending' && studentMatches(student, query));
   safeSetText('#managerPendingBadge', `${bn(pendingCount)} অপেক্ষমাণ`);
@@ -1095,6 +1097,15 @@ $('#managerStudentSearch').addEventListener('input', () => {
   renderStudents();
 });
 $('#managerStudentSearch').addEventListener('search', () => { expandedStudentId = null; renderStudents(); });
+$('#managerStudentSearchClear')?.addEventListener('click', () => {
+  const input = $('#managerStudentSearch');
+  if (input) {
+    input.value = '';
+    expandedStudentId = null;
+    renderStudents();
+    input.focus();
+  }
+});
 $$('.manager-view[data-view-panel="students"] [data-student-scope]').forEach(button => button.addEventListener('click', () => {
   const studentsPanel = $('.manager-view[data-view-panel="students"]');
   const nextScope = button.dataset.studentScope;

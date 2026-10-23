@@ -2059,10 +2059,12 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
   background: var(--color-surface); border: 1px solid var(--color-border);
 }
 :is(#noticeModal, #apcNoticeModal) .apc-pending-btn.approve {
+  min-height: 44px;
   background: var(--color-primary); border: 1px solid var(--color-primary); color: var(--color-on-accent);
   border-radius: 11px; box-shadow: none;
 }
 :is(#noticeModal, #apcNoticeModal) .apc-pending-btn.reject {
+  min-height: 44px;
   background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
   border: 1px solid color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
   color: var(--color-danger); border-radius: 11px; box-shadow: none;
@@ -2167,8 +2169,8 @@ svg.apc-glyph-icon { animation: apc-glyph-live 4.4s ease-in-out infinite; }
   flex: 1 1 180px; min-width: 0; font-size: 12.5px; line-height: 1.5; color: var(--color-text-secondary);
 }
 :is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] .notice-push-btn {
-  flex: 0 0 auto; width: auto; min-height: 36px; padding: 6px 12px; margin: 0;
-  border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: none;
+  flex: 0 0 auto; width: auto; min-height: 44px; padding: 8px 14px; margin: 0;
+  border-radius: 11px; font-size: 12.5px; font-weight: 600; white-space: nowrap; box-shadow: none;
 }
 :is(#noticeModal, #apcNoticeModal) [data-apc-notice-push] .notice-push-btn.reject {
   background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
@@ -7473,6 +7475,7 @@ body:is(.modal-open, .admin-modal-open, .notice-board-detail-open) .class-chat-h
   width: min(100%, 500px);
   max-height: min(92dvh, 720px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
 }
 #apcRegistrationReview .modal-header {
@@ -7484,6 +7487,21 @@ body:is(.modal-open, .admin-modal-open, .notice-board-detail-open) .class-chat-h
   line-height: 1.35;
   word-break: normal;
   overflow-wrap: break-word;
+}
+#apcRegistrationReview .modal-close {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font-size: 22px;
+  line-height: 1;
 }
 #apcRegistrationReview .apc-review-details {
   display: grid;
@@ -7587,10 +7605,25 @@ body:is(.modal-open, .admin-modal-open, .notice-board-detail-open) .class-chat-h
 }
 #apcRegistrationReview .modal-actions [data-review-later] {
   grid-column: 1 / -1;
-  min-height: 42px;
+  min-height: 44px;
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
+}
+@media (max-width: 520px) {
+  #apcRegistrationReview:not([hidden]) {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  #apcRegistrationReview .modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+  }
 }
 @media (max-width: 380px) {
   #apcRegistrationReview .apc-review-row {
@@ -7598,6 +7631,290 @@ body:is(.modal-open, .admin-modal-open, .notice-board-detail-open) .class-chat-h
     gap: 10px;
     padding: 10px 12px;
   }
+}
+
+/* Priority 2 mobile UX polish: Admin Quick Access, non-shifting Search & Filters,
+   consistent Empty States, clear Bottom Nav active state, and >=44px touch targets */
+.admin-main,
+.pay-main {
+  overflow-x: clip;
+}
+.admin-feature-pending-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  background: var(--tone-amber-soft);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
+}
+.admin-feature-pending-pill[hidden] {
+  display: none;
+}
+.admin-quick-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+.admin-quick-shortcuts[hidden] {
+  display: none;
+}
+.admin-quick-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--pay-shadow);
+  min-width: 0;
+}
+.admin-quick-card:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+}
+.admin-quick-card.is-full {
+  grid-column: 1 / -1;
+}
+.admin-quick-icon {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: var(--pay-disc);
+  color: var(--pay-disc-ink);
+}
+.admin-quick-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.admin-quick-copy strong {
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-quick-copy small {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  overflow-wrap: break-word;
+}
+@media (max-width: 359px) {
+  .admin-quick-shortcuts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Consistent Empty States across Admin, Staff, Students, Pending Queue & Search */
+.apc-empty-state,
+.admin-empty-search {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 24px 16px;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+.apc-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pay-disc);
+  color: var(--pay-disc-ink);
+}
+.apc-empty-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.apc-empty-state p,
+.admin-empty-search p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--color-text);
+  max-width: 34ch;
+  overflow-wrap: break-word;
+}
+.apc-empty-state small,
+.admin-empty-search small {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  max-width: 38ch;
+}
+.apc-empty-cta {
+  margin-top: 4px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-on-accent);
+  width: auto;
+}
+
+/* Non-shifting Search & Filter controls across Student, Staff, and Manager panels */
+.student-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--pay-shadow);
+}
+.student-search-box {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.student-search,
+.staff-search,
+.manager-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  min-width: 0;
+}
+.manager-student-search {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.manager-search-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.student-search > svg,
+.staff-search-icon,
+.manager-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+.student-search input,
+.staff-search input,
+.manager-search-field input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 46px 12px 44px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+.student-search input[type="search"]::-webkit-search-cancel-button,
+.staff-search input[type="search"]::-webkit-search-cancel-button,
+.manager-search-field input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+.student-search-clear,
+.staff-search-clear,
+.manager-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  display: grid;
+  place-items: center;
+  box-shadow: none;
+  z-index: 1;
+}
+.student-search-clear:active,
+.staff-search-clear:active,
+.manager-search-clear:active {
+  transform: translateY(-50%) scale(.95);
+}
+.student-search-clear[hidden],
+.staff-search-clear[hidden],
+.manager-search-clear[hidden] {
+  display: none;
+}
+.student-search-clear svg,
+.staff-search-clear svg,
+.manager-search-clear svg {
+  width: 16px;
+  height: 16px;
+}
+.student-filter-toggle,
+.student-filter-reset {
+  min-height: 44px;
+}
+.chip,
+.chip-row button {
+  min-height: 40px;
+}
+
+/* Primary button touch targets >= 44px & crisp Bottom Nav active state */
+.admin-btn,
+.student-actions .mini-btn.primary,
+.student-actions .mini-btn.approve,
+.staff-card-actions .mini-btn {
+  min-height: 44px;
+}
+.bottom-link.active,
+.admin-bottom-item.active {
+  color: var(--color-primary);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+.bottom-link.active .nav-chip,
+.admin-bottom-item.active .nav-chip {
+  background: var(--color-primary);
+  color: var(--pay-on-fab);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 28%, transparent);
 }
 }
 

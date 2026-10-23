@@ -240,6 +240,39 @@ function syncAdminHeroCards() {
   });
 }
 
+function openDefaultPrimarySection(target) {
+  if (target === 'staff') {
+    const staffToggle = $('[data-admin-section-toggle="staff-directory"]');
+    const staffPanel = $('[data-admin-section-panel="staff-directory"]');
+    if (staffToggle && staffPanel) {
+      staffToggle.classList.add('is-open');
+      staffToggle.setAttribute('aria-expanded', 'true');
+      staffPanel.hidden = false;
+    }
+  } else if (target === 'students') {
+    const scopeKey = state.filter && state.filter !== 'all' ? state.filter : 'all';
+    const stuCard = $(`[data-admin-student-card="${scopeKey}"]`) || $('[data-admin-student-card="all"]');
+    const stuPanel = $('#adminStudentsDirectoryPanel');
+    if (stuCard && stuPanel) {
+      stuCard.classList.add('is-open');
+      stuCard.setAttribute('aria-expanded', 'true');
+      stuCard.after(stuPanel);
+      stuPanel.hidden = false;
+    }
+  } else if (target === 'reports') {
+    const reportToggle = $('[data-admin-section-toggle="reports-builder"]');
+    const reportPanel = $('[data-admin-section-panel="reports-builder"]');
+    if (reportToggle && reportPanel) {
+      reportToggle.classList.add('is-open');
+      reportToggle.setAttribute('aria-expanded', 'true');
+      if (reportToggle.closest('.admin-action-stack')) {
+        reportToggle.after(reportPanel);
+      }
+      reportPanel.hidden = false;
+    }
+  }
+}
+
 function setView(view) {
   const target = String(view || '').trim();
   if (!access.allowsView(target)) return false;
@@ -251,6 +284,7 @@ function setView(view) {
     panel.classList.toggle('active', active);
     if (active) resetAdminTogglePanels(panel);
   });
+  openDefaultPrimarySection(target);
   syncAdminHeroCards();
   const seat = seatFor(target);
   $$('.admin-bottom-item').forEach(item => {
@@ -296,10 +330,15 @@ function navigate(view, source) {
   refreshView(target);
   const activePanel = $('.admin-view.active');
   if (activePanel) resetAdminTogglePanels(activePanel);
+  openDefaultPrimarySection(target);
   if (target === 'students' && source?.dataset?.studentScope === 'pending') {
     const pendingCard = $('[data-admin-student-card="pending"]');
     const stuPanel = $('#adminStudentsDirectoryPanel');
     if (pendingCard && stuPanel) {
+      $$('[data-admin-student-card]').forEach(btn => {
+        btn.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
       pendingCard.classList.add('is-open');
       pendingCard.setAttribute('aria-expanded', 'true');
       pendingCard.after(stuPanel);
@@ -344,6 +383,26 @@ function renderDashboard() {
   if ($('#dashStaffCount')) $('#dashStaffCount').textContent = bn(state.staffCounts.active || 0);
   if ($('#dashProtectedCount')) {
     $('#dashProtectedCount').textContent = bn(state.staff.filter(staff => staff.protected).length || 0);
+  }
+  const studentFeatureTile = $('#adminFeatureGrid [data-admin-view="students"]');
+  if (studentFeatureTile) {
+    const pendingCount = access.has(CAPABILITIES.STUDENTS_APPROVE) ? listPendingRegistrations().length : 0;
+    let pill = studentFeatureTile.querySelector('.admin-feature-pending-pill');
+    if (pendingCount > 0) {
+      if (!pill) {
+        pill = document.createElement('span');
+        pill.className = 'admin-feature-pending-pill';
+        studentFeatureTile.append(pill);
+      }
+      pill.textContent = `${bn(pendingCount)} জন অপেক্ষমাণ`;
+      pill.hidden = false;
+    } else if (pill) {
+      pill.hidden = true;
+    }
+  }
+  const quickShortcuts = $('#adminQuickShortcuts');
+  if (quickShortcuts) {
+    quickShortcuts.hidden = quickShortcuts.querySelectorAll('button').length === 0;
   }
   /* A switched-on maintenance notice is easy to forget, and a forgotten notice
      is exactly how students end up staring at one for days. The dashboard keeps
@@ -478,8 +537,19 @@ function renderStudents() {
           </article>`;
       }).join('')
     : state.query.trim()
-      ? `<div class="admin-empty-search"><p>🔍 "${escapeHtml(state.query.trim())}" দিয়ে কোনো শিক্ষার্থী পাওয়া যায়নি</p><small>শিক্ষার্থীর আইডি, নাম, পিতার নাম, শ্রেণি বা মোবাইল নম্বর দিয়ে খুঁজে দেখুন।</small></div>`
-      : '<p class="admin-empty">এই ফিল্টারে কোনো শিক্ষার্থী নেই। সার্চ বা ফিল্টার বদলে দেখুন।</p>';
+      ? `<div class="admin-empty admin-empty-search apc-empty-state" role="status">
+          <span class="apc-empty-icon" aria-hidden="true">${iconMarkup('search', 'apc-icon-svg')}</span>
+          <p>🔍 "${escapeHtml(state.query.trim())}" দিয়ে কোনো শিক্ষার্থী পাওয়া যায়নি</p>
+          <small>শিক্ষার্থীর আইডি, নাম, পিতার নাম, শ্রেণি বা মোবাইল নম্বর দিয়ে খুঁজে দেখুন।</small>
+          <button class="mini-btn primary apc-empty-cta" type="button" data-action="reset-student-filters">ফিল্টার রিসেট করুন</button>
+        </div>`
+      : `<div class="admin-empty apc-empty-state" role="status">
+          <span class="apc-empty-icon" aria-hidden="true">${iconMarkup('students', 'apc-icon-svg')}</span>
+          <p>এই ফিল্টারে কোনো শিক্ষার্থী নেই। সার্চ বা ফিল্টার বদলে দেখুন।</p>
+          ${(state.filter !== 'all' || state.classFilter !== 'all')
+            ? '<button class="mini-btn primary apc-empty-cta" type="button" data-action="reset-student-filters">ফিল্টার রিসেট করুন</button>'
+            : ''}
+        </div>`;
 }
 function findStudent(id) {
   return state.students.find(student => student.id === id);
@@ -1827,6 +1897,21 @@ const studentAction = event => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const { action, id } = button.dataset;
+  if (action === 'reset-student-filters') {
+    state.filter = 'all';
+    state.classFilter = 'all';
+    state.query = '';
+    if ($('#studentSearch')) $('#studentSearch').value = '';
+    if ($('#studentClassFilter')) $('#studentClassFilter').value = 'all';
+    $$('#studentFilterChips .chip').forEach(chip => chip.classList.toggle('active', chip.dataset.studentFilter === 'all'));
+    $$('[data-admin-student-card]').forEach(btn => {
+      const isAll = btn.dataset.adminStudentCard === 'all';
+      btn.classList.toggle('is-open', isAll);
+      btn.setAttribute('aria-expanded', String(isAll));
+    });
+    renderStudents();
+    return;
+  }
   const student = findStudent(id);
   if (!student) return;
   // Registration decisions go through the shared review dialog, and only for a

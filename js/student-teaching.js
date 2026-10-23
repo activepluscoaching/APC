@@ -16,7 +16,8 @@ export function initStudentTeaching({ getStudent }) {
   let subjectFilter = '';
   const text = value => String(value ?? '').trim();
   const pending = new Set();
-  const $ = selector => document.querySelector(selector);
+  const hostDoc = document;
+  const $ = selector => hostDoc.querySelector(selector);
   const num = value => esc(bn(value));
   function card(a, student) {
     const progress = a.progress[student.id];
@@ -71,43 +72,55 @@ export function initStudentTeaching({ getStudent }) {
   }
   function render() {
     const student = getStudent();
-    const activities = publishedForStudent(db.activities, student).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const activities = student
+      ? publishedForStudent(db.activities, student).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      : [];
     const current = scope();
     const visible = activities.filter(a => (current === 'all' || a.type === current)
       && (!subjectFilter || text(a.subject) === subjectFilter));
-    $('#learningList').innerHTML = visible.map(a => card(a, student)).join('') || '<p class="teacher-empty">এই বিভাগে তোমার জন্য এখনও কোনো কাজ প্রকাশ হয়নি।</p>';
+    counts = { all: activities.length };
+    Object.keys(ACTIVITY_TYPES).forEach(type => { counts[type] = activities.filter(a => a.type === type).length; });
+    const listEl = $('#learningList');
+    if (!listEl || !student) return;
+    listEl.innerHTML = visible.map(a => card(a, student)).join('') || '<p class="teacher-empty">এই বিভাগে তোমার জন্য এখনও কোনো কাজ প্রকাশ হয়নি।</p>';
     if ($('#learningTitle')) $('#learningTitle').textContent = SECTION_TITLES[current] || 'শিক্ষকের দেওয়া কাজ';
-    $('#learningCount').textContent = `${bn(visible.length)}টি প্রকাশিত কাজ • ${student.className}`;
+    if ($('#learningCount')) $('#learningCount').textContent = `${bn(visible.length)}টি প্রকাশিত কাজ • ${student.className}`;
     const homework = activities.filter(a => a.type === 'homework');
     const done = homework.filter(a => ['done', 'reviewed'].includes(a.progress[student.id]?.value)).length;
     const remaining = homework.length - done;
-    counts = { all: activities.length };
-    Object.keys(ACTIVITY_TYPES).forEach(type => { counts[type] = activities.filter(a => a.type === type).length; });
-    $('#learningSummary').innerHTML = `<div><strong>${bn(activities.length)}</strong><span>মোট কাজ</span></div><div class="learning-summary-pending"><strong>${bn(remaining)}</strong><span>বাড়ির কাজ বাকি</span></div><div><strong>${bn(done)}</strong><span>বাড়ির কাজ সম্পন্ন</span></div>`;
-    $('#learningFilters').querySelectorAll('button').forEach(button => {
+    if ($('#learningSummary')) {
+      $('#learningSummary').innerHTML = `<div><strong>${bn(activities.length)}</strong><span>মোট কাজ</span></div><div class="learning-summary-pending"><strong>${bn(remaining)}</strong><span>বাড়ির কাজ বাকি</span></div><div><strong>${bn(done)}</strong><span>বাড়ির কাজ সম্পন্ন</span></div>`;
+    }
+    $('#learningFilters')?.querySelectorAll('button').forEach(button => {
       const type = button.dataset.learningFilter;
       const count = type === 'all' ? activities.length : activities.filter(a => a.type === type).length;
       const label = type === 'all' ? 'সব' : type === 'routine' ? 'রুটিন' : ACTIVITY_TYPES[type].label;
       button.innerHTML = `${label} <span class="learning-filter-count">${bn(count)}</span>`;
     });
     const routines = activities.filter(a => a.type === 'routine').sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-    $('#teacherRoutineBoard').hidden = routines.length === 0;
-    $('#teacherRoutineList').innerHTML = routines.map(a => card(a, student)).join('');
+    if ($('#teacherRoutineBoard')) $('#teacherRoutineBoard').hidden = routines.length === 0;
+    if ($('#teacherRoutineList')) $('#teacherRoutineList').innerHTML = routines.map(a => card(a, student)).join('');
     const exams = activities.filter(a => a.type === 'exam' && a.progress[student.id]);
-    $('#teacherResultsBoard').hidden = exams.length === 0;
-    $('#teacherResultsList').innerHTML = exams.map(a => card(a, student)).join('');
+    if ($('#teacherResultsBoard')) $('#teacherResultsBoard').hidden = exams.length === 0;
+    if ($('#teacherResultsList')) $('#teacherResultsList').innerHTML = exams.map(a => card(a, student)).join('');
   }
   async function refresh() {
     const current = ++request;
+    const errEl = $('#learningError');
     try {
       const next = await teachingRepository.listForStudent(getStudent()?.id);
       if (current !== request) return;
-      db = next; $('#learningError').hidden = true; render();
+      db = next;
+      if (errEl) errEl.hidden = true;
+      render();
     } catch {
       if (current !== request) return;
-      db = { activities: [] }; render();
-      $('#learningError').hidden = false;
-      $('#learningError').textContent = 'শিক্ষকের কাজ লোড হয়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করো।';
+      db = { activities: [] };
+      render();
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = 'শিক্ষকের কাজ লোড হয়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করো।';
+      }
     }
   }
   $('#learningFilters')?.addEventListener('click', event => {
@@ -122,7 +135,7 @@ export function initStudentTeaching({ getStudent }) {
     window.dispatchEvent(new CustomEvent('apc-open-study-section', { detail: { section: 'homework' } }));
     setScope('homework');
     void refresh().then(() => {
-      const card = [...$('#learningList').querySelectorAll('[data-learning-id]')]
+      const card = [...($('#learningList')?.querySelectorAll('[data-learning-id]') || [])]
         .find(item => item.dataset.learningId === String(detail.id));
       if (!card) return;
       const toggle = card.querySelector('.learning-card-toggle');
@@ -134,15 +147,15 @@ export function initStudentTeaching({ getStudent }) {
   /* Tap a card to reveal its details; works on the courses board, the home
      routine board and the results board alike. The homework-complete button
      lives inside the revealed details, so this check comes first. */
-  document.addEventListener('click', event => {
+  hostDoc.addEventListener('click', event => {
     const toggle = event.target.closest('.learning-card-toggle');
     if (!toggle) return;
     const open = toggle.getAttribute('aria-expanded') === 'true';
     toggle.setAttribute('aria-expanded', String(!open));
-    const details = document.getElementById(toggle.getAttribute('aria-controls'));
+    const details = hostDoc.getElementById(toggle.getAttribute('aria-controls'));
     if (details) details.hidden = open;
   });
-  document.addEventListener('click', event => {
+  hostDoc.addEventListener('click', event => {
     const done = event.target.closest('[data-quick-complete]');
     if (done) {
       const card = done.closest('.learning-card');
@@ -164,7 +177,7 @@ export function initStudentTeaching({ getStudent }) {
       .then(() => showFeedback('PDF সেভ হয়েছে'), () => showFeedback('PDF তৈরি হয়নি। আবার চেষ্টা করো।'))
       .finally(() => { pdf.disabled = false; });
   });
-  $('#learningList').addEventListener('click', async event => {
+  $('#learningList')?.addEventListener('click', async event => {
     const button = event.target.closest('[data-complete-homework]'); if (!button) return;
     const id = button.dataset.completeHomework; if (pending.has(id)) return;
     pending.add(id); button.disabled = true; button.textContent = 'সংরক্ষণ হচ্ছে…';
@@ -191,7 +204,7 @@ export function initStudentTeaching({ getStudent }) {
     if (a.totalMarks) rows.push(`<div><small>পূর্ণমান</small><strong>${num(a.totalMarks)}</strong></div>`);
     return `${rows.length ? `<div class="learning-meta">${rows.join('')}</div>` : ''}<p class="teaching-body">${esc(a.details || 'অতিরিক্ত নির্দেশনা নেই।')}</p>${resolveTeacherName(a.teacherId, a.teacherName) ? `<div class="learning-teacher"><span aria-hidden="true">${esc(Array.from(resolveTeacherName(a.teacherId, a.teacherName) || 'শ')[0])}</span><small>শিক্ষক • ${esc(resolveTeacherName(a.teacherId, a.teacherName))}</small></div>` : ''}`;
   };
-  document.addEventListener('click', event => {
+  hostDoc.addEventListener('click', event => {
     const link = event.target.closest('a.teaching-resource');
     if (!link) return;
     event.preventDefault();
@@ -208,11 +221,11 @@ export function initStudentTeaching({ getStudent }) {
     const status = $('#resourceModalStatus'); status.textContent = ''; status.classList.remove('is-error');
     openModal('resourceModal');
   });
-  $('#resourceOpenTab').addEventListener('click', () => {
+  $('#resourceOpenTab')?.addEventListener('click', () => {
     if (resource?.url) window.open(resource.url, '_blank', 'noopener,noreferrer');
     closeModal('resourceModal');
   });
-  $('#resourceDownload').addEventListener('click', async () => {
+  $('#resourceDownload')?.addEventListener('click', async () => {
     if (!resource) return;
     const button = $('#resourceDownload'), status = $('#resourceModalStatus');
     button.disabled = true; status.classList.remove('is-error');

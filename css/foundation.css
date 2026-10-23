@@ -78,7 +78,7 @@
  /* Fixed student viewport: JS measures the actual bars/status inset. */
  --shell-header-height:60px;--shell-footer-height:66px;--shell-top-offset:0px;
  --student-home-height:calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height));
- --safe-bottom:env(safe-area-inset-bottom,0px);
+ --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--chat-viewport-h:100dvh;
  /* Unified staff portal tokens (Admin, Manager, Payment — matching Teacher): */
  --portal-canvas-bg:#f8fafc;--portal-surface:#fff;--portal-surface-soft:#f8fafc;--portal-border:#e8eef4;
  --portal-card-shadow:0 1px 3px 0 rgba(15,23,42,.05),0 8px 20px -8px rgba(15,23,42,.07);

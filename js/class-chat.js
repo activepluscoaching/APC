@@ -786,8 +786,9 @@ export function mountClassChat(target, options = {}) {
 
   const portal = ['teacher', 'manager', 'admin'].includes(options.portal) ? options.portal : 'student';
   const hostView = root.closest('.view, .teacher-view, .manager-view, .admin-view');
+  const hostShell = root.closest('.app-shell, .admin-shell');
   const hostHeroEl = hostView?.querySelector(':scope > .page-intro') || null;
-  const hasPortalBack = Boolean(hostView?.querySelector('.pay-back'));
+  const hasPortalBack = Boolean(hostView?.querySelector('.pay-back') || hostView);
   const pendingInitialClass = (!options.initialClass && typeof window !== 'undefined' && portal !== 'student')
     ? normalizeClassId(window.__apcPendingChatClass || '')
     : '';
@@ -1350,8 +1351,16 @@ export function mountClassChat(target, options = {}) {
     const action = actionBtn.dataset.chatAction;
 
     if (action === 'go-back') {
-      const nativeBack = root.closest('.view, .teacher-view, .manager-view, .admin-view')?.querySelector('.pay-back');
-      nativeBack?.click();
+      const host = root.closest('.view, .teacher-view, .manager-view, .admin-view');
+      const nativeBack = host?.querySelector('.pay-back');
+      if (nativeBack) {
+        nativeBack.click();
+        return;
+      }
+      const fallbackNav = document.querySelector(
+        '.bottom-link[data-view="home"], .admin-bottom-item[data-admin-view="dashboard"], .admin-bottom-item[data-manager-view="dashboard"], .admin-bottom-item[data-teacher-view="home"]'
+      );
+      fallbackNav?.click();
       return;
     }
     if (action === 'toggle-search') {
@@ -1569,9 +1578,28 @@ export function mountClassChat(target, options = {}) {
     void refresh(false);
   };
 
+  const syncVisualViewportHeight = () => {
+    if (!hostShell || typeof window === 'undefined') return;
+    if (state.destroyed || !isChatContainerVisible(hostView || root)) {
+      hostShell.style.removeProperty('--chat-viewport-h');
+      return;
+    }
+    const vv = window.visualViewport;
+    if (vv && Number.isFinite(vv.height) && vv.height > 0 && vv.height < (window.innerHeight - 8)) {
+      const nearBottom = feedEl ? (feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight) < 72 : false;
+      hostShell.style.setProperty('--chat-viewport-h', `${Math.round(vv.height)}px`);
+      if (nearBottom && feedEl) feedEl.scrollTop = feedEl.scrollHeight;
+    } else {
+      hostShell.style.removeProperty('--chat-viewport-h');
+    }
+  };
+
   window.addEventListener('storage', onExternalUpdate);
   window.addEventListener('apc-sync-updated', onExternalUpdate);
   window.addEventListener('apc-class-chat-updated', onExternalUpdate);
+  window.addEventListener('hashchange', syncVisualViewportHeight);
+  window.addEventListener('apc-view-change', syncVisualViewportHeight);
+  window.visualViewport?.addEventListener('resize', syncVisualViewportHeight);
 
   const instance = {
     refresh,
@@ -1589,15 +1617,20 @@ export function mountClassChat(target, options = {}) {
     destroy() {
       state.destroyed = true;
       syncHostHeroCollapse(false);
+      hostShell?.style.removeProperty('--chat-viewport-h');
       window.removeEventListener('storage', onExternalUpdate);
       window.removeEventListener('apc-sync-updated', onExternalUpdate);
       window.removeEventListener('apc-class-chat-updated', onExternalUpdate);
+      window.removeEventListener('hashchange', syncVisualViewportHeight);
+      window.removeEventListener('apc-view-change', syncVisualViewportHeight);
+      window.visualViewport?.removeEventListener('resize', syncVisualViewportHeight);
       delete root.__apcClassChatInstance;
     }
   };
 
   root.__apcClassChatInstance = instance;
   autoResizeInput();
+  syncVisualViewportHeight();
   void refresh(true);
   return instance;
 }

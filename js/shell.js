@@ -234,6 +234,9 @@ export function setView(viewName, { history: historyMode = 'push' } = {}) {
   }
   panel.hidden = false;
   panel.classList.add('active');
+  const isChatFullscreen = name === 'class-chat';
+  $('#appShell')?.classList.toggle('is-chat-fullscreen', isChatFullscreen);
+  $('#appMain')?.classList.toggle('is-chat-view', isChatFullscreen);
 
   const parent = NAV_PARENTS[name] || name;
   $$('.bottom-link').forEach(item => {

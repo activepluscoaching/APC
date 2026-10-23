@@ -1080,5 +1080,83 @@ test('12. Per-class scroll preservation, unread badges, persistent lock banner, 
   ui.destroy();
 });
 
+test('13. Full-screen Class Chat mode: hides portal chrome, enforces >=44px back/search controls, syncs visualViewport keyboard height & exits cleanly', async () => {
+  resetStorage(ROSTER);
+  document.body.innerHTML = `
+    <div class="admin-shell is-chat-fullscreen" id="adminShell">
+      <header class="app-topbar"><button id="classChatTopbarButton" type="button">চ্যাট</button></header>
+      <main class="admin-main is-chat-view" id="adminMain">
+        <section class="admin-view active" data-view-panel="class-chat">
+          <div class="page-intro">
+            <button class="pay-back" type="button" data-admin-view="more" hidden>ফিরে যান</button>
+            <h1>শ্রেণি চ্যাট ও মডারেশন</h1>
+          </div>
+          <div id="fsAdminMount" data-class-chat-mount="admin"></div>
+        </section>
+      </main>
+      <nav class="admin-bottom"><button class="admin-bottom-item" data-admin-view="dashboard" type="button">ড্যাশবোর্ড</button></nav>
+    </div>
+  `;
+
+  const shellEl = document.getElementById('adminShell');
+  const mainEl = document.getElementById('adminMain');
+  const chatView = document.querySelector('[data-view-panel="class-chat"]');
+  let exitedFullscreen = false;
+  document.querySelector('.pay-back').addEventListener('click', () => {
+    exitedFullscreen = true;
+    chatView.classList.remove('active');
+    shellEl.classList.remove('is-chat-fullscreen');
+    mainEl.classList.remove('is-chat-view');
+  });
+
+  // Mock mobile virtual keyboard resize via visualViewport
+  let vvResizeHandler = null;
+  const mockVv = {
+    height: 520,
+    addEventListener(type, fn) { if (type === 'resize') vvResizeHandler = fn; },
+    removeEventListener(type, fn) { if (type === 'resize' && vvResizeHandler === fn) vvResizeHandler = null; }
+  };
+  Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+  Object.defineProperty(window, 'visualViewport', { value: mockVv, configurable: true });
+
+  const mount = document.getElementById('fsAdminMount');
+  const ui = mountClassChat(mount, { portal: 'admin', defaultClass: 'দশম শ্রেণি', getActor: () => adminActor });
+  await new Promise(r => setTimeout(r, 25));
+
+  // visualViewport keyboard shrink updates --chat-viewport-h on host shell
+  assert.equal(shellEl.style.getPropertyValue('--chat-viewport-h'), '520px',
+    'mobile keyboard shrink updates --chat-viewport-h on full-screen shell');
+  mockVv.height = 800;
+  vvResizeHandler?.();
+  assert.equal(shellEl.style.getPropertyValue('--chat-viewport-h'), '',
+    'closing mobile keyboard clears custom --chat-viewport-h');
+
+  // Back button inside WhatsApp header is visible even when .pay-back has [hidden] and exits full-screen cleanly
+  const backBtn = mount.querySelector('[data-chat-action="go-back"]');
+  assert.equal(backBtn.hidden, false, 'WhatsApp back arrow is visible in full-screen portal view');
+  backBtn.click();
+  assert.equal(exitedFullscreen, true, 'clicking WhatsApp back arrow exits full-screen chat view');
+  assert.equal(shellEl.classList.contains('is-chat-fullscreen'), false, 'shell exits full-screen class');
+
+  // Verify full-screen CSS contract, >=44px touch targets, safe-area-top & pull-to-refresh guard
+  const walletCss = readFileSync(new URL('../css/ui-wallet.css', import.meta.url), 'utf8');
+  const foundationCss = readFileSync(new URL('../css/foundation.css', import.meta.url), 'utf8');
+  const pullRefreshJs = readFileSync(new URL('../js/pull-to-refresh.js', import.meta.url), 'utf8');
+  assert.match(foundationCss, /--safe-top:\s*env\(safe-area-inset-top,\s*0px\)/, '--safe-top defined in foundation.css');
+  assert.match(foundationCss, /--chat-viewport-h:\s*100dvh/, '--chat-viewport-h defined in foundation.css');
+  assert.match(walletCss, /\.is-chat-fullscreen[\s\S]*?>\s*:is\(\.app-topbar,\s*\.bottom-nav,\s*\.admin-bottom\)[\s\S]*?display:\s*none\s*!important/,
+    'full-screen chat hides .app-topbar and bottom navigation bars');
+  assert.match(walletCss, /\.class-chat-back-btn\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
+    'back button enforces >=44x44px primary touch target');
+  assert.match(walletCss, /\.class-chat-icon-btn\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
+    'header search icon button enforces >=44x44px touch target');
+  assert.match(pullRefreshJs, /is-chat-view[\s\S]*?\.class-chat-shell/,
+    'pull-to-refresh ignores downward touch scroll inside full-screen chat');
+
+  delete window.visualViewport;
+  ui.destroy();
+});
+
+
 
 

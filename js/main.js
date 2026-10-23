@@ -97,27 +97,19 @@ function applyAppConfig(cfg) {
   applyMaintenanceMode(cfg);
 
   // 4. Registration Permission
-  if (cfg.allowRegistration === false) {
-    const regTab = $('[data-auth-tab="register"]');
-    if (regTab) {
-      regTab.disabled = true;
-      regTab.style.opacity = '0.5';
-      regTab.title = 'বর্তমানে নতুন রেজিস্ট্রেশন বন্ধ রয়েছে';
-    }
+  const regTab = $('[data-auth-tab="register"]');
+  if (regTab) {
+    const regBlocked = cfg.allowRegistration === false;
+    regTab.disabled = regBlocked;
+    regTab.style.opacity = regBlocked ? '0.5' : '';
+    if (regBlocked) regTab.title = 'বর্তমানে নতুন রেজিস্ট্রেশন বন্ধ রয়েছে';
+    else regTab.removeAttribute('title');
   }
 
   // 5. Module Toggles
-  if (cfg.modules) {
-    if (cfg.modules.routine === false) {
-      $('.bottom-link[data-view="routine"]')?.classList.add('disabled-nav');
-    }
-    if (cfg.modules.courses === false) {
-      $('.bottom-link[data-view="courses"]')?.classList.add('disabled-nav');
-    }
-    if (cfg.modules.results === false) {
-      $('.bottom-link[data-view="exams"]')?.classList.add('disabled-nav');
-    }
-  }
+  $('.bottom-link[data-view="routine"]')?.classList.toggle('disabled-nav', cfg.modules?.routine === false);
+  $('.bottom-link[data-view="courses"]')?.classList.toggle('disabled-nav', cfg.modules?.courses === false);
+  $('.bottom-link[data-view="exams"]')?.classList.toggle('disabled-nav', cfg.modules?.results === false);
 
   // Home shortcuts mirror the same optional modules as the navigation. A
   // disabled module must not become reachable just because it has a tile.
@@ -138,16 +130,21 @@ function applyAppConfig(cfg) {
   // 6. Theme Mode Override
   if (cfg.themeMode && cfg.themeMode !== 'auto') {
     document.documentElement.dataset.timeTheme = cfg.themeMode;
+  } else {
+    delete document.documentElement.dataset.timeTheme;
   }
 }
 
 applyAppConfig(appConfig);
 
-/* Re-read the maintenance flag when settings change. */
+/* Re-apply live app settings (maintenance banner, module toggles, tagline) on remote sync. */
 window.addEventListener('storage', event => {
-  if (!event || event.key === null || event.key === STORAGE_KEYS.appConfig) applyMaintenanceMode();
+  if (!event || event.key === null || event.key === STORAGE_KEYS.appConfig) applyAppConfig(loadAppConfig());
 });
-window.addEventListener('apc-app-config', () => applyMaintenanceMode());
+window.addEventListener('apc-sync-updated', event => {
+  if (event?.detail?.collection === 'settings') applyAppConfig(loadAppConfig());
+});
+window.addEventListener('apc-app-config', () => applyAppConfig(loadAppConfig()));
 
 const state = {
   student: loadStudent(),

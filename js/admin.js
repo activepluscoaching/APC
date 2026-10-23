@@ -164,10 +164,12 @@ async function enterPanel() {
      the accounts are simply ready for the shared login card. */
   readStaffAccount('admin')
     .then(account => ensureBootstrapStaffAccounts(account?.username || 'admin.apc'));
+  window.dispatchEvent(new Event('apc-session-ready'));
 }
 
 function exitPanel() {
   clearStaffSession('admin');
+  window.dispatchEvent(new Event('apc-session-ended'));
   // Logout always returns to the shared login page, never to a panel entry form.
   $('#adminShell').hidden = true;
   goToLoginPage();
@@ -2067,8 +2069,14 @@ const ADMIN_WATCHED_STORAGE_KEYS = new Set([
   KEYS.transactions,
   KEYS.notices,
   KEYS.routine,
+  KEYS.teaching,
+  KEYS.academics,
+  KEYS.courses,
+  KEYS.courseContent,
   KEYS.exams,
-  KEYS.settings
+  KEYS.settings,
+  'activePlus.manager.teacherAssignments.v1',
+  'activePlus.staffDirectory.v1'
 ]);
 const ADMIN_WATCHED_COLLECTIONS = new Set([
   'students',
@@ -2076,9 +2084,15 @@ const ADMIN_WATCHED_COLLECTIONS = new Set([
   'transactions',
   'notices',
   'routine',
+  'teaching',
+  'academics',
+  'courses',
+  'courseContent',
+  'teacherAssignments',
   'exams',
   'settings',
-  'staffDirectory'
+  'staffDirectory',
+  'staffAccounts'
 ]);
 function scheduleAdminLiveRefresh() {
   clearTimeout(cloudRefreshTimer);

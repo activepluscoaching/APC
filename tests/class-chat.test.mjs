@@ -1057,6 +1057,26 @@ test('12. Per-class scroll preservation, unread badges, persistent lock banner, 
   assert.equal(/\.class-chat-lock-label\s*\{\s*display:\s*none/.test(walletCss), false,
     'চ্যাট লক (স্টাফ অনলি) label stays visible on mobile viewports');
 
+  // Verify clean-URL staff portal (/admin without .html) resolves as staff with all-room relay access
+  // even when a prior student KEYS.account exists in localStorage
+  const { resolveCurrentRelayViewer } = await import('../js/class-chat-relay.js');
+  const cleanUrlDom = new JSDOM('<div id="adminShell"></div>', { url: 'https://active-plus-coaching.web.app/admin#class-chat' });
+  const prevWin = globalThis.window;
+  globalThis.window = cleanUrlDom.window;
+  try {
+    cleanUrlDom.window.localStorage.setItem(KEYS.account, JSON.stringify({
+      username: 'tanvir10',
+      student: { id: 'STU-10A', className: 'দশম শ্রেণি', status: 'approved' }
+    }));
+    const viewer = resolveCurrentRelayViewer(cleanUrlDom.window.localStorage);
+    assert.equal(viewer.kind, 'staff', 'clean-URL /admin resolves as staff relay viewer');
+    assert.equal(viewer.role, 'admin');
+    assert.equal(viewer.allowedRoomKeys, null, 'staff viewer syncs all class rooms without student single-room restriction');
+  } finally {
+    globalThis.window = prevWin;
+    cleanUrlDom.window.close();
+  }
+
   ui.destroy();
 });
 

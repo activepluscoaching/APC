@@ -1077,7 +1077,7 @@ async function showTeacherShell() {
         if ($('#teacherProfileTitle')) $('#teacherProfileTitle').textContent = 'আমার প্রোফাইল';
         $('#teacherProfileCard [data-profile-edit]')?.click();
       },
-      logout: () => { clearStaffSession('teacher'); goToLoginPage(); }
+      logout: () => { clearStaffSession('teacher'); window.dispatchEvent(new Event('apc-session-ended')); goToLoginPage(); }
     },
     session: { value: 'ডিভাইস-বাউন্ড সেশন', hint: 'লগইন এই ডিভাইসেই বাঁধা' }
   });
@@ -1113,6 +1113,7 @@ async function mountCourseEditor() {
 $('#teacherChangePassword')?.addEventListener('click', () => openStaffPasswordDialog({ role: 'teacher', mode: 'change' }));
 $('#teacherExit').addEventListener('click', () => {
   clearStaffSession('teacher');
+  window.dispatchEvent(new Event('apc-session-ended'));
   // Logout always returns to the shared login page, never to a panel entry form.
   $('#teacherShell').hidden = true;
   goToLoginPage();
@@ -1409,17 +1410,49 @@ watchTeachingData(() => {
 window.addEventListener('teacher-assignments-updated', () => {
   if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
 });
+const TEACHER_WATCHED_COLLECTIONS = new Set([
+  'students',
+  'academics',
+  'routine',
+  'notices',
+  'settings',
+  'teacherAssignments',
+  'staffDirectory',
+  'staffAccounts'
+]);
+const TEACHER_WATCHED_KEYS = new Set([
+  'activePlus.admin.students.v1',
+  'activePlus.academics.v1',
+  'activePlus.admin.routine.v1',
+  'activePlus.admin.notices.v1',
+  'active-plus-app-config-v1',
+  'activePlus.manager.teacherAssignments.v1',
+  'activePlus.staffDirectory.v1'
+]);
+let teacherCloudRefreshTimer = 0;
+function scheduleTeacherLiveRefresh() {
+  clearTimeout(teacherCloudRefreshTimer);
+  teacherCloudRefreshTimer = setTimeout(() => {
+    if (state.busy || !$('#teacherShell') || $('#teacherShell').hidden) return;
+    if ($('#teacherModalBackdrop') && !$('#teacherModalBackdrop').hidden) return;
+    void reload();
+    refreshReports($('#teacherReports'));
+  }, 60);
+}
 window.addEventListener('apc-sync-updated', event => {
   const collection = event?.detail?.collection;
-  if (!['teacherAssignments', 'staffDirectory', 'staffAccounts'].includes(collection)) return;
-  if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
+  const key = event?.detail?.key;
+  if (!collection || TEACHER_WATCHED_COLLECTIONS.has(collection) || (key && TEACHER_WATCHED_KEYS.has(key))) {
+    scheduleTeacherLiveRefresh();
+  }
 });
 /* The same edits made from another tab on this device (Admin Staff Management
    or the Manager's assignment screen) arrive as raw storage events — reload the
    scope so a new class/subject takes effect without a manual refresh. */
 window.addEventListener('storage', event => {
-  if (!['activePlus.manager.teacherAssignments.v1', 'activePlus.staffDirectory.v1'].includes(event.key)) return;
-  if (!state.busy && $('#teacherShell') && !$('#teacherShell').hidden) reload();
+  if (!event.key || TEACHER_WATCHED_KEYS.has(event.key)) {
+    scheduleTeacherLiveRefresh();
+  }
 });
 
 watchExams(() => {

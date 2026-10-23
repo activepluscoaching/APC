@@ -65,6 +65,7 @@ let hasConnected = false;
 let partialFailures = [];
 let partialRetry = null;
 let lastPartialRetry = 0;
+let classChatPending = false;
 
 function notifyRemote(key, collection) {
   try {
@@ -184,12 +185,19 @@ function onOptionalValue(node, callback, { label = 'optional', onPermissionDenie
   return unsubscribe;
 }
 
+function hasOutboxPending() {
+  return [...recordBridges.values()].some(bridge => bridge.hasPending())
+    || examSync.pending.size > 0
+    || classChatPending;
+}
+
 /** Push everything still waiting in the durable outboxes. */
 async function flushPending() {
   if (!syncEnabled) return;
   const bridges = [...recordBridges.values()];
   await Promise.all([
     ...bridges.map(bridge => bridge.flush()),
+    pushExamDb(),
     syncClassChat()
   ]);
 }
@@ -201,7 +209,7 @@ function paintSyncStatus() {
   else if (!connected && hasConnected) setSyncStatus('offline');
   else if (!connected) setSyncStatus('connecting');
   else if (!ready) setSyncStatus('connecting');
-  else if ([...recordBridges.values()].some(bridge => bridge.hasPending())) setSyncStatus('pending');
+  else if (hasOutboxPending()) setSyncStatus('pending');
   else setSyncStatus('online');
 }
 
@@ -631,10 +639,15 @@ function markLocalExamChanges() {
   const { db, readable } = readExamDbLocal();
   if (!readable) return;
   for (const space of EXAM_SYNC_SPACES) {
+    const seen = new Set();
     for (const item of db[space]) {
+      seen.add(item.id);
       if (examSync.lastLocal[space].get(item.id) !== stableStringify(item)) {
         examSync.pending.add(`${space}/${item.id}`);
       }
+    }
+    for (const id of examSync.lastLocal[space].keys()) {
+      if (!seen.has(id)) examSync.pending.add(`${space}/${id}`);
     }
   }
 }
@@ -667,13 +680,16 @@ async function pushExamDb() {
         examSync.lastRemote[space].set(item.id, json);
         examSync.lastLocal[space].set(item.id, json);
         examSync.pending.delete(key);
+        markSyncSuccess('write');
       }));
     }
     for (const id of [...examSync.lastRemote[space].keys()]) {
-      if (localIds.has(id) || examSync.pending.has(`${space}/${id}`)) continue;
+      if (localIds.has(id)) continue;
       tasks.push(set(ref(getDatabase(firebaseApp), `${EXAMDB_ROOT}/${space}/${id}`), null).then(() => {
         examSync.lastRemote[space].delete(id);
         examSync.lastLocal[space].delete(id);
+        examSync.pending.delete(`${space}/${id}`);
+        markSyncSuccess('write');
       }));
     }
   }
@@ -681,6 +697,13 @@ async function pushExamDb() {
   else clearConflict('unsafe-record');
   await Promise.all(tasks);
 }
+
+const pushLocalExamDb = () => {
+  markLocalExamChanges();
+  if (!ready || !navigator.onLine) { paintSyncStatus(); return Promise.resolve(); }
+  setSyncStatus('pending');
+  return pushExamDb().then(paintSyncStatus);
+};
 
 /** Merge one cloud snapshot of examDb into the local document (single write). */
 function applyExamDbRemote(remoteRoot) {
@@ -872,19 +895,21 @@ function syncClassChat(preloadedSnapshot = undefined) {
     if (!live()) return;
     try {
       await runClassChatCycleOnce(preloadedSnapshot, live);
+      classChatPending = false;
     } catch (error) {
       if (!classChatRulesBlocked && isPermissionDenied(error)) {
         classChatRulesBlocked = true;
         listenClassChatFallback();
         try {
           await runClassChatCycleOnce(undefined, live);
+          classChatPending = false;
           return;
         } catch (fallbackErr) {
-          if (isPermissionDenied(fallbackErr)) return;
+          if (isPermissionDenied(fallbackErr)) { classChatPending = false; return; }
           throw fallbackErr;
         }
       }
-      if (isPermissionDenied(error)) return;
+      if (isPermissionDenied(error)) { classChatPending = false; return; }
       throw error;
     }
   });
@@ -893,6 +918,7 @@ function syncClassChat(preloadedSnapshot = undefined) {
 }
 
 const pushClassChat = () => {
+  classChatPending = true;
   if (!ready || !navigator.onLine) { paintSyncStatus(); return Promise.resolve(); }
   setSyncStatus('pending');
   return syncClassChat().then(paintSyncStatus);
@@ -1078,7 +1104,7 @@ function installLocalWriteBridge() {
     if (key === STAFF_DIRECTORY_KEY) return pushDirectory();
     if (key === KEYS.usernames) return pushUsernames();
     if (key === KEYS.account) return pushStudentAccount();
-    if (key === KEYS.exams) { markLocalExamChanges(); return pushExamDb(); }
+    if (key === KEYS.exams) return pushLocalExamDb();
     if (key === KEYS.classChat) return pushClassChat();
     return null;
   };
@@ -1094,7 +1120,10 @@ function installLocalWriteBridge() {
           pushCollection(collection).catch(recordSyncError);
         }
       }
-      try { pushIdentityKey(key)?.catch(syncError); } catch {}
+      try {
+        const errorHandler = (key === KEYS.exams || key === KEYS.classChat) ? recordSyncError : syncError;
+        pushIdentityKey(key)?.catch(errorHandler);
+      } catch {}
     }
     return result;
   };
@@ -1108,7 +1137,10 @@ function installLocalWriteBridge() {
     }
     const role = staffRoleByAccountKey(event.key);
     if (role) pushStaffRole(role).catch(syncError);
-    try { pushIdentityKey(event.key)?.catch(syncError); } catch {}
+    try {
+      const errorHandler = (event.key === KEYS.exams || event.key === KEYS.classChat) ? recordSyncError : syncError;
+      pushIdentityKey(event.key)?.catch(errorHandler);
+    } catch {}
   });
   window.__apcRealtimeSyncBridge = true;
 }
@@ -2105,14 +2137,13 @@ function schedulePendingFlush() {
   window.clearInterval(pendingTimer);
   pendingTimer = window.setInterval(() => {
     if (!ready || !navigator.onLine || !connected) return;
-    const bridges = [...recordBridges.values()];
-    if (!bridges.some(bridge => bridge.hasPending())) return;
+    if (!hasOutboxPending()) return;
     flushPending().then(async () => {
       /* A queued write that finally landed proves the transport works again.
          Repair the collections whose boot read failed now, so the app can say
          "synced" again within seconds — the 20s watchdog would re-boot every
          listener instead of retrying the one collection that failed. */
-      if (!bridges.some(bridge => bridge.hasPending()) && partialFailures.length && !partialRetry) {
+      if (!hasOutboxPending() && partialFailures.length && !partialRetry) {
         lastPartialRetry = Date.now();
         await retryPartialSync();
       }
@@ -2141,6 +2172,7 @@ export function stopRealtimeSync() {
   coursesFallbackListening = false;
   classChatRulesBlocked = false;
   classChatFallbackListening = false;
+  classChatPending = false;
   notificationsRulesBlocked = false;
   for (const stop of subscriptions) stop();
   subscriptions.clear();

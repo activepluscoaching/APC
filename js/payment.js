@@ -306,7 +306,9 @@ $('#payReceiptDownload').addEventListener('click',async()=>{
   finally {button.disabled=false;}
 });
 function exitCounter() {
-  clearPaymentSession(); ++state.queryVersion; state.matches=[]; state.today=[];
+  clearPaymentSession();
+  window.dispatchEvent(new Event('apc-session-ended'));
+  ++state.queryVersion; state.matches=[]; state.today=[];
   clearSelection(); closeReceipt(); $('#payTodayList').replaceChildren(); $('#paySearchResults').replaceChildren();
   $('#payShell').hidden=true; goToLoginPage();
 }
@@ -315,13 +317,30 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape' && !$('#payReceiptBackdrop').hidden) closeReceipt();
   if(event.key==='/' && !$('#payShell').hidden && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) {event.preventDefault();search.focus();}
 });
+function refreshCounterStudentsLive() {
+  if (state.saving) return;
+  if (search && search.value.trim().length >= 2 && !state.selected) {
+    void findStudents();
+    return;
+  }
+  ++state.queryVersion;
+  state.matches=[];
+  renderResults();
+  if (!state.selected || $('#payCollectionForm')?.hidden) clearSelection();
+}
 window.addEventListener('storage',async event=>{
   if ((!event.key || event.key===PAYMENT_SESSION_KEY) && !(await hasPaymentSession())) {
     await lockPanel({ role: 'payment.html', reason: 'কাউন্টারের সেশন শেষ হয়েছে। নিরাপত্তার জন্য তথ্য বন্ধ করা হয়েছে।' });
     return;
   }
   if(!event.key || event.key==='activePlus.admin.transactions.v1') void refreshToday();
-  if(!event.key || event.key==='activePlus.admin.students.v1') {++state.queryVersion;state.matches=[];renderResults();clearSelection();}
+  if(!event.key || event.key==='activePlus.admin.students.v1') refreshCounterStudentsLive();
+});
+window.addEventListener('apc-sync-updated', event => {
+  if ($('#payShell')?.hidden) return;
+  const col = event?.detail?.collection;
+  if (!col || col === 'transactions') void refreshToday();
+  if (!col || col === 'students') refreshCounterStudentsLive();
 });
 new MutationObserver(() => {
   if (!$('#payShell').hidden) return;
@@ -361,4 +380,5 @@ hasPaymentSession().then(async valid=>{
     if (document.documentElement) heroObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
   } catch {}
   configureForm(); showCounterView('home'); await refreshToday();
+  window.dispatchEvent(new Event('apc-session-ready'));
 });

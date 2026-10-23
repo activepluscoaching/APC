@@ -186,6 +186,9 @@ function renderView(view) {
   view = target.view;
   activeView = view;
   $$('.manager-view').forEach(panel => { const active = panel.dataset.viewPanel === view; panel.classList.toggle('active', active); panel.hidden = !active; });
+  const isChatFullscreen = view === 'class-chat';
+  $('#managerShell')?.classList.toggle('is-chat-fullscreen', isChatFullscreen);
+  $('#managerMain')?.classList.toggle('is-chat-view', isChatFullscreen);
   const seat = view === 'dashboard' ? 'dashboard'
     : view === 'students' ? 'students'
       : ['academic', 'academic-records', 'class-chat', 'notices', 'routine', 'exams', 'results', 'courses', 'teachers', ...ROUTINE_CHILD_VIEWS].includes(view) ? 'academic'

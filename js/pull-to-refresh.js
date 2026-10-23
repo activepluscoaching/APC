@@ -27,6 +27,7 @@ export function initPullToRefresh() {
   for (const panel of panels) {
     panel.addEventListener('touchstart', event => {
       if (refreshing || event.touches.length !== 1 || panel.scrollTop > 0) return;
+      if (panel.classList.contains('is-chat-view') || event.target?.closest?.('.class-chat-shell')) return;
       startY = event.touches[0].clientY;
       distance = 0;
       tracking = true;

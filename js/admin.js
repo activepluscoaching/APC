@@ -283,6 +283,7 @@ function setView(view) {
   if (!access.allowsView(target)) return false;
   if (!$$('.admin-view').some(panel => panel.dataset.viewPanel === target)) return false;
   state.activeView = target;
+  $('#adminShell')?.classList.toggle('is-chat-fullscreen', target === 'class-chat');
   $('#adminMain')?.classList.toggle('is-staff-view', target === 'staff');
   $('#adminMain')?.classList.toggle('is-chat-view', target === 'class-chat');
   $$('.admin-view').forEach(panel => {

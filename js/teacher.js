@@ -557,7 +557,10 @@ function setView(view) {
   state.view = view;
   const panel = ACTIVITY_TYPES[view] ? 'teacherRecords' : { home: 'teacherHome', academic: 'teacherAcademic', notice: 'teacherNotice', exam: 'teacherOnlineExams', more: 'teacherMore', 'online-exams': 'teacherOnlineExams', courses: 'teacherCourses', classes: 'teacherClasses', 'class-chat': 'teacherClassChat', 'routine-view': 'teacherRoutine', reports: 'teacherAcademicReports', profile: 'teacherProfile' }[view];
   $$('.teacher-view').forEach(el => { el.hidden = el.id !== panel; });
-  if (view === 'class-chat') mountTeacherClassChat();
+  const isChatFullscreen = view === 'class-chat';
+  $('#teacherShell')?.classList.toggle('is-chat-fullscreen', isChatFullscreen);
+  $('#teacherMain')?.classList.toggle('is-chat-view', isChatFullscreen);
+  if (isChatFullscreen) mountTeacherClassChat();
   delete $('#teacherRecords')?.dataset.recordsOpen;
   delete $('#teacherNotice')?.dataset.noticeOpen;
   delete $('#teacherRoutine')?.dataset.routineOpen;

@@ -6119,121 +6119,137 @@ body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidde
   color: var(--color-text-secondary);
 }
 
-/* ── Authentic WhatsApp Group-Chat Skin (all portals, light + dark) ──────── */
-#classChatView > .page-intro {
-  display: none;
+/* ── Authentic WhatsApp Group-Chat Skin — Full-Screen Mode (all portals, light + dark) ──────── */
+:is(
+  #appShell.is-chat-fullscreen,
+  #adminShell.is-chat-fullscreen,
+  #managerShell.is-chat-fullscreen,
+  #teacherShell.is-chat-fullscreen,
+  .app-shell.is-chat-fullscreen,
+  .admin-shell.is-chat-fullscreen,
+  .app-shell:has(> .app-main > #classChatView.active:not([hidden])),
+  .admin-shell:has(> .admin-main > [data-view-panel="class-chat"].active:not([hidden])),
+  .admin-shell:has(> .admin-main > #teacherClassChat:not([hidden]))
+),
+body.student-reference #appShell.is-chat-fullscreen,
+body.student-reference #appShell:has(> #appMain > #classChatView.active:not([hidden])),
+.teacher-reference .teacher-shell.is-chat-fullscreen,
+.teacher-reference .teacher-shell:has(> .admin-main > #teacherClassChat:not([hidden])) {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100vh !important;
+  height: var(--chat-viewport-h) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
 }
 
-/* Slim, collapsible Hero strip on Admin/Manager Class Chat: keeps title, date badge
-   and sun/moon icon in ~38px and auto-collapses on feed scroll for maximum chat height */
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro {
+:is(
+  .app-shell.is-chat-fullscreen,
+  .admin-shell.is-chat-fullscreen,
+  .app-shell:has(> .app-main > #classChatView.active:not([hidden])),
+  .admin-shell:has(> .admin-main > [data-view-panel="class-chat"].active:not([hidden])),
+  .admin-shell:has(> .admin-main > #teacherClassChat:not([hidden]))
+) > :is(.app-topbar, .bottom-nav, .admin-bottom),
+:is(
+  .app-shell.is-chat-fullscreen,
+  .admin-shell.is-chat-fullscreen,
+  .app-shell:has(> .app-main > #classChatView.active:not([hidden])),
+  .admin-shell:has(> .admin-main > [data-view-panel="class-chat"].active:not([hidden])),
+  .admin-shell:has(> .admin-main > #teacherClassChat:not([hidden]))
+) .class-chat-head {
+  display: none !important;
+}
+
+:is(
+  #appMain.is-chat-view,
+  #adminMain.is-chat-view,
+  #managerMain.is-chat-view,
+  #teacherMain.is-chat-view,
+  .app-main.is-chat-view,
+  .admin-main.is-chat-view,
+  .app-main:has(> #classChatView.active:not([hidden])),
+  .admin-main:has(> [data-view-panel="class-chat"].active:not([hidden])),
+  .admin-main:has(> #teacherClassChat:not([hidden]))
+),
+body.student-reference #appMain.is-chat-view,
+body.student-reference #appMain:has(> #classChatView.active:not([hidden])),
+.teacher-reference .teacher-shell > .admin-main.is-chat-view,
+.teacher-reference .teacher-shell > .admin-main:has(> #teacherClassChat:not([hidden])),
+.manager-shell > .manager-main.is-chat-view,
+.manager-shell > .manager-main:has(> [data-view-panel="class-chat"].active:not([hidden])) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+#classChatView > .page-intro,
+:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro,
+body.manager-reference .manager-view[data-view-panel="class-chat"] > .page-intro.manager-sub-hero,
+body.admin-reference .admin-view[data-view-panel="class-chat"] > .page-intro.admin-sub-hero,
+#teacherClassChat > :is(.page-intro, .teacher-home-intro) {
+  display: none !important;
+}
+
+#classChatView.active:not([hidden]),
+:is(.admin-view, .manager-view)[data-view-panel="class-chat"].active:not([hidden]),
+#teacherClassChat:not([hidden]),
+.teacher-reference #teacherClassChat:not([hidden]) {
   display: flex;
-  align-items: center;
-  min-height: 0;
-  max-height: 56px;
-  margin: 0 0 6px;
-  padding: 7px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: none;
-  overflow: hidden;
-  flex: none;
-  transition: max-height .2s ease, padding .2s ease, margin .2s ease, opacity .18s ease, border-width .2s ease;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro.is-chat-hero-collapsed {
-  max-height: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-  border-width: 0;
-  pointer-events: none;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-scene,
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-welcome p {
-  display: none;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-content {
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  flex: 1 1 auto;
   width: 100%;
+  max-width: none;
+  height: 100%;
   min-height: 0;
-  padding: 0;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-top {
+  max-height: none;
   margin: 0;
   padding: 0;
-  flex: 0 0 auto;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-date-pill {
-  font-size: 11px;
-  padding: 3px 8px;
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-glint {
-  width: 24px;
-  height: 24px;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-welcome {
-  margin: 0;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"] > .page-intro .teacher-hero-welcome h1 {
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--color-text);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  animation: none;
 }
 
-.admin-main.is-chat-view,
-.admin-main:has([data-view-panel="class-chat"].active),
-.app-main:has([data-view-panel="class-chat"].active) {
-  padding-top: 8px;
-  padding-bottom: calc(var(--shell-footer-height) + var(--safe-bottom) + 6px);
-}
-
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"].active {
-  display: flex;
-  flex-direction: column;
-  height: calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height) - 14px);
-  min-height: 440px;
-  max-height: 860px;
-}
-
-[data-class-chat-mount] {
+[data-class-chat-mount],
+#studentClassChatMount,
+#teacherClassChatMount,
+#managerClassChatMount,
+#adminClassChatMount {
   flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .class-chat-shell {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  height: calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height) - 16px);
-  min-height: 420px;
-  max-height: 820px;
-  margin-top: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  max-height: none;
+  margin: 0;
   background: var(--wa-wallpaper-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--wa-shell-shadow);
+  box-shadow: none;
 }
-:is(.admin-view, .manager-view)[data-view-panel="class-chat"].active .class-chat-shell {
-  height: auto;
+:is(#classChatView, [data-view-panel="class-chat"], #teacherClassChat) .class-chat-shell {
+  height: 100%;
   min-height: 0;
   max-height: none;
 }
@@ -6251,6 +6267,7 @@ body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidde
 .class-chat-header {
   display: flex;
   flex-direction: column;
+  padding-top: var(--safe-top);
   background: var(--wa-header-bg);
   color: var(--wa-header-ink);
   border-bottom: 1px solid var(--wa-header-line);
@@ -6261,25 +6278,26 @@ body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidde
 .class-chat-topbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 58px;
-  padding: 8px 12px;
+  padding: 7px 10px 7px 8px;
 }
 
 .class-chat-back-btn {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
-  margin-left: -4px;
+  margin-left: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--wa-header-ink);
   cursor: pointer;
+  flex: none;
 }
 .class-chat-back-btn:hover {
   background: var(--wa-header-chip);
@@ -6360,10 +6378,10 @@ body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidde
 .class-chat-icon-btn {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -7544,18 +7562,30 @@ body.payment-reference [data-settings-hub="payment"] [data-settings-group][hidde
   flex: none;
 }
 
+@media (min-width: 960px) {
+  .class-chat-topbar,
+  .class-chat-switcher-wrap,
+  .class-chat-search-drawer,
+  .class-chat-pinned,
+  .class-chat-lock-banner,
+  .class-chat-feed,
+  .class-chat-composer-wrap {
+    padding-inline: max(16px, calc((100% - 1080px) / 2));
+  }
+}
+
 @media (max-width: 640px) {
   .class-chat-shell {
     margin-top: 0;
     margin-inline: 0;
     width: 100%;
-    border-radius: 14px;
+    border-radius: 0;
     max-height: none;
   }
   #classChatView .class-chat-shell {
     border-radius: 0;
     border-inline: 0;
-    height: calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height));
+    height: 100%;
   }
   .chat-row {
     max-width: 90%;

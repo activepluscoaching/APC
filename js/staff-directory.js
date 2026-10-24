@@ -498,9 +498,14 @@ async function loginIdTakenInCloud(username) {
   ]);
   try {
     const bridge = await bounded(import('./realtime-sync.js'));
-    return Boolean((await bounded(bridge.usernameTakenOnline(username)))?.taken);
+    if ((await bounded(bridge.usernameTakenOnline(username)))?.taken) return true;
   } catch (error) {
     console.warn('[Active Plus] cloud login-id check unavailable:', error.message);
+  }
+  try {
+    const sbBridge = await bounded(import('./supabase-sync.js'));
+    return Boolean((await bounded(sbBridge.usernameTakenSupabase(username)))?.taken);
+  } catch {
     return false;
   }
 }

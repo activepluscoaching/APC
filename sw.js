@@ -170,7 +170,8 @@
 // v295: Firebase opt-in panel gate and trusted first-Admin bootstrap staging.
 // v294: Firebase backend selector and pure Auth role-claim policy offline.
 // v293: same-origin Firebase SDK bundle, dev/prod config and Firebase API cache bypass.
-const CACHE_VERSION = 420;
+// v421: dual-cloud Supabase + Firebase database sync, same-origin Supabase SDK bundle, and Supabase API cache bypass.
+const CACHE_VERSION = 421;
 const CACHE_NAME = `active-plus-student-v${CACHE_VERSION}-minimal-education`;
 const APP_SHELL = [
   './assets/icons/ai-3d/class-materials.svg',
@@ -342,7 +343,12 @@ const APP_SHELL = [
   './firebase/firebase-services.js',
   './vendor/firebase/sdk.js',
   './vendor/firebase/messaging-compat.js',
+  './vendor/supabase/sdk.js',
   './firebase-messaging-sw.js',
+  './sync/supabase-config.js',
+  './sync/supabase-config.dev.js',
+  './sync/supabase-client.js',
+  './js/supabase-sync.js',
   './sync/sync-core.js',
   './sync/sync-config.js',
   './sync/sync-auth.js',
@@ -687,7 +693,7 @@ function isFirebaseServiceRequest(request) {
   const url = new URL(request.url);
   // Firebase Auth uses reserved same-origin Hosting endpoints too.
   if (url.origin === self.location.origin) return /^\/__\/(auth|firebase|messaging)(\/|$)/.test(url.pathname);
-  return /(^|\.)(googleapis\.com|firebaseio\.com|firebasedatabase\.app|cloudfunctions\.net|firebaseapp\.com)$/.test(url.hostname);
+  return /(^|\.)(googleapis\.com|firebaseio\.com|firebasedatabase\.app|cloudfunctions\.net|firebaseapp\.com|supabase\.co|supabase\.in)$/.test(url.hostname);
 }
 
 self.addEventListener('fetch', event => {

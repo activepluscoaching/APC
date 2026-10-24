@@ -1,0 +1,155 @@
+/* Scoped to the student detail view; edit, staff and receipt dialogs keep their
+   existing layout. Header/actions stay visible while the details scroll. */
+.admin-modal.student-record-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 720px);
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - var(--safe-bottom));
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.student-record-modal .admin-modal-header {
+  position: static;
+  flex: none;
+  margin: 0;
+  padding: 20px 24px 16px;
+  gap: 16px;
+}
+.student-record-modal .admin-modal-header .eyebrow {
+  color: var(--color-primary);
+  font-size: 12px;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+}
+.student-record-modal .admin-modal-header h2 {
+  font-size: 22px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.student-record-modal .admin-modal-close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 24px;
+  border-radius: 50%;
+  background: var(--color-bg);
+}
+.student-record-modal .admin-modal-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.student-record-content {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 20px 24px 24px;
+  min-height: 0;
+}
+.student-record-content:focus-visible { outline-offset: -3px; }
+.student-record-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.student-record-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid currentColor;
+  border-radius: 24px;
+  padding: 3px 10px;
+  font-weight: 500;
+}
+.student-record-status--approved { color: var(--color-success); }
+.student-record-status--pending { color: var(--color-warning); }
+.student-record-status--rejected { color: var(--color-danger); }
+.student-record-status--unknown, .student-record-class { color: var(--color-text-secondary); }
+.student-record-status > span { font-size: 8px; }
+.student-record-identity {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.student-record-identifiers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+.student-record-identifiers code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.student-record-section { margin-top: 24px; }
+.student-record-section h3 {
+  font-size: 15px;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+.student-record-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+  margin: 0;
+}
+.student-record-field { min-width: 0; }
+.student-record-field--wide { grid-column: 1 / -1; }
+.student-record-field dt {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0 0 4px;
+  line-height: 1.6;
+}
+.student-record-field dd {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.student-record-phone dd { font-variant-numeric: tabular-nums; }
+.student-record-class-code {
+  display: inline-block;
+  font: 500 11px/1.6 system-ui, sans-serif;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.student-record-actions {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.student-record-actions button { padding: 10px 8px; min-width: 0; }
+@media (max-width: 520px) {
+  .student-record-modal .admin-modal-header { padding: 16px; gap: 12px; }
+  .student-record-modal .admin-modal-header h2 { font-size: 20px; }
+  .student-record-content { padding: 16px; }
+  .student-record-fields { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .student-record-identity { padding: 12px; }
+  .student-record-actions { padding: 12px 16px; }
+  .student-record-actions button { font-size: 13px; }
+}
+@media (max-height: 480px) {
+  .student-record-modal .admin-modal-header { padding-block: 8px; }
+  .student-record-actions { padding-block: 8px; }
+}

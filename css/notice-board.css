@@ -1,0 +1,98 @@
+/* Student Notice Board — high-priority notices have a dedicated, categorized home. */
+.notice-board-view{max-width:920px;margin-inline:auto}
+.notice-board-view .page-intro{display:flex;align-items:flex-start;gap:var(--space-3)}
+.notice-board-view .page-intro-copy{min-width:0}
+.notice-board-view .page-intro h1{letter-spacing:-.025em}
+.notice-board-summary{min-height:1.5em;margin:0 0 var(--space-3);color:var(--color-text-secondary);font-size:var(--font-sm);font-weight:600}
+.notice-board-categories{display:flex;gap:var(--space-2);overflow-x:auto;padding:2px 1px var(--space-3);margin:0 calc(-1 * var(--space-1)) var(--space-3);scrollbar-width:thin;overscroll-behavior-x:contain}
+.notice-board-category{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;flex:none;padding:0 var(--space-3);border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface);color:var(--color-text-secondary);font-size:var(--font-sm);font-weight:650;white-space:nowrap;transition:background .16s,border-color .16s,color .16s,transform .16s}
+.notice-board-category:hover{transform:translateY(-1px);border-color:var(--color-primary)}
+.notice-board-category.active{border-color:var(--color-primary);background:var(--color-primary);color:var(--color-on-primary,#fff);box-shadow:0 6px 16px color-mix(in srgb,var(--color-primary) 18%,transparent)}
+.notice-board-category[data-notice-board-category="urgent"]{border-color:color-mix(in srgb,var(--color-danger) 42%,var(--color-border))}
+.notice-board-category[data-notice-board-category="urgent"].active{border-color:var(--color-danger);background:var(--color-danger);color:#fff}
+.notice-board-category-count{display:inline-grid;place-items:center;min-width:21px;height:21px;padding-inline:5px;border-radius:999px;background:color-mix(in srgb,currentColor 12%,transparent);font-size:var(--font-xs);line-height:1}
+.notice-board-list{display:grid;gap:var(--space-3)}
+.notice-board-card{position:relative;display:grid;gap:var(--space-2);min-width:0;padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm,0 4px 14px rgb(15 23 42 / .045));overflow:hidden}
+.notice-board-card:before{position:absolute;inset:0 auto 0 0;width:3px;background:var(--color-primary);content:""}
+.notice-board-card.urgent{border-color:color-mix(in srgb,var(--color-danger) 35%,var(--color-border));background:color-mix(in srgb,var(--color-danger) 7%,var(--color-surface))}
+.notice-board-card.urgent:before{width:5px;background:var(--color-danger)}
+.notice-board-card.is-unread h2{font-weight:750}
+.notice-board-card-head,.notice-board-card-foot,.notice-board-detail-top,.notice-board-detail-actions{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}
+.notice-board-tag{display:inline-flex;align-items:center;gap:6px;width:max-content;max-width:100%;padding:4px 10px;border:1px solid transparent;border-radius:999px;background:var(--color-surface-muted);color:var(--color-text-secondary);font-size:var(--font-xs);font-weight:700;line-height:1.4}
+.notice-board-tag-urgent{border-color:color-mix(in srgb,var(--color-danger) 25%,transparent);background:color-mix(in srgb,var(--color-danger) 12%,var(--color-surface));color:var(--color-danger)}
+.notice-board-tag-academic{border-color:color-mix(in srgb,#5272d8 24%,transparent);background:color-mix(in srgb,#5272d8 10%,var(--color-surface));color:color-mix(in srgb,#3454b4,var(--color-text) 12%)}
+.notice-board-tag-class{border-color:color-mix(in srgb,#24866e 24%,transparent);background:color-mix(in srgb,#24866e 10%,var(--color-surface));color:color-mix(in srgb,#17674f,var(--color-text) 12%)}
+.notice-board-tag-fee{border-color:color-mix(in srgb,#aa7710 25%,transparent);background:color-mix(in srgb,#d5a321 13%,var(--color-surface));color:color-mix(in srgb,#805500,var(--color-text) 12%)}
+.notice-board-tag-exam{border-color:color-mix(in srgb,#865bb3 25%,transparent);background:color-mix(in srgb,#865bb3 11%,var(--color-surface));color:color-mix(in srgb,#69418f,var(--color-text) 12%)}
+.notice-board-read-state{color:var(--color-text-muted);font-size:var(--font-xs);font-weight:650}
+.notice-board-card h2{margin:0;font-size:var(--font-md);line-height:1.45;word-break:break-word;overflow-wrap:anywhere}
+.notice-board-card p,.notice-card-preview{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm);line-height:1.65;word-break:break-word;overflow-wrap:anywhere}
+.notice-board-card-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2);margin-top:var(--space-1);padding-top:var(--space-2);border-top:1px solid var(--color-border)}
+.notice-board-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.notice-board-expand{min-height:38px;padding:0 var(--space-3);border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface);color:var(--color-text);font-size:var(--font-xs);font-weight:700;cursor:pointer}
+.notice-board-card-foot time,.notice-board-detail time{color:var(--color-text-muted);font-size:var(--font-xs)}
+.notice-board-open{min-height:38px;padding:0 var(--space-3);border:1px solid var(--color-primary);border-radius:999px;background:var(--color-surface);color:var(--color-primary);font-size:var(--font-sm);font-weight:700}
+.notice-board-open:hover{background:var(--color-primary);color:var(--color-on-primary,#fff)}
+.notice-board-detail{display:grid;gap:var(--space-3);padding:var(--space-4);margin:0 0 var(--space-4);border:1px solid var(--color-primary);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:0 12px 34px color-mix(in srgb,var(--color-primary) 11%,transparent);scroll-margin-top:calc(90px + var(--space-3))}
+.notice-board-detail[hidden]{display:none!important}
+/* Single view: opening a notice makes the list leave the screen and the
+   detail becomes a fixed modal sheet over the board (backdrop/×/Esc closes). */
+.notice-board-list[hidden]{display:none!important}
+body.notice-board-detail-open{overflow:hidden}
+body.notice-board-detail-open:before{content:"";position:fixed;inset:0;z-index:70;background:color-mix(in srgb,var(--color-text) 42%,transparent)}
+.notice-board-detail:not([hidden]){position:fixed;z-index:71;left:0;right:0;bottom:0;top:auto;width:100%;max-height:min(88dvh,88vh);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0;border:0;border-top:1px solid var(--color-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom,0px));box-shadow:0 -14px 44px color-mix(in srgb,var(--color-text) 24%,transparent);scroll-margin-top:0;overscroll-behavior:contain}
+@media(min-width:760px){.notice-board-detail:not([hidden]){top:50%;bottom:auto;left:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 48px));max-height:84vh;border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:0 24px 64px color-mix(in srgb,var(--color-text) 28%,transparent)}}
+.notice-board-detail h2{margin:0;font-size:var(--font-lg);line-height:1.45;word-break:break-word;overflow-wrap:anywhere}
+.notice-board-detail p,.notice-board-detail .notice-content{margin:0;color:var(--color-text);font-size:var(--font-md);line-height:1.65;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:12px 16px;border-radius:var(--radius-sm);background:var(--color-surface-muted)}
+.notice-board-detail-close{display:grid;place-items:center;width:36px;height:36px;flex:none;border:1px solid var(--color-border);border-radius:50%;background:var(--color-surface);color:var(--color-text-secondary);font-size:22px}
+.notice-board-detail-actions{justify-content:flex-start;flex-wrap:wrap;margin-top:var(--space-1)}
+.notice-board-read-button{min-height:44px;padding:0 var(--space-4);border:1px solid var(--color-primary);border-radius:999px;background:var(--color-primary);color:var(--color-on-primary,#fff);font-weight:750}
+.notice-board-read-button:disabled{border-color:var(--color-success);background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface));color:var(--color-success);cursor:default}
+#noticeBoardReadStatus{color:var(--color-text-secondary);font-size:var(--font-xs)}
+.notice-board-empty{display:grid;justify-items:center;gap:var(--space-2);padding:var(--space-6) var(--space-4);border:1px dashed var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);text-align:center}
+.notice-board-empty strong{font-size:var(--font-md)}
+.notice-board-empty p{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm)}
+.notice-board-shortcut{position:relative}
+.notice-board-shortcut-count{position:absolute;top:8px;right:8px;display:grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border:2px solid var(--color-surface);border-radius:999px;background:var(--color-danger);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 2px 7px rgb(0 0 0 / .14)}
+.notice-board-shortcut-count[hidden]{display:none}
+.notice-category-admin{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:var(--color-surface-muted);font-size:var(--font-xs);font-weight:700}
+.notice-category-admin[data-notice-category="urgent"]{background:color-mix(in srgb,var(--color-danger) 12%,var(--color-surface));color:var(--color-danger)}
+@media(max-width:420px){
+  .notice-board-view .page-intro{gap:var(--space-2)}
+  .notice-board-category{min-height:40px;padding-inline:11px}
+  .notice-board-card,.notice-board-detail{padding:var(--space-3)}
+  .notice-board-card-foot{align-items:flex-start}
+  .notice-board-open{min-height:36px;padding-inline:var(--space-2)}
+}
+
+/* ---- v168: the Home notice preview -----------------------------------------
+   Home shows the three newest notices the student may see, painted by the same
+   reader as the board (js/student-notice-board.js). The compact card drops the
+   body copy and keeps the category, title and the open action. */
+.notice-board-card-compact{padding:var(--space-3);gap:var(--space-1)}
+.notice-board-card-compact h2{font-size:var(--font-sm);line-height:1.5}
+.notice-board-card-compact .notice-board-card-foot{margin-top:0;padding-top:var(--space-1);border-top:0}
+.notice-board-read-state{font-size:var(--font-xs);color:var(--color-text-muted)}
+.notice-board-card-compact.is-unread .notice-board-read-state{color:var(--color-primary);font-weight:600}
+.notice-board-empty{margin:0;padding:var(--space-4);border:1px dashed var(--color-border);border-radius:var(--radius-md);color:var(--color-text-secondary);font-size:var(--font-sm);text-align:center}
+
+/* ---- Home 1-click Notice Card & More Menu Notice Badge -------------------- */
+body.student-reference #homeView .home-notice-banner{width:100%;max-width:none;min-width:0;margin:0}
+.home-notice-card{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:11px 14px;border:1px solid var(--color-border);border-radius:18px;background:var(--color-surface);color:var(--color-text);text-align:start;cursor:pointer;box-shadow:0 4px 14px color-mix(in srgb,var(--color-text) 5%,transparent);transition:transform .15s ease,border-color .15s ease,background-color .15s ease}
+.home-notice-card:hover{border-color:color-mix(in srgb,var(--color-primary) 42%,var(--color-border))}
+.home-notice-card:active{transform:scale(.99)}
+.home-notice-card.has-unread{border-color:color-mix(in srgb,var(--color-primary) 45%,var(--color-border));background:color-mix(in srgb,var(--color-primary) 7%,var(--color-surface))}
+.home-notice-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;background:color-mix(in srgb,var(--color-warning) 16%,var(--color-surface-muted))}
+.home-notice-icon svg{width:24px;height:24px}
+.home-notice-copy{display:grid;gap:2px;flex:1 1 auto;min-width:0}
+.home-notice-title{font-size:var(--font-sm);font-weight:750;line-height:1.4;color:var(--color-text);word-break:break-word;overflow-wrap:anywhere}
+.home-notice-meta{font-size:var(--font-xs);color:var(--color-text-secondary);line-height:1.45;word-break:break-word;overflow-wrap:anywhere}
+.home-notice-badge,.notice-board-more-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;flex:none;border-radius:999px;background:var(--color-danger);color:#fff;font-size:11px;font-weight:800;line-height:1}
+.home-notice-badge[hidden],.notice-board-more-badge[hidden]{display:none}
+.home-notice-cta{flex:none;padding:5px 10px;border-radius:999px;background:color-mix(in srgb,var(--color-primary) 12%,var(--color-surface-muted));color:var(--color-primary);font-size:var(--font-xs);font-weight:700;white-space:nowrap}
+.notice-board-more-row .notice-board-more-badge{margin-inline-start:auto;margin-inline-end:6px}
+@media(max-width:380px){
+  .home-notice-card{gap:10px;padding:10px 12px;border-radius:16px}
+  .home-notice-icon{width:38px;height:38px}
+  .home-notice-cta{padding:4px 8px}
+}

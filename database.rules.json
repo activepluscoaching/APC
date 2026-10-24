@@ -1,0 +1,197 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "activePlusSync": {
+      "v1": {
+        "staffAccounts": {
+          ".read": "auth != null",
+          "$role": {
+            ".write": "auth != null && ($role === 'admin' || $role === 'manager' || $role === 'teacher' || $role === 'payment')",
+            ".validate": "newData.hasChildren(['username', 'password']) && newData.child('username').isString()"
+          }
+        },
+        "staffDirectory": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.hasChild('version')"
+        },
+        "usernames": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$usernameKey": {
+            ".write": "auth != null",
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "mobileIndex": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$mobileKey": {
+            ".write": "auth != null",
+            ".validate": "$mobileKey.length === 11 && newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "emailIndex": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$emailKey": {
+            ".write": "auth != null",
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+          }
+        },
+        "dailyStudentCounters": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$dayKey": {
+            ".write": "auth != null && (!newData.exists() || (newData.isNumber() && newData.val() >= 1 && newData.val() <= 999 && (!data.exists() || newData.val() > data.val())))",
+            ".validate": "$dayKey.length === 6 && newData.isNumber() && newData.val() >= 1 && newData.val() <= 999"
+          }
+        },
+        "notifications": {
+          ".read": "auth != null && (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager')",
+          ".write": "auth != null && (!newData.exists() || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+          "$notifId": {
+            ".write": "auth != null && (!newData.exists() || (!data.exists() && newData.child('read').val() === false) || ((auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager') && data.exists()))",
+            ".validate": "newData.child('id').val() === $notifId && newData.hasChildren(['id', 'type', 'studentId', 'studentName', 'mobile', 'createdAt', 'read']) && newData.child('type').val() === 'new_registration' && newData.child('studentId').isString() && newData.child('studentId').val().length > 0 && newData.child('studentName').isString() && newData.child('studentName').val().length > 0 && newData.child('mobile').isString() && newData.child('mobile').val().length > 0 && newData.child('createdAt').isString() && newData.child('createdAt').val().length > 0 && newData.child('read').isBoolean()"
+          }
+        },
+        "studentAccount": {
+          ".read": "auth != null"
+        },
+        "studentAccounts": {
+          ".read": "auth != null",
+          "$loginKey": {
+            ".write": "auth != null && (!newData.exists() || !(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'active' || newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+            ".validate": "newData.hasChild('pinHash') && (!(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'active' || newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))"
+          }
+        },
+        "examDb": {
+          ".read": "auth != null",
+          "exams": {
+            ".write": "auth != null",
+            "$examId": {
+              ".write": "auth != null",
+              ".validate": "newData.child('id').val() === $examId && newData.child('teacherId').isString() && newData.child('status').isString()"
+            }
+          },
+          "attempts": {
+            ".write": "auth != null",
+            "$attemptId": {
+              ".write": "auth != null",
+              ".validate": "newData.child('id').val() === $attemptId && newData.child('examId').isString() && newData.child('studentId').isString()"
+            }
+          }
+        },
+        "system": {
+          ".read": "auth != null",
+          "adminInitialized": {
+            ".write": "auth != null && (!newData.exists() || newData.isBoolean())",
+            ".validate": "newData.isBoolean()"
+          },
+          "connectivityProbe": {
+            ".read": "auth != null",
+            "$probeKey": {
+              ".read": "auth != null",
+              ".write": "auth != null && $probeKey.length <= 64",
+              "at": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "adviceBank": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.token.status === 'active' && auth.token.mustChangePassword !== true && (auth.token.role === 'admin' || auth.token.role === 'manager')",
+          "$adviceId": {
+            ".validate": "newData.numChildren() === 6 && newData.hasChildren(['text', 'source', 'active', 'order', 'createdBy', 'createdAt']) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 140 && newData.child('source').isString() && newData.child('source').val().length > 0 && newData.child('source').val().length <= 120 && newData.child('active').isBoolean() && newData.child('order').isNumber() && newData.child('order').val() >= 1 && newData.child('createdBy').isString() && newData.child('createdBy').val().length > 0 && newData.child('createdBy').val().length <= 128 && newData.child('createdAt').isNumber() && newData.child('createdAt').val() >= 0"
+          }
+        },
+        "settings": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "pushTokens": {
+          "$deviceKey": {
+            ".write": "auth != null",
+            ".validate": "newData.child('token').isString() && newData.child('token').val().length > 20 && newData.child('token').val().length <= 4096"
+          }
+        },
+        "students": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".write": "auth != null && (!newData.exists() || !(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'active' || newData.child('status').val() === 'rejected')) || (auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager'))",
+            ".validate": "newData.hasChildren() && (!data.exists() || !data.child('id').exists() || newData.child('id').val() === data.child('id').val()) && (!(data.exists() && data.child('status').val() === 'pending' && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'active' || newData.child('status').val() === 'rejected')) || ((auth.token.role === null || auth.token.role === 'admin' || auth.token.role === 'manager') && (newData.child('approvedAt').isString() || newData.child('reviewedAt').isString())))"
+          }
+        },
+        "transactions": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "notices": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "routine": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "teaching": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "academics": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "courseContent": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "courses": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "teacherAssignments": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        },
+        "classChat": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$recordId": {
+            ".validate": "newData.hasChildren()"
+          }
+        }
+      }
+    }
+  }
+}

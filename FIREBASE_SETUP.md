@@ -912,9 +912,14 @@ Firebase Auth/UID মাইগ্রেশনের সাথে। বিস্
 
 ### Publishing and acceptance
 
-GitHub Pages currently publishes the repository's **main** branch at `/`.
-Changes on the Arena branch are not automatically published there. Review/merge
-the pull request, wait for the Pages deployment, then:
+GitHub Pages publishes the `activepluscoaching/APC` repository's **main** branch
+at `/`, serving the app at `https://activepluscoaching.github.io/APC/`.
+Changes on an Arena working branch are not automatically published there. Before
+using Firebase sync on the new GitHub Pages domain, ensure
+`activepluscoaching.github.io` is added under **Firebase Console →
+Authentication → Settings → Authorized domains** (and in reCAPTCHA/App Check
+allowed domains when enabled). Review/merge the pull request, enable GitHub
+Pages from `main` (`/ (root)`), wait for the Pages deployment, then:
 
 1. Back up existing data. Do **not** clear site storage on the original device.
 2. Reload the original device online on the updated static app; check the sync

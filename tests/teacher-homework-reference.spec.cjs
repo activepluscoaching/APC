@@ -26,14 +26,14 @@ for (const width of [320, 390, 1024]) {
     await page.locator('.homework-options summary').click();
     await page.locator('#activity-time').fill('17:00');
     await page.locator('.homework-attachment summary').click();
-    await page.locator('#activity-resourceURL').fill('https://github.com/ajfrinch-ctrl/apc');
+    await page.locator('#activity-resourceURL').fill('https://github.com/activepluscoaching/APC');
     await expect(page.locator('#teacherActivityForm [type="submit"]')).toHaveText('প্রকাশ করুন');
     await page.locator('#teacherActivityForm [type="submit"]').click();
     await expect(page.locator('#teacherModalBackdrop')).toBeHidden();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('activePlus.teaching.v1')).activities.find(item => item.title === 'অনুশীলনী ১'));
     expect(saved.status).toBe('published');
     expect(saved.subject).toBe('গণিত');
-    expect(saved.resourceURL).toBe('https://github.com/ajfrinch-ctrl/apc');
+    expect(saved.resourceURL).toBe('https://github.com/activepluscoaching/APC');
     await page.locator('.admin-bottom [data-teacher-view="home"]').click();
     await page.locator('#teacherHome [data-new-activity="homework"]').click();
     await expect(page.locator('#teacherModalBackdrop')).toBeVisible();

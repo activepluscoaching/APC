@@ -91,7 +91,7 @@ export async function get(node) { if (isUndep(node.path)) throw permErr(node.pat
   );
 
   const ctx = await loadPage('student.html', {
-    url: 'https://ajfrinch-ctrl.github.io/apc/student.html',
+    url: 'https://activepluscoaching.github.io/APC/student.html',
     seed: { 'activePlus.demo.autofill.v1': 'off' }
   });
   Object.defineProperty(globalThis, 'Storage', {

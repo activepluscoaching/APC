@@ -1,0 +1,19 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # semantic-icons.test.mjs compares portal controls with this approved historical checkpoint.
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          # Firebase JS SDK 13 and rules-unit-testing 6 require Node >=24.12.
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:firebase && git diff --exit-code -- vendor/firebase/
+      - run: npm run build:supabase && git diff --exit-code -- vendor/supabase/
+      - run: npm test

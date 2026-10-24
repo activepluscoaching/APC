@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Active Plus — দুই ডিভাইসের ব্যাকআপ এক করুন</title>
+<link rel="stylesheet" href="../css/design-system.css?v=106">
+</head>
+<body>
+<main class="backup-tool">
+  <h1>দুই ডিভাইসের ব্যাকআপ এক করুন</h1>
+  <p class="lead">প্রতিটি ডিভাইসের Admin প্যানেল → <b>Backup &amp; Restore → ব্যাকআপ ডাউনলোড</b> থেকে JSON ফাইল দুটি নিন, তারপর এখানে দিন। মিলিত ফাইলটি আবার Backup &amp; Restore দিয়ে রিস্টোর করা যাবে। পুরো কাজ ব্রাউজারেই হয় — কোনো ডেটা কোথাও পাঠানো হয় না।</p>
+
+  <section class="warn">
+    <h2>শুরুর আগে জেনে নিন</h2>
+    <ul>
+      <li>ব্যাকআপ ফাইলে <b>মুছে ফেলা রেকর্ড থাকে না</b>। তাই কোনো জিনিস আগে মুছে থাকলে মিলিত ফাইলে সেটি ফিরে আসতে পারে — নিচের রিপোর্ট দেখে নিশ্চিত হন।</li>
+      <li>রিস্টোর করার আগে সর্বদা <b>বর্তমান অবস্থার একটি নতুন ব্যাকআপ</b> নিয়ে রাখুন।</li>
+      <li>একই রেকর্ড দুই ডিভাইসে বদলালে যেটির সময় সবচেয়ে নতুন সেটি রাখা হয়; লেনদেন/বালান্সের হিসাব নিজে মিলিয়ে নিন।</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>১. ব্যাকআপ ফাইল দুটি বাছুন</h2>
+    <label for="fileA">প্রথম ডিভাইসের ব্যাকআপ (সাধারণত পুরোনো)</label>
+    <input id="fileA" type="file" accept="application/json,.json">
+    <label for="fileB" style="margin-top:14px">দ্বিতীয় ডিভাইসের ব্যাকআপ</label>
+    <input id="fileB" type="file" accept="application/json,.json">
+    <button id="merge" type="button" disabled>ফাইল মিলিয়ে দেখুন</button>
+  </section>
+
+  <section id="error" class="error" hidden></section>
+
+  <section id="result" class="ok" hidden>
+    <h2>২. মিলিত ফলাফল</h2>
+    <ul id="summary"></ul>
+    <div id="conflictBox" hidden>
+      <h2 style="margin-top:14px">যেসব রেকর্ড দুটি ফাইলেই আলাদা ছিল</h2>
+      <ul id="conflicts"></ul>
+    </div>
+    <button id="download" class="secondary" type="button">মিলিত ব্যাকআপ ডাউনলোড করুন</button>
+    <p class="lead" id="restoreHint" style="margin-top:12px">ডাউনলোড করা ফাইলটি Admin প্যানেলে গিয়ে <b>Backup &amp; Restore → ফাইল বাছুন → রিস্টোর করুন</b> চাপলেই সব ডিভাইসে একই ডেটা হয়ে যাবে।</p>
+  </section>
+</main>
+<script type="module">
+import { mergeBackups, unwrapBackupPayload, encryptBackupPayload } from '../js/backup-merge.js';
+
+const $ = id => document.getElementById(id);
+const files = { a: null, b: null };
+let merged = null;
+const readJSON = async file => JSON.parse(await file.text());
+const showError = message => { $('error').textContent = message; $('error').hidden = false; $('result').hidden = true; };
+const clearError = () => { $('error').hidden = true; };
+
+for (const [id, key] of [['fileA', 'a'], ['fileB', 'b']]) {
+  $(id).addEventListener('change', event => {
+    files[key] = event.target.files?.[0] || null;
+    $('merge').disabled = !(files.a && files.b);
+    clearError();
+  });
+}
+
+$('merge').addEventListener('click', async () => {
+  try {
+    clearError();
+    const rawA = await unwrapBackupPayload(await readJSON(files.a), 'প্রথম ফাইল');
+    const rawB = await unwrapBackupPayload(await readJSON(files.b), 'দ্বিতীয় ফাইল');
+    const { merged: result, report } = mergeBackups(rawA, rawB);
+    merged = await encryptBackupPayload(result.data, result.createdAt, { mergedFrom: result.mergedFrom });
+    $('summary').replaceChildren(...report.lines.map(line => {
+      const item = document.createElement('li'); item.textContent = line; return item;
+    }));
+    $('conflicts').replaceChildren(...report.conflicts.map(line => {
+      const item = document.createElement('li'); item.textContent = line; return item;
+    }));
+    $('conflictBox').hidden = report.conflicts.length === 0;
+    if (!report.lines.length) $('summary').textContent = 'ফাইল দুটিতে কোনো পরিচিত সংগ্রহ পাওয়া যায়নি।';
+    $('result').hidden = false;
+  } catch (error) {
+    showError(error.message || 'ফাইল মেলানো যায়নি।');
+  }
+});
+
+$('download').addEventListener('click', () => {
+  if (!merged) return;
+  const blob = new Blob([JSON.stringify(merged, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `APC-merged-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+});
+</script>
+</body>
+</html>

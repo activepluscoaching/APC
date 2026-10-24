@@ -1,0 +1,2 @@
+# Normalise synthetic CSV review diffs while retaining CSV CRLF on checkout.
+preview/**/*.csv text eol=crlf

@@ -1,0 +1,73 @@
+{
+  "id": "./",
+  "name": "Active Plus Coaching — শিক্ষার্থী অ্যাপ",
+  "short_name": "Active Plus",
+  "description": "Active Plus Coaching-এর অফলাইন শিক্ষার্থী অ্যাপ। রুটিন, কোর্স, ফলাফল ও নোটিশ এক জায়গায়।",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#fafbfa",
+  "theme_color": "#0e7a55",
+  "orientation": "any",
+  "lang": "bn",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "education"
+  ],
+  "shortcuts": [
+    {
+      "name": "ক্লাস রুটিন",
+      "short_name": "রুটিন",
+      "url": "./#routine",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "ফলাফল",
+      "short_name": "ফলাফল",
+      "url": "./#results",
+      "icons": [
+        {
+          "src": "assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

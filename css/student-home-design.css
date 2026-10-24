@@ -1,0 +1,851 @@
+/* Student Home's full-colour reference treatment.
+   This layer is linked only by student.html; other portals and Payment keep
+   their existing shells and carousel. Content/data remain the live app's. */
+body.student-reference #homeView.active {
+  --student-home-welcome: #eaf3ff;
+  --student-home-welcome-sheen: #f7faff;
+  --student-home-advice: #eef0ff;
+  --student-home-routine: #e8f5ee;
+  --student-home-routine-sheen: #f6fbf8;
+  --student-home-progress: #fff2df;
+  --student-home-progress-sheen: #fff9ef;
+  --student-home-ink: #26364a;
+  --student-home-welcome-ink: #174a76;
+  --student-home-routine-ink: #195e4b;
+  --student-home-progress-ink: #76501b;
+  --student-home-progress-ring: #dc9440;
+  --student-home-progress-track: #f0dfc5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+html[data-theme="dark"] body.student-reference #homeView.active {
+  --student-home-welcome: #244663;
+  --student-home-welcome-sheen: #315574;
+  --student-home-advice: #353357;
+  --student-home-routine: #214d40;
+  --student-home-routine-sheen: #2b5a4d;
+  --student-home-progress: #5c4729;
+  --student-home-progress-sheen: #725a38;
+  --student-home-ink: #f4f6fa;
+  --student-home-welcome-ink: #f4f6fa;
+  --student-home-routine-ink: #f4f6fa;
+  --student-home-progress-ink: #f4f6fa;
+  --student-home-progress-ring: #f2bc69;
+  --student-home-progress-track: rgb(255 255 255 / 28%);
+}
+
+body.student-reference:has(.view.active) #studentHeader {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.student-reference:has(.view.active) #studentHeader .app-brand-institute { color: var(--color-text); }
+body.student-reference:has(.view.active) #studentHeader .app-brand-slogan { color: var(--color-text-secondary); }
+body.student-reference:has(.view.active) #studentHeader .app-topbar-icon {
+  color: var(--color-primary);
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+}
+
+body.student-reference #appMain {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 12px calc(var(--shell-footer-height, 76px) + 24px + var(--safe-bottom));
+}
+body.student-reference #homeView :is(.student-home-welcome, .daily-quote-section, .dashboard-today-section, .student-home-overview) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+}
+body.student-reference #homeView .student-home-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 0;
+}
+body.student-reference #homeView .student-home-welcome {
+  position: relative;
+  isolation: isolate;
+  min-height: 126px;
+  padding: 20px 20px 20px 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--student-home-welcome-ink) 12%, transparent);
+  border-radius: 25px;
+  background-color: var(--student-home-welcome);
+  background-image: linear-gradient(135deg, var(--student-home-welcome-sheen), var(--student-home-welcome));
+  color: var(--student-home-welcome-ink);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--student-home-welcome-ink) 9%, transparent);
+}
+body.student-reference #homeView .student-home-welcome .pay-hero-id {
+  display: flex;
+  align-items: center;
+  min-height: 86px;
+  margin: 0;
+  padding: 0;
+  gap: 16px;
+}
+body.student-reference #homeView .student-home-welcome .pay-avatar {
+  width: 66px;
+  height: 66px;
+  border: 0;
+  background: var(--color-surface);
+  color: var(--student-home-welcome-ink);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--student-home-welcome-ink) 13%, transparent);
+  font-size: 26px;
+}
+body.student-reference #homeView .student-home-welcome :is(.pay-greeting, .pay-hero-name, .pay-hero-meta) {
+  color: var(--student-home-welcome-ink);
+}
+body.student-reference #homeView .student-home-welcome .pay-greeting { font-size: 14px; font-weight: 600; }
+body.student-reference #homeView .student-home-welcome .pay-hero-name { font-size: 24px; font-weight: 700; }
+body.student-reference #homeView .student-home-welcome .pay-hero-meta { font-size: 13px; font-weight: 500; }
+body.student-reference #homeView .student-home-welcome .birthday-banner {
+  width: fit-content;
+  margin: 3px 0;
+  padding: 2px 0;
+  background: transparent;
+  color: var(--student-home-welcome-ink);
+}
+
+body.student-reference #homeView .daily-quote-section { margin: 0; }
+body.student-reference #homeView .daily-quote-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  min-height: 148px;
+  margin: 0;
+  padding: 20px 22px;
+  border: 0;
+  border-radius: 25px;
+  background: var(--student-home-advice);
+  box-shadow: none;
+  color: var(--student-home-ink);
+}
+body.student-reference #homeView .daily-quote-head { gap: 10px; min-width: 0; }
+body.student-reference #homeView .daily-quote-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.16);
+  color: var(--student-home-ink);
+}
+body.student-reference #homeView .daily-quote-mark svg { width: 22px; height: 22px; }
+body.student-reference #homeView .daily-quote-kicker {
+  flex: none;
+  color: var(--student-home-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+body.student-reference #homeView .daily-quote-text {
+  max-width: calc(100% - 90px);
+  margin: 0;
+  color: var(--student-home-ink);
+  font-size: clamp(18px, 2.3vw, 25px);
+  font-weight: 600;
+  line-height: 1.45;
+}
+body.student-reference #homeView .daily-quote-author { color: rgba(255,255,255,.88); }
+body.student-reference #homeView .daily-quote-footer {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  min-width: 0;
+}
+body.student-reference #homeView .daily-quote-date {
+  max-width: none;
+  color: rgba(255,255,255,.92);
+  font-size: 14px;
+  text-align: left;
+}
+body.student-reference #homeView .daily-advice-summary {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: rgba(255,255,255,.86);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.student-reference #homeView .dashboard-today-section {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  flex: none;
+  min-height: 132px;
+  margin: 0;
+  padding: 18px 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--student-home-routine-ink) 12%, transparent);
+  border-radius: 25px;
+  background-color: var(--student-home-routine);
+  background-image: linear-gradient(135deg, var(--student-home-routine-sheen), var(--student-home-routine));
+  color: var(--student-home-routine-ink);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--student-home-routine-ink) 8%, transparent);
+}
+body.student-reference #homeView .dashboard-section-heading {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 90px 4px 0;
+}
+body.student-reference #homeView .dashboard-section-heading h2 {
+  margin: 0;
+  color: var(--student-home-routine-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+body.student-reference #homeView .dashboard-text-link {
+  min-height: 34px;
+  padding: 4px 0;
+  color: var(--student-home-routine-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+body.student-reference #homeView #dashboardRoutineList {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.student-reference #homeView #dashboardRoutineList:has(.dashboard-routine-card) { overflow: visible; }
+body.student-reference #homeView .dashboard-routine-card {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--student-home-routine-ink);
+  box-shadow: none;
+}
+body.student-reference #homeView .dashboard-routine-icon { display: none; }
+body.student-reference #homeView .dashboard-routine-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: calc(100% - 96px);
+  min-width: 0;
+  gap: 2px;
+}
+body.student-reference #homeView.is-empty-routine .dashboard-empty-card {
+  width: calc(100% - 112px);
+  align-self: flex-start;
+}
+body.student-reference #homeView .dashboard-routine-main strong {
+  color: var(--student-home-routine-ink);
+  font-size: clamp(19px, 2.1vw, 24px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+body.student-reference #homeView .dashboard-routine-main small {
+  color: color-mix(in srgb, var(--student-home-routine-ink) 76%, var(--color-text-secondary));
+  font-size: 12px;
+  line-height: 1.4;
+}
+body.student-reference #homeView .dashboard-time-pill {
+  margin: 3px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--student-home-routine-ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+body.student-reference #homeView .dashboard-routine-status {
+  align-self: flex-start;
+  min-height: 0;
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--student-home-routine-ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+body.student-reference #homeView .dashboard-routine-status.is-running {
+  color: var(--student-home-routine-ink);
+}
+body.student-reference #homeView .dashboard-routine-status i {
+  width: 7px;
+  height: 7px;
+  background: #9fe1cb;
+}
+body.student-reference #homeView .dashboard-empty-card {
+  display: flex;
+  align-items: center;
+  min-height: 82px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--student-home-routine-ink);
+}
+body.student-reference #homeView .dashboard-empty-card .dashboard-empty-icon { display: none; }
+body.student-reference #homeView .dashboard-empty-card .dashboard-empty-copy strong { color: var(--student-home-routine-ink); }
+body.student-reference #homeView .dashboard-empty-card .dashboard-empty-copy small {
+  color: color-mix(in srgb, var(--student-home-routine-ink) 76%, var(--color-text-secondary));
+}
+body.student-reference #homeView .dashboard-empty-card .challenge-open {
+  background: color-mix(in srgb, var(--student-home-routine-ink) 12%, var(--student-home-routine));
+  color: var(--student-home-routine-ink);
+}
+
+body.student-reference #homeView .pay-hero.pay-hero-summary {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+body.student-reference #homeView .pay-hero.pay-hero-summary::before { display: none; }
+body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 136px;
+  margin: 0;
+  padding: 19px 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--student-home-progress-ink) 12%, transparent);
+  border-radius: 25px;
+  background-color: var(--student-home-progress);
+  background-image: linear-gradient(135deg, var(--student-home-progress-sheen), var(--student-home-progress));
+  color: var(--student-home-progress-ink);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--student-home-progress-ink) 8%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.student-reference #homeView .study-progress-icon { display: none; }
+body.student-reference #homeView .study-progress-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 14px;
+}
+body.student-reference #homeView .study-progress-heading { flex: 1; min-width: 0; }
+body.student-reference #homeView .study-progress-heading h1 {
+  margin: 0;
+  color: var(--student-home-progress-ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+body.student-reference #homeView .study-progress-subtitle {
+  margin: 2px 0 0;
+  color: var(--student-home-progress-ink);
+  font-size: clamp(17px, 2vw, 22px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+body.student-reference #homeView .progress-ring {
+  width: 74px;
+  height: 74px;
+  background-image: conic-gradient(from -90deg, var(--student-home-progress-ring) var(--progress, 0deg), var(--student-home-progress-track) 0);
+}
+@media screen and (prefers-reduced-motion: no-preference) {
+  body.student-reference #homeView #studyProgressRing {
+    transition: --progress 2.4s cubic-bezier(.22, .8, .36, 1);
+  }
+}
+body.student-reference #homeView .progress-ring::before { inset: 7px; background: var(--student-home-progress); }
+body.student-reference #homeView .progress-ring strong { color: var(--student-home-progress-ink); font-size: 17px; }
+body.student-reference #homeView .progress-ring small {
+  color: color-mix(in srgb, var(--student-home-progress-ink) 74%, var(--color-text-secondary));
+}
+body.student-reference #homeView #homeRealStatsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 8px 96px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--student-home-progress-ink) 18%, transparent);
+}
+body.student-reference #homeView #homeRealStatsRow > div {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+body.student-reference #homeView #homeRealStatsRow strong {
+  color: var(--student-home-progress-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+body.student-reference #homeView #homeRealStatsRow small {
+  color: color-mix(in srgb, var(--student-home-progress-ink) 74%, var(--color-text-secondary));
+  font-size: 12px;
+  font-weight: 500;
+}
+body.student-reference #homeView .pay-hero.pay-hero-summary .pay-hero-link { display: none; }
+
+body.student-reference #homeView #studentServices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.student-reference #homeView #studentServices .pay-tile {
+  --home-tile: #eaf2ff;
+  --home-tile-ink: #224f7d;
+  --home-tile-accent: #6c9ec8;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 0;
+  /* Keep the existing two-column hero-tile proportions and touch target. */
+  min-height: 112px !important;
+  padding: 18px 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--home-tile-accent) 22%, #fff);
+  border-radius: 21px;
+  background-color: var(--home-tile);
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--home-tile) 70%, #fff), var(--home-tile));
+  color: var(--home-tile-ink);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--home-tile-accent) 12%, transparent);
+  text-align: left;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+body.student-reference #homeView #studentServices .pay-tile:nth-child(2) {
+  --home-tile: #fff0e9;
+  --home-tile-ink: #783d30;
+  --home-tile-accent: #d28c73;
+}
+body.student-reference #homeView #studentServices .pay-tile:nth-child(3) {
+  --home-tile: #fcebf2;
+  --home-tile-ink: #77334e;
+  --home-tile-accent: #ce7d9f;
+}
+body.student-reference #homeView #studentServices .pay-tile:nth-child(4) {
+  --home-tile: #f0edff;
+  --home-tile-ink: #4b4085;
+  --home-tile-accent: #8d80d8;
+}
+body.student-reference #homeView #studentServices .pay-tile:nth-child(5) {
+  --home-tile: #e7f5ee;
+  --home-tile-ink: #245e4d;
+  --home-tile-accent: #69a98a;
+}
+body.student-reference #homeView #studentServices .pay-tile:nth-child(6) {
+  --home-tile: #f1f2ef;
+  --home-tile-ink: #4b5350;
+  --home-tile-accent: #929b96;
+}
+body.student-reference #homeView #studentServices .pay-tile::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  right: -36px;
+  bottom: -64px;
+  width: 152px;
+  height: 152px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--home-tile-accent) 18%, transparent), transparent 70%);
+  pointer-events: none;
+}
+body.student-reference #homeView #studentServices .pay-tile:hover {
+  filter: saturate(1.04);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px color-mix(in srgb, var(--home-tile-accent) 18%, transparent);
+}
+body.student-reference #homeView #studentServices .pay-tile:focus-visible {
+  outline: 3px solid var(--home-tile-accent);
+  outline-offset: 3px;
+}
+body.student-reference #homeView #studentServices .pay-tile-label {
+  position: relative;
+  z-index: 1;
+  width: min(76%, 260px);
+  margin: 0;
+  color: var(--home-tile-ink);
+  font-size: clamp(16px, 1.65vw, 21px);
+  font-weight: 700;
+  line-height: 1.42;
+  text-align: left;
+}
+body.student-reference #homeView #studentServices .pay-tile-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 8px;
+  transform: translateY(-50%);
+  border: 1px solid rgb(255 255 255 / 88%);
+  border-radius: 13px;
+  background: rgb(255 255 255 / 82%);
+  color: var(--home-tile-accent);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--home-tile-accent) 18%, transparent);
+  opacity: 1;
+}
+body.student-reference #homeView #studentServices .pay-tile-icon svg {
+  width: 40px;
+  height: 40px;
+  filter: none;
+  animation: none;
+}
+
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--home-tile) 84%, #fff), var(--home-tile));
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(1) {
+  --home-tile: #294b69; --home-tile-ink: #f2f7ff; --home-tile-accent: #92bce0;
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(2) {
+  --home-tile: #69483f; --home-tile-ink: #fff3ee; --home-tile-accent: #edb09a;
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(3) {
+  --home-tile: #674258; --home-tile-ink: #fff1f7; --home-tile-accent: #e7a6c2;
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(4) {
+  --home-tile: #514a7c; --home-tile-ink: #f5f3ff; --home-tile-accent: #b9b0f1;
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(5) {
+  --home-tile: #2e5d4e; --home-tile-ink: #effaf4; --home-tile-accent: #9bd0b1;
+}
+html[data-theme="dark"] body.student-reference #homeView #studentServices .pay-tile:nth-child(6) {
+  --home-tile: #50544f; --home-tile-ink: #f6f7f3; --home-tile-accent: #c2c8c0;
+}
+
+/* The shared Soft 3D float is intentionally phase-shifted across all six
+   Student shortcuts; no two neighboring icons bob in sync. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(1) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: 0s !important; }
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(2) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: -.36s !important; }
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(3) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: -.72s !important; }
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(4) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: -1.08s !important; }
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(5) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: -1.44s !important; }
+  body.student-reference #homeView #studentServices .pay-tile:nth-child(6) .pay-tile-icon svg[data-icon-set="active-plus-soft3d"] { animation-delay: -1.8s !important; }
+}
+
+@media screen and (min-width: 768px) {
+  body.student-reference { background: var(--color-bg); }
+  body.student-reference #appShell {
+    position: relative;
+    width: min(calc(100% - 64px), 1230px);
+    max-width: 1230px;
+    height: calc(100dvh - 48px);
+    min-height: 520px;
+    margin: 32px auto 16px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 34px;
+    background: var(--color-surface);
+    box-shadow: 0 12px 36px color-mix(in srgb, var(--color-text) 8%, transparent);
+  }
+  body.student-reference #studentHeader {
+    position: relative;
+    top: auto;
+    flex: none;
+  }
+  body.student-reference #studentHeader .app-topbar-inner {
+    width: 100%;
+    max-width: none;
+    min-height: 78px;
+    padding: 12px 24px;
+  }
+  body.student-reference #studentHeader .app-brand-logo { width: 46px; height: 46px; }
+  body.student-reference #studentHeader .app-brand-institute { font-size: 20px; }
+  body.student-reference #studentHeader .app-brand-slogan { font-size: 13px; }
+  body.student-reference #studentHeader .app-topbar-icon { width: 48px; height: 48px; }
+  body.student-reference #appMain {
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 24px 24px calc(104px + var(--safe-bottom));
+  }
+  body.student-reference #homeView { gap: 20px; }
+  body.student-reference #homeView .student-home-overview { gap: 20px; }
+  body.student-reference #homeView .student-home-welcome {
+    min-height: 148px;
+    padding: 25px 28px;
+    border-radius: 30px;
+  }
+  body.student-reference #homeView .student-home-welcome .pay-hero-id { min-height: 98px; gap: 22px; }
+  body.student-reference #homeView .student-home-welcome .pay-avatar { width: 80px; height: 80px; font-size: 30px; }
+  body.student-reference #homeView .student-home-welcome .pay-greeting { font-size: 17px; }
+  body.student-reference #homeView .student-home-welcome .pay-hero-name { font-size: 30px; }
+  body.student-reference #homeView .student-home-welcome .pay-hero-meta { font-size: 16px; }
+  body.student-reference #homeView .daily-quote-card {
+    min-height: 174px;
+    padding: 23px 28px;
+    border-radius: 30px;
+    gap: 12px;
+  }
+  body.student-reference #homeView .daily-quote-mark { width: 42px; height: 42px; }
+  body.student-reference #homeView .daily-quote-mark svg { width: 26px; height: 26px; }
+  body.student-reference #homeView .daily-quote-kicker { font-size: 19px; }
+  body.student-reference #homeView .daily-quote-text { font-size: clamp(22px, 2.1vw, 29px); }
+  body.student-reference #homeView .daily-quote-date { font-size: 16px; }
+  body.student-reference #homeView .daily-advice-summary { font-size: 14px; }
+  body.student-reference #homeView .dashboard-today-section {
+    min-height: 158px;
+    padding: 22px 28px;
+    border-radius: 30px;
+  }
+  body.student-reference #homeView .dashboard-section-heading { margin: 0 112px 4px 0; }
+  body.student-reference #homeView .dashboard-section-heading h2 { font-size: 16px; }
+  body.student-reference #homeView .dashboard-text-link { font-size: 14px; }
+  body.student-reference #homeView .dashboard-routine-main { width: calc(100% - 122px); }
+  body.student-reference #homeView .dashboard-routine-main strong { font-size: clamp(24px, 2.25vw, 30px); }
+  body.student-reference #homeView .dashboard-routine-main small { font-size: 14px; }
+  body.student-reference #homeView .dashboard-time-pill { font-size: 16px; }
+  body.student-reference #homeView .dashboard-routine-status { font-size: 15px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card {
+    min-height: 164px;
+    padding: 22px 28px;
+    border-radius: 30px;
+  }
+  body.student-reference #homeView .progress-ring { width: 84px; height: 84px; }
+  body.student-reference #homeView .progress-ring::before { inset: 8px; }
+  body.student-reference #homeView .progress-ring strong { font-size: 20px; }
+  body.student-reference #homeView .study-progress-heading h1 { font-size: 19px; }
+  body.student-reference #homeView .study-progress-subtitle { font-size: clamp(21px, 2vw, 27px); }
+  body.student-reference #homeView #homeRealStatsRow { margin-top: 10px; padding-top: 9px; gap: 8px 24px; }
+  body.student-reference #homeView #homeRealStatsRow strong { font-size: 17px; }
+  body.student-reference #homeView #homeRealStatsRow small { font-size: 14px; }
+  body.student-reference #homeView #studentServices { gap: 12px; }
+  body.student-reference #homeView #studentServices .pay-tile { min-height: 138px !important; padding: 21px 24px; border-radius: 25px; }
+  body.student-reference #homeView #studentServices .pay-tile-label { font-size: clamp(20px, 1.8vw, 25px); }
+  body.student-reference #homeView #studentServices .pay-tile-icon { top: 50%; right: 22px; bottom: auto; width: 68px; height: 68px; transform: translateY(-50%); }
+  body.student-reference #homeView #studentServices .pay-tile-icon svg { width: 44px; height: 44px; }
+  body.student-reference #homeView .daily-challenge-section { margin-top: 4px; }
+  body.student-reference .bottom-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    width: auto;
+    max-width: none;
+    min-height: 88px;
+    padding: 8px 32px calc(8px + var(--safe-bottom));
+    transform: none;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+    filter: none;
+  }
+  body.student-reference .bottom-nav::before { display: none; }
+  body.student-reference .bottom-nav .bottom-link { max-width: 180px; min-height: 66px; justify-content: center; }
+}
+
+@media screen and (min-width: 768px) and (max-height: 620px) {
+  body.student-reference #appShell {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  body.student-reference #appMain { padding: 14px 20px calc(104px + var(--safe-bottom)); }
+  body.student-reference .bottom-nav { border-radius: 0; }
+}
+
+@media screen and (max-width: 480px) {
+  body.student-reference #homeView { gap: 12px; }
+  body.student-reference #homeView .student-home-welcome { min-height: 104px; padding: 14px 14px 14px 16px; border-radius: 20px; }
+  body.student-reference #homeView .student-home-welcome .pay-hero-id { min-height: 74px; gap: 12px; }
+  body.student-reference #homeView .student-home-welcome .pay-avatar { width: 54px; height: 54px; font-size: 22px; }
+  body.student-reference #homeView .student-home-welcome .pay-greeting { font-size: 12px; }
+  body.student-reference #homeView .student-home-welcome .pay-hero-name { font-size: 20px; }
+  body.student-reference #homeView .student-home-welcome .pay-hero-meta { font-size: 11px; }
+  body.student-reference #homeView .daily-quote-card { min-height: 0; padding: 14px 15px; gap: 8px; border-radius: 20px; }
+  body.student-reference #homeView .daily-quote-mark { width: 30px; height: 30px; }
+  body.student-reference #homeView .daily-quote-mark svg { width: 18px; height: 18px; }
+  body.student-reference #homeView .daily-quote-kicker { font-size: 12px; }
+  body.student-reference #homeView .daily-quote-text { max-width: 100%; font-size: 17px; }
+  body.student-reference #homeView .daily-quote-date { font-size: 11px; }
+  body.student-reference #homeView .daily-advice-summary { flex-basis: 100%; font-size: 11px; }
+  body.student-reference #homeView .dashboard-today-section { min-height: 122px; padding: 14px 15px; border-radius: 20px; }
+  body.student-reference #homeView .dashboard-section-heading { margin-right: 54px; }
+  body.student-reference #homeView .dashboard-section-heading h2 { font-size: 13px; }
+  body.student-reference #homeView .dashboard-text-link { font-size: 11px; }
+  body.student-reference #homeView .dashboard-routine-main { width: calc(100% - 64px); }
+  body.student-reference #homeView.is-empty-routine .dashboard-empty-card { width: calc(100% - 64px); }
+  body.student-reference #homeView .dashboard-routine-main strong { font-size: 18px; }
+  body.student-reference #homeView .dashboard-time-pill { font-size: 11.5px; }
+  body.student-reference #homeView .dashboard-routine-main small { font-size: 10px; }
+  body.student-reference #homeView .dashboard-routine-status { font-size: 11px; }
+  body.student-reference #homeView .student-home-overview { gap: 12px; }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card { min-height: 116px; padding: 14px 15px; border-radius: 20px; }
+  body.student-reference #homeView .study-progress-top { gap: 8px; }
+  body.student-reference #homeView .study-progress-heading h1 { font-size: 14px; }
+  body.student-reference #homeView .study-progress-subtitle { font-size: 15px; }
+  body.student-reference #homeView .progress-ring { width: 58px; height: 58px; }
+  body.student-reference #homeView .progress-ring::before { inset: 6px; }
+  body.student-reference #homeView .progress-ring strong { font-size: 14px; }
+  body.student-reference #homeView #homeRealStatsRow { gap: 4px 12px; margin: 6px 66px 0 0; padding-top: 6px; }
+  body.student-reference #homeView #homeRealStatsRow strong { font-size: 12px; }
+  body.student-reference #homeView #homeRealStatsRow small { font-size: 10px; }
+  body.student-reference #homeView #studentServices { gap: 9px; }
+  body.student-reference #homeView #studentServices .pay-tile { min-height: 100px !important; padding: 14px 12px; border-radius: 17px; }
+  body.student-reference #homeView #studentServices .pay-tile-label { width: 78%; font-size: 15px; }
+  body.student-reference #homeView #studentServices .pay-tile-icon { top: auto; right: 10px; bottom: 10px; width: 48px; height: 48px; padding: 6px; border-radius: 14px; transform: none; }
+  body.student-reference #homeView #studentServices .pay-tile-icon svg { width: 31px; height: 31px; }
+
+  /* Match compact progress text to the same light/dark palette as the card. */
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-heading h1 {
+    color: var(--student-home-progress-ink);
+    font-size: 14px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-subtitle {
+    color: var(--student-home-progress-ink);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring {
+    width: 58px;
+    height: 58px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring::before {
+    inset: 6px;
+    background: var(--student-home-progress);
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring strong {
+    color: var(--student-home-progress-ink);
+    font-size: 14px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary .progress-ring small {
+    display: block;
+    color: color-mix(in srgb, var(--student-home-progress-ink) 74%, var(--color-text-secondary));
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 6px 66px 0 0;
+    padding: 6px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--student-home-progress-ink) 18%, transparent);
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow > div {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow strong {
+    color: var(--student-home-progress-ink);
+    font-size: 12px;
+  }
+  body.student-reference #homeView .pay-hero.pay-hero-summary #homeRealStatsRow small {
+    color: color-mix(in srgb, var(--student-home-progress-ink) 74%, var(--color-text-secondary));
+    font-size: 10px;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  body.student-reference #appMain { padding-inline: 10px; }
+  body.student-reference #homeView .daily-quote-footer { gap: 2px 10px; }
+  body.student-reference #homeView .dashboard-text-link { font-size: 10px; }
+  body.student-reference #homeView .dashboard-section-heading { margin-right: 48px; }
+  body.student-reference #homeView.is-empty-routine .dashboard-empty-card { width: calc(100% - 48px); }
+  body.student-reference #homeView #studentServices { gap: 8px; }
+  body.student-reference #homeView #studentServices .pay-tile { min-height: 92px !important; padding: 12px 10px; }
+  body.student-reference #homeView #studentServices .pay-tile-label { font-size: 14px; }
+}
+
+/* Match the reference's violet Home selection without changing the shared
+   green brand tokens or the other portals' active navigation. */
+body.student-reference .bottom-nav .bottom-link.active {
+  background: rgba(85, 73, 179, .1);
+  color: #5549b3;
+}
+body.student-reference .bottom-nav .bottom-link.active .nav-chip {
+  background: #5549b3;
+  color: #fff;
+}
+body.student-reference .bottom-nav .bottom-link.active > span:not(.nav-chip) {
+  color: #5549b3;
+}
+
+/* Interface match: home is the reference, so every student subview card
+   (পড়াশোনা, নোটিশ বোর্ড, বাড়ির কাজ, আরও, রুটিন, পরীক্ষা) wears the same
+   20px radius and shared soft lift as the home cards. */
+body.student-reference .learning-card,
+body.student-reference .routine-card,
+body.student-reference .result-card,
+body.student-reference .course-card,
+body.student-reference .teaching-board,
+body.student-reference .profile-card,
+body.student-reference .exam-card,
+body.student-reference .challenge-card,
+body.student-reference .notice-board-card,
+body.student-reference .notice-board-detail {
+  border-radius: 20px;
+  box-shadow: var(--pay-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.student-reference #homeView #studentServices .pay-tile,
+  body.student-reference #homeView #studentServices .pay-tile-icon { transition: none; }
+}
+
+@media print {
+  body.student-reference #homeView .student-home-welcome,
+  body.student-reference #homeView #dailyQuoteCard,
+  body.student-reference #homeView .dashboard-today-section,
+  body.student-reference #homeView .pay-hero.pay-hero-summary .study-progress-card,
+  body.student-reference #homeView #studentServices .pay-tile { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Zero-count badges stay quiet so a new student reads "nothing yet", not
+   "nothing, ever"; counts return to full weight the moment they register. */
+.student-reference #studySections .learning-filter-count.is-zero,
+.student-reference #examTabs .learning-filter-count.is-zero,
+.student-reference #classHub .class-hub-count.is-zero { opacity: .45; }

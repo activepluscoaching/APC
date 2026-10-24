@@ -1,0 +1,114 @@
+/* Examination workspace — date-wise history, archive and questions.
+   Layout only: every colour comes from css/foundation.css, so the AMOLED
+   theme needs no second palette here. Mobile-first: the dashboard table turns
+   into one card per exam on a phone, and nothing in this section may push the
+   page sideways. */
+
+.exam-workspace{display:grid;gap:var(--space-4);min-width:0}
+.exam-workspace>*{min-width:0}
+/* Row spacing: the grid gap is the one spacer — direct <p> rows add no
+   margins of their own, an empty status row takes no space at all, and the
+   first row inside the content area does not double the gap. */
+.exam-workspace>p{margin:0}
+.exam-auto-notice:empty{display:none}
+[data-exam-content]>.exam-actions:first-child{margin-top:0}
+.exam-timer{margin-top:var(--space-3)}
+/* Keep the official live-exam countdown visible while the student scrolls the
+   paper. #appMain owns scrolling, so top:0 pins this below the shell header. */
+.exam-timer--pinned{position:sticky;top:0;z-index:25;margin-top:0;background:var(--color-surface)}
+
+/* ---- module tiles + counters ------------------------------------------- */
+.exam-hub{display:grid;gap:var(--space-3)}
+.exam-counters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2);margin:0}
+.exam-counters>div{display:grid;gap:2px;padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-muted)}
+.exam-counters dt{font-size:var(--font-xs);color:var(--color-text-secondary)}
+.exam-counters dd{margin:0;font-size:var(--font-lg);font-weight:650}
+.exam-section-title{display:flex;justify-content:space-between;gap:var(--space-2);align-items:baseline;margin-block:var(--space-3) 0}
+
+/* ---- filters ----------------------------------------------------------- */
+.exam-filters{display:grid;gap:var(--space-3);padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface)}
+.exam-filters label{display:grid;gap:var(--space-1);font-size:var(--font-sm);color:var(--color-text-secondary)}
+.exam-filters input,.exam-filters select{width:100%;min-width:0}
+.exam-filter-wide{grid-column:1/-1}
+
+/* ---- date groups + dashboard table ------------------------------------ */
+.exam-date-group{display:grid;gap:var(--space-2);margin-block:var(--space-4)}
+.exam-date-head{display:flex;justify-content:space-between;gap:var(--space-2);align-items:baseline;padding-inline-start:var(--space-2);border-inline-start:3px solid var(--color-primary)}
+.exam-date-head span{font-size:var(--font-xs);color:var(--color-text-secondary);font-weight:400}
+.exam-table-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface)}
+.exam-table{width:100%;border-collapse:collapse;font-size:var(--font-sm)}
+.exam-table th,.exam-table td{text-align:start;vertical-align:top;padding:var(--space-3);border-bottom:1px solid var(--color-border);overflow-wrap:anywhere}
+.exam-table thead th{background:var(--color-surface-muted);font-weight:600;white-space:nowrap}
+.exam-table tbody tr:last-child td{border-bottom:0}
+.exam-row-meta{display:block;color:var(--color-text-secondary)}
+.exam-review-note{display:block;color:var(--color-danger)}
+.exam-row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.exam-row-actions>:only-child{grid-column:1/-1}
+
+/* ---- workflow timeline ------------------------------------------------- */
+.exam-timeline{display:flex;flex-wrap:wrap;gap:var(--space-2);margin:var(--space-3) 0;padding:0;list-style:none}
+.exam-timeline li{padding:4px 10px;border:1px solid var(--color-border);border-radius:999px;font-size:var(--font-xs);color:var(--color-text-secondary)}
+.exam-timeline li.is-done{border-color:var(--color-success);color:var(--color-success)}
+.exam-timeline li.is-current{border-color:var(--color-primary);color:var(--color-primary);font-weight:600}
+
+/* ---- record fields (all eleven exam fields, readable on a phone) ------- */
+.exam-record{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);margin:var(--space-3) 0}
+.exam-record dt{font-size:var(--font-xs);color:var(--color-text-secondary)}
+.exam-record dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.exam-identity .exam-record{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* ---- status tags + questions ------------------------------------------ */
+.exam-status{border:1px solid currentColor;background:var(--color-surface);font-weight:600}
+.exam-status-muted{color:var(--color-text-secondary)}
+.exam-status-warning{color:var(--color-warning)}
+.exam-status-info{color:var(--color-primary)}
+.exam-status-success{color:var(--color-success)}
+.exam-status-danger{color:var(--color-danger)}
+.exam-questions-head{display:grid;gap:var(--space-2)}
+.exam-tags{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.exam-tags .exam-tag{margin:0}
+.exam-question-options p{margin:0 0 4px}
+.exam-option-correct{color:var(--color-success);font-weight:600}
+/* ---- exam code + the six stages ---------------------------------------- */
+.exam-code-tag{font-family:var(--font-mono,ui-monospace,monospace);letter-spacing:.5px;font-weight:600}
+.exam-stage{border:1px solid currentColor;background:var(--color-surface);font-weight:600}
+.exam-stage-draft{color:var(--color-text-secondary)}
+.exam-stage-scheduled{color:var(--color-warning)}
+.exam-stage-published{color:var(--color-primary)}
+.exam-stage-running{color:var(--color-success)}
+.exam-stage-completed{color:var(--color-text-secondary)}
+.exam-stage-archived{color:var(--color-text-secondary);opacity:.85}
+
+/* ---- question bank ------------------------------------------------------ */
+.exam-bank-filters{grid-template-columns:minmax(0,1fr)}
+.exam-bank-row,.exam-bank-pick{margin-bottom:var(--space-3)}
+.exam-bank-row p,.exam-bank-pick p{margin:var(--space-2) 0;overflow-wrap:anywhere}
+.exam-bank-form{display:grid;gap:var(--space-2)}
+.exam-bank-tools{flex-wrap:wrap}
+.exam-bank-picker summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+@media (max-width:720px){
+  /* The bank form never squeezes two fields into one narrow row. */
+  .exam-bank-form,.exam-bank-form label{grid-template-columns:minmax(0,1fr)}
+  .exam-bank-row .exam-actions button,.exam-bank-pick .exam-actions button{width:100%}
+}
+.exam-question-edit,.exam-question-add{margin-top:var(--space-3)}
+.exam-question-add summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+
+@media (max-width:720px){
+  /* One card per exam: labels come from data-label, so nothing is clipped. */
+  .exam-table-wrap{border:0;background:transparent;overflow:visible}
+  .exam-table,.exam-table tbody,.exam-table tr,.exam-table td{display:block;width:100%}
+  .exam-table thead{display:none}
+  .exam-table tr{margin-bottom:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface)}
+  .exam-table td{display:grid;grid-template-columns:minmax(94px,36%) minmax(0,1fr);gap:var(--space-2);padding:5px 0;border:0}
+  .exam-table td::before{content:attr(data-label);color:var(--color-text-secondary);font-size:var(--font-xs)}
+  .exam-table td[data-label="অ্যাকশন"]{grid-template-columns:minmax(0,1fr)}
+  .exam-table td[data-label="অ্যাকশন"]::before{content:''}
+  .exam-record,.exam-identity .exam-record{grid-template-columns:minmax(0,1fr)}
+}
+
+/* Keep multi-column exam summaries in print/PDF output only. */
+@media print and (min-width: 721px) {
+  .exam-counters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .exam-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

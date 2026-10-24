@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app http://localhost:9000 http://127.0.0.1:9000; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.supabase.co wss://*.supabase.co https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app https://*.firebasedatabase.app http://localhost:9000 http://127.0.0.1:9000; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <script src="js/sanitize-url.js?v=421"></script>
+  <script src="js/cache-refresh.js?v=421"></script>
+  <script src="js/app-entry.js?v=421" data-entry="admin"></script>
+  <script type="module" src="js/admin.js?v=421"></script>
+  <script type="module" src="js/advice-admin-entry.js?v=421"></script>
+  <script src="js/topbar-connectivity.js?v=421" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=421"></script>
+  <script src="js/appearance-boot.js?v=421"></script>
+  <script src="js/theme-logos.js?v=421"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0e7a55">
+  <meta name="description" content="Active Plus Coaching এডমিন প্যানেল — ইউজারনেম ও পাসওয়ার্ড দিয়ে প্রবেশ।">
+  <meta name="robots" content="noindex">
+  <title>Active Plus | এডমিন প্যানেল</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app">
+  <link rel="dns-prefetch" href="https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <!-- Global glass design system. Presentation layer only; loaded last. -->
+  <!-- Admin Panel shell: permission-driven navigation, icon grid and typography.
+       Loaded last so the panel always speaks the shared design language. -->
+  <link rel="preload" href="assets/fonts/NotoSansBengali-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Icon geometry + staff management: loaded last so one fixed container
+       per icon is the final word (no overlap, no double painting). -->
+
+  <!-- Stylesheets are linked directly, in design-system.css order, instead of
+       being @import-ed from it: the preload scanner then discovers all 15 in the
+       HTML and fetches them in parallel, instead of a render-blocking serial
+       waterfall (design-system.css first, its imports one round-trip later).
+       tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
+  <link rel="stylesheet" href="css/foundation.css?v=421">
+  <link rel="stylesheet" href="css/ui-layout.css?v=421">
+  <link rel="stylesheet" href="css/ui-components.css?v=421">
+  <link rel="stylesheet" href="css/ui-forms.css?v=421">
+  <link rel="stylesheet" href="css/ui-features.css?v=421">
+  <link rel="stylesheet" href="css/notice-board.css?v=421">
+  <link rel="stylesheet" href="css/ui-status.css?v=421">
+  <link rel="stylesheet" href="css/ui-auth.css?v=421">
+  <link rel="stylesheet" href="css/app-polish.css?v=421">
+  <link rel="stylesheet" href="css/student-record.css?v=421">
+  <link rel="stylesheet" href="css/exam-archive.css?v=421">
+  <link rel="stylesheet" href="css/academics.css?v=421">
+  <link rel="stylesheet" href="css/notifications.css?v=421">
+  <link rel="stylesheet" href="css/course-hub.css?v=421">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=421">
+  <script type="module" src="js/ui-accessibility.js?v=421"></script>
+  <script src="js/launch-screen.js?v=421" defer></script>
+</head>
+<body class="admin-reference">
+  <!-- apcPanelBootLogin is created by the CSP-safe boot guard. --><script src="js/admin-boot-guard.js?v=421" defer></script>
+  <!-- First use lives on the login page only (index.html → "প্রথমবার ব্যবহার
+       করছেন? Admin Account তৈরি করুন"). This panel never offers it again, and
+       js/staff-auth.js refuses createInitialAdmin() once one Admin exists. -->
+  <!-- Admin Login Screen -->
+  <div class="admin-shell" id="adminShell" hidden>
+    <header class="app-topbar"><div class="app-topbar-inner"><div class="app-brand"><img class="app-brand-logo" src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="38" height="38"><span class="app-brand-text"><strong class="app-brand-institute">Active Plus Coaching</strong><small class="app-brand-slogan" data-fixed-tagline>শিখতে থাকো, এগিয়ে যাও</small></span></div><div class="app-topbar-actions"><button class="app-topbar-icon class-chat-topbar-button" id="classChatTopbarButton" data-admin-view="class-chat" data-admin-cap="data.manage" type="button" aria-label="শ্রেণি চ্যাট খুলুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot class-chat-dot" data-chat-unread-dot hidden aria-hidden="true"></span></button><button class="app-topbar-icon notification-button" id="notificationButton" type="button" aria-label="নোটিফিকেশন দেখুন" aria-haspopup="dialog"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span class="notification-dot" hidden aria-hidden="true"></span></button><button class="app-topbar-icon app-topbar-exit" id="adminExitButton" type="button" aria-label="লগআউট"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div></header>
+
+    <main class="admin-main" id="adminMain">
+      <!-- System overview: identity, staff, data and security snapshots.
+           No daily collection, routine or notice entry lives here. -->
+      <section class="admin-view active" data-view-panel="dashboard" aria-labelledby="dashTitle">
+        <div class="home-dashboard-intro admin-home-intro" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="অ্যাডমিন ড্যাশবোর্ডের থ্রিডি চিত্র" width="828" height="462" fetchpriority="high" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="admin-hero-top teacher-hero-top">
+              <span class="admin-hero-icon" aria-hidden="true" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="home" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/home.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <span class="teacher-hero-top-right">
+                <div class="admin-hero-date-chip teacher-hero-date-pill">
+                  <span class="admin-weekday-label" id="adminTodayWeekday"></span>
+                  <time class="admin-date-pill" id="adminTodayDate"></time>
+                </div>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="admin-hero-title teacher-hero-welcome" data-admin-hero-advice="admin-dashboard">
+              <div class="pay-portal-heading">
+                <div class="admin-welcome" id="adminWelcome" hidden role="status" aria-live="polite"></div>
+                <h1 id="dashTitle">স্বাগতম, এডমিন</h1>
+                <p class="admin-hero-advice teacher-hero-advice" id="adminHeroAdvice">প্রতিদিন স্টাফ ও সিস্টেম লগ একবার যাচাই করুন এবং নিয়মিত ডেটা ব্যাকআপ সংরক্ষণ করুন।</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="admin-home-summary" aria-labelledby="adminSummaryTitle">
+          <h2 class="admin-summary-title" id="adminSummaryTitle">পরিচালনাগত সারাংশ</h2>
+          <div class="admin-hero-stats">
+            <div class="admin-stat-tile tone-mint">
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="users" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/users.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <p class="tile-label">মোট শিক্ষার্থী</p>
+              <p class="tile-value" id="dashStudentCount">—</p>
+            </div>
+            <div class="admin-stat-tile tone-blue">
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="users" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/users.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <p class="tile-label">সক্রিয় স্টাফ</p>
+              <p class="tile-value" id="dashStaffCount">—</p>
+            </div>
+            <div class="admin-stat-tile tone-amber">
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <p class="tile-label">চলমান ক্লাস</p>
+              <p class="tile-value" id="dashClassCount">—</p>
+            </div>
+            <div class="admin-stat-tile tone-lilac">
+              <span class="tile-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <p class="tile-label">সুরক্ষিত অ্যাকাউন্ট</p>
+              <p class="tile-value" id="dashProtectedCount">—</p>
+            </div>
+          </div>
+        </section>
+        <p class="admin-maintenance-flag" id="adminMaintenanceFlag" hidden role="status"></p>
+        <div class="admin-backup-reminder" id="backupReminder" role="status" hidden><span class="admin-backup-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="backup" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/backup.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-backup-copy"><strong>ব্যাকআপ নেওয়া হয়নি</strong> — ৭ দিন ব্যাকআপ নেওয়া হয়নি।</span><a class="admin-backup-action" href="#backup">ব্যাকআপ এক্সপোর্ট করুন</a></div>
+        <!-- Permission-driven section grid: one large icon + one clear label per
+             section, rendered only for the capabilities this role holds. -->
+        <p class="pay-section-label">দ্রুত অ্যাক্সেস</p>
+        <div class="pay-grid is-2 admin-feature-grid" id="adminFeatureGrid" aria-label="হোম শর্টকাট"></div>
+        <div class="admin-quick-shortcuts" id="adminQuickShortcuts" aria-label="প্রধান শর্টকাট">
+          <button class="admin-quick-card" type="button" data-admin-view="staff" data-admin-cap="staff.manage">
+            <span class="admin-quick-icon pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-quick-copy">
+              <strong>স্টাফ তালিকা</strong>
+              <small>সকল স্টাফ খুঁজুন ও পরিচালনা করুন</small>
+            </span>
+          </button>
+          <button class="admin-quick-card" type="button" data-admin-view="backup" data-admin-cap="backup.manage">
+            <span class="admin-quick-icon pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="backup" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/backup.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-quick-copy">
+              <strong>ব্যাকআপ এক্সপোর্ট</strong>
+              <small>এক ট্যাপে সম্পূর্ণ ডেটা সংরক্ষণ</small>
+            </span>
+          </button>
+          <button class="admin-quick-card is-full" type="button" data-admin-view="reports" data-admin-cap="reports.view">
+            <span class="admin-quick-icon pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-quick-copy">
+              <strong>রিপোর্ট</strong>
+              <small>শিক্ষার্থী, স্টাফ ও হিসাবের পিডিএফ রিপোর্ট</small>
+            </span>
+          </button>
+        </div>
+        <button class="teacher-chat-hub" type="button" data-admin-view="class-chat" data-admin-cap="data.manage" aria-label="শ্রেণি চ্যাট ও মডারেশন খুলুন — সকল শ্রেণির আলোচনা পর্যবেক্ষণ, বার্তা পিন ও চ্যাট লক">
+          <span class="teacher-academic-hub-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          <span class="teacher-academic-hub-body">
+            <span class="teacher-academic-hub-title">শ্রেণি চ্যাট ও মডারেশন</span>
+            <span class="teacher-academic-hub-sub">সকল শ্রেণির আলোচনা কক্ষ পর্যবেক্ষণ, বার্তা পিন/মুছুন ও চ্যাট লক নিয়ন্ত্রণ</span>
+          </span>
+          <span class="teacher-academic-hub-chevron" aria-hidden="true"></span>
+        </button>
+        <!-- Super Admin (owner decision 2026-10-16): the signed-in Admin holds
+             full control, so every staff portal opens from here with the
+             Admin session alone — no second login. Only this page ships
+             these doors; every other panel still refuses cross-panel routes
+             (js/panel-lockdown.js lets the Admin through, and each portal
+             re-validates the device-bound Admin session on entry). Student
+             accounts keep their own login: entering as a student would put
+             exam answers and payments in a student's name, so no student
+             door is shipped here. -->
+        <p class="pay-section-label">সব প্যানেল · সুপার অ্যাডমিন</p>
+        <div class="pay-grid is-3 admin-portal-grid" aria-label="সব প্যানেলে যান">
+          <a class="pay-tile admin-portal-card teacher-action-card is-accent" href="manager.html">
+            <span class="pay-tile-icon teacher-action-art" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label teacher-action-title" data-action-sub="শিক্ষার্থী ভর্তি, রুটিন, নোটিশ ও হিসাব তদারকি">ম্যানেজার প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card teacher-action-card" href="teacher.html">
+            <span class="pay-tile-icon teacher-action-art" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="teacher" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/teacher.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label teacher-action-title" data-action-sub="ক্লাস, উপস্থিতি, বাড়ির কাজ, সাজেশন ও পরীক্ষা">শিক্ষক প্যানেল</span>
+          </a>
+          <a class="pay-tile admin-portal-card teacher-action-card" href="payment.html">
+            <span class="pay-tile-icon teacher-action-art" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="wallet" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/wallet.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="pay-tile-label teacher-action-title" data-action-sub="দৈনিক ফি আদায়, ডিজিটাল রসিদ ও কাউন্টার ক্লোজিং">পেমেন্ট কাউন্টার</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ================= Staff Management =================
+           Admin-controlled CRUD for every non-student user. A স্টাফ আইডি is
+           unique, permanent and never mixed with a শিক্ষার্থী আইডি. -->
+      <section class="admin-view" data-view-panel="staff" aria-labelledby="staffTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="স্টাফ ব্যবস্থাপনার থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="staff">
+              <h1 id="staffTitle">স্টাফ ও কর্মকর্তা ব্যবস্থাপনা</h1>
+              <p class="staff-page-sub">নতুন স্টাফ অ্যাকাউন্ট তৈরির সময় সঠিক রোল ও মোবাইল নম্বর যাচাই করে নিলে নিরাপত্তা অটুট থাকে।</p>
+            </div>
+          </div>
+        </div>
+        <div class="staff-create-bar" data-admin-cap="staff.manage">
+          <button class="admin-btn primary staff-create-btn teacher-action-card is-accent" type="button" id="staffCreateButton">
+            <span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নতুন শিক্ষক, ম্যানেজার বা ক্যাশ কাউন্টার অ্যাকাউন্ট যোগ করুন">নতুন স্টাফ তৈরি করুন</span></span>
+            <span class="apc-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+        </div>
+        <button class="teacher-action-card" type="button" data-admin-section-toggle="staff-directory" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সক্রিয় ও নিষ্ক্রিয় সব স্টাফ অ্যাকাউন্ট খুঁজুন, ফিল্টার ও সম্পাদনা করুন">স্টাফ তালিকা ও ফিল্টার দেখুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="users" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/users.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <p class="finance-error" id="staffReadonlyNote" role="status" hidden>শুধুমাত্র এডমিন স্টাফ অ্যাকাউন্ট তৈরি, সম্পাদনা বা মুছতে পারবেন।</p>
+        <div class="admin-toggle-panel" data-admin-section-panel="staff-directory" hidden>
+          <div class="staff-toolbar">
+            <label class="staff-search" for="staffSearch">
+              <span class="staff-search-icon" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              <input id="staffSearch" type="search" placeholder="স্টাফ খুঁজুন — ID, নাম, ইউজারনেম, মোবাইল বা রোল" autocomplete="off" aria-label="স্টাফ অনুসন্ধান">
+              <button class="staff-search-clear" id="staffSearchClear" type="button" aria-label="অনুসন্ধান মুছুন" hidden>
+                <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="close" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/close.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+              </button>
+            </label>
+            <div class="staff-filter-block">
+              <p class="staff-filter-label">রোল</p>
+              <div class="chip-row" id="staffRoleFilter" aria-label="রোল ফিল্টার"></div>
+            </div>
+            <div class="staff-filter-block">
+              <p class="staff-filter-label">স্ট্যাটাস</p>
+              <div class="chip-row" id="staffStatusFilter" aria-label="স্ট্যাটাস ফিল্টার"></div>
+            </div>
+            <label class="staff-sort-control" for="staffSort">
+              <span class="staff-filter-label">সাজানোর ক্রম</span>
+              <select id="staffSort" aria-label="স্টাফ তালিকা সাজান">
+                <option value="default">ডিফল্ট ক্রম</option>
+                <option value="name">নাম (বর্ণক্রম)</option>
+                <option value="id">স্টাফ আইডি</option>
+                <option value="role">ভূমিকা</option>
+                <option value="status">স্ট্যাটাস</option>
+              </select>
+            </label>
+            <span class="staff-count-badge" id="staffCountBadge" aria-live="polite"></span>
+          </div>
+          <div class="staff-list" id="staffList"></div>
+        </div>
+      </section>
+
+      <!-- রোল ও অনুমতি: বিদ্যমান অনুমতির তালিকা -->
+      <section class="admin-view" data-view-panel="system" aria-labelledby="systemTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="সিস্টেম নিয়ন্ত্রণের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="system">
+              <h1 id="systemTitle">সিস্টেম ও নিরাপত্তা নিয়ন্ত্রণ</h1>
+              <p class="admin-view-sub">রোল, নিরাপত্তা, সিস্টেম সেটিংস ও একাডেমিক কাঠামো এখান থেকে কেন্দ্রীয়ভাবে নিয়ন্ত্রণ করুন।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="admin-more-menu admin-card" id="adminSystemMenu" aria-label="সিস্টেম বিভাগ">
+          <button class="admin-more-item admin-system-item teacher-action-card is-accent" type="button" data-admin-view="roles" data-admin-cap="roles.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="roles" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/roles.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>রোল ও অনুমতি</strong><small>রোলভিত্তিক অনুমতির ম্যাট্রিক্স</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="security" data-admin-cap="security.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>সিকিউরিটি</strong><small>সেশন, পাসওয়ার্ড নীতি ও সুরক্ষিত অ্যাকাউন্ট</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="settings" data-admin-cap="settings.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="settings" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/settings.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>সিস্টেম সেটিংস</strong><small>অ্যাপ নিয়ন্ত্রণ, ব্র্যান্ডিং ও নোটিশ</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="academics" data-admin-cap="settings.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="classes" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/classes.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>ক্লাস ও বিষয়</strong><small>ক্লাস, বিষয় ও শিক্ষক ম্যাপিংয়ের একক কেন্দ্র</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="migration" data-admin-cap="security.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="data" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/data.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>ভি-টু সিংক মাইগ্রেশন</strong><small>শিক্ষক সংযোগ ও রোস্টার — কাটওভারের প্রস্তুতি</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+        </nav>
+      </section>
+
+      <section class="admin-view" data-view-panel="migration" aria-labelledby="migrationTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="homework" src="assets/images/teacher-hero/homework-day.webp" alt="ভি-টু সিংক মাইগ্রেশনের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="migration">
+              <h1 id="migrationTitle">ভি-টু সিংক মাইগ্রেশন</h1>
+              <p class="admin-view-sub">ভি-টু সিংক মাইগ্রেশনের আগে সবসময় ড্রাই-রান প্রিভিউ দেখে তথ্য যাচাই করে নিন।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="teacher-home-actions admin-action-stack" aria-label="মাইগ্রেশন অপশন">
+          <button class="teacher-action-card is-accent" type="button" data-admin-migration-card="0" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="পুরনো ইউজারনেম-ভিত্তিক অ্যাসাইনমেন্টকে সুরক্ষিত ক্লেমের সঙ্গে যুক্ত করুন">শিক্ষক লিংক ও অ্যাসাইনমেন্ট যাচাই</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="teacher" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/teacher.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-migration-card="1" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="পুরনো রস্টার এন্ট্রিকে যাচাইকৃত শিক্ষার্থী অ্যাকাউন্টের সঙ্গে যুক্ত করুন">শিক্ষার্থী ভি-টু আইডি মাইগ্রেশন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <div id="adminV2Migration"></div>
+      </section>
+
+      <section class="admin-view" data-view-panel="roles" aria-labelledby="rolesTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="attendance" src="assets/images/teacher-hero/attendance-day.webp" alt="রোল ও অনুমতির থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="roles">
+              <h1 id="rolesTitle">রোল ও অনুমতি ব্যবস্থাপনা</h1>
+              <p class="admin-view-sub">প্রতিটি রোলের কাজের পরিধি ও অনুমতি স্পষ্ট থাকলে দৈনন্দিন কাজে কোনো বিশৃঙ্খলা তৈরি হয় না।</p>
+            </div>
+          </div>
+        </div>
+        <div class="app-control-grid" id="rolesMatrix"></div>
+      </section>
+
+      <!-- Student Management / Student Overview -->
+      <section class="admin-view" data-view-panel="students" aria-labelledby="studentsTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="শিক্ষার্থী ব্যবস্থাপনার থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="students">
+              <h1 id="studentsTitle">শিক্ষার্থী ব্যবস্থাপনা</h1>
+              <p class="admin-view-sub">নতুন নিবন্ধনের আবেদন যাচাইয়ের সময় শ্রেণি, মোবাইল নম্বর ও মাসিক ফি ভালোভাবে মিলিয়ে নিন।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="teacher-home-actions admin-action-stack" id="adminStudentScopeCards" aria-label="শিক্ষার্থী তালিকা ও অনুমোদন">
+          <button class="teacher-action-card is-accent" type="button" data-admin-student-card="all" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সকল শ্রেণির নিবন্ধিত শিক্ষার্থীদের তালিকা, সার্চ ও প্রোফাইল দেখুন">সব শিক্ষার্থী দেখুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="students" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/students.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-student-card="pending" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নতুন শিক্ষার্থীদের নিবন্ধন আবেদন যাচাই করে অনুমোদন বা বাতিল করুন">অপেক্ষমাণ নিবন্ধন অনুমোদন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="pending-user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/pending-user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-student-card="approved" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="অনুমোদিত সক্রিয় শিক্ষার্থীদের তথ্য সম্পাদনা ও পাসওয়ার্ড রিসেট করুন">অনুমোদিত শিক্ষার্থী তালিকা</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="approval" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/approval.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-student-card="rejected" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="বাতিল হওয়া নিবন্ধন আবেদনের তালিকা ও কারণ পর্যালোচনা করুন">বাতিল নিবন্ধন তালিকা</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <div id="adminPendingRegistrations" class="apc-pending-host" hidden></div>
+        <div class="admin-toggle-panel" id="adminStudentsDirectoryPanel" hidden>
+          <div class="student-toolbar">
+            <div class="student-search-box">
+              <label class="student-search" for="studentSearch">
+                <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="search" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/search.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+                <input id="studentSearch" type="search" placeholder="স্টুডেন্ট আইডি, নাম বা মোবাইল নং দিয়ে খুঁজুন..." autocomplete="off">
+                <button class="student-search-clear" id="studentSearchClear" type="button" aria-label="অনুসন্ধান মুছুন" hidden>
+                  <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="close" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/close.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+                </button>
+              </label>
+              <div class="student-search-meta">
+                <span class="student-count-badge" id="studentCountBadge">৮ জন শিক্ষার্থী</span>
+              </div>
+            </div>
+            <button class="student-filter-toggle" type="button" id="studentFilterToggle" aria-expanded="false" aria-controls="studentFilterPanel">
+              <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="grid" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/dashboard.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+              <span>ফিল্টার</span>
+            </button>
+            <div class="student-filter-panel" id="studentFilterPanel" hidden>
+              <div class="student-filter-field">
+                <label for="studentClassFilter">শ্রেণি</label>
+                <select id="studentClassFilter" aria-label="শ্রেণি অনুযায়ী ফিল্টার">
+                  <option value="all">সব শ্রেণি</option>
+                </select>
+              </div>
+              <div class="student-filter-field">
+                <span class="staff-filter-label">স্ট্যাটাস</span>
+                <div class="chip-row" id="studentFilterChips" aria-label="স্ট্যাটাস ফিল্টার">
+                  <button class="chip active" type="button" data-student-filter="all">সব</button>
+                  <button class="chip" type="button" data-student-filter="pending">অপেক্ষমাণ</button>
+                  <button class="chip" type="button" data-student-filter="approved">অনুমোদিত</button>
+                  <button class="chip" type="button" data-student-filter="rejected">বাতিল</button>
+                </div>
+              </div>
+              <button class="student-filter-reset" type="button" id="studentFilterReset">ফিল্টার মুছুন</button>
+            </div>
+          </div>
+          <div class="student-list" id="studentList"></div>
+        </div>
+      </section>
+
+      <!-- Report Center: every downloadable report lives here. -->
+      <section class="admin-view" data-view-panel="reports" aria-labelledby="reportsTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="exam" src="assets/images/teacher-hero/exam-day.webp" alt="রিপোর্ট সেন্টারের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="dashboard" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="reports">
+              <h1 id="reportsTitle">রিপোর্ট ও বিশ্লেষণ কেন্দ্র</h1>
+              <p class="admin-view-sub">মাসিক মূল্যায়ন শেষে অগ্রগতির সারসংক্ষেপ সংরক্ষণ করলে পুরো শিক্ষাবর্ষের চিত্র হাতের মুঠোয় থাকে।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="teacher-home-actions admin-action-stack" aria-label="রিপোর্ট পরিচালনা">
+          <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="reports-builder" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="শিক্ষার্থী, উপস্থিতি, পরীক্ষা, স্টাফ ও হিসাবের পূর্ণাঙ্গ রিপোর্ট তৈরি করুন">প্রতিবেদন তৈরি ও ফিল্টার করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-section-toggle="reports-builder" data-admin-report-focus="preview" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="তৈরি করা রিপোর্ট A4 প্রিভিউ দেখুন এবং PDF হিসেবে সংরক্ষণ করুন">রিপোর্ট প্রিভিউ ও পিডিএফ ডাউনলোড</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="download" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/download.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <section class="rp-section admin-toggle-panel" data-admin-section-panel="reports-builder" aria-labelledby="adminReportsTitle" hidden>
+          <div class="page-intro">
+            <div><h2 id="adminReportsTitle">রিপোর্ট তৈরি, প্রিভিউ ও ডাউনলোড</h2></div>
+          </div>
+          <div id="adminReports" class="rp-mount"></div>
+        </section>
+      </section>
+
+      <!-- Data Management -->
+      <section class="admin-view" data-view-panel="data" aria-labelledby="dataTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="homework" src="assets/images/teacher-hero/homework-day.webp" alt="ডেটা ব্যবস্থাপনার থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="more" aria-label="আরও মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="data">
+              <h1 id="dataTitle">ডেটা ও স্টোরেজ ব্যবস্থাপনা</h1>
+              <p class="data-page-sub">মডিউলভিত্তিক সংরক্ষিত রেকর্ডের সংখ্যা ও স্টোরেজ ব্যবহার নিয়মিত পর্যবেক্ষণ করুন।</p>
+            </div>
+          </div>
+        </div>
+        <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="data-stats" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সংগ্রহভিত্তিক মোট রেকর্ড সংখ্যা ও ব্যবহৃত স্টোরেজের হিসাব দেখুন">সংরক্ষিত ডেটা ও পরিসংখ্যান দেখুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="data" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/data.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="data-stats" hidden>
+          <header class="admin-card-head">
+            <div><h2>সংরক্ষিত ডেটা ও পরিসংখ্যান</h2></div>
+            <button class="mini-btn" type="button" id="dataRefreshButton"><span class="apc-icon" aria-hidden="true"></span>রিফ্রেশ</button>
+          </header>
+          <div class="data-summary" id="dataSummary"></div>
+          <div class="data-collection-list" id="dataCollectionList"></div>
+          <p class="finance-hint" id="dataStorageNote">—</p>
+        </article>
+        <nav class="admin-more-menu admin-card" id="adminDataMenu" aria-label="ডেটা বিভাগ">
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="backup" data-admin-cap="backup.manage">
+            <span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="backup" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/backup.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+            <span class="admin-more-copy"><strong>ব্যাকআপ ও রিস্টোর</strong><small>সম্পূর্ণ ব্যাকআপ নিন ও ফিরিয়ে আনুন</small></span>
+            <span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span>
+          </button>
+        </nav>
+        <button class="teacher-action-card" type="button" data-admin-view="audit" data-admin-cap="backup.manage"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="কে, কখন, কোন পরীক্ষায় বা উপস্থিতিতে নম্বর সংশোধন করেছে তার ইতিহাস দেখুন">নম্বর ও উপস্থিতি অডিট লগ</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="exam" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <button class="teacher-action-card" type="button" data-admin-section-toggle="data-danger" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নির্দিষ্ট সংগ্রহ খালি করুন অথবা পাসওয়ার্ড নিশ্চিত করে সম্পূর্ণ ডাটাবেজ রিসেট করুন">ডেটা মুছুন ও সম্পূর্ণ রিসেট (সতর্ক এলাকা)</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <div class="data-danger-zone" data-admin-section-panel="data-danger" hidden>
+          <p class="data-danger-zone-title"><span class="data-danger-zone-icon" aria-hidden="true"></span>সতর্ক এলাকা — এখানকার কাজ স্থায়ীভাবে ডেটা মুছে দেয়</p>
+          <article class="admin-card admin-danger-card">
+            <header class="admin-card-head">
+              <span class="admin-danger-icon" aria-hidden="true"></span>
+              <div><h2>নির্বাচিত ডেটা মুছুন</h2></div>
+            </header>
+            <div class="staff-field">
+              <label for="dataClearSelect">সংগ্রহ নির্বাচন করুন</label>
+              <select id="dataClearSelect" aria-label="মুছে ফেলার জন্য সংগ্রহ নির্বাচন"></select>
+            </div>
+            <p class="admin-danger-note">সতর্কতা: নির্বাচিত সংগ্রহের সব রেকর্ড স্থায়ীভাবে মুছে যাবে। আগে ব্যাকআপ ও পুনরুদ্ধার থেকে ব্যাকআপ নিন।</p>
+            <button class="admin-btn danger" type="button" id="dataClearButton">নির্বাচিত ডেটা মুছুন</button>
+          </article>
+          <article class="admin-card admin-danger-card">
+            <header class="admin-card-head">
+              <span class="admin-danger-icon" aria-hidden="true"></span>
+              <div><h2>সম্পূর্ণ ডাটাবেজ রিসেট</h2></div>
+            </header>
+            <p class="admin-danger-note">সতর্কতা: ক্লাউড ও এই ডিভাইসের সব ডেটা স্থায়ীভাবে মুছে যাবে। রিসেটের পর লগইন পেজ থেকে নতুন এডমিন অ্যাকাউন্ট তৈরি করতে হবে।</p>
+            <button class="admin-btn danger" type="button" id="factoryResetButton">সম্পূর্ণ ডাটাবেজ রিসেট করুন</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- Backup & Restore -->
+      <section class="admin-view" data-view-panel="backup" aria-labelledby="backupTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="homework" src="assets/images/teacher-hero/homework-day.webp" alt="ব্যাকআপ ও রিস্টোরের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="data" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="backup">
+              <h1 id="backupTitle">ব্যাকআপ ও রিস্টোর</h1>
+              <p class="admin-view-sub">প্রতি সপ্তাহে অন্তত একবার সম্পূর্ণ ডাটাবেজের এনক্রিপ্টেড ব্যাকআপ ডাউনলোড করে নিরাপদ স্থানে রাখুন।</p>
+            </div>
+          </div>
+        </div>
+        <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="backup-export" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সব সংগ্রহের সম্পূর্ণ কপি AES-256-GCM এনক্রিপ্টেড ফাইলে ডাউনলোড করে সংরক্ষণ করুন">সম্পূর্ণ ব্যাকআপ ডাউনলোড (এনক্রিপ্টেড)</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="backup" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/backup.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="backup-export" hidden>
+          <header class="admin-card-head">
+            <div><h2>সম্পূর্ণ ব্যাকআপ ডাউনলোড</h2></div>
+            <span class="badge badge-approved" id="backupLastBadge">—</span>
+          </header>
+          <p class="finance-hint">সব সংগ্রহের সম্পূর্ণ কপি স্বয়ংক্রিয়ভাবে AES-256-GCM এনক্রিপ্ট হয়ে ডাউনলোড হবে — ফাইলটি বাইরে থেকে কেউ সরাসরি পড়তে পারবে না।</p>
+          <div class="modal-actions">
+            <button class="admin-btn primary" type="button" id="backupExportButton">
+              <span class="apc-icon" aria-hidden="true"></span><span>ব্যাকআপ ডাউনলোড</span>
+            </button>
+          </div>
+        </article>
+        <button class="teacher-action-card" type="button" data-admin-section-toggle="backup-restore" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সংরক্ষিত JSON ফাইল নির্বাচন করে পূর্বের ডেটা পুনরুদ্ধার করুন">ব্যাকআপ ফাইল থেকে ফিরিয়ে আনুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="data" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/data.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="backup-restore" hidden>
+          <header class="admin-card-head">
+            <div><h2>ব্যাকআপ ফাইল থেকে ফিরিয়ে আনুন</h2></div>
+          </header>
+          <div class="staff-field">
+            <label for="backupFileInput">ব্যাকআপ ফাইল (.json)</label>
+            <input id="backupFileInput" type="file" accept="application/json,.json">
+          </div>
+          <p class="finance-hint" id="backupStatus">রিস্টোর করার আগে বর্তমান ডেটার ব্যাকআপ নেওয়ার পরামর্শ দেওয়া হয়।</p>
+          <button class="admin-btn ghost" type="button" id="backupRestoreButton">
+            <span class="apc-icon" aria-hidden="true"></span><span>রিস্টোর করুন</span>
+          </button>
+        </article>
+      </section>
+
+      <section class="admin-view" data-view-panel="audit" aria-labelledby="auditTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="exam" src="assets/images/teacher-hero/exam-day.webp" alt="অডিট লগের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="data" aria-label="ডেটা মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="audit">
+              <h1 id="auditTitle">নম্বর ও উপস্থিতি অডিট লগ</h1>
+              <p class="admin-view-sub">নম্বর বা উপস্থিতি সংশোধনের প্রতিটি লগ যাচাই করলে মূল্যায়নের স্বচ্ছতা শতভাগ নিশ্চিত হয়।</p>
+            </div>
+          </div>
+        </div>
+        <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="audit-log" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="কে, কখন, আগে ও পরে কী পরিবর্তন করেছে এবং পরিবর্তনের কারণ দেখুন">সাম্প্রতিক পরিবর্তনের অডিট ইতিহাস</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="audit-log" hidden>
+          <header class="admin-card-head"><div><h2>সাম্প্রতিক পরিবর্তন</h2></div><span class="badge">সর্বশেষ ২০০টি</span></header>
+          <div id="gradeAuditList"></div>
+        </article>
+        <button class="teacher-action-card" type="button" data-admin-section-toggle="audit-exam" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="অনুমোদিত পরীক্ষায় কারণ উল্লেখ করে শিক্ষার্থীর নম্বর সংশোধন করুন">লিখিত পরীক্ষার নম্বর সংশোধন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="exam" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/exam.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="audit-exam" hidden>
+          <header class="admin-card-head"><div><h2>লিখিত পরীক্ষার নম্বর সংশোধন</h2></div></header>
+          <div id="adminExamWorkspace"></div>
+        </article>
+      </section>
+
+      <!-- Security -->
+      <section class="admin-view" data-view-panel="security" aria-labelledby="securityTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="সিকিউরিটি তদারকির থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="security">
+              <h1 id="securityTitle">সিকিউরিটি ও সেশন তদারকি</h1>
+              <p class="admin-view-sub">সিস্টেম মালিকের সুরক্ষিত অ্যাকাউন্ট ও স্টাফদের পাসওয়ার্ড পরিবর্তনের অবস্থা নিয়মিত তদারকি করুন।</p>
+            </div>
+          </div>
+        </div>
+        <div class="app-control-grid" id="securityPanels"></div>
+      </section>
+
+      <!-- Academic Setup: the single source of truth for classes and subjects -->
+      <section class="admin-view" data-view-panel="academics" aria-labelledby="academicSetupTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="ক্লাস ও বিষয় নির্ধারণের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="system" aria-label="ফিরে যান" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="academics">
+              <h1 id="academicSetupTitle">ক্লাস ও পাঠ্য বিষয় নির্ধারণ</h1>
+              <p class="admin-view-sub">শ্রেণি ও পাঠ্য বিষয়ের তালিকা এখানে হালনাগাদ করলে রুটিন, পরীক্ষা ও কোর্সে তা স্বয়ংক্রিয়ভাবে যুক্ত হয়।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="teacher-home-actions admin-action-stack" aria-label="ক্লাস ও বিষয় ব্যবস্থাপনা">
+          <button class="teacher-action-card is-accent" type="button" data-admin-academic-card="add" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="নতুন শ্রেণি অথবা নতুন পাঠ্য বিষয় সিস্টেমে যুক্ত করুন">নতুন ক্লাস ও বিষয় যোগ করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="classes" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/classes.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-academic-card="subjects" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="কোনো পাঠ্য বিষয় চালু বা সাময়িক বন্ধ করুন">সকল বিষয়ের তালিকা ও নিয়ন্ত্রণ</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-academic-card="mapping" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="কোন শ্রেণিতে কোন কোন বিষয় পড়ানো হবে তা টিক দিয়ে নির্ধারণ করুন">শ্রেণিভিত্তিক বিষয় বরাদ্দ</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="class-subjects" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/class-subjects.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <div id="adminAcademics"></div>
+      </section>
+
+      <!-- System Settings -->
+      <section class="admin-view" data-view-panel="settings" aria-labelledby="appManagementTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="সিস্টেম সেটিংসের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="system" aria-label="হোমে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="settings">
+              <h1 id="appManagementTitle">সিস্টেম ও অ্যাপ সেটিংস</h1>
+              <p class="admin-view-sub">পছন্দমতো থিম, ব্র্যান্ডিং ও নোটিফিকেশন সাজিয়ে নিলে প্রতিদিন অ্যাপ ব্যবহারের অভিজ্ঞতা আরও স্বাচ্ছন্দ্যময় হয়।</p>
+            </div>
+          </div>
+        </div>
+        <div class="app-control-grid">
+          <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="settings-branding" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="স্লোগান, হেল্পলাইন, হোয়াটসঅ্যাপ, ইমেইল ও ক্যাম্পাস ঠিকানা হালনাগাদ করুন">ব্র্যান্ডিং ও যোগাযোগ তথ্য</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="settings" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/settings.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <article class="admin-card admin-toggle-panel" data-admin-section-panel="settings-branding" hidden>
+            <header class="admin-card-head"><div><h2>ব্র্যান্ডিং ও যোগাযোগ তথ্য</h2></div></header>
+            <div class="app-setting-group">
+              <div class="app-field"><label for="cfgTagline">অ্যাপ ট্যাগলাইন / মূল স্লোগান</label><input type="text" id="cfgTagline"></div>
+              <div class="app-field-row">
+                <div class="app-field"><label for="cfgHelpline">অফিসিয়াল হেল্পলাইন নম্বর</label><input type="tel" id="cfgHelpline"></div>
+                <div class="app-field"><label for="cfgWhatsapp">হোয়াটসঅ্যাপ সাপোর্ট নম্বর</label><input type="tel" id="cfgWhatsapp"></div>
+              </div>
+              <div class="app-field-row">
+                <div class="app-field"><label for="cfgEmail">অফিসিয়াল ইমেইল</label><input type="email" id="cfgEmail"></div>
+                <div class="app-field"><label for="cfgAddress">ক্যাম্পাস / অফিসের ঠিকানা</label><input type="text" id="cfgAddress"></div>
+              </div>
+              <button class="admin-btn primary" type="button" id="btnSaveAppSettings">সেটিংস সংরক্ষণ করুন</button>
+            </div>
+          </article>
+          <button class="teacher-action-card" type="button" data-admin-section-toggle="settings-classes" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="কোন কোন শ্রেণি অ্যাপে সক্রিয় থাকবে তা চালু বা বন্ধ করুন">চলমান শ্রেণি তালিকা নিয়ন্ত্রণ</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="classes" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/classes.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <article class="admin-card admin-toggle-panel" data-admin-section-panel="settings-classes" hidden>
+            <header class="admin-card-head"><div><h2>চলমান ক্লাস</h2></div><span class="classes-count" id="classesCount"></span></header>
+            <div class="class-list" id="classList"></div>
+          </article>
+          <button class="teacher-action-card" type="button" data-admin-section-toggle="settings-broadcast" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সব ডিভাইসে জরুরি বার্তা ও পুশ নোটিফিকেশন নিয়ন্ত্রণ করুন">জরুরি ঘোষণা ও নোটিফিকেশন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <article class="admin-card admin-toggle-panel" data-admin-section-panel="settings-broadcast" hidden>
+            <header class="admin-card-head"><div><h2>জরুরি ঘোষণা (নোটিফিকেশন)</h2></div></header>
+            <div class="app-setting-group">
+              <label class="admin-check"><input type="checkbox" id="cfgPushNotifications"> সব ডিভাইসে নোটিফিকেশন চালু রাখুন</label>
+              <label class="admin-check"><input type="checkbox" id="cfgBroadcastAlert"> জরুরি ঘোষণা চালু রাখুন</label>
+              <div class="app-field"><label for="cfgBroadcastMessage">ঘোষণার লেখা</label><textarea id="cfgBroadcastMessage" rows="3" maxlength="500" placeholder="যেমন: আজ বিকেল ৩টায় ক্লাস বন্ধ থাকবে।"></textarea></div>
+              <button class="admin-btn primary" type="button" id="btnSaveBroadcast">সব ডিভাইসে পাঠান</button>
+              <p class="finance-hint" id="broadcastState" role="status"></p>
+            </div>
+          </article>
+          <button class="teacher-action-card" type="button" data-admin-section-toggle="settings-maintenance" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="শিক্ষার্থী অ্যাপে জরুরি রক্ষণাবেক্ষণ সতর্কতা ব্যানার চালু বা বন্ধ করুন">রক্ষণাবেক্ষণ মোড নিয়ন্ত্রণ</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="shield" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/shield.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <article class="admin-card admin-toggle-panel" data-admin-section-panel="settings-maintenance" hidden>
+            <header class="admin-card-head"><div><h2>রক্ষণাবেক্ষণ মোড</h2></div></header>
+            <div class="app-setting-group">
+              <label class="admin-check"><input type="checkbox" id="cfgMaintenanceMode"> রক্ষণাবেক্ষণ মোড চালু রাখুন</label>
+              <div class="app-field"><label for="cfgMaintenanceMessage">বার্তা (ঐচ্ছিক)</label><textarea id="cfgMaintenanceMessage" rows="3" maxlength="500" placeholder="সম্মানিত শিক্ষার্থী, অ্যাপটিতে বর্তমানে সিস্টেম আপডেট চলছে। সাময়িক অসুবিধার জন্য আন্তরিকভাবে দুঃখিত।"></textarea></div>
+              <button class="admin-btn primary" type="button" id="btnSaveMaintenance">সংরক্ষণ করুন</button>
+              <p class="finance-hint" id="maintenanceState" role="status"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Admin Profile -->
+      <section class="admin-view" data-view-panel="profile" aria-labelledby="adminProfileTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="আমার প্রোফাইল ও সেটিংসের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="more" aria-label="আরও মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="profile">
+              <h1 id="adminProfileTitle">আমার প্রোফাইল ও সেটিংস</h1>
+              <p class="profile-page-sub">আপনার নাম ও যোগাযোগের নম্বর সঠিক রাখলে প্রাতিষ্ঠানিক সমন্বয় ও নোটিশ প্রেরণ সহজ হয়।</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Identity first (owner design 2026-10-16): the dark identity card
+             sits above the settings doors and stays visible whichever group
+             is open — it is who you are, not one group's content. -->
+        <article class="admin-identity-card" id="adminProfileCard" data-settings-row="profile" aria-live="polite"></article>
+        <div class="settings-hub" data-settings-hub="admin">
+          <div class="profile-section" data-settings-group="account">
+            <article class="admin-card">
+          <header class="admin-card-head">
+            <div><h2>আমার তথ্য হালনাগাদ</h2><p class="admin-card-hint">নাম, মোবাইল ও ইমেইল বদলানো যায় — লগইন আইডি ও স্টাফ আইডি অপরিবর্তিত থাকে।</p></div>
+          </header>
+          <form id="adminProfileForm" class="staff-form" novalidate autocomplete="off">
+            <div class="staff-form-grid">
+              <div class="staff-field">
+                <label for="adminProfileName">পূর্ণ নাম *</label>
+                <input id="adminProfileName" name="fullName" type="text" autocomplete="name" maxlength="100" required>
+              </div>
+              <div class="staff-field">
+                <label for="adminProfileMobile">মোবাইল নম্বর *</label>
+                <input id="adminProfileMobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+              </div>
+              <div class="staff-field">
+                <label for="adminProfileEmail">ইমেইল (ঐচ্ছিক)</label>
+                <input id="adminProfileEmail" name="email" type="email" autocomplete="email" maxlength="254">
+              </div>
+              <div class="staff-field">
+                <label for="adminProfileUserId">লগইন আইডি</label>
+                <div class="auto-id-preview" id="adminProfileUserId" role="status" aria-live="polite">—</div>
+                <small>স্বয়ংক্রিয়ভাবে তৈরি — নামের প্রথম অংশ + ভূমিকা + .apc</small>
+              </div>
+            </div>
+            <p class="finance-error" id="adminProfileError" role="alert" hidden></p>
+            <button class="admin-btn primary" type="submit">তথ্য সংরক্ষণ করুন</button>
+          </form>
+        </article>
+            <article class="admin-card">
+          <header class="admin-card-head">
+            <div><h2>নিজের পাসওয়ার্ড বদল</h2><p class="admin-card-hint">নিরাপত্তার জন্য বর্তমান পাসওয়ার্ড দিয়ে নিশ্চিত করে নতুন পাসওয়ার্ড দিন।</p></div>
+          </header>
+          <form id="adminPasswordForm" data-settings-row="password" class="staff-form" novalidate autocomplete="off">
+            <div class="staff-form-grid">
+              <div class="staff-field">
+                <label for="adminCurrentPassword">বর্তমান পাসওয়ার্ড *</label>
+                <input id="adminCurrentPassword" name="currentPassword" type="password" autocomplete="current-password" minlength="6" maxlength="32" required>
+              </div>
+              <div class="staff-field">
+                <label for="adminNewPassword">নতুন পাসওয়ার্ড *</label>
+                <input id="adminNewPassword" name="newPassword" type="password" autocomplete="new-password" minlength="6" maxlength="32" required>
+                <small>৬–৩২ অক্ষর</small>
+              </div>
+              <div class="staff-field">
+                <label for="adminConfirmPassword">নতুন পাসওয়ার্ড নিশ্চিত করুন *</label>
+                <input id="adminConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="32" required>
+              </div>
+            </div>
+            <p class="finance-error" id="adminPasswordError" role="alert" hidden></p>
+            <button class="admin-btn primary" type="submit">পাসওয়ার্ড বদল করুন</button>
+          </form>
+        </article>
+          <article class="admin-card admin-session-card"><div class="admin-session-copy"><h2>সেশন</h2><p>এই ডিভাইসে লগইন করা আছেন। কাজ শেষ হলে লগআউট করুন।</p></div><button class="admin-btn ghost admin-logout-btn" type="button" data-settings-row="logout" id="adminAccountLogout"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg> লগআউট</button></article>
+            </div>
+          <div class="profile-section" data-settings-group="notification"><div id="notificationSettings" class="notification-settings-mount"></div></div>
+          <div class="profile-section" data-settings-group="app">
+            
+            <div class="settings-list"><article class="admin-card theme-card"><label class="settings-toggle theme-switch"><span class="settings-icon purple theme-switch-icon" aria-hidden="true"><svg class="icon-sun apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/sun.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><svg class="icon-moon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="moon" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/moon.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="settings-copy"><strong>গাঢ় থিম</strong><small>AMOLED কালো — চোখের আরাম ও ব্যাটারি সাশ্রয়</small></span><span class="toggle-switch"><input type="checkbox" id="darkModeToggle"><i></i></span></label></article></div>
+          </div>
+          <div class="profile-section" data-settings-group="security"></div>
+          <div class="profile-section" data-settings-group="data"></div>
+        </div>
+      </section>
+
+      <section class="admin-view" data-view-panel="advice" aria-labelledby="adminAdviceTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="notice" src="assets/images/teacher-hero/notice-day.webp" alt="দৈনিক পরামর্শের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="more" aria-label="আরও মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="advice">
+              <h1 id="adminAdviceTitle">দৈনিক পরামর্শ ব্যবস্থাপনা</h1>
+              <p class="admin-view-sub">প্রতিদিনের একটি ইতিবাচক চিন্তা ও কর্মপরিকল্পনা পুরো কোচিং সেন্টারের পরিবেশ উজ্জ্বল করে।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="teacher-home-actions admin-action-stack" aria-label="দৈনিক পরামর্শ পরিচালনা">
+          <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="advice-editor" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="শিক্ষার্থীদের হোমে দেখানোর অনুপ্রেরণামূলক বার্তা যোগ, ক্রম পরিবর্তন বা সম্পাদনা করুন">দৈনিক পরামর্শ যোগ ও সম্পাদনা করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="teacher-action-card" type="button" data-admin-view="content" data-admin-cap="data.manage"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="শিক্ষক ও ম্যানেজারের প্রকাশিত নোটিশ এবং বাড়ির কাজ যাচাই করুন">নোটিশ ও কনটেন্ট তদারকিতে যান</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="notice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/notice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <div id="adminDailyAdvice" class="admin-toggle-panel" data-admin-section-panel="advice-editor" data-advice-admin data-advice-role="admin" hidden></div>
+      </section>
+
+      <section class="admin-view" data-view-panel="content" aria-labelledby="adminContentTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="notice" src="assets/images/teacher-hero/notice-day.webp" alt="নোটিশ ও কনটেন্ট তদারকির থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="more" aria-label="আরও মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="content">
+              <h1 id="adminContentTitle">নোটিশ ও কনটেন্ট তদারকি</h1>
+              <p class="admin-view-sub">শিক্ষার্থীদের নোটিশ বোর্ড এবং বাড়ির কাজ ও সাজেশনের মান নিয়মিত তদারকি করুন।</p>
+            </div>
+          </div>
+        </div>
+        <button class="teacher-action-card is-accent" type="button" data-admin-section-toggle="content-notices" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="প্রকাশিত সকল নোটিশ যাচাই ও প্রয়োজনে নিশ্চিত করে মুছে ফেলুন">শিক্ষার্থীদের নোটিশ বোর্ড দেখুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="notice" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/notice.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="content-notices" hidden>
+          <header class="admin-card-head"><div><h2>শিক্ষার্থীদের নোটিশ বোর্ড</h2></div><span class="badge" data-admin-content-count></span></header>
+          <div class="manager-record-list" id="adminNoticeReviewList"><p class="admin-empty">লোড হচ্ছে…</p></div>
+        </article>
+        <button class="teacher-action-card" type="button" data-admin-section-toggle="content-records" aria-expanded="false"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="শিক্ষকদের প্রকাশিত সকল বাড়ির কাজ ও সাজেশন যাচাই ও প্রয়োজনে মুছে ফেলুন">বাড়ির কাজ ও সাজেশন দেখুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="assignment" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/assignment.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <article class="admin-card admin-toggle-panel" data-admin-section-panel="content-records" hidden>
+          <header class="admin-card-head"><div><h2>বাড়ির কাজ ও সাজেশন</h2></div></header>
+          <div class="manager-record-list" id="adminContentReviewList"><p class="admin-empty">লোড হচ্ছে…</p></div>
+        </article>
+        <button class="teacher-action-card" type="button" data-admin-view="class-chat" data-admin-cap="data.manage"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="অষ্টম থেকে দ্বাদশ শ্রেণির আলোচনা কক্ষ, বার্তা পিন, অপসারণ ও চ্যাট লক নিয়ন্ত্রণ করুন">শ্রেণি চ্যাট ও মডারেশন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+      </section>
+
+      <section class="admin-view" data-view-panel="class-chat" aria-labelledby="adminClassChatTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="classroom" src="assets/images/teacher-hero/classroom-day.webp" alt="শ্রেণি চ্যাট ও মডারেশনের থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              <button class="pay-back" type="button" data-admin-view="more" aria-label="আরও মেনুতে ফিরুন" hidden><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="back" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/back.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="chat">
+              <h1 id="adminClassChatTitle">শ্রেণি চ্যাট ও মডারেশন</h1>
+              <p class="admin-view-sub">সকল শ্রেণির আলোচনা কক্ষ পর্যবেক্ষণ করুন এবং প্রয়োজনে বার্তা পিন, অপসারণ বা চ্যাট লক নিয়ন্ত্রণ করুন।</p>
+            </div>
+          </div>
+        </div>
+        <div id="adminClassChatMount" data-class-chat-mount="admin"></div>
+      </section>
+
+      <section class="admin-view" data-view-panel="more" aria-labelledby="adminMoreTitle">
+        <div class="page-intro home-dashboard-intro teacher-home-intro admin-sub-hero" data-home-intro data-hero-mode="day">
+          <div class="teacher-hero-scene" aria-hidden="true">
+            <img class="teacher-hero-art" data-admin-hero-art data-hero-card="welcome" src="assets/images/teacher-hero/welcome-day.webp" alt="আরও মেনুর থ্রিডি চিত্র" width="828" height="462" loading="lazy" decoding="async" data-mode="day">
+            <span class="teacher-hero-scene-scrim"></span>
+            <span class="teacher-hero-scene-sheen"></span>
+          </div>
+          <div class="teacher-hero-content">
+            <div class="teacher-hero-top">
+              
+              <span class="teacher-hero-top-right">
+                <span class="teacher-hero-date-pill" data-admin-hero-date></span>
+                <span class="teacher-hero-glint" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="sun" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image data-admin-hero-glint href="assets/icons/ai-3d/sun.svg" width="22" height="22" preserveAspectRatio="xMidYMid meet"/></svg></span>
+              </span>
+            </div>
+            <div class="teacher-hero-welcome" data-admin-hero-advice="more">
+              <h1 id="adminMoreTitle">আরও ও সিস্টেম টুলস</h1>
+              <p class="admin-view-sub">আপনার প্রোফাইল, পাসওয়ার্ড, ডেটা ব্যাকআপ ও কনটেন্ট তদারকি এখান থেকে সহজেই পরিচালনা করুন।</p>
+            </div>
+          </div>
+        </div>
+        <nav class="admin-more-menu admin-card" id="adminMoreMenu" aria-label="আরও বিভাগ">
+          <button class="admin-more-item admin-system-item teacher-action-card is-accent" type="button" data-admin-view="data" data-admin-cap="data.manage"><span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="data" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/data.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-more-copy"><strong>ডেটা ও ব্যাকআপ</strong><small>রেকর্ড, স্টোরেজ, ব্যাকআপ ও অডিট</small></span><span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="content" data-admin-cap="data.manage"><span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="bell" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/bell.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-more-copy"><strong>নোটিশ ও কনটেন্ট</strong><small>প্রকাশিত নোটিশ/কাজ দেখুন ও মুছুন</small></span><span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="profile" data-admin-cap="profile.view"><span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-more-copy"><strong>আমার অ্যাকাউন্ট</strong><small>পরিচয়, পাসওয়ার্ড ও পছন্দ</small></span><span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+          <button class="admin-more-item admin-system-item teacher-action-card" type="button" data-admin-view="advice" data-admin-cap="advice.manage"><span class="admin-more-icon teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="book" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/book.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="admin-more-copy"><strong>দৈনিক পরামর্শ</strong><small>পরামর্শ যোগ, সম্পাদনা ও সাজান</small></span><span class="admin-menu-arrow" aria-hidden="true"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chevron-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        </nav>
+        <button class="teacher-action-card is-accent" type="button" data-admin-view="class-chat" data-admin-cap="data.manage"><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="সকল শ্রেণির আলোচনা কক্ষ দেখুন, বার্তা পাঠান, পিন/অপসারণ ও চ্যাট লক নিয়ন্ত্রণ করুন">শ্রেণি চ্যাট ও মডারেশন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="chat" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/chat.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+        <button class="teacher-action-card" type="button" id="adminMoreLogoutButton" data-admin-logout-card><span class="teacher-action-body"><span class="teacher-action-title pay-tile-label" data-action-sub="এই ডিভাইস থেকে নিরাপদে অ্যাডমিন সেশন শেষ করে লগইন পেজে ফিরুন">লগআউট করুন</span></span><span class="teacher-action-art pay-tile-icon" aria-hidden="true"><svg class="apc-color-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="logout" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="color"><image href="assets/icons/ai-3d/logout.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span></button>
+      </section>
+
+      <!-- More: actions formerly on separate seats remain reachable above. -->
+    </main>
+
+    <!-- Rebuilt by js/admin-panel-ui.js from the signed-in role's capabilities:
+         icons, labels, order and visibility all come from the permission model. -->
+    <nav class="admin-bottom" aria-label="এডমিন নেভিগেশন"><button class="admin-bottom-item active" type="button" data-admin-view="dashboard" aria-current="page"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="dashboard" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/dashboard.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">হোম</span></button><button class="admin-bottom-item" type="button" data-admin-view="staff"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="staff" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/staff.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">স্টাফ</span></button><button class="admin-bottom-item" type="button" data-admin-view="reports"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="reports" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/reports.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">রিপোর্ট</span></button><button class="admin-bottom-item" type="button" data-admin-view="system"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="settings" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/settings.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">সিস্টেম</span></button><button class="admin-bottom-item" type="button" data-admin-view="more"><span class="nav-chip"><svg class="nav-icon apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="more" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/more.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></span><span class="nav-label">আরও</span></button></nav>
+  </div>
+
+  <!-- Generic modal (student detail / password reset) -->
+  <div class="admin-modal-backdrop" id="adminModalBackdrop" hidden>
+    <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+      <div class="admin-modal-header">
+        <div><p class="eyebrow" id="adminModalKicker">বিস্তারিত</p><h2 id="adminModalTitle">—</h2></div>
+        <button class="admin-modal-close" type="button" id="adminModalClose" aria-label="বন্ধ করুন">×</button>
+      </div>
+      <div class="admin-modal-body" id="adminModalBody"></div>
+    </section>
+  </div>
+
+
+
+  <script type="module" src="js/theme-entry.js?v=421"></script>
+  <script type="module" src="js/pull-to-refresh.js?v=421"></script>
+  <script type="module" src="js/class-chat-head.js?v=421"></script>
+</body>
+</html>

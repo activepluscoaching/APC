@@ -1,0 +1,107 @@
+/* Fail-safe entry loader: no credentials/storage/role decisions here.
+ * A failed module must never turn the login form into a native GET request,
+ * or leave a staff shell hidden with no explanation. */
+(() => {
+  const script = document.currentScript || document.querySelector('script[data-entry]');
+  const entries = {
+    student: './main.js', admin: './admin.js', manager: './manager.js',
+    teacher: './teacher.js', payment: './payment.js'
+  };
+  const entry = entries[script?.dataset.entry];
+  if (!entry) return;
+  const moduleUrl = new URL(entry, script.src || document.baseURI || location.href).href;
+  let failed = false;
+  let timer;
+  function message(text) {
+    const authMessage = document.getElementById('authMessage');
+    if (authMessage) { authMessage.hidden = false; authMessage.textContent = text; }
+  }
+  // Password visibility is delegated from the head-loaded fail-safe script so
+  // the eye works immediately, even while the app module is still booting.
+  document.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest('[data-toggle-pin]');
+    if (!button) return;
+    const input = document.getElementById(button.dataset.togglePin);
+    if (!input) return;
+    const visible = input.type === 'password';
+    input.type = visible ? 'text' : 'password';
+    button.setAttribute('aria-pressed', String(visible));
+    button.setAttribute('aria-label', visible ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন');
+    button.classList.toggle('is-visible', visible);
+  });
+
+  // Installed in <head>, before any form can be interacted with.
+  document.addEventListener('submit', event => {
+    if (event.target.id !== 'loginForm' || event.target.dataset.loginReady === 'true') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    message(failed ? 'লগইন লোড হয়নি। নিচের আবার চেষ্টা করুন বাটন চাপুন।' : 'লগইন প্রস্তুত হচ্ছে — একটু পরে আবার চেষ্টা করুন।');
+  }, true);
+  function panelReady() {
+    if (document.getElementById('appEntryError') && document.querySelector('.manager-shell:not([hidden]), .admin-shell:not([hidden]), .app-shell:not([hidden]), .pay-shell:not([hidden]), .teacher-shell:not([hidden])')) return true;
+    if (document.getElementById('apcPanelLock')) return true;
+    if (document.querySelector('#loginForm')?.dataset.loginReady === 'true') return true;
+    if (document.getElementById('managerShell')?.hidden === false) return true;
+    return false;
+  }
+  function showFailure() {
+    clearTimeout(timer);
+    if (panelReady()) {
+      document.getElementById('appEntryError')?.remove();
+      failed = false;
+      return;
+    }
+    failed = true;
+    document.querySelector('.launch-screen')?.remove();
+    const loginButton = document.querySelector('#loginForm [type=submit]');
+    if (loginButton) loginButton.disabled = false;
+    if (document.getElementById('appEntryError')) return;
+    const panel = document.createElement('section');
+    panel.id = 'appEntryError';
+    panel.className = 'entry-error';
+    panel.setAttribute('role', 'alert');
+    const title = document.createElement('h1');
+    title.textContent = 'অ্যাপ চালু করা যায়নি';
+    const copy = document.createElement('p');
+    copy.textContent = 'প্রয়োজনীয় ফাইল লোড হয়নি। আপনার পুরোনো অ্যাকাউন্ট ও ডেটা মুছবেন না। সংযোগ চালু করে আবার চেষ্টা করুন।';
+    const retry = document.createElement('button');
+    retry.type = 'button'; retry.textContent = 'আবার চেষ্টা করুন';
+    retry.addEventListener('click', async () => {
+      retry.disabled = true;
+      // Ask the normal worker lifecycle for the new release. No cache/storage reset.
+      try {
+        await Promise.race([
+          navigator.serviceWorker?.getRegistration().then(reg => reg?.update()),
+          new Promise(resolve => setTimeout(resolve, 2500))
+        ]);
+      } catch { /* an offline retry still uses the existing cache */ }
+      location.reload();
+    });
+    const login = document.createElement('a');
+    login.href = 'index.html'; login.textContent = 'লগইন পেজে যান';
+    panel.append(title, copy, retry, login);
+    (document.getElementById('authScreen') || document.body).append(panel);
+  }
+  function start() {
+    const file = entry.replace('./', '');
+    const existing = document.querySelector(`script[type="module"][src*="${file}"]`);
+    if (existing) {
+      existing.addEventListener('error', showFailure);
+      return;
+    }
+    timer = setTimeout(showFailure, 12000);
+    const el = document.createElement('script');
+    el.type = 'module';
+    el.src = moduleUrl;
+    el.addEventListener('error', showFailure);
+    el.addEventListener('load', () => {
+      clearTimeout(timer);
+      document.getElementById('appEntryError')?.remove();
+      failed = false;
+    });
+    document.head.append(el);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+  else start();
+})();

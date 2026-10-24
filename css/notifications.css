@@ -1,0 +1,112 @@
+/* Notification centre, bell badge and Settings → Notification Settings.
+
+   Layout and states only — every colour is a token from css/foundation.css, so
+   light/dark/AMOLED all keep working. The wallet skin (css/ui-wallet.css)
+   still loads last and may refine any of these. */
+
+/* ---------- The bell badge: 🔔 3 / ১০+ / hidden at zero ---------- */
+.notification-dot{position:absolute;right:5px;top:5px;width:auto;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--color-danger);color:#fff;font-size:11px;font-weight:700;line-height:1;letter-spacing:0;box-shadow:0 0 0 2px var(--pay-hero-a)}
+.notification-dot[hidden]{display:none}
+.notification-dot:empty{width:8px;height:8px;min-width:8px;padding:0}
+
+/* ---------- The inbox: filters, cards, unread state ---------- */
+.notice-filters{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-block:var(--space-2) var(--space-3)}
+.notice-filters .chip{min-height:36px}
+.notice-filters .notice-read-all{margin-left:auto}
+.notice-filters .notice-read-all[hidden]{display:none}
+.notice-read-status{margin:0 0 var(--space-2);color:var(--color-text-secondary);font-size:var(--font-sm)}
+.notice-read-status:empty{display:none}
+
+#apcNoticeModal [data-apc-notice-list],#noticeListStudent{display:grid;gap:var(--space-3);max-height:min(65vh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-right:2px}
+.notice-detail{position:relative;display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);word-break:break-word;overflow-wrap:anywhere}
+.notice-detail.unread{border-inline-start:3px solid var(--color-primary);background:var(--color-surface-muted)}
+.notice-detail.actionable{cursor:pointer}
+.notice-detail-icon{flex:0 0 auto;width:36px;height:36px;display:grid;place-items:center;border-radius:var(--radius-sm);background:var(--color-surface-muted)}
+.notice-detail-icon svg{width:20px;height:20px}
+.notice-detail-copy{flex:1 1 auto;min-width:0;display:grid;gap:var(--space-1)}
+.notice-detail-copy h3{margin:0;font-size:var(--font-md);line-height:1.45;word-break:break-word;overflow-wrap:anywhere}
+.notice-detail-copy p,.notification-card-preview{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm);line-height:1.65;word-break:break-word;overflow-wrap:anywhere}
+.notification-body,.notice-content{margin:var(--space-1) 0 0;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;line-height:1.65;font-size:var(--font-md);padding:12px 16px;border-radius:var(--radius-sm);background:var(--color-surface-muted);color:var(--color-text)}
+.notice-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:var(--space-2)}
+.notice-detail .mini-btn{margin-top:0;width:fit-content}
+.notice-expand-btn{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-primary);font-weight:600}
+.notice-modal-detail-sheet{display:grid;gap:var(--space-2);padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);min-width:0}
+.notice-modal-detail-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2)}
+.notice-modal-detail-sheet h3{margin:0;font-size:var(--font-lg);line-height:1.45;word-break:break-word;overflow-wrap:anywhere}
+.notice-detail:not(.unread) .notice-detail-copy{color:var(--color-text-secondary)}
+.notice-detail:not(.unread) h3{font-weight:500;color:var(--color-text-secondary)}
+.notice-time{color:var(--color-text-secondary);font-size:var(--font-xs)}
+.notice-section-chip{display:inline-block;width:fit-content;margin-inline-start:var(--space-2);padding:1px var(--space-2);border-radius:999px;background:var(--color-surface);border:1px solid var(--color-border);font-size:var(--font-xs);color:var(--color-text-secondary)}
+.notice-unread-dot{position:absolute;inset-inline-end:var(--space-3);inset-block-start:var(--space-3);width:8px;height:8px;border-radius:50%;background:var(--color-primary)}
+
+/* ---------- The pretty empty state (never a row of buttons) ---------- */
+.notice-empty{display:grid;justify-items:center;gap:var(--space-2);padding:var(--space-6) var(--space-4);border:1px dashed var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);text-align:center}
+.notice-empty-art{width:64px;height:64px;display:grid;place-items:center;border-radius:50%;background:var(--color-surface-muted);color:var(--color-success)}
+.notice-empty-art svg{width:30px;height:30px}
+.notice-empty strong{font-size:var(--font-md)}
+.notice-empty p{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm)}
+
+/* ---------- The in-app card: no acknowledgement button ---------- */
+.apc-alert-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-4)}
+.apc-alert-actions .mini-btn{width:auto;flex:0 0 auto}
+
+/* ---------- Settings → Notification Settings ---------- */
+#notificationSettings .profile-section{margin-bottom:var(--space-5)}
+.notice-permission-row,.settings-row-button{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);text-align:start}
+.settings-row-button{width:100%;cursor:pointer}
+.settings-row-button:disabled{opacity:.6;cursor:default}
+.notice-permission-row .settings-copy,.settings-row-button .settings-copy{flex:1;min-width:min(100%,220px)}
+.notice-permission-ok{flex:0 0 auto;color:var(--color-success);font-size:var(--font-sm);font-weight:600}
+.notice-setting-row{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface)}
+.notice-setting-row .settings-copy{flex:1;min-width:min(100%,220px)}
+.notice-setting-row input:disabled+.toggle-switch i,.notice-setting-row input:disabled~*{opacity:.6}
+.notice-history-list{display:grid;gap:var(--space-2)}
+.notice-history-row{display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:56px;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);text-align:start}
+.notice-history-row.unread{border-inline-start:3px solid var(--color-primary)}
+.notice-history-copy{flex:1;min-width:0;display:grid;gap:2px}
+.notice-history-copy strong{font-size:var(--font-sm);overflow-wrap:anywhere}
+.notice-history-copy small{color:var(--color-text-secondary);font-size:var(--font-xs)}
+.notice-history-tag{flex:0 0 auto;padding:var(--space-1) var(--space-2);border-radius:999px;background:var(--color-surface-muted);font-size:var(--font-xs);color:var(--color-text-secondary)}
+
+/* ---------- Pending Registration Queue ("অনুমোদনের অপেক্ষায়") & Subtle Toast ---------- */
+.apc-pending-host{margin-block:0 var(--space-3);min-width:0}
+.apc-pending-host.is-empty{margin-block:0}
+.apc-pending-queue{display:grid;gap:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-muted);min-width:0}
+.apc-pending-queue__head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2)}
+.apc-pending-queue__head h3{margin:0;font-size:var(--font-md);font-weight:700;line-height:1.4;color:var(--color-text)}
+.apc-pending-queue__count{padding:3px 10px;border-radius:999px;border:1px solid var(--color-border);background:var(--color-surface);font-size:var(--font-xs);font-weight:700;color:var(--color-primary)}
+.apc-pending-queue__empty-wrap{display:grid;justify-items:center;gap:var(--space-2);padding:var(--space-3) var(--space-2);text-align:center}
+.apc-pending-queue__empty{margin:0;color:var(--color-text-secondary);font-size:var(--font-sm)}
+.apc-pending-queue__list{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-2);max-height:min(42vh,320px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.apc-pending-item{display:grid;gap:10px;padding:12px 14px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);min-width:0;box-sizing:border-box}
+.apc-pending-item__info{display:grid;gap:6px;min-width:0}
+.apc-pending-item__name{font-size:var(--font-md);font-weight:700;line-height:1.4;color:var(--color-text);word-break:normal;overflow-wrap:break-word}
+.apc-pending-item__meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:var(--font-xs);line-height:1.45;color:var(--color-text-secondary)}
+.apc-pending-item__meta>span{display:inline-flex;align-items:baseline;gap:4px;min-width:0;max-width:100%;white-space:nowrap}
+.apc-pending-item__meta b{font-weight:600;color:var(--color-text);font-variant-numeric:tabular-nums}
+.apc-pending-item__actions,.apc-pending-item__reject-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2);align-items:center}
+.apc-pending-btn{min-height:44px;padding:8px 12px;border-radius:var(--radius-sm);font-weight:600;text-align:center;justify-content:center;box-sizing:border-box;width:100%}
+.apc-pending-btn.approve{background:var(--color-primary);border:1px solid var(--color-primary);color:var(--color-on-accent)}
+.apc-pending-btn.reject{background:var(--color-surface);border:1px solid var(--color-danger);color:var(--color-danger)}
+.apc-pending-item__reject-box{display:grid;gap:var(--space-2);padding-top:var(--space-2);border-top:1px dashed var(--color-border)}
+.apc-pending-item__reject-box[hidden],.apc-pending-item__feedback[hidden]{display:none}
+.apc-pending-item__reason-input{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-text);font:inherit;font-size:var(--font-sm);box-sizing:border-box}
+.apc-pending-item__feedback{margin:0;font-size:var(--font-xs);color:var(--color-danger)}
+[data-apc-notice-push]{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2) var(--space-3);padding:12px 14px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-muted);box-sizing:border-box}
+[data-apc-notice-push]:empty{display:none}
+.notice-push-copy{flex:1 1 180px;min-width:0;font-size:var(--font-xs);line-height:1.5;color:var(--color-text-secondary)}
+.notice-push-btn{flex:0 0 auto;width:auto;min-height:44px;padding:8px 14px;white-space:nowrap}
+
+.apc-reg-toast{position:fixed;inset-inline:var(--space-3);inset-block-end:calc(var(--space-5) + 52px);max-width:420px;margin-inline:auto;padding:var(--space-3) var(--space-4);border:1px solid var(--color-primary);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-md);font-size:var(--font-sm);font-weight:600;text-align:center;z-index:1100;pointer-events:none}
+.apc-reg-toast[hidden]{display:none}
+
+@media(max-width:520px){
+  .notice-filters .notice-read-all{margin-left:0;width:100%}
+  .notice-detail{padding:var(--space-3);gap:var(--space-2)}
+  .notice-card-actions{width:100%}
+  .notification-body,.notice-content{padding:12px 14px;font-size:var(--font-md);line-height:1.65;max-height:58vh}
+  .notice-empty{padding:var(--space-4) var(--space-3)}
+  .apc-pending-queue{padding:12px}
+  .apc-pending-item{padding:12px}
+  .apc-pending-item__actions,.apc-pending-item__reject-actions{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+}

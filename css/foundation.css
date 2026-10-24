@@ -1,0 +1,354 @@
+/* WOFF2 is the shipped payload (238 KB vs the 453 KB TTF); the TTF stays in the
+   repository as the licensed OFL source and is only a last-resort fallback for
+   an engine old enough to lack WOFF2 — no modern client ever downloads it. */
+@font-face{font-family:'Noto Sans Bengali';src:url('../assets/fonts/NotoSansBengali-Variable.woff2') format('woff2'),url('../assets/fonts/NotoSansBengali-Variable.ttf') format('truetype');font-weight:100 900;font-display:swap}
+/* One palette for every portal — the only place a colour is defined.
+   Light is the default. The dark theme is the AMOLED one: a true-black canvas
+   (#000 — the pixels an OLED panel actually switches off), surfaces lifted by
+   a single hairline step so a card still reads as a card, borders instead of
+   shadows, and accents bright enough to hold contrast on black.
+   Component-level dark tuning lives in css/app-polish.css; neither file may
+   define a second palette (§ AMOLED block there is strict overrides only). */
+:root{
+ --logout-confirm-bg:#E24B4A;--logout-confirm-text:#fff;
+ --color-bg:#fafbfa;--color-surface:#fff;--color-surface-muted:#f5f7f6;--color-border:#e3e9e6;
+ --color-text:#171a18;--color-text-secondary:#59625d;--color-text-muted:#6b746f;
+ --color-primary:#0e7a55;--color-primary-hover:#0b6548;--color-accent:var(--color-primary);--color-on-accent:#fff;
+ --color-success:#0e7a55;--color-warning:#875b0c;--color-danger:#b91c1c;
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;
+ --radius-sm:9px;--radius-md:14px;--radius-lg:18px;
+ --font-xs:12px;--font-sm:14px;--font-md:16px;--font-lg:20px;--font-xl:28px;--font-2xl:36px;
+ --shadow-sm:0 3px 14px #20365306;--shadow-dialog:0 12px 36px #202b3c18;
+ --modal-backdrop:#17243866;--modal-backdrop-soft:rgba(23,36,56,.60);
+ /* Glass design tokens (§30 student interior): derived from the palette
+    above, so dark/AMOLED inherit the same language through --color-surface. */
+ --glass-bg:color-mix(in srgb, var(--color-surface) 58%, transparent);
+ --glass-bg-strong:color-mix(in srgb, var(--color-surface) 82%, transparent);
+ --glass-bg-soft:color-mix(in srgb, var(--color-surface) 42%, transparent);
+ --glass-border:color-mix(in srgb, var(--color-border) 55%, var(--color-surface));
+ --glass-shadow:0 10px 30px color-mix(in srgb, var(--color-text) 10%, transparent);
+ --glass-shadow-lift:0 16px 38px color-mix(in srgb, var(--color-text) 14%, transparent);
+ --glass-radius:20px;--glass-accent:var(--color-success);
+ --glass-accent-soft:color-mix(in srgb, var(--color-success) 14%, transparent);
+ --glass-teal-soft:color-mix(in srgb, var(--color-success) 45%, var(--color-primary) 20%);
+ --glass-blur:18px;
+ /* Glass material: frosted panels over a soft ambient wash. The flat colour
+    above stays the fallback; these only exist while the blur can render. */
+ --glass-blur:18px;--glass-saturate:1.4;
+ --glass-surface:rgba(255,255,255,.62);--glass-bar:rgba(255,255,255,.74);
+ --glass-strong:rgba(255,255,255,.88);--glass-chip:rgba(255,255,255,.55);
+ --glass-border:rgba(32,54,83,.10);--glass-edge:rgba(255,255,255,.9);
+ --glass-shadow:0 10px 30px rgba(23,42,71,.10);--glass-shadow-strong:0 24px 60px rgba(23,42,71,.20);
+ --glass-blur-thin:6px;
+ --ambient-1:rgba(16,133,92,.16);--ambient-2:rgba(14,122,85,.10);--ambient-3:rgba(69,201,161,.14);
+ --ambient-4:rgba(255,138,110,.13);
+ /* Modern colour: one second brand hue for gradients, and the five tints the
+    dashboard tiles carry in their class names. They never replace the palette
+    above — they are the colour that keeps the flat baseline from looking like a
+    form on paper. Tints sit on top of a surface as a wash, never as a new one. */
+ --brand-2:#18a278;
+ --tone-blue:#3b82f6;--tone-blue-soft:rgba(59,130,246,.14);
+ --tone-mint:#0e9f6e;--tone-mint-soft:rgba(16,185,129,.14);
+ --tone-amber:#d97706;--tone-amber-soft:rgba(245,158,11,.16);
+ --tone-violet:#6d4dfa;--tone-violet-soft:rgba(122,92,255,.14);
+ --tone-rose:#d6415d;--tone-rose-soft:rgba(219,77,103,.14);--tone-coral:#df5b32;--tone-coral-soft:rgba(223,91,50,.14);
+ --student-id-face:#f4f8f5;--student-id-ink:#0f3625;
+ --ring-track:rgba(14,122,85,.16);
+ --accent-glow:0 12px 28px rgba(14,122,85,.20);--card-glow:0 14px 34px rgba(14,95,67,.09);
+ /* Pay skin (css/ui-wallet.css): the shared green brand band, icon discs and
+    action colors. Components only arrange these palette tokens. */
+ --pay-hero-a:#0e7a55;--pay-hero-b:#0b6548;--pay-on-hero:#fff;--pay-on-hero-soft:#e4f4ec;
+ --pay-hero-gradient:linear-gradient(130deg,#0e7a55 0%,#0f766e 48%,#373a9b 100%);
+ --pay-hero-chip:rgba(255,255,255,.14);--pay-hero-line:rgba(255,255,255,.30);--pay-hero-stat-chip:rgba(0,0,0,.22);
+ --pay-disc:#e5f2eb;--pay-disc-ink:#0e7a55;
+ --pay-fab-a:#18a278;--pay-fab-b:#0e7a55;--pay-on-fab:#fff;
+ --pay-shadow:0 1px 2px rgba(10,55,39,.05),0 8px 22px rgba(10,75,50,.08);--pay-nav-shadow:rgba(14,58,42,.12);
+ --pay-success:#0e7a55;--pay-success-soft:#e2f6ee;
+ --pay-logo-shadow:0 2px 8px rgba(6,42,29,.12);--pay-fab-shadow:0 8px 18px rgba(12,100,70,.22);
+ /* Paper is deliberately invariant: the receipt preview mirrors a printable
+    document even when the surrounding app is AMOLED. */
+ --pay-paper:#fff;--pay-paper-ink:#213047;--pay-paper-muted:#56677e;--pay-paper-line:#dce5f0;--pay-paper-tint:#edf3fc;--pay-paper-success:#187346;
+ /* Active Plus Color: the illustration paints, centrally themed like every
+    other surface. Blue/green remain the brand; warm accents distinguish services. */
+ --icon-outline:#0b6548;--icon-on-color:#fff;
+ --icon-blue:#3d8bff;--icon-blue-back:#b9d6ff;--icon-mint:#0fbf86;--icon-mint-back:#9eecc9;
+ --icon-gold:#ffc107;--icon-coral:#ff7a4d;--icon-violet:#9a7dff;
+ --icon-paper:#fff;--icon-paper-back:#e3edf7;
+ --icon-plate-blue:#eaf2ff;--icon-plate-green:#e9f7f0;--icon-plate-gold:#fff4dc;--icon-plate-violet:#f0edfc;
+ /* Fixed student viewport: JS measures the actual bars/status inset. */
+ --shell-header-height:60px;--shell-footer-height:66px;--shell-top-offset:0px;
+ --student-home-height:calc(100dvh - var(--shell-top-offset) - var(--shell-header-height) - var(--shell-footer-height));
+ --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--chat-viewport-h:100dvh;
+ /* Unified staff portal tokens (Admin, Manager, Payment — matching Teacher): */
+ --portal-canvas-bg:#f8fafc;--portal-surface:#fff;--portal-surface-soft:#f8fafc;--portal-border:#e8eef4;
+ --portal-card-shadow:0 1px 3px 0 rgba(15,23,42,.05),0 8px 20px -8px rgba(15,23,42,.07);
+ --portal-card-shadow-lift:0 10px 24px -8px rgba(15,23,42,.10),0 2px 6px -2px rgba(15,23,42,.05);
+ --portal-hero-bg:linear-gradient(0deg,rgba(4,24,17,.88) 0%,rgba(4,24,17,.58) 28%,rgba(4,24,17,.18) 58%,rgba(4,24,17,.04) 100%),linear-gradient(90deg,rgba(4,24,17,.42) 0%,transparent 76%),url('../assets/teacher-hero/teacher-hero-day.webp');
+ --portal-hero-text-shadow:0 2px 14px rgba(4,24,17,.55);--portal-hero-sub-shadow:0 1px 10px rgba(4,24,17,.55);--portal-hero-chip-shadow:0 8px 20px rgba(4,24,17,.22);
+ --portal-hero-day-bg:#dfe3cf;--portal-hero-day-border:rgba(14,122,85,.22);--portal-hero-day-ink:#0f2922;--portal-hero-day-sub:#1e3a32;
+ --portal-hero-day-scrim:linear-gradient(90deg,rgba(225,229,210,.92) 0%,rgba(225,229,210,.78) 46%,rgba(225,229,210,.16) 64%,transparent 76%);
+ --portal-hero-day-chip-bg:rgba(255,255,255,.78);--portal-hero-day-chip-border:rgba(14,122,85,.24);--portal-hero-day-chip-ink:#0e6b4a;--portal-hero-day-chip-shadow:0 6px 16px -6px rgba(15,41,34,.14);--portal-hero-day-text-shadow:0 1px 0 rgba(255,255,255,.65);
+ --portal-hero-night-bg:#2a4a52;--portal-hero-night-border:rgba(255,255,255,.18);--portal-hero-night-ink:#f8fafc;--portal-hero-night-sub:#e2e8f0;
+ --portal-hero-night-scrim:linear-gradient(90deg,rgba(22,42,48,.92) 0%,rgba(22,42,48,.76) 46%,rgba(22,42,48,.16) 64%,transparent 76%);
+ --portal-hero-night-chip-bg:rgba(255,255,255,.16);--portal-hero-night-chip-border:rgba(255,255,255,.34);--portal-hero-night-chip-ink:#f8fafc;--portal-hero-night-chip-shadow:0 8px 20px rgba(8,20,24,.28);--portal-hero-night-text-shadow:0 2px 10px rgba(8,20,24,.55);
+ --auth-glass-canvas:var(--color-surface-muted);
+ --auth-card-bg:var(--color-surface);--auth-card-border:var(--color-border);
+ --auth-card-shadow:0 8px 28px -8px rgba(15,23,42,.07),0 2px 6px -2px rgba(15,23,42,.04);
+ --auth-brand-banner:transparent;
+ --auth-brand-border:transparent;--auth-input-bg:var(--color-surface);
+ /* Compatibility for JS-rendered content, not a legacy stylesheet dependency. */
+ --ink:var(--color-text);--muted:var(--color-text-secondary);--muted-2:var(--color-text-muted);--surface:var(--color-surface);--white:var(--color-surface);--line:var(--color-border);--forest:var(--color-primary);--forest-text:var(--color-primary);--mint:var(--color-surface-muted);--cream:var(--color-bg);--coral:var(--color-danger);
+}
+html[data-theme=dark]{
+ color-scheme:dark;
+ --color-bg:#000;--color-surface:#0b0d10;--color-surface-muted:#171a20;--color-border:#2b303a;
+ --color-text:#f4f6fa;--color-text-secondary:#b7bec9;--color-text-muted:#8e96a3;
+ --color-primary:#5cd68f;--color-primary-hover:#8de8b1;--color-accent:var(--color-primary);--color-on-accent:#062016;
+ --color-success:#5cd68f;--color-warning:#f2c56d;--color-danger:#ff8d92;
+ /* AMOLED: a drop shadow on black is invisible and still costs paint on every
+     scroll — surfaces separate with borders instead, dialogs with one deep
+     shadow so the backdrop still reads as a layer. */
+ --shadow-sm:none;--shadow-dialog:0 24px 70px #000;
+ --modal-backdrop:#000000d9;--modal-backdrop-soft:rgba(0,0,0,.60);
+ /* Glass on true black: the panels are mostly the canvas itself (5 % white) so
+    the pixels that stay off keep staying off; the rim and the ambient glow are
+    what make them read as glass. Shadow is a zero-alpha placeholder — a black
+    shadow on black is only paint work; the strong one is for dialogs. */
+ --glass-blur:22px;--glass-saturate:1.3;
+ --glass-surface:rgba(255,255,255,.055);--glass-bar:rgba(12,16,22,.72);
+ --glass-strong:rgba(16,20,28,.86);--glass-chip:rgba(255,255,255,.07);
+ --glass-border:rgba(255,255,255,.12);--glass-edge:rgba(255,255,255,.10);
+ --glass-shadow:0 0 0 rgba(0,0,0,0);--glass-shadow-strong:0 28px 70px rgba(0,0,0,.75);
+ --glass-blur-thin:8px;
+ --ambient-1:rgba(92,214,143,.14);--ambient-2:rgba(33,166,122,.12);--ambient-3:rgba(69,201,161,.09);
+ --ambient-4:rgba(255,138,110,.08);
+ /* Same five tints, lifted for the black canvas: colour is what keeps an AMOLED
+    screen from reading as a grey-on-black terminal. */
+ --brand-2:#71e5aa;
+ --tone-blue:#6fb2ff;--tone-blue-soft:rgba(111,178,255,.16);
+ --tone-mint:#54e0a4;--tone-mint-soft:rgba(84,224,164,.14);
+ --tone-amber:#ffcf70;--tone-amber-soft:rgba(255,207,112,.14);
+ --tone-violet:#b3a3ff;--tone-violet-soft:rgba(179,163,255,.16);
+ --tone-rose:#ff9aab;--tone-rose-soft:rgba(255,154,171,.14);--tone-coral:#ffac8a;--tone-coral-soft:rgba(255,172,138,.14);
+ --ring-track:rgba(92,214,143,.22);
+ --accent-glow:0 16px 40px rgba(92,214,143,.22);--card-glow:0 0 0 rgba(0,0,0,0);
+ /* AMOLED: the band is deep forest green fading to black; the same lifted
+    green accent remains legible without adding shadows to the true-black canvas. */
+ --pay-hero-a:#0e2b1f;--pay-hero-b:#050c08;--pay-on-hero:#f4f6fa;--pay-on-hero-soft:#c3ead4;
+ --pay-hero-gradient:linear-gradient(130deg,#075a3e 0%,#086174 48%,#30266f 100%);
+ --pay-hero-chip:rgba(255,255,255,.10);--pay-hero-line:rgba(255,255,255,.20);--pay-hero-stat-chip:rgba(0,0,0,.30);
+ --pay-disc:rgba(92,214,143,.16);--pay-disc-ink:#7fe2a7;
+ --pay-fab-a:#74d99b;--pay-fab-b:#43b67b;--pay-on-fab:#04101f;
+ --pay-shadow:none;--pay-nav-shadow:rgba(0,0,0,0);--pay-logo-shadow:none;--pay-fab-shadow:none;
+ --pay-success:#5cd68f;--pay-success-soft:rgba(92,214,143,.14);
+ /* The same illustrations on AMOLED: lifted colours, forest paper and no glow. */
+ --icon-outline:#e4f5e9;--icon-on-color:#0c243c;
+ --icon-blue:#7ec0ff;--icon-blue-back:#1c3f6c;--icon-mint:#4eecc0;--icon-mint-back:#145244;
+ --icon-gold:#ffd56a;--icon-coral:#ff9a6a;--icon-violet:#c9b4ff;
+ --icon-paper:#1d2b40;--icon-paper-back:#293d58;
+ --icon-plate-blue:#0f2036;--icon-plate-green:#112b24;--icon-plate-gold:#2c2619;--icon-plate-violet:#232039;
+ --portal-canvas-bg:#000;--portal-surface:#0b0d10;--portal-surface-soft:#141820;--portal-border:#2b303a;
+ --portal-card-shadow:none;--portal-card-shadow-lift:none;
+ --portal-hero-bg:linear-gradient(0deg,rgba(4,24,17,.90) 0%,rgba(4,24,17,.62) 28%,rgba(4,24,17,.22) 58%,rgba(4,24,17,.06) 100%),linear-gradient(90deg,rgba(4,24,17,.46) 0%,transparent 76%),url('../assets/teacher-hero/teacher-hero-night.webp');
+ --portal-hero-text-shadow:0 2px 14px rgba(4,24,17,.65);--portal-hero-sub-shadow:0 1px 10px rgba(4,24,17,.65);--portal-hero-chip-shadow:none;
+ --auth-glass-canvas:var(--color-bg);
+ --auth-card-bg:var(--color-surface);--auth-card-border:var(--color-border);
+ --auth-card-shadow:none;
+ --auth-brand-banner:transparent;
+ --auth-brand-border:transparent;--auth-input-bg:var(--color-surface-muted);
+}
+*{box-sizing:border-box}html{scroll-padding-block:90px}body{margin:0;background:var(--color-bg);color:var(--color-text);font:400 var(--font-md)/1.65 'Noto Sans Bengali',system-ui,sans-serif}h1,h2,h3,p{margin:0 0 var(--space-3)}h1{font-size:var(--font-xl);line-height:1.4;font-weight:650}h2{font-size:var(--font-lg);line-height:1.5;font-weight:600}h3{font-size:var(--font-md);font-weight:600}strong,b{font-weight:600}small,.eyebrow{font-size:var(--font-xs);color:var(--color-text-secondary)}.eyebrow{letter-spacing:.06em;margin-bottom:var(--space-2)}a{color:var(--color-primary)}img{max-width:100%;object-fit:contain}svg{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}button,a,input,select,textarea{touch-action:manipulation}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}:focus-visible{outline:3px solid var(--color-primary);outline-offset:3px}[hidden]{display:none!important}pre,code{white-space:pre-wrap;overflow-wrap:anywhere}p,small,strong,label{overflow-wrap:anywhere}::selection{background:var(--color-surface-muted)}
+html[data-theme=dark] ::selection{background:#5ea9ff38;color:var(--color-text)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ── Weather-sky palette (login screen) ───────────────────────────────────
+   The photographic sky (css/ui-wallet.css §13) composes these tokens with one
+   state photograph each; every literal lives here so the wallet skin itself
+   stays free of raw colours (tests/wallet-design.test.mjs guards that). The
+   scrim tokens are built from --sky-fade, so the single dark-theme flip
+   re-tints every weather state at once. */
+:root{
+ --sky-fade:247,248,252;
+ --sky-glow-day:radial-gradient(circle at 50% 48%, rgba(255,250,226,.85), rgba(255,222,150,.30) 46%, rgba(255,222,150,0) 72%);
+ --sky-glow-dusk:radial-gradient(ellipse at 50% 60%, rgba(255,196,120,.55), rgba(255,150,80,.22) 48%, rgba(255,150,80,0) 74%);
+ --sky-glow-night:radial-gradient(circle at 50% 48%, rgba(240,246,255,.65), rgba(190,210,240,.18) 46%, rgba(190,210,240,0) 72%);
+ --sky-haze:radial-gradient(ellipse at center, rgba(255,255,255,.40), rgba(255,255,255,0) 70%);
+ --sky-haze-night:radial-gradient(ellipse at center, rgba(205,220,245,.22), rgba(205,220,245,0) 70%);
+ --sky-warm-wash:linear-gradient(180deg, rgba(255,158,64,.16), rgba(255,158,64,0) 55%);
+ --sky-fog-wash:linear-gradient(180deg, rgba(236,234,230,.55), rgba(236,234,230,.22) 45%, rgba(236,234,230,0) 72%);
+ --sky-scrim-bright:linear-gradient(180deg, rgba(var(--sky-fade),.16) 0%, rgba(var(--sky-fade),.60) 34%, rgba(var(--sky-fade),.96) 58%, var(--color-bg) 86%);
+ --sky-scrim-mid:linear-gradient(180deg, rgba(var(--sky-fade),.38) 0%, rgba(var(--sky-fade),.78) 36%, rgba(var(--sky-fade),.96) 60%, var(--color-bg) 88%);
+ --sky-scrim-rain:linear-gradient(180deg, rgba(var(--sky-fade),.30) 0%, rgba(var(--sky-fade),.70) 38%, rgba(var(--sky-fade),.95) 62%, var(--color-bg) 88%);
+ --sky-scrim-dusk:linear-gradient(180deg, rgba(var(--sky-fade),.12) 0%, rgba(var(--sky-fade),.62) 38%, rgba(var(--sky-fade),.95) 64%, var(--color-bg) 90%);
+ --sky-scrim-night:linear-gradient(180deg, rgba(var(--sky-fade),0) 0%, rgba(var(--sky-fade),.44) 36%, rgba(var(--sky-fade),.92) 64%, var(--color-bg) 92%);
+ --sky-scrim-storm:linear-gradient(180deg, rgba(var(--sky-fade),0) 0%, rgba(var(--sky-fade),.45) 38%, rgba(var(--sky-fade),.90) 66%, var(--color-bg) 92%);
+ --sky-scrim-fog:linear-gradient(180deg, rgba(var(--sky-fade),.45) 0%, rgba(var(--sky-fade),.85) 40%, rgba(var(--sky-fade),.98) 62%, var(--color-bg) 88%);
+ --sky-fall-day:linear-gradient(180deg, #cfe8ff 0%, #f4f7fb 42%, var(--color-bg) 100%);
+ --sky-fall-heat:linear-gradient(180deg, #ffd18a 0%, #f7e7d2 42%, var(--color-bg) 100%);
+ --sky-fall-dusk:linear-gradient(180deg, #f3c9a4 0%, #ead4c4 38%, var(--color-bg) 100%);
+ --sky-fall-night:linear-gradient(180deg, #1c2744 0%, #2c3548 40%, var(--color-bg) 100%);
+ --sky-fall-cloudy:linear-gradient(180deg, #c5cdd6 0%, #e8edf2 45%, var(--color-bg) 100%);
+ --sky-fall-rain:linear-gradient(180deg, #6e849c 0%, #c5d2de 48%, var(--color-bg) 100%);
+ --sky-fall-storm:linear-gradient(180deg, #3d4a5c 0%, #8b97a8 50%, var(--color-bg) 100%);
+ --sky-fall-fog:linear-gradient(180deg, #d5d2cc 0%, #eceae6 50%, var(--color-bg) 100%);
+ --sky-ink-strong:#eef4fc;--sky-ink-soft:#dce5f0;
+ --sky-ink-shadow-paper:0 1px 2px rgba(var(--sky-fade),.9), 0 0 14px rgba(var(--sky-fade),.95);
+ --sky-ink-shadow:0 1px 14px rgba(8,14,26,.5);--sky-ink-shadow-soft:0 1px 10px rgba(8,14,26,.45);
+ --sky-glow-dawn:radial-gradient(ellipse at 50% 62%, rgba(255,186,150,.55), rgba(255,140,110,.2) 48%, rgba(255,140,110,0) 74%);
+ --sky-scrim-dawn:linear-gradient(180deg, rgba(var(--sky-fade),.14) 0%, rgba(var(--sky-fade),.64) 38%, rgba(var(--sky-fade),.95) 64%, var(--color-bg) 90%);
+ --sky-fall-dawn:linear-gradient(180deg, #efc0c4 0%, #f2d9c8 38%, var(--color-bg) 100%);
+ --sky-orb-sun:radial-gradient(circle at 50% 50%, rgba(255,253,240,.95), rgba(255,230,160,.55) 32%, rgba(255,200,120,.18) 56%, rgba(255,190,100,0) 72%);
+ --sky-orb-sun-warm:radial-gradient(circle at 50% 52%, rgba(255,236,205,.95), rgba(255,176,112,.52) 34%, rgba(255,132,82,.18) 58%, rgba(255,120,70,0) 74%);
+ --sky-orb-moon:radial-gradient(circle at 46% 44%, rgba(242,247,255,.94), rgba(212,226,248,.5) 36%, rgba(190,210,240,.16) 60%, rgba(180,200,235,0) 76%);
+ --sky-wash-sheet:linear-gradient(180deg, rgba(196,218,244,.18), rgba(196,218,244,.05) 52%, rgba(196,218,244,0) 74%);
+ --sky-wash-basanta:linear-gradient(180deg, rgba(255,192,208,.17), rgba(206,236,196,.06) 52%, rgba(255,255,255,0) 74%);
+ --sky-wash-grishmo:linear-gradient(180deg, rgba(255,202,112,.18), rgba(255,172,92,.05) 52%, rgba(255,172,92,0) 74%);
+ --sky-wash-borsha:linear-gradient(180deg, rgba(118,178,168,.17), rgba(118,168,168,.05) 52%, rgba(118,168,168,0) 74%);
+ --sky-wash-shorot:linear-gradient(180deg, rgba(172,204,236,.15), rgba(180,210,240,.05) 52%, rgba(180,210,240,0) 74%);
+ --sky-wash-hemonto:linear-gradient(180deg, rgba(242,192,130,.16), rgba(236,186,122,.05) 52%, rgba(236,186,122,0) 74%);
+ --sky-note-bg:rgba(20,28,40,.42);
+ --sky-note-ink:#f2f6fb;
+ --orb-x:70%;--orb-y:22vh;--orb-size:180px;
+}
+html[data-theme=dark]{ --sky-fade:0,0,0;
+  /* light ink over a bright day photo needs the stronger wash back */
+  --sky-scrim-bright:linear-gradient(180deg, rgba(var(--sky-fade),.30) 0%, rgba(var(--sky-fade),.72) 34%, rgba(var(--sky-fade),.96) 58%, var(--color-bg) 86%); }
+/* ── Birthday celebration palette (wallet skin) ───────────────────────────
+   Same rule as the weather sky: the skin composes, the palette owns colours. */
+:root{
+ --birthday-band:linear-gradient(90deg, #ffd36a, #ff8aa0);
+ --birthday-ink:#3b2410;
+ --birthday-shell:radial-gradient(520px 280px at 12% -8%, rgba(255, 180, 80, .35), transparent 70%),
+   radial-gradient(480px 260px at 110% 8%, rgba(255, 110, 150, .28), transparent 68%),
+   var(--color-bg);
+ --birthday-topbar:linear-gradient(90deg, rgba(255, 196, 90, .35), rgba(255, 130, 160, .22));
+ --birthday-hero:linear-gradient(135deg, #f6c15a 0%, #ff8a7a 48%, #c084fc 100%);
+ --birthday-ring:0 0 0 2px rgba(255, 196, 90, .45);
+ --birthday-notice-border:#f3bd53;
+ --birthday-notice-bg:linear-gradient(180deg, #fff8e8, var(--color-surface));
+ --birthday-notice-icon:#fff0c4;
+}
+/* ── WhatsApp class-chat palette (wallet skin § Class Chat) ───────────────
+   Authentic WhatsApp group-chat surfaces, bubbles, doodle wallpaper and
+   sender tones in both light and dark themes; components in ui-wallet.css
+   reference only these tokens. */
+:root{
+ --wa-header-bg:#008069;
+ --wa-header-bg-deep:#075e54;
+ --wa-header-ink:#ffffff;
+ --wa-header-sub:rgba(255,255,255,.84);
+ --wa-header-chip:rgba(255,255,255,.15);
+ --wa-header-chip-active:#ffffff;
+ --wa-header-chip-active-ink:#008069;
+ --wa-header-line:rgba(255,255,255,.22);
+ --wa-wallpaper-bg:#efeae2;
+ --wa-wallpaper-doodle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%2354656f' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round' opacity='0.065'%3E%3Cpath d='M16 20h18a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H23l-6 5v-5h-1a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z'/%3E%3Cpath d='M74 16l4 8 9 1-6.5 6 1.5 9-8-4.2-8 4.2 1.5-9L61 25l9-1z'/%3E%3Ccircle cx='104' cy='38' r='8'/%3E%3Cpath d='M104 34v5l3 2'/%3E%3Cpath d='M22 72l14-14 6 6-14 14-8 2z'/%3E%3Cpath d='M62 66h24v18H62z'/%3E%3Cpath d='M74 66v18M62 72h24'/%3E%3Cpath d='M18 102h20M22 108h12'/%3E%3Cpath d='M58 104l4 4 9-9'/%3E%3Cpath d='M92 100a8 8 0 1 1 12 7v3h-8v-3a8 8 0 0 1-4-7z'/%3E%3C/g%3E%3C/svg%3E");
+ --wa-out-bubble:#d9fdd3;
+ --wa-in-bubble:#ffffff;
+ --wa-bubble-ink:#111b21;
+ --wa-meta-ink:#667781;
+ --wa-tick-read:#029be5;
+ --wa-bubble-shadow:0 1px 1px rgba(11,20,26,.13);
+ --wa-bubble-border:rgba(11,20,26,.06);
+ --wa-date-pill-bg:rgba(255,255,255,.94);
+ --wa-date-pill-ink:#54656f;
+ --wa-date-pill-shadow:0 1px 2px rgba(11,20,26,.11);
+ --wa-enc-bg:#ffeecd;
+ --wa-enc-ink:#54656f;
+ --wa-enc-border:rgba(214,173,96,.45);
+ --wa-pin-bg:rgba(255,255,255,.97);
+ --wa-pin-border:rgba(11,20,26,.09);
+ --wa-pin-accent:#00a884;
+ --wa-quote-out-bg:rgba(11,20,26,.055);
+ --wa-quote-in-bg:#f0f2f5;
+ --wa-quote-bar:#00a884;
+ --wa-quote-bar-alt:#0284c7;
+ --wa-composer-bg:#f0f2f5;
+ --wa-input-bg:#ffffff;
+ --wa-input-placeholder:#667781;
+ --wa-send-bg:#00a884;
+ --wa-send-hover:#008f6f;
+ --wa-send-ink:#ffffff;
+ --wa-send-shadow:0 2px 6px rgba(0,168,132,.34);
+ --wa-tray-bg:#ffffff;
+ --wa-tray-shadow:0 4px 16px rgba(11,20,26,.18);
+ --wa-react-pill-bg:#ffffff;
+ --wa-react-pill-active:#d9fdd3;
+ --wa-highlight-ring:0 0 0 2px #00a884, 0 6px 18px rgba(0,168,132,.25);
+ --wa-unread-badge:#25d366;
+ --wa-unread-ink:#111b21;
+ --wa-shell-shadow:0 6px 24px rgba(11,20,26,.09);
+ --wa-name-1:#008069;
+ --wa-name-2:#1d4ed8;
+ --wa-name-3:#b45309;
+ --wa-name-4:#be185d;
+ --wa-name-5:#6d28d9;
+ --wa-name-teacher:#008069;
+ --wa-name-manager:#b45309;
+ --wa-name-admin:#be123c;
+ --wa-avatar-1-bg:#dff6ef;
+ --wa-avatar-2-bg:#dbeafe;
+ --wa-avatar-3-bg:#fef3c7;
+ --wa-avatar-4-bg:#fce7f3;
+ --wa-avatar-5-bg:#ede9fe;
+}
+html[data-theme=dark]{
+ --wa-header-bg:#202c33;
+ --wa-header-bg-deep:#111b21;
+ --wa-header-ink:#e9edef;
+ --wa-header-sub:#8696a0;
+ --wa-header-chip:rgba(233,237,239,.09);
+ --wa-header-chip-active:#00a884;
+ --wa-header-chip-active-ink:#111b21;
+ --wa-header-line:rgba(233,237,239,.13);
+ --wa-wallpaper-bg:#0b141a;
+ --wa-wallpaper-doodle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%238696a0' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round' opacity='0.055'%3E%3Cpath d='M16 20h18a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H23l-6 5v-5h-1a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z'/%3E%3Cpath d='M74 16l4 8 9 1-6.5 6 1.5 9-8-4.2-8 4.2 1.5-9L61 25l9-1z'/%3E%3Ccircle cx='104' cy='38' r='8'/%3E%3Cpath d='M104 34v5l3 2'/%3E%3Cpath d='M22 72l14-14 6 6-14 14-8 2z'/%3E%3Cpath d='M62 66h24v18H62z'/%3E%3Cpath d='M74 66v18M62 72h24'/%3E%3Cpath d='M18 102h20M22 108h12'/%3E%3Cpath d='M58 104l4 4 9-9'/%3E%3Cpath d='M92 100a8 8 0 1 1 12 7v3h-8v-3a8 8 0 0 1-4-7z'/%3E%3C/g%3E%3C/svg%3E");
+ --wa-out-bubble:#005c4b;
+ --wa-in-bubble:#202c33;
+ --wa-bubble-ink:#e9edef;
+ --wa-meta-ink:rgba(233,237,239,.68);
+ --wa-tick-read:#53bdeb;
+ --wa-bubble-shadow:none;
+ --wa-bubble-border:rgba(233,237,239,.07);
+ --wa-date-pill-bg:#182229;
+ --wa-date-pill-ink:#8696a0;
+ --wa-date-pill-shadow:none;
+ --wa-enc-bg:#182229;
+ --wa-enc-ink:#ffd279;
+ --wa-enc-border:rgba(255,210,121,.16);
+ --wa-pin-bg:#182229;
+ --wa-pin-border:rgba(233,237,239,.09);
+ --wa-pin-accent:#00a884;
+ --wa-quote-out-bg:rgba(11,20,26,.28);
+ --wa-quote-in-bg:rgba(11,20,26,.36);
+ --wa-quote-bar:#00a884;
+ --wa-quote-bar-alt:#53bdeb;
+ --wa-composer-bg:#202c33;
+ --wa-input-bg:#2a3942;
+ --wa-input-placeholder:#8696a0;
+ --wa-send-bg:#00a884;
+ --wa-send-hover:#06cf9c;
+ --wa-send-ink:#111b21;
+ --wa-send-shadow:none;
+ --wa-tray-bg:#233138;
+ --wa-tray-shadow:none;
+ --wa-react-pill-bg:#2a3942;
+ --wa-react-pill-active:#005c4b;
+ --wa-highlight-ring:0 0 0 2px #00a884;
+ --wa-unread-badge:#00a884;
+ --wa-unread-ink:#111b21;
+ --wa-shell-shadow:none;
+ --wa-name-1:#53bdeb;
+ --wa-name-2:#06cf9c;
+ --wa-name-3:#ffb84d;
+ --wa-name-4:#ff7eb6;
+ --wa-name-5:#b794f4;
+ --wa-name-teacher:#06cf9c;
+ --wa-name-manager:#ffb84d;
+ --wa-name-admin:#ff7eb6;
+ --wa-avatar-1-bg:rgba(83,189,235,.18);
+ --wa-avatar-2-bg:rgba(6,207,156,.18);
+ --wa-avatar-3-bg:rgba(255,184,77,.18);
+ --wa-avatar-4-bg:rgba(255,126,182,.18);
+ --wa-avatar-5-bg:rgba(183,148,244,.18);
+}

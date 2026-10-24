@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "active-plus-coaching",
+    "prod": "active-plus-coaching"
+  }
+}

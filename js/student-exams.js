@@ -1,0 +1,341 @@
+import { nowEpoch } from './time.js';
+import { examRepository as repo, examMatchesStudent, retryEligibility, firstAttemptMean, examResults, totalMarks, watchExams, isStudentVisibleExam, gradeFor } from './exam-data.js';
+import { examMeta, resultMarkup, classResultBoard, attemptStage, stageTag, codeTag, esc, num } from './exam-ui.js';
+import { downloadExamPDF } from './exam-pdf.js';
+import { setView } from './shell.js';
+
+export function initStudentExams({ getStudent, getAccount }) {
+  const root = document.querySelector('#studentExamWorkspace'); if (!root) return () => {};
+  let db = { exams: [], attempts: [] }, view = 'list', examId = null, attemptId = null, busy = false, ready = false;
+  /* The four states of the পরীক্ষা section (docs/APP-ARCHITECTURE.md §3). An exam
+     belongs to exactly one tab: a live attempt or a running window is চলমান, a
+     future paper is আসন্ন, a published paper is ফলাফল, the rest is সম্পন্ন. */
+  const TABS = ['upcoming', 'live', 'done', 'results'];
+  const TAB_VIEWS = Object.freeze({
+    upcoming: 'exam-upcoming', live: 'exam-live', done: 'exam-done', results: 'exam-results',
+    practice: 'exam-practice', instant: 'exam-instant', papers: 'exam-papers', recent: 'exam-recent'
+  });
+  const VIEW_TABS = Object.freeze(Object.fromEntries(Object.entries(TAB_VIEWS).map(([tab, view]) => [view, tab])));
+  const EMPTY_TAB_TEXT = Object.freeze({
+    upcoming: 'এই মুহূর্তে কোনো আসন্ন পরীক্ষা নেই।',
+    live: 'এখন কোনো পরীক্ষা চলছে না।',
+    done: 'সম্পন্ন হওয়া কোনো পরীক্ষা এখনও নেই।',
+    results: 'এখনও কোনো ফলাফল প্রকাশ করা হয়নি।'
+  });
+  /* Hub first: the পরীক্ষা page opens on the category + practice grids, with
+     no list painted until the student picks one tile. */
+  let tab = 'hub';
+  let tabChosen = true;
+  root.classList.add('exam-workspace');
+  root.innerHTML = '<p class="exam-error" data-exam-error role="alert" hidden></p><p class="exam-message" data-exam-message role="status" hidden></p><div data-exam-content></div>';
+  const $ = selector => root.querySelector(selector), content = $('[data-exam-content]');
+  const activeAccount = () => getAccount()?.status === 'active';
+  const button = (action, label, id = '', cls = '') => `<button type="button" class="${cls}" data-student-exam-action="${action}" data-id="${esc(id)}">${label}</button>`;
+  const own = e => db.attempts.filter(a => a.examId === e.id && a.studentId === getStudent().id);
+  function error(text) { $('[data-exam-error]').textContent = text; $('[data-exam-error]').hidden = !text; }
+  function message(text) { $('[data-exam-message]').textContent = text; $('[data-exam-message]').hidden = !text; }
+  function scrollTop() { if (document.querySelector('#examsView').classList.contains('active')) root.closest('main')?.scrollTo({ top: 0, behavior: 'instant' }); }
+  function visibleExams() {
+    return db.exams.filter(e => isStudentVisibleExam(e) && examMatchesStudent(e, getStudent()));
+  }
+  function tabOf(exam, now = nowEpoch()) {
+    const attempts = own(exam);
+    if (attempts.some(a => a.status === 'active') && now < exam.endAt) return 'live';
+    if (now < exam.startAt) return 'upcoming';
+    if (now < exam.endAt) return 'live';
+    return exam.resultsPublished ? 'results' : 'done';
+  }
+  function ownPublishedRows() {
+    const student = getStudent() || {};
+    return visibleExams().filter(e => e.resultsPublished).map(exam => {
+      const row = examResults(db, exam).find(item => item.studentId === student.id);
+      if (!row) return null;
+      const total = totalMarks(exam), percent = total ? row.score / total * 100 : 0;
+      return { exam, row, total, percent, grade: row.grade || gradeFor(row.score, total, exam.passPercent) };
+    }).filter(Boolean);
+  }
+  function paintResultOverview() {
+    const mount = document.querySelector('#studentResultOverview');
+    if (!mount) return;
+    const rows = ownPublishedRows();
+    if (!rows.length) {
+      mount.innerHTML = '<p class="exam-note">প্রকাশিত ফলাফল এখানে দেখা যাবে — শিক্ষক নম্বর দিয়ে Manager প্রকাশ করলে স্বয়ংক্রিয়ভাবে যোগ হবে।</p>';
+      return;
+    }
+    const average = rows.reduce((sum, item) => sum + item.percent, 0) / rows.length;
+    mount.innerHTML = `<div class="exam-summary"><h3>সারসংক্ষেপ</h3><dl><div><dt>প্রকাশিত ফলাফল</dt><dd>${num(rows.length)}</dd></div><div><dt>গড় শতকরা</dt><dd>${num(average.toFixed(1))}%</dd></div><div><dt>সামগ্রিক গ্রেড</dt><dd>${esc(gradeFor(average, 100))}</dd></div></dl></div>
+      <div class="exam-results">${rows.map(item => `<article class="exam-card"><span class="exam-tag">${esc(item.exam.subject || 'পরীক্ষা')}</span><h3>${esc(item.exam.title)}</h3><small>পরীক্ষা আইডি ${esc(item.exam.id)} • প্রচেষ্টা ${num(item.row.number || 1)}</small><p><strong>${num(item.row.score)} / ${num(item.total)}</strong> • ${num(item.percent.toFixed(1))}% • গ্রেড ${esc(item.grade)}</p>${item.row.rank ? `<small>মেধাক্রম ${num(item.row.rank)}</small>` : ''}</article>`).join('')}</div>`;
+  }
+  function paintHubLive(exams, now) {
+    const host = document.querySelector('#examHubLiveList');
+    if (!host) return;
+    const live = exams.filter(exam => now >= exam.startAt && now < exam.endAt)
+      .sort((a, b) => a.endAt - b.endAt);
+    host.hidden = !live.length;
+    host.innerHTML = live.map(exam => {
+      const attempts = own(exam);
+      const resume = attempts.some(attempt => attempt.status === 'active');
+      const canStart = exam.type === 'mcq' && !attempts.length && now <= exam.startAt + exam.lateMinutes * 60000;
+      const action = resume ? 'resume' : canStart ? 'start' : '';
+      const minutes = Math.max(1, Math.ceil((exam.endAt - now) / 60000));
+      return `<article class="exam-hub-live-card" data-live-exam="${esc(exam.id)}">
+        <span class="exam-hub-live-dot" aria-hidden="true"></span>
+        <div class="exam-hub-live-copy"><h2>${esc(exam.title || exam.subject || 'পরীক্ষা')}</h2><p>এখন চলছে · ${num(minutes)} মিনিট বাকি</p></div>
+        <button type="button" class="exam-hub-live-open" data-exam-hub-open="${esc(exam.id)}" data-hub-action="${action}">${resume ? 'ফিরে যান' : canStart ? 'শুরু' : 'দেখুন'}</button>
+      </article>`;
+    }).join('');
+  }
+
+  function paintTabs() {
+    const bar = document.querySelector('#examTabs');
+    const now = nowEpoch();
+    const exams = activeAccount() ? visibleExams() : [];
+    const counts = { upcoming: 0, live: 0, done: 0, results: 0 };
+    exams.forEach(exam => { counts[tabOf(exam, now)] += 1; });
+    paintHubLive(exams, now);
+    if (bar) {
+      bar.querySelectorAll('[data-exam-tab]').forEach(item => {
+        const key = item.dataset.examTab;
+        item.setAttribute('aria-pressed', String(key === tab));
+        const badge = item.querySelector('[data-exam-tab-count]');
+        if (badge) {
+          const count = counts[key] || 0;
+          badge.textContent = num(count);
+          badge.classList.toggle('is-zero', !count);
+        }
+      });
+    }
+    const examWorkspace = document.querySelector('#studentExamWorkspace');
+    const listSlot = document.querySelector(`[data-exam-list-slot="${TAB_VIEWS[tab] || ''}"]`);
+    if (examWorkspace && listSlot && examWorkspace.parentElement !== listSlot) listSlot.appendChild(examWorkspace);
+    if (examWorkspace) examWorkspace.hidden = !['upcoming', 'live', 'done'].includes(tab);
+    const practiceWorkspace = document.querySelector('#studentPracticeWorkspace');
+    const practiceSlot = document.querySelector(`[data-practice-slot="${tab}"]`) || document.querySelector('#examPracticeView');
+    if (practiceWorkspace && ['instant', 'papers', 'recent', 'practice'].includes(tab)) {
+      if (practiceSlot && practiceWorkspace.parentElement !== practiceSlot) practiceSlot.appendChild(practiceWorkspace);
+      practiceWorkspace.hidden = false;
+      const mode = tab === 'practice' ? 'all' : tab;
+      window.apcStudentPractice?.setMode?.(mode);
+    } else if (practiceWorkspace && !practiceWorkspace.closest('#studyPracticeView')) {
+      practiceWorkspace.hidden = true;
+    }
+    if (tab === 'results') paintResultOverview();
+  }
+  /* Which tab a student lands on: the first one that actually has something to
+     show (a live paper first), never an empty list while another tab is full. */
+  function defaultTab(exams, now) {
+    const counts = { upcoming: 0, live: 0, done: 0, results: 0 };
+    exams.forEach(exam => { counts[tabOf(exam, now)] += 1; });
+    for (const key of ['live', 'upcoming', 'done', 'results']) if (counts[key]) return key;
+    return 'upcoming';
+  }
+  function setTab(next, { skipView = false } = {}) {
+    if (view === 'active') return;
+    if (next === 'hub' || next === 'practice' || next === 'instant' || next === 'papers' || next === 'recent' || TABS.includes(next)) {
+      tab = next;
+      tabChosen = true;
+      list();
+      if (!skipView) {
+        if (next === 'hub') setView('exams');
+        else if (TAB_VIEWS[next]) setView(TAB_VIEWS[next]);
+      }
+    }
+  }
+  function list() {
+    view = 'list'; examId = null; attemptId = null;
+    if (tab === 'hub' || tab === 'practice' || tab === 'instant' || tab === 'papers' || tab === 'recent') { content.innerHTML = ''; paintTabs(); return; }
+    if (!activeAccount()) { content.innerHTML = '<p class="exam-card">অনুমোদিত অ্যাকাউন্ট দিয়ে লগইন করতে হবে।</p>'; paintTabs(); return; }
+    /* Draft / review / approved / archived papers are staff-only: a student
+    never sees a question before its exam is published. */
+    const visible = visibleExams(), now = nowEpoch();
+    const exams = visible.filter(e => tabOf(e, now) === tab).sort((a, b) => b.startAt - a.startAt);
+    content.innerHTML = `<div class="exam-actions">${button('refresh', 'তালিকা / জমার অবস্থা হালনাগাদ')}</div><div class="exam-list">${exams.map(e => {
+      const attempts = own(e), active = attempts.find(a => a.status === 'active'), queued = attempts.some(a => a.status === 'queued');
+      const canFirst = !attempts.length && now >= e.startAt && now < e.endAt && now <= e.startAt + e.lateMinutes * 60000;
+      const retry = false;
+      return `<article class="exam-card" data-student-exam="${esc(e.id)}">${examMeta(e)}<p class="exam-note">${stageTag(e)}${codeTag(e)}</p><p class="exam-note">${esc(e.instructions)}</p>${e.type === 'mcq' ? `<p class="exam-note">সব প্রশ্ন একসঙ্গে থাকবে। প্রতি ভুলে ${num(e.negative)} নম্বর কাটা হবে; সর্বনিম্ন মোট ০। প্রথম প্রবেশের সীমা ${num(e.lateMinutes)} মিনিট।</p>${queued ? `<p class="exam-message">${esc(attemptStage(attempts.find(a => a.status === 'queued'), e))}</p>` : ''}` : ''}
+        <div class="exam-actions">${e.type === 'mcq' ? active && now < e.endAt ? button('resume', 'পরীক্ষায় ফিরে যাও', e.id, 'primary') : canFirst ? button('start', 'পরীক্ষা শুরু করো', e.id, 'primary') : retry ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : `<small>${now < e.startAt ? 'নির্ধারিত সময়ে পরীক্ষা শুরু হবে।' : now >= e.endAt ? 'পরীক্ষার সময় শেষ।' : attempts.length ? 'চলমান গড়ের নিচে হলে দ্বিতীয় সুযোগ এখানে আসবে।' : 'প্রথম প্রবেশের সময়সীমা শেষ।'}</small>` : now >= e.startAt ? button('paper', 'প্রশ্নপত্র PDF ডাউনলোড', e.id, 'primary') : '<small>শুরুর সময় হলে PDF পাওয়া যাবে।</small>'}
+        ${e.resultsPublished ? button('results', 'প্রকাশিত ফলাফল ও ক্লাসের মেধাক্রম', e.id): e.type === 'mcq' ? `<small>সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।</small>` : '<small>ফলাফল Manager-এর প্রকাশের অপেক্ষায়।</small>'}${e.type === 'mcq' && now >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF', e.id) : ''}</div></article>`;
+    }).join('') || `<p class="exam-card">${visible.length ? EMPTY_TAB_TEXT[tab] : 'অ্যাডমিন এখনও কোনো পরীক্ষা প্রকাশ করেননি।'}</p>`}</div>`;
+    paintTabs();
+  }
+  function activeExam(e, a) {
+    view = 'active'; examId = e.id; attemptId = a.id;
+    if (!document.querySelector('#examLiveView')?.classList.contains('active')) setView('exam-live', { history: 'push' });
+    content.innerHTML = `<div class="exam-actions">${button('list', '← তালিকা (উত্তর সংরক্ষিত থাকবে)')}</div><div class="exam-timer exam-timer--pinned"><span>সবার জন্য একই শেষ সময় • চেষ্টা ${num(a.number)}</span><strong data-exam-clock aria-live="off"></strong><em class="exam-timer-hint" data-low-hint hidden></em><small data-answer-status>উত্তর এই ফোনে সংরক্ষিত হচ্ছে।</small></div><h2>${esc(e.title)}</h2><p class="exam-note">সব প্রশ্ন একসঙ্গে দেখানো হয়েছে — খুঁজতে স্ক্রল করো। সময় শেষ হলে উত্তরপত্র <strong>স্বয়ংক্রিয়ভাবে জমা</strong> হবে; ততক্ষণ যেকোনো উত্তরের অপশন বদলাতে পারবে। নেট না থাকলেও উত্তর এই ফোনে সংরক্ষিত থাকবে, সংযোগ ফিরলে জমা হবে।</p>
+      <div class="exam-question-list">${a.order.map((item, i) => {
+        const q = e.questions.find(q => q.id === item.id);
+        return `<fieldset class="exam-question"><legend>প্রশ্ন ${num(i + 1)} • ${num(q.marks)} নম্বর</legend><p>${esc(q.text)}</p>${item.options.map((id, j) => {
+          const option = q.options.find(o => o.id === id);
+          return `<label class="exam-option"><input type="radio" name="answer-${q.id}" value="${id}" data-answer-question="${q.id}" ${a.answers[q.id] === id ? 'checked' : ''}><span>${'ABCD'[j]}. ${esc(option.text)}</span></label>`;
+        }).join('')}</fieldset>`;
+      }).join('')}</div><div class="exam-actions">${button('confirm', 'উত্তরপত্র জমা দাও', e.id, 'primary')}</div>
+      <div class="exam-card" data-submit-confirm hidden><h3>এখনই জমা দেবে?</h3><p>জমা দেওয়ার পর এই প্রচেষ্টার উত্তর বদলানো যাবে না। চাইলে “উত্তরে ফিরে যাও” চেপে সময় শেষ হওয়া পর্যন্ত অপেক্ষা করো — সময় শেষ হলে উত্তরপত্র স্বয়ংক্রিয়ভাবে জমা হবে।</p><div class="exam-actions">${button('finish', 'হ্যাঁ, জমা দাও', e.id, 'primary')}${button('cancel-confirm', 'উত্তরে ফিরে যাও')}</div></div>`;
+    clock(); scrollTop();
+  }
+  function results(e, reset = true) {
+    if (!e.resultsPublished) { view = 'list'; examId = null; attemptId = null; list(); message(e.type === 'mcq' ? 'ফলাফল এখনো প্রকাশিত হয়নি — সবার উত্তরপত্র জমা হলেই ফলাফল নিজে থেকেই প্রকাশিত হবে।' : 'ফলাফল এখনো ম্যানেজার প্রকাশ করেননি।'); return; }
+    view = 'results'; examId = e.id; attemptId = null;
+    const mine = own(e), pending = mine.some(a => a.status === 'queued'), mean = firstAttemptMean(db, e.id);
+    content.innerHTML = `<div class="exam-actions">${button('list', '← পরীক্ষার তালিকা')}${button('refresh', 'হালনাগাদ')}</div>${examMeta(e)}
+      ${pending ? '<p class="exam-message">তোমার উত্তর ফোনে রাখা আছে। অনলাইনে এলে জমা ও মূল্যায়ন হবে।</p>' : ''}
+      ${mine.filter(a => a.status === 'submitted').map(a => {
+        const auto = e.type === 'mcq' && Number.isFinite(a.finishedAt) && a.finishedAt >= e.endAt;
+        return `<div class="exam-summary"><h3>তোমার প্রচেষ্টা ${num(a.number)} • ${esc(attemptStage(a, e))}${auto ? ' (সময় শেষে স্বয়ংক্রিয় জমা)' : ''}</h3><strong>${num(a.score)} / ${num(totalMarks(e))}</strong>${e.type === 'mcq' ? `<p>সঠিক ${num(a.correct)} • ভুল ${num(a.wrong)} • অনুত্তরিত ${num(a.unanswered)}</p>` : ''}${a.comment ? `<p class="exam-teacher-comment" data-exam-comment><strong>শিক্ষকের মন্তব্য:</strong> ${esc(a.comment)}</p>` : ''}${auto ? '<p>নির্ধারিত সময় শেষ হওয়ায় উত্তরপত্র নিজে থেকেই জমা হয়েছে — জমা হওয়ার আগে যেসব উত্তর বাছা ছিল সেগুলোই গণনা হয়েছে।</p>' : ''}</div>`;
+      }).join('')}
+      <p class="exam-note">${e.type === 'mcq' ? `দ্বিতীয় সুযোগ: জমা হওয়া প্রথম প্রচেষ্টার চলমান গড় ${mean === null ? 'এখনও নেই' : num(mean.toFixed(2))}। তার নিচে থাকলে সর্বোচ্চ দুইবার; শেষ সময় একই। শুরু করা দ্বিতীয় সুযোগ পরে গড় বদলালেও বাতিল হবে না।` : 'ক্লাসে পরীক্ষার পরে শিক্ষক নম্বর প্রকাশ করবেন।'}</p>
+      <div class="exam-actions">${false ? button('start', 'দ্বিতীয়বার পরীক্ষা দাও', e.id, 'primary') : ''}${e.type === 'mcq' && nowEpoch() >= e.endAt ? button('solutions', 'সঠিক উত্তরসহ PDF ডাউনলোড', e.id, 'primary') : e.type === 'mcq' ? '<small>সঠিক উত্তরসহ PDF সবার পরীক্ষা শেষ হলে পাওয়া যাবে।</small>' : ''}</div>${e.classResults ? classResultBoard(e, e.classResults, { meId: getStudent().id }) : resultMarkup(db, e)}`;
+    if (reset) scrollTop();
+  }
+  function repaint() {
+    if (!activeAccount()) { list(); return; }
+    const e = db.exams.find(e => e.id === examId && isStudentVisibleExam(e));
+    if (view === 'active' && e) {
+      const a = own(e).find(a => a.id === attemptId);
+      if (a?.status === 'active') root.querySelectorAll('[data-answer-question]').forEach(input => { input.checked = a.answers[input.dataset.answerQuestion] === input.value; });
+      else results(e);
+    } else if (view === 'results' && e) results(e, false);
+    else list();
+    paintTabs();
+  }
+  async function refresh() {
+    try {
+      db = await repo.listForStudent(getStudent()?.id);
+      ready = true;
+      /* A refresh that succeeded clears the banner an earlier pre-login or
+         offline attempt left behind — otherwise the student keeps seeing
+         "অ্যাকাউন্ট যাচাই করা যায়নি" over a working list. */
+      error('');
+      if (!tabChosen) { tab = defaultTab(visibleExams(), nowEpoch()); tabChosen = true; }
+      repaint();
+    }
+    catch (e) { ready = false; content.innerHTML = ''; error(e.message || 'পরীক্ষার ডেটা লোড হয়নি।'); }
+  }
+  async function run(operation, after = repaint) {
+    if (busy || !ready || !activeAccount()) return;
+    busy = true; error('');
+    const controls = [...root.querySelectorAll('button, input')]; controls.forEach(el => { el.disabled = true; });
+    try { const snapshot = await operation(); if (snapshot?.exams) db = snapshot; await after(); }
+    catch (e) { error(e instanceof DOMException ? 'সংরক্ষণ/ডাউনলোড হয়নি। ফোনের স্টোরেজ পরীক্ষা করে আবার চেষ্টা করো।' : e.message || 'সংরক্ষণ হয়নি। আবার চেষ্টা করো।'); }
+    finally { busy = false; controls.forEach(el => { el.disabled = false; }); }
+  }
+  const LOW_TIME_MS = 5 * 60000;
+  const bnDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+  function clock() {
+    const e = db.exams.find(e => e.id === examId);
+    if ($('[data-exam-clock]') && e) {
+      const seconds = Math.max(0, Math.ceil((e.endAt - nowEpoch()) / 1000));
+      const readable = bnDigits(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
+      const left = e.endAt - nowEpoch(), node = $('[data-exam-clock]');
+      const low = left > 0 && left <= LOW_TIME_MS, hint = $('[data-low-hint]');
+      node.textContent = left <= 0 ? 'সময় শেষ' : `সময় বাকি ${readable}`;
+      node.dataset.lowTime = low ? 'true' : 'false';
+      node.title = low ? 'শেষ ৫ মিনিট — উত্তরপত্র স্বয়ংক্রিয়ভাবে জমা হবে।' : '';
+      if (hint) { hint.hidden = !low; hint.textContent = low ? 'শেষ ৫ মিনিট — সময় শেষে উত্তরপত্র নিজে থেকে জমা হবে।' : ''; }
+      const count = Object.keys(db.attempts.find(a => a.id === attemptId)?.answers || {}).length;
+      $('[data-answer-status]').textContent = !$('[data-exam-error]').hidden ? $('[data-exam-error]').textContent : `${bnDigits(count)} / ${bnDigits(e.questions.length)} উত্তর ফোনে সংরক্ষিত • ${navigator.onLine ? 'অনলাইন' : 'অফলাইন'}`;
+    }
+  }
+  async function sync() {
+    if (busy || !ready || !activeAccount()) return;
+    const pending = db.attempts.some(a => a.studentId === getStudent().id && (a.status === 'queued' && navigator.onLine !== false || a.status === 'active' && nowEpoch() >= db.exams.find(e => e.id === a.examId).endAt));
+    if (pending) await run(() => repo.syncStudent(getStudent().id));
+  }
+  root.addEventListener('change', event => {
+    const input = event.target.closest('[data-answer-question]'); if (!input) return;
+    run(() => repo.saveAnswer(attemptId, getStudent().id, input.dataset.answerQuestion, input.value), clock).then(() => repaint());
+  });
+  root.addEventListener('click', event => {
+    const target = event.target.closest('[data-student-exam-action]'); if (!target || busy) return;
+    const action = target.dataset.studentExamAction, e = db.exams.find(e => e.id === target.dataset.id); error(''); message('');
+    if (action === 'list') { list(); scrollTop(); }
+    else if (action === 'refresh') refresh().then(sync);
+    else if (!ready) error('ডেটা লোড হয়নি। আবার চেষ্টা করো।');
+    else if (action === 'start') run(() => repo.startAttempt(e.id, getStudent()), () => { const current = db.exams.find(item => item.id === e.id); activeExam(current, own(current).find(a => a.status === 'active')); });
+    else if (action === 'resume') activeExam(e, own(e).find(a => a.status === 'active'));
+    else if (action === 'results') results(e);
+    else if (action === 'confirm') { $('[data-submit-confirm]').hidden = false; $('[data-student-exam-action=finish]').focus(); }
+    else if (action === 'cancel-confirm') $('[data-submit-confirm]').hidden = true;
+    else if (action === 'finish') run(() => repo.finishAttempt(attemptId, getStudent().id), () => results(db.exams.find(item => item.id === e.id)));
+    else if (action === 'paper') run(() => downloadExamPDF(e, { attempt: examResults(db, e).find(a => a.studentId === getStudent().id) || own(e).at(-1) }), () => message('PDF ডাউনলোড শুরু হয়েছে।'));
+    else if (action === 'solutions') run(async () => {
+      const refreshed = await repo.listForStudent(getStudent()?.id);
+      const current = refreshed.exams.find(item => item.id === target.dataset.id);
+      if (!current || nowEpoch() < current.endAt) throw new Error('পরীক্ষা শেষ হলে সঠিক উত্তরসহ PDF পাওয়া যাবে।');
+      await downloadExamPDF(current, { solutions: true, attempt: examResults(refreshed, current).find(item => item.studentId === getStudent().id) || own(current).at(-1) });
+      return refreshed;
+    }, () => message('PDF ডাউনলোড শুরু হয়েছে।'));
+  });
+  window.addEventListener('apc-notification-action', event => {
+    const detail = event.detail || {};
+    if (!['exam', 'exam-soon', 'exam-live'].includes(detail.kind) || !detail.id) return;
+    void refresh().then(() => {
+      const target = db.exams.find(e => e.id === String(detail.id));
+      if (target) tab = tabOf(target);
+      if (view !== 'active') list();
+      const card = [...root.querySelectorAll('[data-student-exam]')]
+        .find(item => item.dataset.studentExam === String(detail.id));
+      if (!card) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const action = ['start', 'resume'].includes(detail.action) ? detail.action : '';
+      const control = action ? card.querySelector(`[data-student-exam-action="${action}"]`) : null;
+      if (control && !control.disabled) control.click();
+      else card.querySelector('.exam-actions button')?.focus?.({ preventScroll: true });
+    });
+  });
+  document.addEventListener('click', event => {
+    const liveCard = event.target.closest('[data-exam-hub-open]');
+    if (liveCard) {
+      setTab('live');
+      window.dispatchEvent(new CustomEvent('apc-notification-action', { detail: {
+        kind: 'exam-live', id: liveCard.dataset.examHubOpen, action: liveCard.dataset.hubAction
+      } }));
+      return;
+    }
+    const practiceTile = event.target.closest('#examTabs [data-practice-mode]');
+    if (practiceTile) {
+      if (view === 'active') return;
+      const mode = practiceTile.dataset.practiceMode;
+      window.apcStudentPractice?.setMode?.(mode);
+      setTab(mode === 'instant' || mode === 'papers' || mode === 'recent' ? mode : 'practice');
+      return;
+    }
+    const trigger = event.target.closest('#examTabs [data-exam-tab]');
+    if (!trigger) return;
+    setTab(trigger.dataset.examTab);
+  });
+  window.addEventListener('apc-view-change', event => {
+    const next = VIEW_TABS[event.detail?.view];
+    if (next) setTab(next, { skipView: true });
+    if (event.detail?.view === 'exams') { tab = 'hub'; list(); }
+  });
+  watchExams(() => { if (!busy) refresh(); });
+  window.addEventListener('online', () => refresh().then(sync));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh().then(sync); });
+  /* The heartbeat only keeps exam state current. MCQ answer PDFs are never
+     generated in the background: only the student's explicit solutions
+     button can invoke downloadExamPDF. */
+  let lastMinute = -1;
+  window.setInterval(() => {
+    clock(); sync();
+    const now = nowEpoch();
+    document.querySelectorAll('#examHubLiveList [data-live-exam]').forEach(card => {
+      const exam = db.exams.find(item => item.id === card.dataset.liveExam);
+      const line = card.querySelector('p');
+      if (exam && line && now < exam.endAt) line.textContent = `এখন চলছে · ${num(Math.max(1, Math.ceil((exam.endAt - now) / 60000)))} মিনিট বাকি`;
+    });
+    const minute = Math.floor(nowEpoch() / 1000);
+    if (ready && !busy && minute !== lastMinute && view !== 'active') {
+      // Refresh time-based buttons without moving focus away from the current control.
+      const transition = db.exams.some(e => [e.startAt, e.endAt, e.startAt + e.lateMinutes * 60000 + 1000].some(t => t > lastMinute * 1000 && t <= nowEpoch()));
+      if (transition) repaint();
+    }
+    lastMinute = minute;
+  }, 1000);
+  refresh();
+  const api = () => refresh().then(sync);
+  api.setTab = setTab;
+  api.paintTabs = paintTabs;
+  api.currentTab = () => tab;
+  return api;
+}

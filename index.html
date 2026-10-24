@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app http://localhost:9000 http://127.0.0.1:9000; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.cloudfunctions.net https://*.firebaseapp.com https://*.supabase.co wss://*.supabase.co https://*.google.com https://www.gstatic.com https://api.open-meteo.com http://localhost:5001 http://localhost:8080 http://localhost:9000 http://localhost:9099 http://127.0.0.1:5001 http://127.0.0.1:8080 http://127.0.0.1:9000 http://127.0.0.1:9099 ws://localhost:5001 ws://localhost:8080 ws://localhost:9000 ws://localhost:9099 ws://127.0.0.1:5001 ws://127.0.0.1:8080 ws://127.0.0.1:9000 ws://127.0.0.1:9099; frame-src 'self' https://www.google.com/recaptcha/ https://*.firebaseapp.com https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app https://*.firebasedatabase.app http://localhost:9000 http://127.0.0.1:9000; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <script src="js/sanitize-url.js?v=421"></script>
+  <script src="js/cache-refresh.js?v=421"></script>
+  <script src="js/app-entry.js?v=421" data-entry="student"></script>
+  <script type="module" src="js/main.js?v=421"></script>
+  <script src="js/topbar-connectivity.js?v=421" defer></script>
+  <script type="module" src="js/realtime-sync-entry.js?v=421"></script>
+  <script src="js/appearance-boot.js?v=421"></script>
+  <script src="js/theme-logos.js?v=421"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0e7a55">
+  <meta name="description" content="Active Plus Coaching শিক্ষার্থী অ্যাপ — অফলাইনে রুটিন, ক্লাস, ফলাফল ও নোটিশ দেখুন।">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Active Plus">
+  <title>Active Plus | শিক্ষার্থী অ্যাপ</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app">
+  <link rel="dns-prefetch" href="https://active-plus-coaching-default-rtdb.asia-southeast1.firebasedatabase.app">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/NotoSansBengali-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Stylesheets are linked directly, in design-system.css order, instead of
+       being @import-ed from it: the preload scanner then discovers all 15 in the
+       HTML and fetches them in parallel, instead of a render-blocking serial
+       waterfall (design-system.css first, its imports one round-trip later).
+       tools/css-order-check.mjs + tests/css-order.test.mjs keep this in sync. -->
+  <link rel="stylesheet" href="css/foundation.css?v=421">
+  <link rel="stylesheet" href="css/ui-layout.css?v=421">
+  <link rel="stylesheet" href="css/ui-components.css?v=421">
+  <link rel="stylesheet" href="css/ui-forms.css?v=421">
+  <link rel="stylesheet" href="css/ui-features.css?v=421">
+  <link rel="stylesheet" href="css/notice-board.css?v=421">
+  <link rel="stylesheet" href="css/ui-status.css?v=421">
+  <link rel="stylesheet" href="css/ui-auth.css?v=421">
+  <link rel="stylesheet" href="css/app-polish.css?v=421">
+  <link rel="stylesheet" href="css/student-record.css?v=421">
+  <link rel="stylesheet" href="css/exam-archive.css?v=421">
+  <link rel="stylesheet" href="css/academics.css?v=421">
+  <link rel="stylesheet" href="css/notifications.css?v=421">
+  <link rel="stylesheet" href="css/course-hub.css?v=421">
+  <link rel="stylesheet" href="css/ui-wallet.css?v=421">
+  <script type="module" src="js/ui-accessibility.js?v=421"></script>
+  <script src="js/launch-screen.js?v=421" defer></script>
+</head>
+<body>
+  <!-- Authentication comes first. Credentials and registration data stay on this device. -->
+  <section class="auth-screen" id="authScreen" data-sky="clear-day" aria-label="Active Plus লগইন">
+    <div class="auth-sky" aria-hidden="true"><span class="auth-orb"></span><span class="auth-cloud c1"></span><span class="auth-cloud c2"></span><span class="auth-cloud c3"></span></div>
+
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img src="assets/icons/logo-128.png" alt="Active Plus Coaching" width="88" height="88">
+        <h1>Active Plus Coaching</h1>
+        <p>শিখতে থাকো, এগিয়ে যাও</p>
+      </div>
+      <div class="auth-tabs" role="tablist" aria-label="অ্যাকাউন্ট অপশন">
+        <button class="auth-tab active" type="button" data-auth-tab="login" role="tab" aria-controls="loginPanel" aria-selected="true">লগইন</button>
+        <button class="auth-tab" type="button" data-auth-tab="register" role="tab" aria-controls="registerPanel" aria-selected="false">রেজিস্ট্রেশন</button>
+      </div>
+      <p class="auth-message" id="authMessage" role="status" hidden></p>
+
+      <div class="auth-panel active" id="loginPanel" data-auth-panel="login">
+        <form id="loginForm" novalidate>
+          <label for="loginMobile">ইউজারনেম, মোবাইল নম্বর বা আইডি</label>
+          <div class="input-wrap input-wrap--plain"><input id="loginMobile" name="mobile" type="text" autocomplete="username" placeholder="01XXXXXXXXX" required></div>
+          <label for="loginPin">পাসওয়ার্ড</label>
+          <div class="input-wrap input-wrap--plain input-wrap--pin"><input id="loginPin" name="pin" type="password" inputmode="text" minlength="4" maxlength="32" autocomplete="current-password" placeholder="৪–৬ সংখ্যা" required><button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="loginPin" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div>
+          <div class="form-row"><label class="remember-label"><input type="checkbox" id="rememberMe" checked><span class="fake-check"></span>এই ডিভাইসে মনে রাখুন</label><button type="button" class="link-button" id="forgotPinButton">পাসওয়ার্ড ভুলে গেছেন?</button></div>
+          <button class="auth-submit" type="submit">লগইন করুন</button>
+        </form>
+        <p class="auth-footnote auth-switch-note">অ্যাকাউন্ট নেই? <button type="button" class="inline-link" id="switchToRegister" data-auth-switch="register">রেজিস্ট্রেশন করুন</button></p>
+        <!-- First use only: shown by js/login.js while this device has no Admin
+             record at all. Once the first Admin exists it is removed. -->
+        <p class="auth-footnote first-use-note" id="firstAdminFootnote" hidden>প্রথমবার ব্যবহার করছেন? <button type="button" class="inline-link" id="openFirstAdmin" data-auth-tab="first-admin">Admin Account তৈরি করুন</button></p>
+      </div>
+
+      <!-- First-use Admin Account creation. The Login User ID is generated,
+           never typed: First Name + Role + ".apc". -->
+      <div class="auth-panel" id="firstAdminPanel" data-auth-panel="first-admin" hidden>
+        <div class="auth-panel-heading">
+          <div>
+            <h2>প্রথম Admin Account তৈরি করুন</h2>
+          </div>
+        </div>
+        <form id="firstAdminForm" novalidate autocomplete="off">
+          <label for="firstAdminName">পূর্ণ নাম</label>
+          <div class="input-wrap">
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+            <input id="firstAdminName" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="যেমন: Rasal Russell Chowdhury" required>
+          </div>
+
+          <span class="auto-id-label" id="firstAdminIdLabel">Admin User ID (স্বয়ংক্রিয়)</span>
+          <div class="auto-id-preview" id="firstAdminIdPreview" role="status" aria-live="polite" aria-atomic="true" aria-labelledby="firstAdminIdLabel">—</div>
+
+          <label for="firstAdminMobile">মোবাইল নম্বর</label>
+          <div class="input-wrap">
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="phone" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/phone.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+            <input id="firstAdminMobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+          </div>
+
+          <label for="firstAdminEmail">ইমেইল (ঐচ্ছিক)</label>
+          <div class="input-wrap">
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="mail" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/mail.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+            <input id="firstAdminEmail" name="email" type="email" autocomplete="email" maxlength="254" placeholder="name@example.com">
+          </div>
+
+          <label for="firstAdminPassword">পাসওয়ার্ড</label>
+          <div class="input-wrap">
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+            <input id="firstAdminPassword" name="password" type="password" autocomplete="new-password" minlength="6" maxlength="32" placeholder="৬–৩২ অক্ষর" required>
+            <button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="firstAdminPassword" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+          </div>
+
+          <label for="firstAdminConfirm">পাসওয়ার্ড নিশ্চিত করুন</label>
+          <div class="input-wrap">
+            <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg>
+            <input id="firstAdminConfirm" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="32" placeholder="একই পাসওয়ার্ড আবার লিখুন" required>
+            <button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="firstAdminConfirm" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+          </div>
+
+          <p class="auth-message" id="firstAdminError" role="alert" hidden></p>
+          <button class="auth-submit" type="submit">Admin Account তৈরি করুন <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="check-circle" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/approval.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button>
+          <p class="auth-footnote"><button type="button" class="inline-link" data-auth-tab="login">← লগইনে ফিরুন</button></p>
+        </form>
+      </div>
+
+      <div class="auth-panel" id="registerPanel" data-auth-panel="register" hidden>
+        <div class="auth-panel-heading"><div><h2>শিক্ষার্থী রেজিস্ট্রেশন</h2></div></div>
+        <div class="registration-progress" aria-label="রেজিস্ট্রেশন অগ্রগতি">
+          <div class="step-progress-track"><span id="registrationProgressBar"></span></div>
+          <div class="step-progress-meta"><span id="registrationStepCount">ধাপ ১ / ৫</span><strong id="registrationStepTitle">অ্যাকাউন্ট তথ্য</strong></div>
+        </div>
+        <form id="registrationForm" novalidate>
+          <section class="registration-step active" data-registration-step="1" data-step-title="অ্যাকাউন্ট তথ্য" aria-labelledby="stepOneTitle">
+            <div class="form-section-title"><span>০১</span><div><strong id="stepOneTitle">অ্যাকাউন্ট তথ্য</strong><small>নাম ও লগইনের তথ্য</small></div></div>
+            <div class="field-grid">
+              <div class="field full"><label for="nameBn">শিক্ষার্থীর নাম (বাংলা) <i>*</i></label><input id="nameBn" name="nameBn" type="text" placeholder="পুরো নাম" required></div>
+              <div class="field full"><label for="nameEn">শিক্ষার্থীর নাম (English) <i>*</i></label><input id="nameEn" name="nameEn" type="text" placeholder="ইংরেজি হরফে পূর্ণ নাম" required></div>
+              <div class="field full"><label for="regMobile">মোবাইল নম্বর <i>*</i></label><div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="phone" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/phone.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="regMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel" placeholder="০১XXXXXXXXX" required></div></div>
+              <div class="field full">
+                <label for="regUsername">ইউজারনেম <i>*</i></label>
+                <div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="user" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/user.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="regUsername" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="4" maxlength="20" placeholder="যেমন: raisa.islam" aria-describedby="regUsernameHint" required></div>
+                <div class="username-row">
+                  <button class="link-button" type="button" id="regUsernameSuggest">নাম থেকে সাজেশন নিন</button>
+                  <span class="username-lock-note"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg> একবার সেট হলে আর বদলানো যাবে না</span>
+                </div>
+                <p id="regUsernameStatus" class="username-status" role="status" aria-live="polite"></p>
+                <small id="regUsernameHint" class="fixed-field-note">৪–২০ অক্ষর; ইংরেজি অক্ষর দিয়ে শুরু, তারপর ছোট হাতের অক্ষর/সংখ্যা/ডট/আন্ডারস্কোর।</small>
+              </div>
+              <div class="field"><label for="regPin">পাসওয়ার্ড <i>*</i></label><div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="regPin" name="pin" type="password" inputmode="numeric" minlength="4" maxlength="6" placeholder="৪–৬ সংখ্যার পাসওয়ার্ড" required><button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="regPin" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div>
+              <div class="field"><label for="regPinConfirm">পাসওয়ার্ড আবার দিন <i>*</i></label><div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="regPinConfirm" name="pinConfirm" type="password" inputmode="numeric" minlength="4" maxlength="6" placeholder="পাসওয়ার্ড মিলান" required><button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="regPinConfirm" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div></div>
+            </div>
+            <p class="fixed-field-note">৪–৬ সংখ্যার পাসওয়ার্ড দিন। প্রথম মোবাইল নম্বর আর পরিবর্তন করা যাবে না।</p><div class="step-actions"><button type="button" class="step-next" data-next-step>পরের অংশ <span>→</span></button></div>
+          </section>
+
+          <section class="registration-step" data-registration-step="2" data-step-title="শিক্ষার্থীর পরিচয়" aria-labelledby="stepTwoTitle" hidden>
+            <div class="form-section-title"><span>০২</span><div><strong id="stepTwoTitle">শিক্ষার্থীর পরিচয়</strong><small>পরিবার ও জন্ম তথ্য</small></div></div>
+            <div class="field-grid">
+              <div class="field"><label for="fatherName">পিতার নাম <i>*</i></label><input id="fatherName" name="fatherName" type="text" placeholder="পিতার নাম" required></div>
+              <div class="field"><label for="motherName">মাতার নাম <i>*</i></label><input id="motherName" name="motherName" type="text" placeholder="মাতার নাম" required></div>
+              <div class="field full"><label for="guardianName">অভিভাবকের নাম <span>(ঐচ্ছিক)</span></label><input id="guardianName" name="guardianName" type="text" placeholder="অভিভাবকের নাম"></div>
+              <div class="field"><label for="birthDate">জন্মতারিখ <i>*</i></label><input id="birthDate" name="birthDate" type="date" required></div>
+              <div class="field"><label for="gender">লিঙ্গ <i>*</i></label><select id="gender" name="gender" required><option value="">নির্বাচন করুন</option><option>পুরুষ</option><option>নারী</option><option>অন্যান্য</option></select></div>
+            </div>
+            <div class="step-actions"><button type="button" class="step-back" data-previous-step>← আগের অংশ</button><button type="button" class="step-next" data-next-step>পরের অংশ <span>→</span></button></div>
+          </section>
+
+          <section class="registration-step" data-registration-step="3" data-step-title="যোগাযোগের তথ্য" aria-labelledby="stepThreeTitle" hidden>
+            <div class="form-section-title"><span>০৩</span><div><strong id="stepThreeTitle">যোগাযোগের তথ্য</strong><small>প্রয়োজনে যোগাযোগের জন্য</small></div></div>
+            <div class="field-grid">
+              <div class="field full"><label for="studentMobile">যোগাযোগের মোবাইল <i>*</i></label><div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="phone" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/phone.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="studentMobile" name="studentMobile" type="tel" inputmode="numeric" placeholder="প্রথম ধাপের মোবাইল নম্বর" readonly required></div><small class="fixed-field-note">প্রথম নিবন্ধনের নম্বর স্থায়ী থাকবে। পরে শুধু অতিরিক্ত নম্বর যোগ করা যাবে।</small></div>
+              <div class="field full"><label for="guardianMobile">অভিভাবকের মোবাইল <i>*</i></label><input id="guardianMobile" name="guardianMobile" type="tel" inputmode="numeric" placeholder="অভিভাবকের নম্বর" required></div>
+              <div class="field full"><label for="regEmail">ইমেইল <span>(ঐচ্ছিক)</span></label><input id="regEmail" name="email" type="email" autocomplete="email" maxlength="254" placeholder="উদাহরণ: student@example.com"><small class="username-status" id="regEmailStatus" aria-live="polite"></small></div>
+              <div class="field full"><label for="address">সম্পূর্ণ ঠিকানা <i>*</i></label><textarea id="address" name="address" rows="3" placeholder="বাড়ি, গ্রাম/রোড, ডাকঘর, উপজেলা, জেলা" required></textarea></div>
+            </div>
+            <div class="step-actions"><button type="button" class="step-back" data-previous-step>← আগের অংশ</button><button type="button" class="step-next" data-next-step>পরের অংশ <span>→</span></button></div>
+          </section>
+
+          <section class="registration-step" data-registration-step="4" data-step-title="শিক্ষার তথ্য" aria-labelledby="stepFourTitle" hidden>
+            <div class="form-section-title"><span>০৪</span><div><strong id="stepFourTitle">শিক্ষার তথ্য</strong><small>কোচিংয়ের ক্লাস নির্বাচন করো</small></div></div>
+            <div class="field-grid">
+              <div class="field"><label for="regClass">শ্রেণি / বর্ষ <i>*</i></label><select id="regClass" name="className" required><option value="">নির্বাচন করুন</option></select></div>
+              <div class="field"><label for="regGroup">বিভাগ / গ্রুপ <i>*</i></label><select id="regGroup" name="group" required><option value="">নির্বাচন করুন</option><option>বিজ্ঞান</option><option>মানবিক</option><option>ব্যবসায় শিক্ষা</option><option>সাধারণ</option><option>প্রযোজ্য নয়</option></select></div>
+              <div class="field full" id="majorField" hidden><label for="major">বিষয় / বিভাগ <span>(অনার্স হলে)</span></label><input id="major" name="major" type="text" placeholder="যেমন: বাংলা, ইংরেজি, হিসাববিজ্ঞান"></div>
+              <div class="field"><label for="institution">স্কুল / কলেজ / বিশ্ববিদ্যালয় <span>(ঐচ্ছিক)</span></label><input id="institution" name="institution" type="text" placeholder="প্রতিষ্ঠানের নাম"></div>
+              <div class="field"><label>ক্লাস রোল</label><p class="fixed-field-note">শ্রেণি অনুযায়ী ইউনিক রোল স্বয়ংক্রিয়ভাবে তৈরি হবে।</p></div>
+              <div class="field full"><label for="registrationNo">রেজিস্ট্রেশন নম্বর <span>(ঐচ্ছিক)</span></label><input id="registrationNo" name="registrationNo" type="text" inputmode="numeric" placeholder="বোর্ড / বিশ্ববিদ্যালয় রেজিস্ট্রেশন নম্বর"></div>
+            </div>
+            <div class="step-actions"><button type="button" class="step-back" data-previous-step>← আগের অংশ</button><button type="button" class="step-next" data-next-step>পরের অংশ <span>→</span></button></div>
+          </section>
+
+          <section class="registration-step" data-registration-step="5" data-step-title="পাসওয়ার্ড পুনরুদ্ধার" aria-labelledby="stepFiveTitle" hidden>
+            <div class="form-section-title"><span>০৫</span><div><strong id="stepFiveTitle">পাসওয়ার্ড পুনরুদ্ধার</strong><small>পাসওয়ার্ড ভুলে গেলে কাজে লাগবে</small></div></div>
+            <div class="field-grid">
+              <div class="field full"><label for="securityQuestion">নিরাপত্তা প্রশ্ন <i>*</i></label><select id="securityQuestion" name="securityQuestion" required><option value="">একটি প্রশ্ন বেছে নিন</option><option>তোমার শৈশবের ডাকনাম কী?</option><option>তোমার প্রিয় শিক্ষকের নাম কী?</option><option>তোমার জন্মস্থানের নাম কী?</option><option>তোমার প্রিয় বইয়ের নাম কী?</option></select></div>
+              <div class="field full"><label for="securityAnswer">নিরাপত্তা প্রশ্নের উত্তর <i>*</i></label><input id="securityAnswer" name="securityAnswer" type="text" placeholder="উত্তরটি লিখুন" required></div>
+            </div>
+            <p class="privacy-note">আপনার তথ্য ভর্তি, ফি, উপস্থিতি ও ফলাফলের জন্য ব্যবহার করা হবে। বিস্তারিত <a href="privacy.html" target="_blank" rel="noopener">গোপনীয়তা নীতিতে</a>।</p>
+            <label class="terms-label"><input type="checkbox" id="guardianConsent" name="guardianConsent" required><span>অভিভাবক হিসেবে এই তথ্য ব্যবহারে সম্মতি দিচ্ছি। <i>*</i></span></label>
+            <label class="terms-label"><input type="checkbox" id="terms" name="terms" required><span class="fake-check"></span><span>আমি Active Plus Coaching-এর নিয়ম ও শর্তে সম্মত আছি। <i>*</i></span></label>
+            <div class="step-actions"><button type="button" class="step-back" data-previous-step>← আগের অংশ</button><button class="auth-submit step-submit" type="submit">রেজিস্ট্রেশন সম্পন্ন করুন <svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="arrow-right" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/next.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div>
+          </section>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+
+  <div class="modal-backdrop" id="recoveryModal" hidden>
+    <section class="modal edit-modal" role="dialog" aria-modal="true" aria-labelledby="recoveryModalTitle">
+      <div class="modal-header"><div><h2 id="recoveryModalTitle">পাসওয়ার্ড রিসেট করুন</h2></div><button class="modal-close" type="button" data-close-modal="recoveryModal" aria-label="বন্ধ করুন">×</button></div>
+
+      <!-- ধাপ ১ — শিক্ষার্থী যাচাই: ইউজারনেম/মোবাইল নম্বর ও নিরাপত্তা প্রশ্নের উত্তর মিললে তবেই পরের ধাপ খোলে। -->
+      <section class="recovery-step" id="recoveryVerifyStep" aria-labelledby="recoveryVerifyTitle">
+        <p class="recovery-step-title" id="recoveryVerifyTitle"><span class="recovery-step-number">১</span> শিক্ষার্থী যাচাই</p>
+        
+        <form id="recoveryForm">
+          <label for="recoveryMobile">ইউজারনেম অথবা মোবাইল নম্বর</label>
+          <input id="recoveryMobile" name="mobile" type="text" autocomplete="username" placeholder="ইউজারনেম / ০১XXXXXXXXX" required>
+          <label for="recoveryQuestion">নিরাপত্তা প্রশ্ন</label>
+          <select id="recoveryQuestion" name="question" required><option value="">প্রশ্ন নির্বাচন করুন</option><option>তোমার শৈশবের ডাকনাম কী?</option><option>তোমার প্রিয় শিক্ষকের নাম কী?</option><option>তোমার জন্মস্থানের নাম কী?</option><option>তোমার প্রিয় বইয়ের নাম কী?</option></select>
+          <label for="recoveryAnswer">উত্তর</label>
+          <input id="recoveryAnswer" name="answer" type="text" autocomplete="off" required>
+          <p class="finance-error" id="recoveryVerifyError" role="alert" hidden></p>
+          <div class="modal-actions"><button class="modal-action" type="submit">যাচাই করুন</button></div>
+        </form>
+      </section>
+
+      <!-- ধাপ ২ — যাচাই শেষে সংক্ষিপ্ত তথ্য দেখে নতুন পাসওয়ার্ড দুইবার দিয়ে পরিবর্তন। -->
+      <section class="recovery-step" id="recoveryPasswordStep" aria-labelledby="recoveryPasswordTitle" hidden>
+        <p class="recovery-step-title" id="recoveryPasswordTitle"><span class="recovery-step-number">২</span> নতুন পাসওয়ার্ড</p>
+        <article class="recovery-summary" id="recoveryStudentSummary" aria-live="polite"></article>
+        <form id="recoveryPasswordForm">
+          <label for="recoveryPin">নতুন পাসওয়ার্ড</label>
+          <div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="recoveryPin" name="pin" type="password" inputmode="numeric" minlength="4" maxlength="6" autocomplete="new-password" placeholder="৪–৬ সংখ্যা" required><button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="recoveryPin" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div>
+          <label for="recoveryPinConfirm">নতুন পাসওয়ার্ড আবার দিন</label>
+          <div class="input-wrap"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="lock" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/lock.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><input id="recoveryPinConfirm" name="pinConfirm" type="password" inputmode="numeric" minlength="4" maxlength="6" autocomplete="new-password" placeholder="একই পাসওয়ার্ড আবার" required><button class="show-pin" type="button" aria-pressed="false" data-toggle-pin="recoveryPinConfirm" aria-label="পাসওয়ার্ড দেখুন"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="eye" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/eye.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg></button></div>
+          <p class="finance-error" id="recoveryPasswordError" role="alert" hidden></p>
+          <div class="modal-actions"><button class="admin-btn ghost" type="button" id="recoveryBack">আবার যাচাই</button><button class="modal-action" type="submit">পাসওয়ার্ড পরিবর্তন করুন</button></div>
+        </form>
+      </section>
+
+      <div class="admin-reset-note"><svg class="apc-glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" data-icon="help" data-icon-set="active-plus-soft3d" data-icon-version="2" data-icon-style="glyph"><image href="assets/icons/ai-3d/help.svg" width="24" height="24" preserveAspectRatio="xMidYMid meet"/></svg><span>নিরাপত্তা প্রশ্নের উত্তর মনে না থাকলে এডমিন পাসওয়ার্ড রিসেট করে দিতে পারবেন।</span></div>
+    </section>
+  </div>
+
+
+</body>
+</html>
